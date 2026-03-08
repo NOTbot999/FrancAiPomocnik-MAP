@@ -4,7 +4,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Slider } from "@/components/ui/slider";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 
-export default function LayerCategory({ category, activeLayers, onToggleLayer, onOpacityChange, iconComponent: Icon }) {
+export default function LayerCategory({ category, activeLayers, onToggleLayer, onOpacityChange, iconComponent }) {
+  const Icon = iconComponent;
   const [isOpen, setIsOpen] = useState(false);
 
   const activeCount = category.layers.filter(l => activeLayers[l.id]).length;
