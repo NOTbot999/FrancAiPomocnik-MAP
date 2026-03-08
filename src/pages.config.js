@@ -47,8 +47,14 @@
  *
  * The mainPage value must match a key in the PAGES object exactly.
  */
+import MapViewer from './pages/MapViewer';
 
-export const pagesConfig = {
-	Pages: {}
+
+export const PAGES = {
+    "MapViewer": MapViewer,
 }
 
+export const pagesConfig = {
+    mainPage: "MapViewer",
+    Pages: PAGES,
+};
