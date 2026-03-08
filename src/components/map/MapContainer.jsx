@@ -1,10 +1,20 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
-import { MapContainer as LeafletMapContainer, TileLayer, WMSTileLayer, useMap, useMapEvents, Marker, Popup, Polyline, Polygon } from "react-leaflet";
-import { BASE_LAYERS, OVERLAY_CATEGORIES, SLOVENIA_CENTER, DEFAULT_ZOOM, SLOVENIA_BOUNDS } from "./layerConfig";
+import React, { useEffect, useRef, useState } from "react";
+import {
+  MapContainer as LeafletMapContainer,
+  TileLayer,
+  WMSTileLayer,
+  useMap,
+  useMapEvents,
+  Marker,
+  Popup,
+  Polyline,
+  Polygon,
+} from "react-leaflet";
+import { BASE_LAYERS, OVERLAY_CATEGORIES, SLOVENIA_CENTER, DEFAULT_ZOOM } from "./layerConfig";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
-// Fix leaflet default marker icons
+// Fix default marker icons
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
@@ -25,29 +35,38 @@ function FlyToLocation({ location }) {
 function CoordsDisplay() {
   const [coords, setCoords] = useState(null);
   const [zoom, setZoom] = useState(DEFAULT_ZOOM);
-
   useMapEvents({
     mousemove: (e) => setCoords({ lat: e.latlng.lat, lng: e.latlng.lng }),
     zoom: (e) => setZoom(e.target.getZoom()),
   });
-
   if (!coords) return null;
   return (
-    <div className="absolute bottom-2 left-2 z-[800] bg-slate-900/80 backdrop-blur-sm text-white text-[10px] font-mono px-2.5 py-1 rounded-lg">
+    <div className="absolute bottom-2 left-2 z-[800] bg-slate-900/80 backdrop-blur-sm text-white text-[10px] font-mono px-2.5 py-1 rounded-lg pointer-events-none">
       {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)} | z{zoom}
     </div>
   );
 }
 
 function formatDistance(meters) {
-  if (meters < 1000) return `${meters.toFixed(0)} m`;
+  if (meters < 1000) return `${Math.round(meters)} m`;
   return `${(meters / 1000).toFixed(2)} km`;
 }
-
-function formatArea(sqMeters) {
-  if (sqMeters < 10000) return `${sqMeters.toFixed(0)} m²`;
-  if (sqMeters < 1000000) return `${(sqMeters / 10000).toFixed(2)} ha`;
-  return `${(sqMeters / 1000000).toFixed(2)} km²`;
+function formatArea(sqm) {
+  if (sqm < 10000) return `${Math.round(sqm)} m²`;
+  if (sqm < 1000000) return `${(sqm / 10000).toFixed(2)} ha`;
+  return `${(sqm / 1000000).toFixed(2)} km²`;
+}
+function computeArea(points) {
+  let area = 0;
+  const toRad = (d) => (d * Math.PI) / 180;
+  const n = points.length;
+  for (let i = 0; i < n; i++) {
+    const j = (i + 1) % n;
+    area +=
+      toRad(points[j][1] - points[i][1]) *
+      (2 + Math.sin(toRad(points[i][0])) + Math.sin(toRad(points[j][0])));
+  }
+  return Math.abs((area * 6378137 * 6378137) / 2);
 }
 
 function DrawingHandler({ activeTool, onMeasurement, drawings, setDrawings }) {
@@ -55,90 +74,74 @@ function DrawingHandler({ activeTool, onMeasurement, drawings, setDrawings }) {
   const map = useMap();
 
   useEffect(() => {
-    if (activeTool === "distance" || activeTool === "area") {
-      map.getContainer().style.cursor = "crosshair";
-    } else if (activeTool === "marker") {
-      map.getContainer().style.cursor = "crosshair";
+    const el = map.getContainer();
+    if (activeTool === "distance" || activeTool === "area" || activeTool === "marker") {
+      el.style.cursor = "crosshair";
     } else {
-      map.getContainer().style.cursor = "";
+      el.style.cursor = "";
     }
     setCurrentPoints([]);
-    return () => { map.getContainer().style.cursor = ""; };
+    return () => { el.style.cursor = ""; };
   }, [activeTool, map]);
 
   useMapEvents({
-    click: (e) => {
+    click(e) {
       if (activeTool === "marker") {
-        setDrawings(prev => ({
+        setDrawings((prev) => ({
           ...prev,
-          markers: [...(prev.markers || []), { lat: e.latlng.lat, lng: e.latlng.lng }]
+          markers: [...(prev.markers || []), { lat: e.latlng.lat, lng: e.latlng.lng }],
         }));
       } else if (activeTool === "distance") {
-        const newPoints = [...currentPoints, [e.latlng.lat, e.latlng.lng]];
-        setCurrentPoints(newPoints);
-        if (newPoints.length >= 2) {
+        const pts = [...currentPoints, [e.latlng.lat, e.latlng.lng]];
+        setCurrentPoints(pts);
+        if (pts.length >= 2) {
           let total = 0;
-          for (let i = 1; i < newPoints.length; i++) {
-            total += L.latLng(newPoints[i-1]).distanceTo(L.latLng(newPoints[i]));
-          }
+          for (let i = 1; i < pts.length; i++)
+            total += L.latLng(pts[i - 1]).distanceTo(L.latLng(pts[i]));
           onMeasurement(`Distance: ${formatDistance(total)}`);
         }
       } else if (activeTool === "area") {
-        const newPoints = [...currentPoints, [e.latlng.lat, e.latlng.lng]];
-        setCurrentPoints(newPoints);
-        if (newPoints.length >= 3) {
-          const area = L.GeometryUtil
-            ? L.GeometryUtil.geodesicArea(newPoints.map(p => L.latLng(p)))
-            : computeArea(newPoints);
-          onMeasurement(`Area: ${formatArea(Math.abs(area))}`);
-        }
+        const pts = [...currentPoints, [e.latlng.lat, e.latlng.lng]];
+        setCurrentPoints(pts);
+        if (pts.length >= 3) onMeasurement(`Area: ${formatArea(computeArea(pts))}`);
       }
     },
-    dblclick: (e) => {
+    dblclick(e) {
       if (activeTool === "distance" && currentPoints.length >= 2) {
-        setDrawings(prev => ({
-          ...prev,
-          lines: [...(prev.lines || []), currentPoints]
-        }));
+        setDrawings((prev) => ({ ...prev, lines: [...(prev.lines || []), currentPoints] }));
         setCurrentPoints([]);
       } else if (activeTool === "area" && currentPoints.length >= 3) {
-        setDrawings(prev => ({
-          ...prev,
-          polygons: [...(prev.polygons || []), currentPoints]
-        }));
+        setDrawings((prev) => ({ ...prev, polygons: [...(prev.polygons || []), currentPoints] }));
         setCurrentPoints([]);
       }
-    }
+    },
+  });
+
+  const dotIcon = L.divIcon({
+    className: "",
+    html: `<div style="width:10px;height:10px;background:#10b981;border:2px solid white;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,.4);transform:translate(-5px,-5px)"></div>`,
+    iconSize: [0, 0],
   });
 
   return (
     <>
-      {/* Current measuring line */}
       {currentPoints.length >= 2 && activeTool === "distance" && (
         <Polyline positions={currentPoints} color="#10b981" weight={3} dashArray="8 4" />
       )}
       {currentPoints.length >= 3 && activeTool === "area" && (
         <Polygon positions={currentPoints} pathOptions={{ color: "#10b981", fillColor: "#10b981", fillOpacity: 0.2 }} />
       )}
-      {/* Points while measuring */}
-      {currentPoints.map((p, i) => (
-        <Marker key={`measure-${i}`} position={p} icon={L.divIcon({
-          className: '',
-          html: `<div style="width:10px;height:10px;background:#10b981;border:2px solid white;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,0.4);transform:translate(-5px,-5px)"></div>`,
-          iconSize: [0, 0]
-        })} />
+      {currentPoints.map((p, i) => <Marker key={`mp-${i}`} position={p} icon={dotIcon} />)}
+      {(drawings.lines || []).map((line, i) => (
+        <Polyline key={`l-${i}`} positions={line} color="#10b981" weight={2.5} />
       ))}
-      {/* Saved drawings */}
-      {drawings.lines?.map((line, i) => (
-        <Polyline key={`line-${i}`} positions={line} color="#10b981" weight={3} />
+      {(drawings.polygons || []).map((poly, i) => (
+        <Polygon key={`pg-${i}`} positions={poly} pathOptions={{ color: "#10b981", fillColor: "#10b981", fillOpacity: 0.15 }} />
       ))}
-      {drawings.polygons?.map((poly, i) => (
-        <Polygon key={`poly-${i}`} positions={poly} pathOptions={{ color: "#10b981", fillColor: "#10b981", fillOpacity: 0.15 }} />
-      ))}
-      {drawings.markers?.map((m, i) => (
-        <Marker key={`marker-${i}`} position={[m.lat, m.lng]}>
+      {(drawings.markers || []).map((m, i) => (
+        <Marker key={`mk-${i}`} position={[m.lat, m.lng]}>
           <Popup>
-            <span className="text-xs font-mono">{m.lat.toFixed(5)}, {m.lng.toFixed(5)}</span>
+            <span className="font-mono text-xs">{m.lat.toFixed(5)}, {m.lng.toFixed(5)}</span>
           </Popup>
         </Marker>
       ))}
@@ -146,27 +149,57 @@ function DrawingHandler({ activeTool, onMeasurement, drawings, setDrawings }) {
   );
 }
 
-function computeArea(points) {
-  // Shoelace formula approximation for small areas
-  const toRad = (deg) => deg * Math.PI / 180;
-  let area = 0;
-  const n = points.length;
-  for (let i = 0; i < n; i++) {
-    const j = (i + 1) % n;
-    area += toRad(points[j][1] - points[i][1]) * (2 + Math.sin(toRad(points[i][0])) + Math.sin(toRad(points[j][0])));
-  }
-  area = area * 6378137 * 6378137 / 2;
-  return Math.abs(area);
-}
-
 function getAllLayersFlat() {
   const map = {};
-  OVERLAY_CATEGORIES.forEach(cat => {
-    cat.layers.forEach(layer => {
-      map[layer.id] = layer;
-    });
-  });
+  OVERLAY_CATEGORIES.forEach((cat) => cat.layers.forEach((l) => { map[l.id] = l; }));
   return map;
+}
+
+// ArcGIS MapServer export as a Leaflet TileLayer (dynamic tiles via /export endpoint)
+function ArcGISExportLayer({ url, opacity, layerIds }) {
+  const map = useMap();
+  const layerRef = useRef(null);
+
+  useEffect(() => {
+    const layer = L.tileLayer.wms
+      ? null
+      : null; // fallback
+
+    // Use Leaflet's built-in support: create a dynamic tile layer via export endpoint
+    const arcLayer = L.tileLayer(
+      url + "?bbox={bbox-epsg-3857}&bboxSR=3857&imageSR=3857&size=256,256&f=image&format=png&transparent=true&" + (layerIds ? `layers=${layerIds}` : ""),
+      {
+        tileSize: 256,
+        opacity,
+        bounds: [[45.4, 13.3], [46.9, 16.7]],
+      }
+    );
+
+    // Override getTileUrl to inject proper bbox
+    arcLayer.getTileUrl = function (coords) {
+      const tileBounds = this._tileCoordsToBounds(coords);
+      const sw = map.options.crs.project(tileBounds.getSouthWest());
+      const ne = map.options.crs.project(tileBounds.getNorthEast());
+      const bbox = `${sw.x},${sw.y},${ne.x},${ne.y}`;
+      const size = this.getTileSize();
+      return (
+        url +
+        `?bbox=${bbox}&bboxSR=3857&imageSR=3857&size=${size.x},${size.y}&f=image&format=png32&transparent=true` +
+        (layerIds ? `&layers=${layerIds}` : "")
+      );
+    };
+
+    arcLayer.addTo(map);
+    layerRef.current = arcLayer;
+    return () => { arcLayer.remove(); };
+  }, [url, opacity, layerIds, map]);
+
+  // Update opacity
+  useEffect(() => {
+    if (layerRef.current) layerRef.current.setOpacity(opacity);
+  }, [opacity]);
+
+  return null;
 }
 
 export default function MapContainerComponent({
@@ -178,25 +211,25 @@ export default function MapContainerComponent({
   drawings,
   setDrawings,
 }) {
-  const baseLayer = BASE_LAYERS.find(l => l.id === activeBaseLayer) || BASE_LAYERS[0];
+  const baseLayer = BASE_LAYERS.find((l) => l.id === activeBaseLayer) || BASE_LAYERS[0];
   const allLayers = getAllLayersFlat();
 
   return (
     <LeafletMapContainer
       center={SLOVENIA_CENTER}
       zoom={DEFAULT_ZOOM}
-      maxBounds={[[44.5, 12.5], [47.5, 17.5]]}
       minZoom={7}
       maxZoom={19}
       className="w-full h-full"
-      zoomControl={false}
+      zoomControl={true}
       doubleClickZoom={activeTool === "pointer"}
+      style={{ zIndex: 1 }}
     >
       {/* Base layer */}
       <TileLayer
         key={baseLayer.id}
         url={baseLayer.url}
-        attribution={baseLayer.attribution}
+        attribution={baseLayer.attribution || ""}
       />
 
       {/* Active overlay layers */}
@@ -204,33 +237,53 @@ export default function MapContainerComponent({
         if (!config) return null;
         const layer = allLayers[layerId];
         if (!layer) return null;
-        
-        if (layer.type === "wms") {
-          return (
-            <WMSTileLayer
-              key={layerId}
-              url={layer.url}
-              layers={layer.layers}
-              format={layer.format || "image/png"}
-              transparent={layer.transparent !== false}
-              version={layer.version || "1.3.0"}
-              opacity={config.opacity ?? layer.opacity}
-              crs={L.CRS.EPSG3857}
-            />
-          );
-        }
-        
+        const opacity = config.opacity ?? layer.opacity ?? 0.7;
+
+        // Standard tile layer (e.g. RABA farmland from OSM DE)
         if (layer.type === "tile") {
           return (
             <TileLayer
               key={layerId}
               url={layer.url}
-              opacity={config.opacity ?? layer.opacity}
-              tileSize={layer.tileSize || 256}
+              opacity={opacity}
+              tileSize={256}
+              attribution={layer.attribution || ""}
             />
           );
         }
-        
+
+        // ArcGIS MapServer export dynamic tiles
+        if (layer.type === "arcgis_export") {
+          return (
+            <ArcGISExportLayer
+              key={layerId}
+              url={layer.url}
+              opacity={opacity}
+              layerIds={layer.layerIds}
+            />
+          );
+        }
+
+        // All WMS layers (standard + katasterjam_caves uses wmsUrl fallback)
+        const wmsUrl = layer.wmsUrl || layer.url;
+        const wmsLayers = layer.wmsLayers || layer.layers;
+        if (wmsUrl && wmsLayers && (layer.type === "wms" || layer.type === "arcgis_dynamic" || layer.type === "geojson_api")) {
+          return (
+            <WMSTileLayer
+              key={layerId}
+              url={wmsUrl}
+              layers={wmsLayers}
+              format={layer.format || "image/png"}
+              transparent={layer.transparent !== false}
+              version={layer.version || "1.1.1"}
+              opacity={opacity}
+              crs={L.CRS.EPSG3857}
+              tileSize={512}
+              detectRetina={false}
+            />
+          );
+        }
+
         return null;
       })}
 
