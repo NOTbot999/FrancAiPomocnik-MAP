@@ -27,11 +27,11 @@ export const BASE_LAYERS = [
     thumbnail: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=80&h=60&fit=crop"
   },
   {
-    id: "cartodb_light",
-    name: "Light Gray",
+    id: "esri_topo",
+    name: "ESRI World Topo",
     type: "tile",
-    url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-    attribution: "&copy; CartoDB",
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
+    attribution: "&copy; Esri",
     thumbnail: "https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=80&h=60&fit=crop"
   },
   {
