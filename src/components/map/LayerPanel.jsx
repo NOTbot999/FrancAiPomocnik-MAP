@@ -1,5 +1,5 @@
 import React from "react";
-import { Layers, X, Building2, Droplets, Trees, CloudSun, MapPin, Wheat, Mountain, History, Landmark } from "lucide-react";
+import { Layers, X, Building2, Droplets, Trees, CloudSun, MapPin, Wheat, Mountain, History, Landmark, ExternalLink } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { OVERLAY_CATEGORIES, BASE_LAYERS } from "./layerConfig";
 import LayerCategory from "./LayerCategory";
@@ -92,8 +92,29 @@ export default function LayerPanel({
             </div>
           </ScrollArea>
 
+          {/* KatasterJam quick links */}
+          <div className="px-4 py-3 border-t border-slate-700/50 space-y-1.5">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">External Tools</p>
+            {[
+              { label: "KatasterJam – Caves", url: "https://www.katasterjam.si" },
+              { label: "ARSO Atlas Okolja", url: "https://gis.arso.gov.si/atlasokolja/profile.aspx?id=Atlas_Okolja_AXL@Arso&culture=en-US" },
+              { label: "Old Maps Online", url: "https://www.oldmapsonline.org/en/Slovenia" },
+              { label: "e-Prostor Javni Vpogled", url: "https://ipi.eprostor.gov.si/jv/" },
+            ].map(link => (
+              <a
+                key={link.url}
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-[11px] text-slate-400 hover:text-emerald-400 transition-colors py-0.5"
+              >
+                <ExternalLink className="w-3 h-3 shrink-0" />
+                {link.label}
+              </a>
+            ))}
+          </div>
           {/* Footer */}
-          <div className="px-4 py-3 border-t border-slate-700/50">
+          <div className="px-4 py-2 border-t border-slate-700/50">
             <p className="text-[10px] text-slate-600 text-center">
               Data: ARSO · GURS · e-Prostor · OSM
             </p>
