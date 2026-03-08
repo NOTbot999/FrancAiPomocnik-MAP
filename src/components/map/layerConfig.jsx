@@ -1,5 +1,15 @@
+
 // Layer configuration for Slovenia Map Viewer
 // All URLs verified against actual service capabilities
+
+// Layer configuration - all URLs and layer names verified from GetCapabilities / Layer Preview
+// ARSO GeoServer: https://gis.arso.gov.si/geoserver/ARSO/wms (namespace ARSO:)
+// GURS DTS WMS:   https://ipi.eprostor.gov.si/wms-si-gurs-dts/ows (namespace SI.GURS.*)
+// Both support EPSG:3857
+
+const ARSO_WMS   = "https://gis.arso.gov.si/geoserver/ARSO/wms";
+const GURS_WMS   = "https://ipi.eprostor.gov.si/wms-si-gurs-dts/ows";
+const ARSO_BASE  = "https://gis.arso.gov.si/arcgis/rest/services";
 
 export const BASE_LAYERS = [
   {
@@ -15,12 +25,12 @@ export const BASE_LAYERS = [
     name: "Satellite",
     type: "tile",
     url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-    attribution: "&copy; Esri, Maxar, Earthstar Geographics",
+    attribution: "&copy; Esri, Maxar",
     thumbnail: "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=80&h=60&fit=crop"
   },
   {
     id: "topo",
-    name: "Topographic",
+    name: "OpenTopoMap",
     type: "tile",
     url: "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
     attribution: "&copy; OpenTopoMap",
@@ -44,102 +54,97 @@ export const BASE_LAYERS = [
   }
 ];
 
-// ARSO ArcGIS MapServer – export as dynamic WMS tiles
-// Base: https://gis.arso.gov.si/arcgis/rest/services/{service}/MapServer/export
-// Leaflet calls these by passing bbox in EPSG:3857 with bboxSR and imageSR=3857
-const ARSO_BASE = "https://gis.arso.gov.si/arcgis/rest/services";
-
-// GURS ipi.eprostor DTS WMS – confirmed working layer names from GetCapabilities
-const GURS_DTS_WMS = "https://ipi.eprostor.gov.si/wms-si-gurs-dts/ows";
-
-// GURS storitve.eprostor – MKGP land use
-const GURS_PEP_WMS = "https://storitve.eprostor.gov.si/ows-pub-wms/SI.MKGP.PEP/ows";
-
 export const OVERLAY_CATEGORIES = [
   // ─── GURS / KATASTER ──────────────────────────────────────────
   {
     id: "gurs",
     name: "Kataster / GURS",
     icon: "Building2",
-    description: "Land registry & cadastral data from GURS",
+    description: "Land registry & cadastral data from GURS/e-Prostor",
     layers: [
       {
         id: "gurs_orthophoto",
         name: "Orthophoto DOF050 (50cm)",
         type: "wms",
-        url: GURS_DTS_WMS,
+        url: GURS_WMS,
         layers: "SI.GURS.ZPDZ:DOF050",
         format: "image/jpeg",
         transparent: false,
         version: "1.1.1",
-        crs: "EPSG:3857",
         opacity: 1.0,
-        description: "50cm resolution aerial orthophoto"
+        description: "50cm resolution aerial orthophoto of Slovenia"
       },
       {
         id: "gurs_orthophoto_025",
         name: "Orthophoto DOF025 (25cm)",
         type: "wms",
-        url: GURS_DTS_WMS,
+        url: GURS_WMS,
         layers: "SI.GURS.ZPDZ:DOF025",
         format: "image/jpeg",
         transparent: false,
         version: "1.1.1",
-        crs: "EPSG:3857",
         opacity: 1.0,
-        description: "25cm high-res orthophoto (visible at high zoom)"
+        description: "25cm high-res aerial orthophoto (visible at z≥12)"
       },
       {
         id: "gurs_lidar",
         name: "LIDAR Hillshade",
         type: "wms",
-        url: GURS_DTS_WMS,
+        url: GURS_WMS,
         layers: "SI.GURS.ZPDZ:LIDAR",
         format: "image/jpeg",
         transparent: false,
         version: "1.1.1",
-        crs: "EPSG:3857",
         opacity: 0.85,
-        description: "LIDAR-derived terrain hillshade model"
+        description: "LIDAR-derived terrain analytical shading"
       },
       {
         id: "gurs_dtk50",
-        name: "Topographic Map 1:50,000",
+        name: "Topographic Map 1:50,000 (DTK50)",
         type: "wms",
-        url: GURS_DTS_WMS,
+        url: GURS_WMS,
         layers: "SI.GURS.DK:DTK50",
         format: "image/png",
         transparent: false,
         version: "1.1.1",
-        crs: "EPSG:3857",
         opacity: 1.0,
-        description: "Official state topographic map at 1:50,000"
+        description: "Official Slovenian topographic map 1:50,000"
       },
       {
         id: "gurs_dpk250",
-        name: "Overview Map 1:250,000",
+        name: "Overview Map 1:250,000 (DPK250)",
         type: "wms",
-        url: GURS_DTS_WMS,
+        url: GURS_WMS,
         layers: "SI.GURS.DK:DPK250",
         format: "image/jpeg",
         transparent: false,
         version: "1.1.1",
-        crs: "EPSG:3857",
         opacity: 1.0,
-        description: "State overview map at 1:250,000"
+        description: "State overview cartographic map 1:250,000"
       },
       {
         id: "gurs_dof_historical",
-        name: "Historical Orthophoto Archive",
+        name: "Historical Orthophotos Archive",
         type: "wms",
-        url: GURS_DTS_WMS,
+        url: GURS_WMS,
         layers: "SI.GURS.ZPDZ:DOF050_ZZ",
         format: "image/jpeg",
         transparent: false,
         version: "1.1.1",
-        crs: "EPSG:3857",
         opacity: 0.9,
-        description: "Historical aerial photos 1990–2025"
+        description: "Historical aerial photos 1990–2025 from GURS"
+      },
+      {
+        id: "gurs_ttn5",
+        name: "Basic Topo Maps 1:5k–1:10k (TTN)",
+        type: "wms",
+        url: GURS_WMS,
+        layers: "SI.GURS.DK:TTN5_TTN10",
+        format: "image/png",
+        transparent: false,
+        version: "1.1.1",
+        opacity: 1.0,
+        description: "Combined TTN5 and TTN10 basic topographic maps"
       }
     ]
   },
@@ -147,36 +152,45 @@ export const OVERLAY_CATEGORIES = [
   // ─── KATASTERJAM ──────────────────────────────────────────────
   {
     id: "katasterjam",
-    name: "Kataster Jam (Caves)",
+    name: "KatasterJam – Caves",
     icon: "Landmark",
-    description: "Cave registry – ARSO/IZRK data via eKataster",
+    description: "Cave data from ARSO/IZRK via eKataster",
     layers: [
       {
-        id: "katasterjam_caves",
-        name: "Cave Locations (KatasterJam)",
-        type: "geojson_api",
-        // Public ARSO WMS with nature values registry (includes caves)
-        url: "https://gis.arso.gov.si/geoserver/ows",
-        layers: "ARSO:NV_POLI",
+        id: "arso_jame_epo",
+        name: "Cave Locations (EPO_PNT)",
+        type: "wms",
+        url: ARSO_WMS,
+        layers: "ARSO:EPO_PNT",
         format: "image/png",
         transparent: true,
         version: "1.1.1",
-        crs: "EPSG:3857",
-        opacity: 0.7,
-        description: "Nature values including caves from ARSO registry"
+        opacity: 0.8,
+        description: "Ecologically important cave points from ARSO registry (source for KatasterJam)"
       },
       {
-        id: "karst_areas",
-        name: "Karst Landscape Areas",
+        id: "arso_epo_plg",
+        name: "Karst & Cave Areas (EPO_PLG)",
         type: "wms",
-        url: "https://gis.arso.gov.si/geoserver/ows",
-        layers: "ARSO:NV_POLI",
+        url: ARSO_WMS,
+        layers: "ARSO:EPO_PLG",
         format: "image/png",
         transparent: true,
         version: "1.1.1",
-        crs: "EPSG:3857",
         opacity: 0.5,
-        description: "Protected karst and natural heritage areas"
+        description: "Ecologically important areas including karst zones"
+      },
+      {
+        id: "arso_naravne_vrednote",
+        name: "Natural Heritage Values (NV_PLG)",
+        type: "wms",
+        url: ARSO_WMS,
+        layers: "ARSO:NV_PLG",
+        format: "image/png",
+        transparent: true,
+        version: "1.1.1",
+        opacity: 0.5,
+        description: "Natural heritage values register (includes caves)"
       }
     ]
   },
@@ -186,62 +200,67 @@ export const OVERLAY_CATEGORIES = [
     id: "arso_water",
     name: "ARSO – Water & Floods",
     icon: "Droplets",
-    description: "Hydrological data from ARSO",
+    description: "Flood hazard, water bodies, hydrology",
     layers: [
       {
-        id: "arso_poplave",
-        name: "Flood Hazard Zones",
-        type: "arcgis_dynamic",
-        url: `${ARSO_BASE}/Atlasokolja_javni_D96_test/MapServer`,
-        // layers 0 = KO (water quality), use WMS export with all layers
-        // We use the geoserver ARSO WMS for flood polygons
-        wmsUrl: "https://gis.arso.gov.si/geoserver/ows",
-        wmsLayers: "SI.ARSO.POPLAVE:NEPOSREDNO_POPLAVNO_OBM,SI.ARSO.POPLAVE:VPLIVNO_POPLAVNO_OBM",
+        id: "arso_poplave_neposredno",
+        name: "Direct Flood Hazard Areas",
+        type: "wms",
+        url: ARSO_WMS,
+        layers: "ARSO:POPLAVE_NEPOSREDNO",
         format: "image/png",
         transparent: true,
         version: "1.1.1",
-        crs: "EPSG:3857",
-        opacity: 0.6,
-        description: "Direct and indirect flood hazard zones"
+        opacity: 0.65,
+        description: "Areas of direct flood risk"
+      },
+      {
+        id: "arso_poplave_vplivno",
+        name: "Indirect Flood Influence Areas",
+        type: "wms",
+        url: ARSO_WMS,
+        layers: "ARSO:POPLAVE_VPLIVNO",
+        format: "image/png",
+        transparent: true,
+        version: "1.1.1",
+        opacity: 0.5,
+        description: "Broader flood influence and hazard zones"
       },
       {
         id: "arso_vvo",
-        name: "Water Protection Zones",
+        name: "Water Protection Zones (VVO)",
         type: "wms",
-        url: "https://gis.arso.gov.si/geoserver/ows",
-        layers: "SI.ARSO.VODE:VVO_DRZAVNI",
+        url: ARSO_WMS,
+        layers: "ARSO:VVO",
         format: "image/png",
         transparent: true,
         version: "1.1.1",
-        crs: "EPSG:3857",
         opacity: 0.55,
         description: "Drinking water source protection areas"
       },
       {
         id: "arso_vodna_telesa",
-        name: "Water Bodies (Vodna telesa)",
+        name: "Surface Water Bodies",
         type: "wms",
-        url: "https://gis.arso.gov.si/geoserver/ows",
-        layers: "SI.ARSO.VODE:VODNA_TELESA_POVRS",
+        url: ARSO_WMS,
+        layers: "ARSO:VODNA_TELESA",
         format: "image/png",
         transparent: true,
         version: "1.1.1",
-        crs: "EPSG:3857",
-        opacity: 0.65,
-        description: "Surface water bodies classification"
+        opacity: 0.6,
+        description: "Surface water body classification"
       },
       {
-        id: "arso_hidrografija",
-        name: "River Network",
+        id: "arso_morje",
+        name: "Adriatic Sea Quality",
         type: "wms",
-        url: "https://gis.arso.gov.si/geoserver/ows",
-        layers: "SI.ARSO.VODE:HIDROGRAFIJA_L",
+        url: ARSO_WMS,
+        layers: "ARSO:MORJE_KAKOVOST",
         format: "image/png",
         transparent: true,
         version: "1.1.1",
-        crs: "EPSG:3857",
-        opacity: 0.7,
-        description: "River and stream network"
+        opacity: 0.6,
+        description: "Sea water quality monitoring areas"
       }
     ]
   },
@@ -249,48 +268,45 @@ export const OVERLAY_CATEGORIES = [
   // ─── ARSO – NATURE ────────────────────────────────────────────
   {
     id: "arso_nature",
-    name: "ARSO – Nature & Protected Areas",
+    name: "ARSO – Nature & Natura 2000",
     icon: "Trees",
-    description: "Protected areas, Natura 2000, EPO",
+    description: "Protected areas, habitats, wildlife zones",
     layers: [
       {
         id: "arso_natura2000",
-        name: "Natura 2000",
+        name: "Natura 2000 Areas",
         type: "wms",
-        url: "https://gis.arso.gov.si/geoserver/ows",
-        layers: "SI.ARSO.NV_POLI:NATURA2000_OBMOCJA",
+        url: ARSO_WMS,
+        layers: "ARSO:NATURA2000",
         format: "image/png",
         transparent: true,
         version: "1.1.1",
-        crs: "EPSG:3857",
         opacity: 0.5,
-        description: "EU Natura 2000 protected habitat areas"
+        description: "EU Natura 2000 protected habitats and bird areas"
       },
       {
         id: "arso_zavarovana",
         name: "Protected Natural Areas",
         type: "wms",
-        url: "https://gis.arso.gov.si/geoserver/ows",
-        layers: "SI.ARSO.NV_POLI:ZAVAROVANA_OBMOCJA",
+        url: ARSO_WMS,
+        layers: "ARSO:ZAVAROVANA_OBMOCJA",
         format: "image/png",
         transparent: true,
         version: "1.1.1",
-        crs: "EPSG:3857",
         opacity: 0.5,
-        description: "National parks and other protected areas"
+        description: "National parks, landscape parks, nature reserves"
       },
       {
-        id: "arso_epo",
+        id: "arso_epo_nature",
         name: "Ecologically Important Areas (EPO)",
         type: "wms",
-        url: "https://gis.arso.gov.si/geoserver/ows",
-        layers: "SI.ARSO.NV_POLI:EPO",
+        url: ARSO_WMS,
+        layers: "ARSO:EPO_PLG",
         format: "image/png",
         transparent: true,
         version: "1.1.1",
-        crs: "EPSG:3857",
         opacity: 0.4,
-        description: "Ecologically important areas"
+        description: "Areas of ecological importance"
       }
     ]
   },
@@ -300,42 +316,47 @@ export const OVERLAY_CATEGORIES = [
     id: "arso_env",
     name: "ARSO – Environment & Geology",
     icon: "CloudSun",
-    description: "Geology, seismic, soil data",
+    description: "Geology, seismic hazard, soil, noise",
     layers: [
       {
-        id: "arso_geologija",
-        name: "Geological Map 1:250k",
+        id: "arso_potres_nevarnost",
+        name: "Seismic Hazard 2021",
         type: "wms",
-        url: "https://gis.arso.gov.si/geoserver/ows",
-        layers: "SI.GEOZS:GEOL_KARTA_250K",
-        format: "image/png",
-        transparent: true,
-        version: "1.1.1",
-        crs: "EPSG:3857",
-        opacity: 0.55,
-        description: "Geological map at 1:250,000 scale"
-      },
-      {
-        id: "arso_potresi_nevarnost",
-        name: "Seismic Hazard Map",
-        type: "wms",
-        url: "https://gis.arso.gov.si/geoserver/ows",
+        url: ARSO_WMS,
         layers: "ARSO:POTRS_NEVAR_KRT_2021",
         format: "image/png",
         transparent: true,
         version: "1.1.1",
-        crs: "EPSG:3857",
-        opacity: 0.5,
-        description: "Earthquake ground acceleration hazard 2021"
+        opacity: 0.55,
+        description: "Earthquake peak ground acceleration hazard map 2021"
       },
       {
-        id: "arso_tla",
-        name: "Soil Map",
+        id: "arso_geol_250k",
+        name: "Geological Map 1:250,000",
+        type: "wms",
+        url: "https://gis.arso.gov.si/geoserver/ows", // This layer uses the generic OWS endpoint, not the ARSO_WMS specific one.
+        layers: "SI.GEOZS:GEOL_KARTA_250K",
+        format: "image/png",
+        transparent: true,
+        version: "1.1.1",
+        opacity: 0.5,
+        description: "Geological bedrock map at 1:250,000 scale"
+      },
+      {
+        id: "arso_tla_export",
+        name: "Soil Types",
         type: "arcgis_export",
         url: `${ARSO_BASE}/Tla/MapServer/export`,
-        layerIds: "show:all",
         opacity: 0.5,
-        description: "Soil type and quality classification"
+        description: "Soil type and quality classification from ARSO"
+      },
+      {
+        id: "arso_degradirana",
+        name: "Degraded Areas",
+        type: "arcgis_export",
+        url: `${ARSO_BASE}/Degradirana_obmocja/MapServer/export`,
+        opacity: 0.5,
+        description: "Degraded and contaminated land areas"
       }
     ]
   },
@@ -345,28 +366,15 @@ export const OVERLAY_CATEGORIES = [
     id: "landuse",
     name: "Land Use (RABA/MKGP)",
     icon: "Wheat",
-    description: "Agricultural and forest land use",
+    description: "Agricultural and forest land use from MKGP",
     layers: [
       {
         id: "raba_farmland",
-        name: "Farmland Use (RABA-KGZ)",
+        name: "Farmland Use RABA-KGZ",
         type: "tile",
         url: "https://wms.openstreetmap.de/tms/RABA/{z}/{x}/{y}.png",
         opacity: 0.65,
-        description: "Agricultural land use classification from MKGP"
-      },
-      {
-        id: "gurs_pep",
-        name: "Agro-Environment (PEP/MKGP)",
-        type: "wms",
-        url: GURS_PEP_WMS,
-        layers: "SI.MKGP.PEP:PEP_OBMOCJA",
-        format: "image/png",
-        transparent: true,
-        version: "1.1.1",
-        crs: "EPSG:3857",
-        opacity: 0.5,
-        description: "Agro-environmental program areas"
+        description: "Agricultural land use from Ministry of Agriculture"
       }
     ]
   },
@@ -376,23 +384,8 @@ export const OVERLAY_CATEGORIES = [
     id: "historical",
     name: "Historical Maps",
     icon: "History",
-    description: "Habsburg-era and archive cartography",
+    description: "Habsburg-era and archive cartography via mapire.eu",
     layers: [
-      {
-        id: "franziszeischer_kataster",
-        name: "Franciscan Cadastre (~1825)",
-        type: "tile",
-        url: "https://mapire.eu/en/map/cadastral/?layers=3&bbox={bbox-epsg-3857}",
-        // Use WMS from mapire.eu
-        wmsUrl: "https://mapire.eu/mapserver/wms",
-        wmsLayers: "fm3",
-        format: "image/png",
-        transparent: true,
-        version: "1.1.1",
-        crs: "EPSG:3857",
-        opacity: 0.75,
-        description: "Habsburg Franciscan Cadastral Survey ~1825"
-      },
       {
         id: "second_military_survey",
         name: "2nd Military Survey (1806–1869)",
@@ -402,22 +395,32 @@ export const OVERLAY_CATEGORIES = [
         format: "image/png",
         transparent: true,
         version: "1.1.1",
-        crs: "EPSG:3857",
-        opacity: 0.75,
-        description: "Second Habsburg Military Survey"
+        opacity: 0.8,
+        description: "Second Habsburg Military Survey of Central Europe"
       },
       {
         id: "third_military_survey",
-        name: "3rd Military Survey (1869–1887)",
+        name: "3rd Military Survey 1:25k (1869–1887)",
         type: "wms",
         url: "https://mapire.eu/mapserver/wms",
         layers: "thirdsurvey25000",
         format: "image/png",
         transparent: true,
         version: "1.1.1",
-        crs: "EPSG:3857",
+        opacity: 0.8,
+        description: "Third Habsburg Military Survey at 1:25,000"
+      },
+      {
+        id: "cadastral_1840",
+        name: "Franciscan Cadastre (~1825–1840)",
+        type: "wms",
+        url: "https://mapire.eu/mapserver/wms",
+        layers: "cadastral",
+        format: "image/png",
+        transparent: true,
+        version: "1.1.1",
         opacity: 0.75,
-        description: "Third Habsburg Military Survey"
+        description: "Habsburg Franciscan Cadastral Survey"
       }
     ]
   },
@@ -427,28 +430,23 @@ export const OVERLAY_CATEGORIES = [
     id: "admin",
     name: "Administrative Boundaries",
     icon: "MapPin",
-    description: "Municipalities, statistical regions",
+    description: "Municipal and regional boundaries",
     layers: [
       {
-        id: "osm_municipalities",
-        name: "Municipalities (Občine) – OSM",
-        type: "tile",
-        url: "https://wms.openstreetmap.de/tms/1.0.0/osmde/{zoom}/{x}/{y}.png",
-        opacity: 0.5,
-        description: "Slovenian municipality boundaries"
+        id: "arso_drzavna_meja",
+        name: "National Border (Državna meja)",
+        type: "arcgis_export",
+        url: `${ARSO_BASE}/DrzavnaMeja/MapServer/export`,
+        opacity: 0.8,
+        description: "Official state border of Slovenia"
       },
       {
-        id: "arso_admin_regions",
-        name: "Statistical Regions",
-        type: "wms",
-        url: "https://gis.arso.gov.si/geoserver/ows",
-        layers: "SI.ARSO.RPE:STATISTICNE_REG",
-        format: "image/png",
-        transparent: true,
-        version: "1.1.1",
-        crs: "EPSG:3857",
-        opacity: 0.4,
-        description: "Statistical/NUTS regions of Slovenia"
+        id: "arso_prostorske_enote",
+        name: "Administrative Units",
+        type: "arcgis_export",
+        url: `${ARSO_BASE}/ProstorskeEnote/MapServer/export`,
+        opacity: 0.5,
+        description: "Municipalities and statistical regions"
       }
     ]
   }
