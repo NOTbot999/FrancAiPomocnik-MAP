@@ -1,12 +1,12 @@
 import React from "react";
-import { Layers, X, Building2, Droplets, Trees, CloudSun, MapPin, Wheat, Mountain, History } from "lucide-react";
+import { Layers, X, Building2, Droplets, Trees, CloudSun, MapPin, Wheat, Mountain, History, Landmark } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { OVERLAY_CATEGORIES, BASE_LAYERS } from "./layerConfig";
 import LayerCategory from "./LayerCategory";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 const ICON_MAP = {
-  Building2, Droplets, Trees, CloudSun, MapPin, Wheat, Mountain, History
+  Building2, Droplets, Trees, CloudSun, MapPin, Wheat, Mountain, History, Landmark
 };
 
 export default function LayerPanel({
