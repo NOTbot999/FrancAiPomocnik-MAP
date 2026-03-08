@@ -161,11 +161,7 @@ function ArcGISExportLayer({ url, opacity, layerIds }) {
   const layerRef = useRef(null);
 
   useEffect(() => {
-    const layer = L.tileLayer.wms
-      ? null
-      : null; // fallback
-
-    // Use Leaflet's built-in support: create a dynamic tile layer via export endpoint
+    // ArcGIS MapServer export: dynamic tiles via /export endpoint with bbox injection
     const arcLayer = L.tileLayer(
       url + "?bbox={bbox-epsg-3857}&bboxSR=3857&imageSR=3857&size=256,256&f=image&format=png&transparent=true&" + (layerIds ? `layers=${layerIds}` : ""),
       {
