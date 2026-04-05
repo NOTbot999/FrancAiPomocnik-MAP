@@ -222,11 +222,19 @@ export default function MapContainerComponent({
       style={{ zIndex: 1 }}
     >
       {/* Base layer */}
-      <TileLayer
-        key={baseLayer.id}
-        url={baseLayer.url}
-        attribution={baseLayer.attribution || ""}
-      />
+      {baseLayer.type === "arcgis_export" ? (
+        <ArcGISExportLayer
+          key={baseLayer.id}
+          url={baseLayer.arcgisUrl}
+          opacity={1}
+        />
+      ) : (
+        <TileLayer
+          key={baseLayer.id}
+          url={baseLayer.url}
+          attribution={baseLayer.attribution || ""}
+        />
+      )}
 
       {/* Active overlay layers */}
       {Object.entries(activeLayers).map(([layerId, config]) => {

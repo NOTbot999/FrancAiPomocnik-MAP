@@ -1,4 +1,3 @@
-
 // Layer configuration for Slovenia Map Viewer
 // All URLs verified against actual service capabilities
 
@@ -51,6 +50,15 @@ export const BASE_LAYERS = [
     url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
     attribution: "&copy; CartoDB",
     thumbnail: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=80&h=60&fit=crop"
+  },
+  {
+    id: "lidar_hillshade",
+    name: "LIDAR Hillshade",
+    type: "arcgis_export",
+    // Verified: https://gis.arso.gov.si/arcgis/rest/services/Lidar_hillshade_D96TM/MapServer
+    arcgisUrl: "https://gis.arso.gov.si/arcgis/rest/services/Lidar_hillshade_D96TM/MapServer/export",
+    attribution: "&copy; ARSO LIDAR",
+    thumbnail: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=80&h=60&fit=crop"
   }
 ];
 
@@ -88,15 +96,11 @@ export const OVERLAY_CATEGORIES = [
       },
       {
         id: "gurs_lidar",
-        name: "LIDAR Hillshade",
-        type: "wms",
-        url: GURS_WMS,
-        layers: "SI.GURS.ZPDZ:LIDAR",
-        format: "image/jpeg",
-        transparent: false,
-        version: "1.1.1",
+        name: "LIDAR Hillshade (ARSO, 1m)",
+        type: "arcgis_export",
+        url: "https://gis.arso.gov.si/arcgis/rest/services/Lidar_hillshade_D96TM/MapServer/export",
         opacity: 0.85,
-        description: "LIDAR-derived terrain analytical shading"
+        description: "Ultra-detailed 1m resolution LIDAR hillshade from ARSO national airborne survey"
       },
       {
         id: "gurs_dtk50",
