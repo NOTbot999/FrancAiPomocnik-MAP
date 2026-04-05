@@ -70,7 +70,7 @@ export default function MapViewer() {
         <MiniToolbar
           onTogglePanel={() => setIsPanelOpen(p => !p)}
           isPanelOpen={isPanelOpen}
-          mapRef={mapRef}
+          onLocate={setFlyToLocation}
         />
 
         {/* Search */}
