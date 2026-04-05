@@ -383,48 +383,40 @@ export const OVERLAY_CATEGORIES = [
     ]
   },
 
-  // ─── HISTORICAL MAPS ──────────────────────────────────────────
+  // ─── HISTORICAL MAPS (Arcanum / Mapire) ───────────────────────
   {
     id: "historical",
-    name: "Historical Maps",
+    name: "Historical Maps (Arcanum)",
     icon: "History",
-    description: "Habsburg-era and archive cartography via mapire.eu",
+    description: "Habsburg-era military surveys & cadastral maps via maps.arcanum.com WMTS",
     layers: [
       {
-        id: "second_military_survey",
+        id: "arcanum_second_survey",
         name: "2nd Military Survey (1806–1869)",
-        type: "wms",
-        url: "https://mapire.eu/mapserver/wms",
-        layers: "secondsurvey",
-        format: "image/png",
-        transparent: true,
-        version: "1.1.1",
-        opacity: 0.8,
-        description: "Second Habsburg Military Survey of Central Europe"
+        type: "tile",
+        // Arcanum WMTS REST endpoint, GoogleCompatible (EPSG:3857), max zoom 15
+        url: "https://maps.arcanum.com/en/map/europe-19century-secondsurvey/wmts/europe-19century-secondsurvey/GoogleCompatibleTileMatrixSet/{z}/{x}/{y}.png",
+        opacity: 0.85,
+        maxZoom: 15,
+        description: "Second Habsburg Military Survey of Central Europe (Arcanum Maps)"
       },
       {
-        id: "third_military_survey",
+        id: "arcanum_third_survey_25k",
         name: "3rd Military Survey 1:25k (1869–1887)",
-        type: "wms",
-        url: "https://mapire.eu/mapserver/wms",
-        layers: "thirdsurvey25000",
-        format: "image/png",
-        transparent: true,
-        version: "1.1.1",
-        opacity: 0.8,
-        description: "Third Habsburg Military Survey at 1:25,000"
+        type: "tile",
+        url: "https://maps.arcanum.com/en/map/europe-19century-thirdsurvey-25000/wmts/europe-19century-thirdsurvey-25000/GoogleCompatibleTileMatrixSet/{z}/{x}/{y}.png",
+        opacity: 0.85,
+        maxZoom: 15,
+        description: "Third Habsburg Military Survey 1:25,000 (Arcanum Maps)"
       },
       {
-        id: "cadastral_1840",
-        name: "Franciscan Cadastre (~1825–1840)",
-        type: "wms",
-        url: "https://mapire.eu/mapserver/wms",
-        layers: "cadastral",
-        format: "image/png",
-        transparent: true,
-        version: "1.1.1",
-        opacity: 0.75,
-        description: "Habsburg Franciscan Cadastral Survey"
+        id: "arcanum_third_survey_75k",
+        name: "3rd Military Survey 1:75k (1869–1887)",
+        type: "tile",
+        url: "https://maps.arcanum.com/en/map/europe-19century-thirdsurvey-75000/wmts/europe-19century-thirdsurvey-75000/GoogleCompatibleTileMatrixSet/{z}/{x}/{y}.png",
+        opacity: 0.85,
+        maxZoom: 13,
+        description: "Third Habsburg Military Survey 1:75,000 overview (Arcanum Maps)"
       }
     ]
   },

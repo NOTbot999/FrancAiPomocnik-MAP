@@ -243,7 +243,7 @@ export default function MapContainerComponent({
         if (!layer) return null;
         const opacity = config.opacity ?? layer.opacity ?? 0.7;
 
-        // Standard tile layer (e.g. RABA farmland from OSM DE)
+        // Standard tile layer
         if (layer.type === "tile") {
           return (
             <TileLayer
@@ -251,6 +251,8 @@ export default function MapContainerComponent({
               url={layer.url}
               opacity={opacity}
               tileSize={256}
+              maxZoom={layer.maxZoom || 19}
+              maxNativeZoom={layer.maxZoom || 19}
               attribution={layer.attribution || ""}
             />
           );
