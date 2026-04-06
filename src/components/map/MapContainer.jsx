@@ -10,6 +10,7 @@ import {
   Polyline,
   Polygon,
 } from "react-leaflet";
+import ZoomControls from "./ZoomControls";
 import { BASE_LAYERS, OVERLAY_CATEGORIES, SLOVENIA_CENTER, DEFAULT_ZOOM } from "./layerConfig";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
@@ -217,7 +218,7 @@ export default function MapContainerComponent({
       minZoom={7}
       maxZoom={19}
       className="w-full h-full"
-      zoomControl={true}
+      zoomControl={false}
       doubleClickZoom={activeTool === "pointer"}
       style={{ zIndex: 1 }}
     >
@@ -293,6 +294,7 @@ export default function MapContainerComponent({
         return null;
       })}
 
+      <ZoomControls />
       <FlyToLocation location={flyToLocation} />
       <CoordsDisplay />
       <DrawingHandler

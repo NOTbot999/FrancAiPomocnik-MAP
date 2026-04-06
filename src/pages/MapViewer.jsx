@@ -83,7 +83,6 @@ export default function MapViewer() {
 
       {/* Top bar overlay */}
       <div className="absolute top-4 left-4 right-4 z-[950] flex items-start gap-3">
-        {/* Layer toggle */}
         <MiniToolbar
           onTogglePanel={() => setIsPanelOpen(p => !p)}
           isPanelOpen={isPanelOpen}
