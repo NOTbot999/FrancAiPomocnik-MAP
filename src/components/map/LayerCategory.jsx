@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Slider } from "@/components/ui/slider";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 
-export default function LayerCategory({ category, activeLayers, onToggleLayer, onOpacityChange, iconComponent }) {
+export default function LayerCategory({ category, activeLayers, onToggleLayer, onOpacityChange, iconComponent, thumbnail }) {
   const Icon = iconComponent;
   const [isOpen, setIsOpen] = useState(false);
 
@@ -16,7 +16,13 @@ export default function LayerCategory({ category, activeLayers, onToggleLayer, o
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex items-center gap-2.5 px-4 py-3 hover:bg-slate-700/30 transition-colors"
       >
-        {Icon && <Icon className="w-4 h-4 text-emerald-400 shrink-0" />}
+        {/* Category thumbnail */}
+        {thumbnail && (
+          <div className="w-8 h-6 rounded overflow-hidden shrink-0">
+            <img src={thumbnail} alt="" className="w-full h-full object-cover" loading="lazy" />
+          </div>
+        )}
+        {!thumbnail && Icon && <Icon className="w-4 h-4 text-emerald-400 shrink-0" />}
         <span className="text-sm font-medium text-slate-200 flex-1 text-left">{category.name}</span>
         {activeCount > 0 && (
           <span className="text-[10px] font-bold bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded-full">
@@ -45,7 +51,7 @@ export default function LayerCategory({ category, activeLayers, onToggleLayer, o
                         onClick={() => onToggleLayer(layer.id)}
                         className={`shrink-0 transition-colors ${isActive ? 'text-emerald-400' : 'text-slate-600'}`}
                       >
-                        {isActive ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                        {isActive ? <Eye className="w-[1.05rem] h-[1.05rem]" /> : <EyeOff className="w-[1.05rem] h-[1.05rem]" />}
                       </button>
                       <span className={`text-xs flex-1 transition-colors ${isActive ? 'text-slate-200' : 'text-slate-500'}`}>
                         {layer.name}
