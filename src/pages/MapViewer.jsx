@@ -14,6 +14,7 @@ export default function MapViewer() {
   const [activeTool, setActiveTool] = useState("pointer");
   const [measurements, setMeasurements] = useState(null);
   const [drawings, setDrawings] = useState({ markers: [], lines: [], polygons: [] });
+  const [is3D, setIs3D] = useState(false);
   const mapRef = useRef(null);
 
   const handleToggleLayer = useCallback((layerId) => {
@@ -53,7 +54,21 @@ export default function MapViewer() {
 
   return (
     <div className="relative w-full h-screen overflow-hidden bg-slate-950" ref={mapRef}>
-      {/* Map */}
+      {/* Map — 3D tilt wrapper */}
+      <div
+        className="w-full h-full transition-all duration-700"
+        style={is3D ? {
+          perspective: "1200px",
+          perspectiveOrigin: "50% 80%",
+        } : {}}
+      >
+      <div
+        className="w-full h-full transition-all duration-700"
+        style={is3D ? {
+          transform: "rotateX(45deg) scale(1.35)",
+          transformOrigin: "50% 100%",
+        } : {}}
+      >
       <MapContainerComponent
         activeBaseLayer={activeBaseLayer}
         activeLayers={activeLayers}
@@ -63,6 +78,8 @@ export default function MapViewer() {
         drawings={drawings}
         setDrawings={setDrawings}
       />
+      </div>
+      </div>
 
       {/* Top bar overlay */}
       <div className="absolute top-4 left-4 right-4 z-[950] flex items-start gap-3">
@@ -71,6 +88,8 @@ export default function MapViewer() {
           onTogglePanel={() => setIsPanelOpen(p => !p)}
           isPanelOpen={isPanelOpen}
           onLocate={setFlyToLocation}
+          is3D={is3D}
+          onToggle3D={() => setIs3D(p => !p)}
         />
 
         {/* Search */}

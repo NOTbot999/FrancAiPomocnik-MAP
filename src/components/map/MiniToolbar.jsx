@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { Layers, Locate, LoaderCircle } from "lucide-react";
+import { Layers, Locate, LoaderCircle, Box } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 
-export default function MiniToolbar({ onTogglePanel, isPanelOpen, onLocate }) {
+export default function MiniToolbar({ onTogglePanel, isPanelOpen, onLocate, is3D, onToggle3D }) {
   const [locating, setLocating] = useState(false);
 
   const handleLocate = () => {
@@ -49,6 +49,22 @@ export default function MiniToolbar({ onTogglePanel, isPanelOpen, onLocate }) {
             </button>
           </TooltipTrigger>
           <TooltipContent side="right"><p className="text-xs">My Location</p></TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={onToggle3D}
+              className={`p-3 rounded-xl shadow-lg transition-all duration-300 ${
+                is3D
+                  ? 'bg-emerald-500 text-white shadow-emerald-500/20'
+                  : 'bg-white/95 backdrop-blur-xl text-slate-700 hover:bg-white border border-slate-200/50'
+              }`}
+            >
+              <Box className="w-5 h-5" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="right"><p className="text-xs">{is3D ? 'Exit 3D' : '3D View'}</p></TooltipContent>
         </Tooltip>
       </TooltipProvider>
     </div>
