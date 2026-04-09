@@ -11,6 +11,7 @@ import {
   Polygon,
 } from "react-leaflet";
 import ZoomControls from "./ZoomControls";
+import MobileTopBar from "./MobileTopBar";
 import { BASE_LAYERS, OVERLAY_CATEGORIES, SLOVENIA_CENTER, DEFAULT_ZOOM } from "./layerConfig";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
@@ -207,6 +208,8 @@ export default function MapContainerComponent({
   onMeasurement,
   drawings,
   setDrawings,
+  showZoomControls = true,
+  mobileProps,
 }) {
   const baseLayer = BASE_LAYERS.find((l) => l.id === activeBaseLayer) || BASE_LAYERS[0];
   const allLayers = getAllLayersFlat();
@@ -294,7 +297,8 @@ export default function MapContainerComponent({
         return null;
       })}
 
-      <ZoomControls />
+      {showZoomControls && <ZoomControls />}
+      {mobileProps && <MobileTopBar {...mobileProps} />}
       <FlyToLocation location={flyToLocation} />
       <CoordsDisplay />
       <DrawingHandler

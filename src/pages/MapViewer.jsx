@@ -4,7 +4,9 @@ import LayerPanel from "@/components/map/LayerPanel";
 import SearchBar from "@/components/map/SearchBar";
 import DrawingTools from "@/components/map/DrawingTools";
 import MiniToolbar from "@/components/map/MiniToolbar";
+import MobileTopBar from "@/components/map/MobileTopBar";
 import { OVERLAY_CATEGORIES } from "@/components/map/layerConfig";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function MapViewer() {
   const [isPanelOpen, setIsPanelOpen] = useState(false);
@@ -48,6 +50,7 @@ export default function MapViewer() {
   }, []);
 
   const activeLayerCount = Object.keys(activeLayers).length;
+  const isMobile = useIsMobile();
 
   return (
     <div className="relative w-full h-screen overflow-hidden bg-slate-950">
@@ -59,28 +62,55 @@ export default function MapViewer() {
         onMeasurement={setMeasurements}
         drawings={drawings}
         setDrawings={setDrawings}
+        showZoomControls={!isMobile}
+        mobileProps={isMobile ? {
+          onTogglePanel: () => setIsPanelOpen(p => !p),
+          isPanelOpen,
+          activeLayerCount,
+          onLocate: setFlyToLocation,
+          activeTool,
+          onToolChange: setActiveTool,
+          onClear: handleClearDrawings,
+          onLocationSelect: setFlyToLocation,
+        } : null}
       />
 
-      {/* Top-left: layers toggle */}
-      <div className="absolute top-4 left-4 z-[950]">
-        <MiniToolbar
-          onTogglePanel={() => setIsPanelOpen(p => !p)}
-          isPanelOpen={isPanelOpen}
-          onLocate={setFlyToLocation}
-        />
-        {activeLayerCount > 0 && (
-          <div className="mt-2 bg-emerald-500/90 backdrop-blur-sm text-white text-xs font-bold px-3 py-2 rounded-xl shadow-lg text-center">
-            {activeLayerCount} layer{activeLayerCount > 1 ? 's' : ''}
+      {/* ── DESKTOP ONLY ── */}
+      {!isMobile && (
+        <>
+          {/* Top-left: layers toggle */}
+          <div className="absolute top-4 left-4 z-[950]">
+            <MiniToolbar
+              onTogglePanel={() => setIsPanelOpen(p => !p)}
+              isPanelOpen={isPanelOpen}
+              onLocate={setFlyToLocation}
+            />
+            {activeLayerCount > 0 && (
+              <div className="mt-2 bg-emerald-500/90 backdrop-blur-sm text-white text-xs font-bold px-3 py-2 rounded-xl shadow-lg text-center">
+                {activeLayerCount} layer{activeLayerCount > 1 ? 's' : ''}
+              </div>
+            )}
           </div>
-        )}
-      </div>
 
-      {/* Search bar — centered top */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[950] w-full max-w-md px-4">
-        <SearchBar onLocationSelect={(loc) => setFlyToLocation(loc)} />
-      </div>
+          {/* Search bar — centered top */}
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[950] w-full max-w-md px-4">
+            <SearchBar onLocationSelect={(loc) => setFlyToLocation(loc)} />
+          </div>
 
-      {/* Layer panel */}
+          {/* Bottom-right: drawing tools */}
+          <div className="absolute right-4 bottom-8 z-[950] flex flex-col items-end gap-2">
+            <DrawingTools
+              activeTool={activeTool}
+              onToolChange={setActiveTool}
+              measurements={measurements}
+              onClear={handleClearDrawings}
+              onLocate={setFlyToLocation}
+            />
+          </div>
+        </>
+      )}
+
+      {/* Layer panel (both) */}
       <LayerPanel
         isOpen={isPanelOpen}
         onClose={() => setIsPanelOpen(false)}
@@ -90,17 +120,6 @@ export default function MapViewer() {
         onToggleLayer={handleToggleLayer}
         onOpacityChange={handleOpacityChange}
       />
-
-      {/* Bottom-right: zoom + locate + drawing tools */}
-      <div className="absolute right-4 bottom-8 z-[950] flex flex-col items-end gap-2">
-        <DrawingTools
-          activeTool={activeTool}
-          onToolChange={setActiveTool}
-          measurements={measurements}
-          onClear={handleClearDrawings}
-          onLocate={setFlyToLocation}
-        />
-      </div>
 
       {/* App title watermark */}
       <div className="absolute bottom-3 right-3 z-[800]">
