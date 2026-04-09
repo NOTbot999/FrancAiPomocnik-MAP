@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import {
-  Ruler, Pentagon, MapPin, Trash2, MousePointer2, X
+  Ruler, Pentagon, MapPin, Trash2, MousePointer2, X, Navigation
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
@@ -14,7 +14,9 @@ const TOOLS = [
   { id: "clear", icon: Trash2, label: "Clear All" },
 ];
 
-export default function DrawingTools({ activeTool, onToolChange, measurements, onClear, onLocate }) {
+const GPS_TOOL = { id: "gps", icon: Navigation, label: "GPS Track" };
+
+export default function DrawingTools({ activeTool, onToolChange, measurements, onClear, onLocate, isGpsTracking, onGpsToggle }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
@@ -65,9 +67,27 @@ export default function DrawingTools({ activeTool, onToolChange, measurements, o
         )}
       </AnimatePresence>
 
-      {/* Bottom row: locate + ruler toggle */}
+      {/* Bottom row: locate + gps + ruler toggle */}
       <div className="flex items-center gap-1.5">
         <LocateButton onLocate={onLocate} />
+        {/* GPS Track button */}
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={onGpsToggle}
+                className={`p-3 rounded-xl shadow-lg transition-all duration-300 ${
+                  isGpsTracking
+                    ? 'bg-blue-500 text-white shadow-blue-500/30'
+                    : 'bg-white/95 backdrop-blur-xl text-slate-700 hover:bg-white border border-slate-200/50'
+                }`}
+              >
+                <Navigation className="w-5 h-5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="left"><p className="text-xs">{isGpsTracking ? "Stop GPS Track" : "Start GPS Track"}</p></TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
         <button
           onClick={() => setIsExpanded(!isExpanded)}
           className={`p-3 rounded-xl shadow-lg transition-all duration-300 ${

@@ -5,8 +5,10 @@ import SearchBar from "@/components/map/SearchBar";
 import DrawingTools from "@/components/map/DrawingTools";
 import MiniToolbar from "@/components/map/MiniToolbar";
 import MobileTopBar from "@/components/map/MobileTopBar";
+import SaveLoadDrawings from "@/components/map/SaveLoadDrawings";
 import { OVERLAY_CATEGORIES } from "@/components/map/layerConfig";
 import { useIsMobile } from "@/hooks/use-mobile";
+
 
 export default function MapViewer() {
   const [isPanelOpen, setIsPanelOpen] = useState(false);
@@ -16,6 +18,8 @@ export default function MapViewer() {
   const [activeTool, setActiveTool] = useState("pointer");
   const [measurements, setMeasurements] = useState(null);
   const [drawings, setDrawings] = useState({ markers: [], lines: [], polygons: [] });
+  const [gpsTrack, setGpsTrack] = useState([]);
+  const [isGpsTracking, setIsGpsTracking] = useState(false);
   const handleToggleLayer = useCallback((layerId) => {
     setActiveLayers(prev => {
       if (prev[layerId]) {
@@ -45,8 +49,29 @@ export default function MapViewer() {
 
   const handleClearDrawings = useCallback(() => {
     setDrawings({ markers: [], lines: [], polygons: [] });
+    setGpsTrack([]);
+    setIsGpsTracking(false);
     setMeasurements(null);
     setActiveTool("pointer");
+  }, []);
+
+  const handleGpsTrackUpdate = useCallback((pt) => {
+    setGpsTrack(prev => [...prev, pt]);
+  }, []);
+
+  const handleGpsToggle = useCallback(() => {
+    setIsGpsTracking(prev => !prev);
+  }, []);
+
+  const handleLoadDrawings = useCallback((merged) => {
+    setDrawings({
+      markers: merged.markers || [],
+      lines: merged.lines || [],
+      polygons: merged.polygons || [],
+    });
+    if (merged.gps_tracks && merged.gps_tracks.length > 0) {
+      setGpsTrack(merged.gps_tracks[merged.gps_tracks.length - 1]);
+    }
   }, []);
 
   const activeLayerCount = Object.keys(activeLayers).length;
@@ -72,7 +97,14 @@ export default function MapViewer() {
           onToolChange: setActiveTool,
           onClear: handleClearDrawings,
           onLocationSelect: setFlyToLocation,
+          isGpsTracking,
+          onGpsToggle: handleGpsToggle,
         } : null}
+        gpsTracking={{
+          isTracking: isGpsTracking,
+          track: gpsTrack,
+          onTrackUpdate: handleGpsTrackUpdate,
+        }}
       />
 
       {/* ── DESKTOP ONLY ── */}
@@ -97,14 +129,21 @@ export default function MapViewer() {
             <SearchBar onLocationSelect={(loc) => setFlyToLocation(loc)} />
           </div>
 
-          {/* Bottom-right: drawing tools */}
+          {/* Bottom-right: drawing tools + save/load */}
           <div className="absolute right-4 bottom-8 z-[950] flex flex-col items-end gap-2">
+            <SaveLoadDrawings
+              drawings={drawings}
+              gpsTrack={gpsTrack}
+              onLoad={handleLoadDrawings}
+            />
             <DrawingTools
               activeTool={activeTool}
               onToolChange={setActiveTool}
               measurements={measurements}
               onClear={handleClearDrawings}
               onLocate={setFlyToLocation}
+              isGpsTracking={isGpsTracking}
+              onGpsToggle={handleGpsToggle}
             />
           </div>
         </>

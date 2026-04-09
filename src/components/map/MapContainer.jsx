@@ -12,6 +12,7 @@ import {
 } from "react-leaflet";
 import ZoomControls from "./ZoomControls";
 import MobileTopBar from "./MobileTopBar";
+import GpsTracker from "./GpsTracker";
 import { BASE_LAYERS, OVERLAY_CATEGORIES, SLOVENIA_CENTER, DEFAULT_ZOOM } from "./layerConfig";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
@@ -210,6 +211,7 @@ export default function MapContainerComponent({
   setDrawings,
   showZoomControls = true,
   mobileProps,
+  gpsTracking,
 }) {
   const baseLayer = BASE_LAYERS.find((l) => l.id === activeBaseLayer) || BASE_LAYERS[0];
   const allLayers = getAllLayersFlat();
@@ -299,6 +301,14 @@ export default function MapContainerComponent({
 
       {showZoomControls && <ZoomControls />}
       {mobileProps && <MobileTopBar {...mobileProps} />}
+      {gpsTracking && (
+        <GpsTracker
+          isTracking={gpsTracking.isTracking}
+          gpsTrack={gpsTracking.track}
+          onTrackUpdate={gpsTracking.onTrackUpdate}
+          followLocation={gpsTracking.isTracking}
+        />
+      )}
       <FlyToLocation location={flyToLocation} />
       <CoordsDisplay />
       <DrawingHandler

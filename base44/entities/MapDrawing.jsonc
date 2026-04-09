@@ -1,0 +1,67 @@
+{
+  "name": "MapDrawing",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name for this drawing session"
+    },
+    "markers": {
+      "type": "array",
+      "description": "Array of marker objects with lat/lng",
+      "items": {
+        "type": "object",
+        "properties": {
+          "lat": {
+            "type": "number"
+          },
+          "lng": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "lines": {
+      "type": "array",
+      "description": "Array of polylines, each is array of [lat, lng] pairs",
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "polygons": {
+      "type": "array",
+      "description": "Array of polygons, each is array of [lat, lng] pairs",
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "gps_tracks": {
+      "type": "array",
+      "description": "Array of GPS tracks, each is array of [lat, lng] pairs",
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

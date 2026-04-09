@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Layers, Locate, LoaderCircle, Plus, Minus, Ruler, Search, X, Pentagon, MapPin, Trash2, MousePointer2 } from "lucide-react";
+import { Layers, Locate, LoaderCircle, Plus, Minus, Ruler, Search, X, Pentagon, MapPin, Trash2, MousePointer2, Navigation } from "lucide-react";
 import { useMap } from "react-leaflet";
 import { createPortal } from "react-dom";
 import SearchBar from "./SearchBar";
@@ -13,7 +13,7 @@ const TOOLS = [
   { id: "clear", icon: Trash2, label: "Clear" },
 ];
 
-function MobileTopBarInner({ onTogglePanel, isPanelOpen, activeLayerCount, onLocate, activeTool, onToolChange, onClear, onLocationSelect }) {
+function MobileTopBarInner({ onTogglePanel, isPanelOpen, activeLayerCount, onLocate, activeTool, onToolChange, onClear, onLocationSelect, isGpsTracking, onGpsToggle }) {
   const map = useMap();
   const container = map.getContainer();
   const [locating, setLocating] = useState(false);
@@ -73,9 +73,17 @@ function MobileTopBarInner({ onTogglePanel, isPanelOpen, activeLayerCount, onLoc
 
             <div className="flex-1" />
 
-            {/* GPS */}
+            {/* GPS locate */}
             <button onClick={handleLocate} disabled={locating} className={`${btnBase} disabled:opacity-60`}>
               {locating ? <LoaderCircle className="w-5 h-5 animate-spin" /> : <Locate className="w-5 h-5" />}
+            </button>
+
+            {/* GPS Track */}
+            <button
+              onClick={onGpsToggle}
+              className={`${btnBase} ${isGpsTracking ? btnActive : ''}`}
+            >
+              <Navigation className="w-5 h-5" />
             </button>
 
             {/* Zoom in */}
