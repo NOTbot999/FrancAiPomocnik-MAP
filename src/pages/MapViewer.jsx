@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback } from "react";
 import MapContainerComponent from "@/components/map/MapContainer";
 import LayerPanel from "@/components/map/LayerPanel";
 import SearchBar from "@/components/map/SearchBar";
@@ -14,9 +14,6 @@ export default function MapViewer() {
   const [activeTool, setActiveTool] = useState("pointer");
   const [measurements, setMeasurements] = useState(null);
   const [drawings, setDrawings] = useState({ markers: [], lines: [], polygons: [] });
-  const [is3D, setIs3D] = useState(false);
-  const mapRef = useRef(null);
-
   const handleToggleLayer = useCallback((layerId) => {
     setActiveLayers(prev => {
       if (prev[layerId]) {
@@ -53,22 +50,7 @@ export default function MapViewer() {
   const activeLayerCount = Object.keys(activeLayers).length;
 
   return (
-    <div className="relative w-full h-screen overflow-hidden bg-slate-950" ref={mapRef}>
-      {/* Map — 3D tilt wrapper */}
-      <div
-        className="w-full h-full transition-all duration-700"
-        style={is3D ? {
-          perspective: "1200px",
-          perspectiveOrigin: "50% 80%",
-        } : {}}
-      >
-      <div
-        className="w-full h-full transition-all duration-700"
-        style={is3D ? {
-          transform: "rotateX(45deg) scale(1.35)",
-          transformOrigin: "50% 100%",
-        } : {}}
-      >
+    <div className="relative w-full h-screen overflow-hidden bg-slate-950">
       <MapContainerComponent
         activeBaseLayer={activeBaseLayer}
         activeLayers={activeLayers}
@@ -78,30 +60,24 @@ export default function MapViewer() {
         drawings={drawings}
         setDrawings={setDrawings}
       />
-      </div>
-      </div>
 
-      {/* Top bar overlay */}
-      <div className="absolute top-4 left-4 right-4 z-[950] flex items-start gap-3">
+      {/* Top-left: layers toggle */}
+      <div className="absolute top-4 left-4 z-[950]">
         <MiniToolbar
           onTogglePanel={() => setIsPanelOpen(p => !p)}
           isPanelOpen={isPanelOpen}
           onLocate={setFlyToLocation}
-          is3D={is3D}
-          onToggle3D={() => setIs3D(p => !p)}
         />
-
-        {/* Search */}
-        <div className="flex-1 max-w-md">
-          <SearchBar onLocationSelect={(loc) => setFlyToLocation(loc)} />
-        </div>
-
-        {/* Active layers badge */}
         {activeLayerCount > 0 && (
-          <div className="bg-emerald-500/90 backdrop-blur-sm text-white text-xs font-bold px-3 py-2 rounded-xl shadow-lg">
-            {activeLayerCount} layer{activeLayerCount > 1 ? 's' : ''} active
+          <div className="mt-2 bg-emerald-500/90 backdrop-blur-sm text-white text-xs font-bold px-3 py-2 rounded-xl shadow-lg text-center">
+            {activeLayerCount} layer{activeLayerCount > 1 ? 's' : ''}
           </div>
         )}
+      </div>
+
+      {/* Search bar — centered top */}
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[950] w-full max-w-md px-4">
+        <SearchBar onLocationSelect={(loc) => setFlyToLocation(loc)} />
       </div>
 
       {/* Layer panel */}
@@ -115,13 +91,14 @@ export default function MapViewer() {
         onOpacityChange={handleOpacityChange}
       />
 
-      {/* Drawing tools - right side */}
-      <div className="absolute right-4 bottom-20 z-[950]">
+      {/* Bottom-right: zoom + locate + drawing tools */}
+      <div className="absolute right-4 bottom-8 z-[950] flex flex-col items-end gap-2">
         <DrawingTools
           activeTool={activeTool}
           onToolChange={setActiveTool}
           measurements={measurements}
           onClear={handleClearDrawings}
+          onLocate={setFlyToLocation}
         />
       </div>
 

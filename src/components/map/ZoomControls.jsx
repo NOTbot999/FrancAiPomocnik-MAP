@@ -9,8 +9,8 @@ export default function ZoomControls() {
 
   return createPortal(
     <div
-      className="flex flex-col rounded-xl overflow-hidden shadow-lg border border-slate-200/50 z-[950]"
-      style={{ position: "absolute", top: 16, left: 196 }}
+      style={{ position: "absolute", bottom: 120, right: 16, zIndex: 950 }}
+      className="flex flex-col rounded-xl overflow-hidden shadow-lg border border-slate-200/50"
     >
       <button
         onClick={() => map.zoomIn()}

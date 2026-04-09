@@ -4,6 +4,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { LocateButton } from "@/components/map/MiniToolbar";
 
 const TOOLS = [
   { id: "pointer", icon: MousePointer2, label: "Select" },
@@ -13,7 +14,7 @@ const TOOLS = [
   { id: "clear", icon: Trash2, label: "Clear All" },
 ];
 
-export default function DrawingTools({ activeTool, onToolChange, measurements, onClear }) {
+export default function DrawingTools({ activeTool, onToolChange, measurements, onClear, onLocate }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
@@ -64,17 +65,20 @@ export default function DrawingTools({ activeTool, onToolChange, measurements, o
         )}
       </AnimatePresence>
 
-      {/* Toggle button */}
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className={`p-3 rounded-xl shadow-lg transition-all duration-300 ${
-          isExpanded
-            ? 'bg-slate-800 text-white'
-            : 'bg-white/95 backdrop-blur-xl text-slate-700 hover:bg-white border border-slate-200/50'
-        }`}
-      >
-        {isExpanded ? <X className="w-5 h-5" /> : <Ruler className="w-5 h-5" />}
-      </button>
+      {/* Bottom row: locate + ruler toggle */}
+      <div className="flex items-center gap-1.5">
+        <LocateButton onLocate={onLocate} />
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className={`p-3 rounded-xl shadow-lg transition-all duration-300 ${
+            isExpanded
+              ? 'bg-slate-800 text-white'
+              : 'bg-white/95 backdrop-blur-xl text-slate-700 hover:bg-white border border-slate-200/50'
+          }`}
+        >
+          {isExpanded ? <X className="w-5 h-5" /> : <Ruler className="w-5 h-5" />}
+        </button>
+      </div>
 
       {/* Measurement display */}
       <AnimatePresence>
