@@ -202,7 +202,7 @@ function ArcGISExportLayer({ url, opacity, layerIds }) {
 }
 
 export default function MapContainerComponent({
-  activeBaseLayer,
+  activeBaseLayers,
   activeLayers,
   flyToLocation,
   activeTool,
@@ -213,8 +213,10 @@ export default function MapContainerComponent({
   mobileProps,
   gpsTracking,
 }) {
-  const baseLayer = BASE_LAYERS.find((l) => l.id === activeBaseLayer) || BASE_LAYERS[0];
   const allLayers = getAllLayersFlat();
+  const activeBaseLayerEntries = activeBaseLayers
+    ? Object.entries(activeBaseLayers)
+    : [['osm', { opacity: 1 }]];
 
   return (
     <LeafletMapContainer
@@ -227,20 +229,16 @@ export default function MapContainerComponent({
       doubleClickZoom={activeTool === "pointer"}
       style={{ zIndex: 1 }}
     >
-      {/* Base layer */}
-      {baseLayer.type === "arcgis_export" ? (
-        <ArcGISExportLayer
-          key={baseLayer.id}
-          url={baseLayer.arcgisUrl}
-          opacity={1}
-        />
-      ) : (
-        <TileLayer
-          key={baseLayer.id}
-          url={baseLayer.url}
-          attribution={baseLayer.attribution || ""}
-        />
-      )}
+      {/* Base layers (multi-select) */}
+      {activeBaseLayerEntries.map(([layerId, config]) => {
+        const bl = BASE_LAYERS.find(l => l.id === layerId);
+        if (!bl) return null;
+        const opacity = config?.opacity ?? 1;
+        if (bl.type === 'arcgis_export') {
+          return <ArcGISExportLayer key={bl.id} url={bl.arcgisUrl} opacity={opacity} />;
+        }
+        return <TileLayer key={bl.id} url={bl.url} opacity={opacity} attribution={bl.attribution || ""} />;
+      })}
 
       {/* Active overlay layers */}
       {Object.entries(activeLayers).map(([layerId, config]) => {

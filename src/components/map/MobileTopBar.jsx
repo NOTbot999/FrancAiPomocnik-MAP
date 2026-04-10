@@ -36,18 +36,11 @@ function MobileTopBarInner({ onTogglePanel, isPanelOpen, activeLayerCount, onLoc
   const btnActive = "bg-emerald-500 text-white border-emerald-500 shadow-emerald-500/30";
 
   return createPortal(
-    <div style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 950 }} className="pointer-events-none">
-      {/* Top bar */}
-      <div className="pointer-events-auto flex items-center gap-2 px-3 pt-3 pb-2 justify-end">
-        {/* Search — expands when open */}
+    <div style={{ position: "absolute", top: 0, right: 0, bottom: 0, zIndex: 950 }} className="pointer-events-none">
+      {/* Right column of buttons */}
+      <div className="pointer-events-auto flex flex-col items-center gap-2 px-2 pt-3">
         {showSearch ? (
-          <div className="flex-1 flex items-center gap-2">
-            <div className="flex-1">
-              <SearchBar
-                onLocationSelect={(loc) => { onLocationSelect(loc); setShowSearch(false); }}
-                autoFocus
-              />
-            </div>
+          <div className="flex flex-col items-center gap-2">
             <button onClick={() => setShowSearch(false)} className={btnBase}>
               <X className="w-5 h-5" />
             </button>
@@ -106,14 +99,31 @@ function MobileTopBarInner({ onTogglePanel, isPanelOpen, activeLayerCount, onLoc
         )}
       </div>
 
-      {/* Ruler tool strip */}
+      {/* Search bar overlay */}
+      <AnimatePresence>
+        {showSearch && (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            className="pointer-events-auto absolute top-3 right-14 left-3"
+          >
+            <SearchBar
+              onLocationSelect={(loc) => { onLocationSelect(loc); setShowSearch(false); }}
+              autoFocus
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Ruler tool strip — vertical on right below main buttons */}
       <AnimatePresence>
         {showRuler && !showSearch && (
           <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            className="pointer-events-auto flex items-center gap-2 px-3 pb-2 justify-end"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            className="pointer-events-auto absolute bottom-8 right-14 flex flex-col gap-2"
           >
             {TOOLS.map((tool) => {
               const Icon = tool.icon;
@@ -125,12 +135,11 @@ function MobileTopBarInner({ onTogglePanel, isPanelOpen, activeLayerCount, onLoc
                     if (tool.id === "clear") { onClear(); setShowRuler(false); }
                     else onToolChange(tool.id === activeTool ? "pointer" : tool.id);
                   }}
-                  className={`${btnBase} flex-1 gap-1.5 text-[11px] font-medium ${
+                  className={`${btnBase} gap-1.5 text-[11px] font-medium ${
                     isActive ? btnActive : tool.id === "clear" ? "text-red-400 border-red-200" : ""
                   }`}
                 >
                   <Icon className="w-4 h-4 shrink-0" />
-                  <span className="hidden sm:inline">{tool.label}</span>
                 </button>
               );
             })}

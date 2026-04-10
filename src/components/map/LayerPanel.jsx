@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Layers, X, Building2, Droplets, Trees, CloudSun, MapPin, Wheat, Mountain, History, Landmark, ExternalLink, ChevronDown, Map } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
 import { motion, AnimatePresence } from "framer-motion";
 import { OVERLAY_CATEGORIES, BASE_LAYERS } from "./layerConfig";
 import LayerCategory from "./LayerCategory";
@@ -22,24 +23,25 @@ const CATEGORY_THUMBNAILS = {
 };
 
 // Base Map as a collapsible category inside Data Layers
-function BaseMapCategory({ activeBaseLayer, onBaseLayerChange, isMobile }) {
+function BaseMapCategory({ activeBaseLayers, onToggleBaseLayer, onBaseOpacityChange }) {
   const [isOpen, setIsOpen] = useState(false);
-  const active = BASE_LAYERS.find(l => l.id === activeBaseLayer);
+  const activeIds = activeBaseLayers ? Object.keys(activeBaseLayers) : [];
+  const firstActive = BASE_LAYERS.find(l => activeIds.includes(l.id));
   return (
     <div className="border-b border-slate-700/50">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex items-center gap-2.5 px-4 py-3 hover:bg-slate-700/30 transition-colors"
       >
-        {/* Show active base map thumbnail */}
-        {active?.thumbnail && (
+        {firstActive?.thumbnail ? (
           <div className="w-8 h-6 rounded overflow-hidden shrink-0">
-            <img src={active.thumbnail} alt="" className="w-full h-full object-cover" loading="lazy" />
+            <img src={firstActive.thumbnail} alt="" className="w-full h-full object-cover" loading="lazy" />
           </div>
-        )}
-        {!active?.thumbnail && <Map className="w-4 h-4 text-emerald-400 shrink-0" />}
+        ) : <Map className="w-4 h-4 text-emerald-400 shrink-0" />}
         <span className="text-sm font-medium text-slate-200 flex-1 text-left">Base Map</span>
-        <span className="text-[10px] text-slate-500 mr-1 truncate max-w-[80px]">{active?.name}</span>
+        {activeIds.length > 0 && (
+          <span className="text-[10px] font-bold bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded-full mr-1">{activeIds.length}</span>
+        )}
         <ChevronDown className={`w-3.5 h-3.5 text-slate-500 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
       <AnimatePresence>
@@ -52,36 +54,48 @@ function BaseMapCategory({ activeBaseLayer, onBaseLayerChange, isMobile }) {
             className="overflow-hidden"
           >
             <div className="px-3 pb-3 space-y-1.5">
-              {BASE_LAYERS.map((layer) => (
-                  <button
-                    key={layer.id}
-                    onClick={() => onBaseLayerChange(layer.id)}
-                    className={`w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg transition-colors ${
-                      activeBaseLayer === layer.id ? 'bg-slate-700/50' : 'hover:bg-slate-700/30'
-                    }`}
-                  >
-                    {/* Thumbnail */}
-                    <div className={`w-10 h-7 rounded overflow-hidden shrink-0 border transition-colors ${
-                      activeBaseLayer === layer.id ? 'border-emerald-500/60' : 'border-slate-600/40'
+              {BASE_LAYERS.map((layer) => {
+                const isActive = activeIds.includes(layer.id);
+                return (
+                  <div key={layer.id}>
+                    <div className={`flex items-center gap-2.5 px-2 py-1.5 rounded-lg transition-colors ${
+                      isActive ? 'bg-slate-700/50' : 'hover:bg-slate-700/30'
                     }`}>
-                      <img src={layer.thumbnail} alt={layer.name} className="w-full h-full object-cover" loading="lazy" />
+                      <div className={`w-10 h-7 rounded overflow-hidden shrink-0 border ${
+                        isActive ? 'border-emerald-500/60' : 'border-slate-600/40'
+                      }`}>
+                        <img src={layer.thumbnail} alt={layer.name} className="w-full h-full object-cover" loading="lazy" />
+                      </div>
+                      <span className={`text-xs flex-1 text-left leading-tight ${
+                        isActive ? 'text-slate-200' : 'text-slate-500'
+                      }`}>{layer.name}</span>
+                      <button
+                        onClick={() => onToggleBaseLayer(layer.id, layer.opacity ?? 1)}
+                        className={`shrink-0 px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
+                          isActive ? 'bg-emerald-500 text-white' : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
+                        }`}
+                      >
+                        {isActive ? 'ON' : 'OFF'}
+                      </button>
                     </div>
-                    {/* Name */}
-                    <span className={`text-xs flex-1 text-left leading-tight transition-colors ${
-                      activeBaseLayer === layer.id ? 'text-slate-200' : 'text-slate-500'
-                    }`}>
-                      {layer.name}
-                    </span>
-                    {/* Active indicator */}
-                    <span className={`shrink-0 px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
-                      activeBaseLayer === layer.id
-                        ? 'bg-emerald-500 text-white'
-                        : 'bg-slate-700 text-slate-400'
-                    }`}>
-                      {activeBaseLayer === layer.id ? 'ON' : 'OFF'}
-                    </span>
-                  </button>
-              ))}
+                    {isActive && (
+                      <div className="px-3 pb-1 pt-0.5">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] text-slate-500 w-8">
+                            {Math.round((activeBaseLayers[layer.id]?.opacity ?? 1) * 100)}%
+                          </span>
+                          <Slider
+                            value={[Math.round((activeBaseLayers[layer.id]?.opacity ?? 1) * 100)]}
+                            onValueChange={([v]) => onBaseOpacityChange(layer.id, v / 100)}
+                            max={100} min={0} step={5}
+                            className="flex-1"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </motion.div>
         )}
@@ -90,15 +104,15 @@ function BaseMapCategory({ activeBaseLayer, onBaseLayerChange, isMobile }) {
   );
 }
 
-function PanelContent({ activeBaseLayer, onBaseLayerChange, activeLayers, onToggleLayer, onOpacityChange, isMobile }) {
+function PanelContent({ activeBaseLayers, onToggleBaseLayer, onBaseOpacityChange, activeLayers, onToggleLayer, onOpacityChange }) {
   return (
     <div className="pt-2 pb-4">
       <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1 px-4">Layers</p>
       {/* Base map first */}
       <BaseMapCategory
-        activeBaseLayer={activeBaseLayer}
-        onBaseLayerChange={onBaseLayerChange}
-        isMobile={isMobile}
+        activeBaseLayers={activeBaseLayers}
+        onToggleBaseLayer={onToggleBaseLayer}
+        onBaseOpacityChange={onBaseOpacityChange}
       />
       {/* Data overlay categories */}
       {OVERLAY_CATEGORIES.map((category) => (
@@ -119,8 +133,9 @@ function PanelContent({ activeBaseLayer, onBaseLayerChange, activeLayers, onTogg
 export default function LayerPanel({
   isOpen,
   onClose,
-  activeBaseLayer,
-  onBaseLayerChange,
+  activeBaseLayers,
+  onToggleBaseLayer,
+  onBaseOpacityChange,
   activeLayers,
   onToggleLayer,
   onOpacityChange,
@@ -162,12 +177,12 @@ export default function LayerPanel({
               </div>
               <ScrollArea className="flex-1 min-h-0">
                 <PanelContent
-                  activeBaseLayer={activeBaseLayer}
-                  onBaseLayerChange={onBaseLayerChange}
+                  activeBaseLayers={activeBaseLayers}
+                  onToggleBaseLayer={onToggleBaseLayer}
+                  onBaseOpacityChange={onBaseOpacityChange}
                   activeLayers={activeLayers}
                   onToggleLayer={onToggleLayer}
                   onOpacityChange={onOpacityChange}
-                  isMobile={true}
                 />
               </ScrollArea>
             </motion.div>
@@ -199,12 +214,12 @@ export default function LayerPanel({
           </div>
           <ScrollArea className="flex-1">
             <PanelContent
-              activeBaseLayer={activeBaseLayer}
-              onBaseLayerChange={onBaseLayerChange}
+              activeBaseLayers={activeBaseLayers}
+              onToggleBaseLayer={onToggleBaseLayer}
+              onBaseOpacityChange={onBaseOpacityChange}
               activeLayers={activeLayers}
               onToggleLayer={onToggleLayer}
               onOpacityChange={onOpacityChange}
-              isMobile={false}
             />
           </ScrollArea>
           <div className="px-4 py-3 border-t border-slate-700/50 space-y-1.5">

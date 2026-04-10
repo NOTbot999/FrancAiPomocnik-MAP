@@ -12,7 +12,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function MapViewer() {
   const [isPanelOpen, setIsPanelOpen] = useState(false);
-  const [activeBaseLayer, setActiveBaseLayer] = useState("osm");
+  const [activeBaseLayers, setActiveBaseLayers] = useState({ osm: { opacity: 1 } });
   const [activeLayers, setActiveLayers] = useState({});
   const [flyToLocation, setFlyToLocation] = useState(null);
   const [activeTool, setActiveTool] = useState("pointer");
@@ -45,6 +45,21 @@ export default function MapViewer() {
       ...prev,
       [layerId]: { ...prev[layerId], opacity }
     }));
+  }, []);
+
+  const handleToggleBaseLayer = useCallback((layerId, defaultOpacity = 1) => {
+    setActiveBaseLayers(prev => {
+      if (prev[layerId]) {
+        const next = { ...prev };
+        delete next[layerId];
+        return next;
+      }
+      return { ...prev, [layerId]: { opacity: defaultOpacity } };
+    });
+  }, []);
+
+  const handleBaseOpacityChange = useCallback((layerId, opacity) => {
+    setActiveBaseLayers(prev => ({ ...prev, [layerId]: { ...prev[layerId], opacity } }));
   }, []);
 
   const handleClearDrawings = useCallback(() => {
@@ -80,7 +95,7 @@ export default function MapViewer() {
   return (
     <div className="relative w-full h-screen overflow-hidden bg-slate-950">
       <MapContainerComponent
-        activeBaseLayer={activeBaseLayer}
+        activeBaseLayers={activeBaseLayers}
         activeLayers={activeLayers}
         flyToLocation={flyToLocation}
         activeTool={activeTool}
@@ -153,8 +168,9 @@ export default function MapViewer() {
       <LayerPanel
         isOpen={isPanelOpen}
         onClose={() => setIsPanelOpen(false)}
-        activeBaseLayer={activeBaseLayer}
-        onBaseLayerChange={setActiveBaseLayer}
+        activeBaseLayers={activeBaseLayers}
+        onToggleBaseLayer={handleToggleBaseLayer}
+        onBaseOpacityChange={handleBaseOpacityChange}
         activeLayers={activeLayers}
         onToggleLayer={handleToggleLayer}
         onOpacityChange={handleOpacityChange}
