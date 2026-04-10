@@ -421,6 +421,48 @@ export const OVERLAY_CATEGORIES = [
     ]
   },
 
+  // ─── WEATHER ─────────────────────────────────────────────────
+  {
+    id: "weather",
+    name: "Weather (OpenWeatherMap)",
+    icon: "CloudSun",
+    description: "Live weather overlays from OpenWeatherMap",
+    layers: [
+      {
+        id: "owm_precipitation",
+        name: "Precipitation",
+        type: "tile",
+        url: "https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=9de243494c0b295cca9337e1e96b00e2",
+        opacity: 0.7,
+        description: "Live precipitation layer from OpenWeatherMap"
+      },
+      {
+        id: "owm_clouds",
+        name: "Cloud Cover",
+        type: "tile",
+        url: "https://tile.openweathermap.org/map/clouds_new/{z}/{x}/{y}.png?appid=9de243494c0b295cca9337e1e96b00e2",
+        opacity: 0.6,
+        description: "Cloud cover layer from OpenWeatherMap"
+      },
+      {
+        id: "owm_wind",
+        name: "Wind Speed",
+        type: "tile",
+        url: "https://tile.openweathermap.org/map/wind_new/{z}/{x}/{y}.png?appid=9de243494c0b295cca9337e1e96b00e2",
+        opacity: 0.7,
+        description: "Wind speed layer from OpenWeatherMap"
+      },
+      {
+        id: "owm_temp",
+        name: "Temperature",
+        type: "tile",
+        url: "https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=9de243494c0b295cca9337e1e96b00e2",
+        opacity: 0.6,
+        description: "Temperature layer from OpenWeatherMap"
+      }
+    ]
+  },
+
   // ─── ADMINISTRATIVE ───────────────────────────────────────────
   {
     id: "admin",

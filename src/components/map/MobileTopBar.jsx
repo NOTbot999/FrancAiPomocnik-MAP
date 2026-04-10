@@ -38,21 +38,8 @@ function MobileTopBarInner({ onTogglePanel, isPanelOpen, activeLayerCount, onLoc
   return createPortal(
     <div style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 950 }} className="pointer-events-none">
       {/* Top bar */}
-      <div className="pointer-events-auto flex items-center gap-2 px-3 pt-3 pb-2">
-        {/* Layers */}
-        <button
-          onClick={onTogglePanel}
-          className={`${btnBase} relative ${isPanelOpen ? btnActive : ''}`}
-        >
-          <Layers className="w-5 h-5" />
-          {activeLayerCount > 0 && (
-            <span className="absolute -top-1 -right-1 bg-emerald-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
-              {activeLayerCount}
-            </span>
-          )}
-        </button>
-
-        {/* Search — expands to fill remaining space */}
+      <div className="pointer-events-auto flex items-center gap-2 px-3 pt-3 pb-2 justify-end">
+        {/* Search — expands when open */}
         {showSearch ? (
           <div className="flex-1 flex items-center gap-2">
             <div className="flex-1">
@@ -67,11 +54,23 @@ function MobileTopBarInner({ onTogglePanel, isPanelOpen, activeLayerCount, onLoc
           </div>
         ) : (
           <>
+            {/* Layers */}
+            <button
+              onClick={onTogglePanel}
+              className={`${btnBase} relative ${isPanelOpen ? btnActive : ''}`}
+            >
+              <Layers className="w-5 h-5" />
+              {activeLayerCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-emerald-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                  {activeLayerCount}
+                </span>
+              )}
+            </button>
+
+            {/* Search */}
             <button onClick={() => setShowSearch(true)} className={btnBase}>
               <Search className="w-5 h-5" />
             </button>
-
-            <div className="flex-1" />
 
             {/* GPS locate */}
             <button onClick={handleLocate} disabled={locating} className={`${btnBase} disabled:opacity-60`}>
@@ -114,7 +113,7 @@ function MobileTopBarInner({ onTogglePanel, isPanelOpen, activeLayerCount, onLoc
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            className="pointer-events-auto flex items-center gap-2 px-3 pb-2"
+            className="pointer-events-auto flex items-center gap-2 px-3 pb-2 justify-end"
           >
             {TOOLS.map((tool) => {
               const Icon = tool.icon;
