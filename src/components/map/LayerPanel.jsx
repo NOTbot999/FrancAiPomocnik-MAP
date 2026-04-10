@@ -51,27 +51,37 @@ function BaseMapCategory({ activeBaseLayer, onBaseLayerChange, isMobile }) {
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="px-3 pb-3">
-              <div className={`grid gap-2 ${isMobile ? 'grid-cols-4' : 'grid-cols-3'}`}>
-                {BASE_LAYERS.map((layer) => (
+            <div className="px-3 pb-3 space-y-1.5">
+              {BASE_LAYERS.map((layer) => (
                   <button
                     key={layer.id}
                     onClick={() => onBaseLayerChange(layer.id)}
-                    className={`relative rounded-lg overflow-hidden transition-all duration-200 ${
-                      activeBaseLayer === layer.id
-                        ? 'ring-2 ring-emerald-400 ring-offset-1 ring-offset-slate-900 scale-[1.02]'
-                        : 'opacity-70 hover:opacity-100'
+                    className={`w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg transition-colors ${
+                      activeBaseLayer === layer.id ? 'bg-slate-700/50' : 'hover:bg-slate-700/30'
                     }`}
                   >
-                    <div className="aspect-[4/3] bg-slate-800">
+                    {/* Thumbnail */}
+                    <div className={`w-10 h-7 rounded overflow-hidden shrink-0 border transition-colors ${
+                      activeBaseLayer === layer.id ? 'border-emerald-500/60' : 'border-slate-600/40'
+                    }`}>
                       <img src={layer.thumbnail} alt={layer.name} className="w-full h-full object-cover" loading="lazy" />
                     </div>
-                    <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent px-1.5 py-1">
-                      <p className="text-[9px] font-medium text-white truncate text-center">{layer.name}</p>
-                    </div>
+                    {/* Name */}
+                    <span className={`text-xs flex-1 text-left leading-tight transition-colors ${
+                      activeBaseLayer === layer.id ? 'text-slate-200' : 'text-slate-500'
+                    }`}>
+                      {layer.name}
+                    </span>
+                    {/* Active indicator */}
+                    <span className={`shrink-0 px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
+                      activeBaseLayer === layer.id
+                        ? 'bg-emerald-500 text-white'
+                        : 'bg-slate-700 text-slate-400'
+                    }`}>
+                      {activeBaseLayer === layer.id ? 'ON' : 'OFF'}
+                    </span>
                   </button>
-                ))}
-              </div>
+              ))}
             </div>
           </motion.div>
         )}

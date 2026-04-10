@@ -41,37 +41,65 @@ export default function LayerCategory({ category, activeLayers, onToggleLayer, o
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="px-3 pb-3 space-y-1">
+            <div className="px-3 pb-3 space-y-1.5">
               {category.layers.map((layer) => {
                 const isActive = activeLayers[layer.id];
                 return (
                   <div key={layer.id} className="group">
-                    <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-700/40 transition-colors">
-                      <button
-                        onClick={() => onToggleLayer(layer.id)}
-                        className={`shrink-0 transition-colors ${isActive ? 'text-emerald-400' : 'text-slate-600'}`}
-                      >
-                        {isActive ? <Eye className="w-[1.05rem] h-[1.05rem]" /> : <EyeOff className="w-[1.05rem] h-[1.05rem]" />}
-                      </button>
-                      <span className={`text-xs flex-1 transition-colors ${isActive ? 'text-slate-200' : 'text-slate-500'}`}>
+                    <div className={`flex items-center gap-2.5 px-2 py-1.5 rounded-lg transition-colors ${isActive ? 'bg-slate-700/50' : 'hover:bg-slate-700/30'}`}>
+                      {/* Thumbnail */}
+                      <div className={`w-10 h-7 rounded overflow-hidden shrink-0 border transition-colors ${
+                        isActive ? 'border-emerald-500/60' : 'border-slate-600/40'
+                      }`}>
+                        {layer.thumbnail ? (
+                          <img src={layer.thumbnail} alt="" className="w-full h-full object-cover" loading="lazy" />
+                        ) : (
+                          <div className={`w-full h-full flex items-center justify-center text-[9px] font-bold ${
+                            isActive ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-700 text-slate-500'
+                          }`}>
+                            {layer.name.charAt(0)}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Name */}
+                      <span className={`text-xs flex-1 leading-tight transition-colors ${
+                        isActive ? 'text-slate-200' : 'text-slate-500'
+                      }`}>
                         {layer.name}
                       </span>
+
+                      {/* Info tooltip */}
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <Info className="w-3 h-3 text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity cursor-help" />
+                            <Info className="w-3 h-3 text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity cursor-help shrink-0" />
                           </TooltipTrigger>
                           <TooltipContent side="left" className="max-w-48">
                             <p className="text-xs">{layer.description}</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
+
+                      {/* Toggle button */}
+                      <button
+                        onClick={() => onToggleLayer(layer.id)}
+                        className={`shrink-0 px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
+                          isActive
+                            ? 'bg-emerald-500 text-white'
+                            : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
+                        }`}
+                      >
+                        {isActive ? 'ON' : 'OFF'}
+                      </button>
                     </div>
+
+                    {/* Opacity slider */}
                     {isActive && (
                       <motion.div
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: "auto", opacity: 1 }}
-                        className="px-8 pb-2"
+                        className="px-3 pb-1 pt-0.5"
                       >
                         <div className="flex items-center gap-2">
                           <span className="text-[10px] text-slate-500 w-8">
