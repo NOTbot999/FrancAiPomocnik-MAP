@@ -16,6 +16,26 @@ const pulseIcon = L.divIcon({
 export default function GpsTracker({ isTracking, gpsTrack, onTrackUpdate, followLocation }) {
   const map = useMap();
   const watchIdRef = useRef(null);
+  const userDraggingRef = useRef(false);
+
+  // Pause follow when user drags, resume after 3s of no interaction
+  useEffect(() => {
+    let resumeTimer = null;
+    const onDragStart = () => {
+      userDraggingRef.current = true;
+      clearTimeout(resumeTimer);
+    };
+    const onDragEnd = () => {
+      resumeTimer = setTimeout(() => { userDraggingRef.current = false; }, 3000);
+    };
+    map.on('dragstart', onDragStart);
+    map.on('dragend', onDragEnd);
+    return () => {
+      map.off('dragstart', onDragStart);
+      map.off('dragend', onDragEnd);
+      clearTimeout(resumeTimer);
+    };
+  }, [map]);
 
   useEffect(() => {
     if (isTracking) {
@@ -23,7 +43,7 @@ export default function GpsTracker({ isTracking, gpsTrack, onTrackUpdate, follow
         (pos) => {
           const pt = [pos.coords.latitude, pos.coords.longitude];
           onTrackUpdate(pt);
-          if (followLocation) {
+          if (followLocation && !userDraggingRef.current) {
             map.panTo(pt, { animate: true });
           }
         },
