@@ -30,8 +30,8 @@ function BaseMapCategory({ activeBaseLayers, onToggleBaseLayer, onBaseOpacityCha
   return (
     <div className="border-b border-slate-700/50">
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center gap-2.5 px-4 py-3 hover:bg-slate-700/30 transition-colors">
+        onClick={() => setIsOpen(!isOpen)} className="text-[hsl(var(--foreground))] px-4 py-3 w-full flex items-center gap-2.5 hover:bg-slate-700/30 transition-colors">
+        
         
         {firstActive?.thumbnail ?
         <div className="w-8 h-6 rounded overflow-hidden shrink-0">
