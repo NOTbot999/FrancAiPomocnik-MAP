@@ -66,9 +66,9 @@ function BaseMapCategory({ activeBaseLayers, onToggleBaseLayer, onBaseOpacityCha
                     }>
                         <img src={layer.thumbnail} alt={layer.name} className="w-full h-full object-cover" loading="lazy" />
                       </div>
-                      <span className={`text-xs flex-1 text-left leading-tight ${
-                    isActive ? 'text-slate-200' : 'text-slate-500'}`
-                    }>{layer.name}</span>
+                      <span className="text-slate-950 text-xs text-left leading-tight flex-1">
+
+                      {layer.name}</span>
                       <button
                       onClick={() => onToggleBaseLayer(layer.id, layer.opacity ?? 1)}
                       className={`shrink-0 px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
