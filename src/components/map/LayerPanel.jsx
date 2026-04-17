@@ -38,7 +38,7 @@ function BaseMapCategory({ activeBaseLayers, onToggleBaseLayer, onBaseOpacityCha
             <img src={firstActive.thumbnail} alt="" className="w-full h-full object-cover" loading="lazy" />
           </div> :
         <Map className="w-4 h-4 text-emerald-400 shrink-0" />}
-        <span className="text-sm font-medium text-slate-200 flex-1 text-left">Base Map</span>
+        <span className="text-slate-950 text-sm font-medium text-left flex-1">Base Map</span>
         {activeIds.length > 0 &&
         <span className="text-[10px] font-bold bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded-full mr-1">{activeIds.length}</span>
         }
