@@ -8,6 +8,7 @@ import MobileTopBar from "@/components/map/MobileTopBar";
 import SaveLoadDrawings from "@/components/map/SaveLoadDrawings";
 import MyTracks from "@/components/map/MyTracks";
 import NavigationPanel from "@/components/map/NavigationPanel";
+import OfflineManager from "@/components/map/OfflineManager";
 import { OVERLAY_CATEGORIES } from "@/components/map/layerConfig";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -105,6 +106,7 @@ export default function MapViewer() {
 
   const [routePolyline, setRoutePolyline] = useState(null);
   const [isNavOpen, setIsNavOpen] = useState(false);
+  const [isOfflineOpen, setIsOfflineOpen] = useState(false);
 
   const handleRouteResult = useCallback((data) => {
     setRoutePolyline(data ? data.polyline : null);
@@ -124,6 +126,8 @@ export default function MapViewer() {
         drawings={drawings}
         setDrawings={setDrawings}
         routePolyline={routePolyline}
+        offlineOpen={isOfflineOpen}
+        onOfflineClose={() => setIsOfflineOpen(false)}
         showZoomControls={!isMobile}
         mobileProps={isMobile ? {
           onTogglePanel: () => setIsPanelOpen(p => !p),
@@ -139,6 +143,7 @@ export default function MapViewer() {
           onShowTracks: () => setShowMyTracks(p => !p),
           gpsTrack,
           onLoadTrack: handleLoadTrack,
+          onRouteResult: handleRouteResult,
         } : null}
         locateTrigger={locateTrigger}
         gpsTracking={{
@@ -178,6 +183,26 @@ export default function MapViewer() {
               onClose={() => setShowMyTracks(false)}
             />
           )}
+
+          {/* Offline button */}
+          <div className="absolute right-4 bottom-56 z-[950] flex flex-col items-end gap-2">
+            <button
+              onClick={() => setIsOfflineOpen(p => !p)}
+              className={`p-3 rounded-xl shadow-lg transition-all duration-300 border ${
+                isOfflineOpen
+                  ? 'bg-slate-800 text-white border-slate-800'
+                  : 'bg-white/95 backdrop-blur-xl text-slate-700 hover:bg-white border-slate-200/50'
+              }`}
+              title="Offline Maps"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/>
+                <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.56 9"/>
+                <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+                <line x1="12" y1="20" x2="12.01" y2="20"/>
+              </svg>
+            </button>
+          </div>
 
           {/* Bottom-right: drawing tools + save/load */}
           <div className="absolute right-4 bottom-8 z-[950] flex flex-col items-end gap-2">

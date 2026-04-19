@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import { Layers, Locate, LoaderCircle, Plus, Minus, Ruler, Search, Pentagon, MapPin, Trash2, MousePointer2, Navigation, Settings } from "lucide-react";
+import { Layers, Locate, LoaderCircle, Plus, Minus, Ruler, Search, Pentagon, MapPin, Trash2, MousePointer2, Navigation, Settings, Route } from "lucide-react";
 import { useMap } from "react-leaflet";
 import { createPortal } from "react-dom";
 import SearchBar from "./SearchBar";
 import MobileSettingsPanel, { useMobileButtonPrefs } from "./MobileSettingsPanel";
 import { AnimatePresence, motion } from "framer-motion";
+import NavigationPanel from "./NavigationPanel";
 
 const TOOLS = [
   { id: "pointer", icon: MousePointer2, label: "Select" },
@@ -19,6 +20,7 @@ function MobileTopBarInner({
   onLocate, activeTool, onToolChange, onClear,
   onLocationSelect, isGpsTracking, onGpsToggle,
   onShowTracks, gpsTrack, onLoadTrack,
+  onRouteResult,
 }) {
   const map = useMap();
   const container = map.getContainer();
@@ -26,6 +28,7 @@ function MobileTopBarInner({
   const [showSearch, setShowSearch] = useState(false);
   const [showRuler, setShowRuler] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showNav, setShowNav] = useState(false);
   const [prefs, setPrefs] = useMobileButtonPrefs();
 
   const handleLocate = () => {
@@ -126,6 +129,16 @@ function MobileTopBarInner({
         {/* Togglable buttons in user-defined order (skip search since it's in top bar) */}
         {optionalButtons}
 
+        {/* Route / Navigation button */}
+        <button
+          onClick={() => setShowNav(p => !p)}
+          style={btnStyle}
+          className={`${btnBase} ${showNav ? btnActive : ''}`}
+          title="Route Planner"
+        >
+          <Route style={iconStyle} />
+        </button>
+
         <div className="flex-1" />
       </div>
 
@@ -157,6 +170,16 @@ function MobileTopBarInner({
           onLoadTrack={onLoadTrack}
         />
       )}
+
+      {/* Navigation Panel for mobile */}
+      <div style={{ pointerEvents: "auto" }} className="absolute bottom-4 right-14">
+        <NavigationPanel
+          onRouteResult={onRouteResult || (() => {})}
+          isOpen={showNav}
+          onToggle={() => setShowNav(p => !p)}
+          onClose={() => setShowNav(false)}
+        />
+      </div>
 
       {/* Ruler tool strip */}
       <AnimatePresence>

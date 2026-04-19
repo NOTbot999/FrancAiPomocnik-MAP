@@ -10,10 +10,23 @@ import {
   Polyline,
   Polygon,
 } from "react-leaflet";
+import { createPortal } from "react-dom";
 import ZoomControls from "./ZoomControls";
 import MobileTopBar from "./MobileTopBar";
 import GpsTracker from "./GpsTracker";
 import MyLocationDot from "./MyLocationDot";
+import OfflineManager from "./OfflineManager";
+
+function OfflineManagerPortal({ onClose }) {
+  const map = useMap();
+  const container = map.getContainer().parentElement;
+  return createPortal(
+    <div className="absolute right-20 bottom-56 z-[960]" style={{ position: "absolute" }}>
+      <OfflineManager onClose={onClose} />
+    </div>,
+    container
+  );
+}
 import { BASE_LAYERS, OVERLAY_CATEGORIES, SLOVENIA_CENTER, DEFAULT_ZOOM } from "./layerConfig";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
@@ -215,6 +228,8 @@ export default function MapContainerComponent({
   mobileProps,
   gpsTracking,
   locateTrigger,
+  offlineOpen,
+  onOfflineClose,
 }) {
   const allLayers = getAllLayersFlat();
   const activeBaseLayerEntries = activeBaseLayers
@@ -300,6 +315,7 @@ export default function MapContainerComponent({
         return null;
       })}
 
+      {offlineOpen && <OfflineManagerPortal onClose={onOfflineClose} />}
       {showZoomControls && <ZoomControls />}
       {mobileProps && <MobileTopBar {...mobileProps} />}
       <MyLocationDot trigger={locateTrigger} />
