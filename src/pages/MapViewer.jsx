@@ -1,5 +1,4 @@
 import React, { useState, useCallback } from "react";
-import { AnimatePresence } from "framer-motion";
 import MapContainerComponent from "@/components/map/MapContainer";
 import LayerPanel from "@/components/map/LayerPanel";
 import SearchBar from "@/components/map/SearchBar";
@@ -215,40 +214,34 @@ export default function MapViewer() {
           </div>
 
           {/* AI Panels — desktop */}
-          <AnimatePresence>
-            {isAskMapOpen && (
-              <div className="absolute right-4 bottom-72 z-[960]" key="ask-map">
-                <AskMapPanel
-                  onClose={() => setIsAskMapOpen(false)}
-                  activeLayers={activeLayers}
-                  onToggleLayer={handleToggleLayer}
-                  mapCenter={mapCenter}
-                  mapZoom={mapZoom}
-                />
-              </div>
-            )}
-          </AnimatePresence>
-          <AnimatePresence>
-            {isTrackAnalyzerOpen && (
-              <div className="absolute right-4 bottom-72 z-[960]" key="track-analyzer">
-                <TrackAnalyzer
-                  gpsTrack={gpsTrack}
-                  onClose={() => setIsTrackAnalyzerOpen(false)}
-                />
-              </div>
-            )}
-          </AnimatePresence>
-          <AnimatePresence>
-            {locationSummary && (
-              <div className="absolute left-1/2 top-20 -translate-x-1/2 z-[960]" key="loc-summary">
-                <LocationSummarizer
-                  latlng={locationSummary.latlng}
-                  activeLayers={activeLayers}
-                  onClose={() => setLocationSummary(null)}
-                />
-              </div>
-            )}
-          </AnimatePresence>
+          {isAskMapOpen && (
+            <div className="absolute right-4 bottom-72 z-[960]">
+              <AskMapPanel
+                onClose={() => setIsAskMapOpen(false)}
+                activeLayers={activeLayers}
+                onToggleLayer={handleToggleLayer}
+                mapCenter={mapCenter}
+                mapZoom={mapZoom}
+              />
+            </div>
+          )}
+          {isTrackAnalyzerOpen && (
+            <div className="absolute right-4 bottom-72 z-[960]">
+              <TrackAnalyzer
+                gpsTrack={gpsTrack}
+                onClose={() => setIsTrackAnalyzerOpen(false)}
+              />
+            </div>
+          )}
+          {locationSummary && (
+            <div className="absolute left-1/2 top-20 -translate-x-1/2 z-[960]">
+              <LocationSummarizer
+                latlng={locationSummary.latlng}
+                activeLayers={activeLayers}
+                onClose={() => setLocationSummary(null)}
+              />
+            </div>
+          )}
 
           {/* Bottom-right: drawing tools + save/load */}
           <div className="absolute right-4 bottom-8 z-[950] flex flex-col items-end gap-2">
