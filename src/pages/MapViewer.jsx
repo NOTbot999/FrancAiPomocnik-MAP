@@ -116,7 +116,7 @@ export default function MapViewer() {
   const isMobile = useIsMobile();
 
   return (
-    <div className="relative w-full h-screen overflow-hidden bg-slate-950">
+    <div className="relative w-full h-screen overflow-hidden" style={{ backgroundColor: "#e8ede8", backgroundImage: "url('https://media.base44.com/images/public/69ad3ce309822f8e71f66838/b15473e19_5992128811794894233.jpg')", backgroundSize: "contain", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>
       <MapContainerComponent
         activeBaseLayers={activeBaseLayers}
         activeLayers={activeLayers}
