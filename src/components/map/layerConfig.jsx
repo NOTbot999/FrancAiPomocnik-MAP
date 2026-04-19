@@ -499,8 +499,9 @@ export const OVERLAY_CATEGORIES = [
         description: "Municipalities and statistical regions"
       }
     ]
-    // — POTI / ROUTES ————————————————————————
-{
+  },
+  // — POTI / ROUTES ————————————————————————
+  {
   id: "poti",
   name: "Poti 🚴 🥾 🚂",
   icon: "Map",
@@ -543,8 +544,7 @@ export const OVERLAY_CATEGORIES = [
       description: "OpenCycleMap roads and cycling infrastructure"
     }
   ]
-
-  }
+}
 ];
 
 export const SLOVENIA_CENTER = [46.1512, 14.9955];
