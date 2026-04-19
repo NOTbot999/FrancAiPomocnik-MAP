@@ -161,7 +161,7 @@ export default function LayerPanel({
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 320 }}
             className="absolute bottom-0 left-0 right-0 z-[900] flex flex-col bg-slate-900/97 backdrop-blur-xl rounded-t-2xl border-t border-slate-700/50"
-            style={{ height: "37.5vh" }}>
+            style={{ height: "43.1vh" }}>
             
               <div className="flex justify-center pt-3 pb-1 shrink-0">
                 <div className="w-10 h-1 rounded-full bg-slate-600" />

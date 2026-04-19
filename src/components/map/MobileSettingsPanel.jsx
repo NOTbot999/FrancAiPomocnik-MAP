@@ -82,7 +82,7 @@ export default function MobileSettingsPanel({ onClose, prefs, setPrefs, gpsTrack
   return (
     <div
       style={{ pointerEvents: "auto" }}
-      className="absolute top-3 left-14 z-[970] w-72 bg-slate-100 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/60 overflow-hidden"
+      className="absolute top-3 right-14 z-[970] w-72 bg-slate-100 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/60 overflow-hidden"
     >
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">

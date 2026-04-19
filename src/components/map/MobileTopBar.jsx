@@ -75,12 +75,7 @@ function MobileTopBarInner({
   return createPortal(
     <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, zIndex: 950, pointerEvents: "none" }}>
 
-      {/* Top-left: Settings button */}
-      <div style={{ pointerEvents: "auto" }} className="absolute top-3 left-3">
-        <button onClick={() => setShowSettings(p => !p)} className={`${btnBase} ${showSettings ? btnActive : ''}`}>
-          <Settings className="w-5 h-5" />
-        </button>
-      </div>
+
 
       {/* Search bar — always visible if enabled, top center */}
       {searchAlwaysVisible && (
@@ -94,6 +89,11 @@ function MobileTopBarInner({
 
       {/* Right column */}
       <div style={{ pointerEvents: "auto" }} className="absolute top-0 right-0 bottom-0 flex flex-col items-center gap-2 px-2 pt-3">
+        {/* Settings button — always on top */}
+        <button onClick={() => setShowSettings(p => !p)} className={`${btnBase} ${showSettings ? btnActive : ''}`}>
+          <Settings className="w-5 h-5" />
+        </button>
+
         {/* Layers button — togglable */}
         {isVisible("layers") && (
           <button onClick={onTogglePanel} className={`${btnBase} relative ${isPanelOpen ? btnActive : ''}`}>
