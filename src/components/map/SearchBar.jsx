@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Search, X, MapPin, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { base44 } from "@/api/base44Client";
+
 
 const TYPE_ICONS = {
   city: "🏙️", town: "🏘️", village: "🏡", hamlet: "🏠",
@@ -65,12 +65,9 @@ export default function SearchBar({ onLocationSelect }) {
     }
     setIsSearching(true);
     try {
-      const res = await base44.functions.invoke("googleMaps", { action: "geocode", query: q });
-      const data = (res.data.results || []).map(r => ({
-        ...r,
-        lon: r.lon ?? r.lng,
-        lat: String(r.lat),
-      }));
+      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=8&addressdetails=1`;
+      const res = await fetch(url, { headers: { "Accept-Language": "en" } });
+      const data = await res.json();
       setResults(data);
       setIsOpen(true);
     } catch (e) {

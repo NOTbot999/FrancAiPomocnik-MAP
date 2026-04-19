@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
+
 import { Navigation, Plus, Trash2, X, ChevronDown, ChevronUp, Loader2, Route } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -15,8 +15,10 @@ function PointInput({ label, value, onChange, onClear }) {
     clearTimeout(debounce);
     debounce = setTimeout(async () => {
       setLoading(true);
-      const res = await base44.functions.invoke("googleMaps", { action: "geocode", query: q });
-      setSuggestions(res.data.results || []);
+      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&addressdetails=1`;
+      const res = await fetch(url, { headers: { "Accept-Language": "en" } });
+      const data = await res.json();
+      setSuggestions(data);
       setLoading(false);
     }, 350);
   };
@@ -98,20 +100,46 @@ export default function NavigationPanel({ onRouteResult, onClose, isOpen, onTogg
     setError(null);
     setResult(null);
     const validWaypoints = waypoints.filter(Boolean);
-    const res = await base44.functions.invoke("googleMaps", {
-      action: "directions",
-      origin,
-      destination,
-      waypoints: validWaypoints,
-    });
+
+    // Build OSRM coordinates string: lng,lat;lng,lat;...
+    const coords = [origin, ...validWaypoints, destination]
+      .map(p => `${p.lng},${p.lat}`)
+      .join(";");
+
+    const url = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson&steps=false`;
+    const res = await fetch(url);
+    const data = await res.json();
     setLoading(false);
-    if (res.data.error) {
-      setError(res.data.error_message || res.data.error);
+
+    if (data.code !== "Ok" || !data.routes?.length) {
+      setError("Could not find a route between these points.");
       onRouteResult(null);
-    } else {
-      setResult(res.data);
-      onRouteResult(res.data);
+      return;
     }
+
+    const route = data.routes[0];
+    const polyline = route.geometry.coordinates.map(([lng, lat]) => [lat, lng]);
+
+    // Build per-leg info
+    const legs = route.legs.map(leg => ({
+      distance: leg.distance >= 1000
+        ? `${(leg.distance / 1000).toFixed(1)} km`
+        : `${Math.round(leg.distance)} m`,
+      duration: leg.duration >= 3600
+        ? `${Math.floor(leg.duration / 3600)}h ${Math.round((leg.duration % 3600) / 60)}min`
+        : `${Math.round(leg.duration / 60)} min`,
+    }));
+
+    const totalDist = route.distance >= 1000
+      ? `${(route.distance / 1000).toFixed(1)} km`
+      : `${Math.round(route.distance)} m`;
+    const totalDur = route.duration >= 3600
+      ? `${Math.floor(route.duration / 3600)}h ${Math.round((route.duration % 3600) / 60)}min`
+      : `${Math.round(route.duration / 60)} min`;
+
+    const result = { polyline, legs, totalDistance: totalDist, totalDuration: totalDur };
+    setResult(result);
+    onRouteResult(result);
   };
 
   const clear = () => {
