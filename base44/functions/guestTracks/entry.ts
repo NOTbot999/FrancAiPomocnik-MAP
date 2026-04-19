@@ -1,7 +1,9 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
+  // This function is intentionally public (no auth) — device_id acts as the access key
   const base44 = createClientFromRequest(req);
+  const serviceBase44 = base44.asServiceRole;
   const body = await req.json();
   const { action, device_id, code, tracks } = body;
 
@@ -11,18 +13,18 @@ Deno.serve(async (req) => {
 
   // Save or update tracks for this device
   if (action === 'save') {
-    const existing = await base44.asServiceRole.entities.GuestSession.filter({ device_id });
+    const existing = await serviceBase44.entities.GuestSession.filter({ device_id });
     if (existing.length > 0) {
-      await base44.asServiceRole.entities.GuestSession.update(existing[0].id, { tracks });
+      await serviceBase44.entities.GuestSession.update(existing[0].id, { tracks });
     } else {
-      await base44.asServiceRole.entities.GuestSession.create({ device_id, tracks });
+      await serviceBase44.entities.GuestSession.create({ device_id, tracks });
     }
     return Response.json({ success: true });
   }
 
   // Load tracks for this device
   if (action === 'load') {
-    const existing = await base44.asServiceRole.entities.GuestSession.filter({ device_id });
+    const existing = await serviceBase44.entities.GuestSession.filter({ device_id });
     if (existing.length === 0) return Response.json({ tracks: [] });
     return Response.json({ tracks: existing[0].tracks || [] });
   }
@@ -32,14 +34,14 @@ Deno.serve(async (req) => {
     const linkCode = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 minutes
 
-    const existing = await base44.asServiceRole.entities.GuestSession.filter({ device_id });
+    const existing = await serviceBase44.entities.GuestSession.filter({ device_id });
     if (existing.length > 0) {
-      await base44.asServiceRole.entities.GuestSession.update(existing[0].id, {
+      await serviceBase44.entities.GuestSession.update(existing[0].id, {
         link_code: linkCode,
         link_code_expires_at: expiresAt,
       });
     } else {
-      await base44.asServiceRole.entities.GuestSession.create({
+      await serviceBase44.entities.GuestSession.create({
         device_id,
         tracks: [],
         link_code: linkCode,
@@ -53,8 +55,7 @@ Deno.serve(async (req) => {
   if (action === 'use_code') {
     if (!code) return Response.json({ error: 'code is required' }, { status: 400 });
 
-    // Find the session with this code
-    const sessions = await base44.asServiceRole.entities.GuestSession.filter({ link_code: code });
+    const sessions = await serviceBase44.entities.GuestSession.filter({ link_code: code });
     if (sessions.length === 0) return Response.json({ error: 'Invalid code' }, { status: 404 });
 
     const source = sessions[0];
@@ -63,20 +64,17 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Code has expired' }, { status: 410 });
     }
 
-    // Merge tracks into the requesting device's session
     const sourceTracks = source.tracks || [];
-    const mySession = await base44.asServiceRole.entities.GuestSession.filter({ device_id });
-    let myTracks = [];
+    const mySession = await serviceBase44.entities.GuestSession.filter({ device_id });
     if (mySession.length > 0) {
-      myTracks = mySession[0].tracks || [];
-      const merged = [...myTracks, ...sourceTracks];
-      await base44.asServiceRole.entities.GuestSession.update(mySession[0].id, { tracks: merged });
+      const merged = [...(mySession[0].tracks || []), ...sourceTracks];
+      await serviceBase44.entities.GuestSession.update(mySession[0].id, { tracks: merged });
     } else {
-      await base44.asServiceRole.entities.GuestSession.create({ device_id, tracks: sourceTracks });
+      await serviceBase44.entities.GuestSession.create({ device_id, tracks: sourceTracks });
     }
 
     // Invalidate the code
-    await base44.asServiceRole.entities.GuestSession.update(source.id, {
+    await serviceBase44.entities.GuestSession.update(source.id, {
       link_code: null,
       link_code_expires_at: null,
     });

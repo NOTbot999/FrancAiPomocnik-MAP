@@ -46,8 +46,8 @@ export default function MyTracks({ gpsTrack, onLoadTrack, onClose }) {
 
   const loadSessions = async () => {
     setLoading(true);
-    const records = await base44.entities.GpsTrackSession.list("-created_date", 30);
-    setSessions(records);
+    const res = await base44.functions.invoke("guestTracks", { action: "load", device_id: deviceId });
+    setSessions(res.data.tracks || []);
     setLoading(false);
   };
 
@@ -58,26 +58,25 @@ export default function MyTracks({ gpsTrack, onLoadTrack, onClose }) {
     setSaving(true);
     const dist = calcDistance(gpsTrack);
     const name = `Track ${new Date().toLocaleString()}`;
-    await base44.entities.GpsTrackSession.create({
-      name,
-      track_data: gpsTrack,
-      distance_meters: Math.round(dist),
-    });
+    const newTrack = { name, track_data: gpsTrack, distance_meters: Math.round(dist), saved_at: new Date().toISOString() };
+    const updated = [...sessions, newTrack];
+    await base44.functions.invoke("guestTracks", { action: "save", device_id: deviceId, tracks: updated });
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
     setSaving(false);
     loadSessions();
   };
 
-  const handleDelete = async (id) => {
-    setDeletingId(id);
-    await base44.entities.GpsTrackSession.delete(id);
-    setSessions((prev) => prev.filter((s) => s.id !== id));
+  const handleDelete = async (idx) => {
+    setDeletingId(idx);
+    const updated = sessions.filter((_, i) => i !== idx);
+    await base44.functions.invoke("guestTracks", { action: "save", device_id: deviceId, tracks: updated });
+    setSessions(updated);
     setDeletingId(null);
   };
 
   return (
-    <div className="absolute bottom-8 right-16 z-[950] w-72 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/50 overflow-hidden">
+    <div className="absolute bottom-8 right-16 z-[950] w-72 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/50">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
         <div className="flex items-center gap-2 text-slate-700 font-semibold text-sm">
@@ -137,41 +136,44 @@ export default function MyTracks({ gpsTrack, onLoadTrack, onClose }) {
           <p className="text-center text-slate-400 text-xs py-6">No saved tracks yet</p>
         ) : (
           <AnimatePresence>
-            {sessions.map((s) => (
-              <motion.div
-                key={s.id}
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className="flex items-center gap-2 px-4 py-2.5 hover:bg-slate-50 border-b border-slate-50 last:border-0"
-              >
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-slate-700 truncate">{s.name}</p>
-                  {s.distance_meters && (
-                    <p className="text-[10px] text-slate-400">{fmtDist(s.distance_meters)} · {s.track_data?.length} pts</p>
-                  )}
-                </div>
-                <button
-                  onClick={() => onLoadTrack(s.track_data)}
-                  className="p-1.5 rounded-lg hover:bg-emerald-50 text-emerald-500"
-                  title="Load track"
+            {[...sessions].reverse().map((s, ri) => {
+              const idx = sessions.length - 1 - ri;
+              return (
+                <motion.div
+                  key={idx}
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="flex items-center gap-2 px-4 py-2.5 hover:bg-slate-50 border-b border-slate-50 last:border-0"
                 >
-                  <FolderOpen className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  onClick={() => handleDelete(s.id)}
-                  disabled={deletingId === s.id}
-                  className="p-1.5 rounded-lg hover:bg-red-50 text-red-400 disabled:opacity-40"
-                  title="Delete"
-                >
-                  {deletingId === s.id ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  ) : (
-                    <Trash2 className="w-3.5 h-3.5" />
-                  )}
-                </button>
-              </motion.div>
-            ))}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-slate-700 truncate">{s.name}</p>
+                    {s.distance_meters && (
+                      <p className="text-[10px] text-slate-400">{fmtDist(s.distance_meters)} · {s.track_data?.length} pts</p>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => onLoadTrack(s.track_data)}
+                    className="p-1.5 rounded-lg hover:bg-emerald-50 text-emerald-500"
+                    title="Load track"
+                  >
+                    <FolderOpen className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(idx)}
+                    disabled={deletingId === idx}
+                    className="p-1.5 rounded-lg hover:bg-red-50 text-red-400 disabled:opacity-40"
+                    title="Delete"
+                  >
+                    {deletingId === idx ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-3.5 h-3.5" />
+                    )}
+                  </button>
+                </motion.div>
+              );
+            })}
           </AnimatePresence>
         )}
       </div>
