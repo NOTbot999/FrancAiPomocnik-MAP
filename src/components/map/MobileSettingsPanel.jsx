@@ -11,7 +11,6 @@ const DEFAULT_BUTTONS = [
   { id: "search",  label: "Search",      icon: Search },
   { id: "locate",  label: "My Location", icon: Locate },
   { id: "gps",     label: "GPS Track",   icon: Navigation },
-  { id: "tracks",  label: "My Tracks",   icon: Route },
   { id: "ruler",   label: "Ruler",       icon: Ruler },
 ];
 

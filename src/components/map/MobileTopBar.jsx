@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Layers, Locate, LoaderCircle, Plus, Minus, Ruler, Search, X, Pentagon, MapPin, Trash2, MousePointer2, Navigation, Route, Settings } from "lucide-react";
+import { Layers, Locate, LoaderCircle, Plus, Minus, Ruler, Search, Pentagon, MapPin, Trash2, MousePointer2, Navigation, Settings } from "lucide-react";
 import { useMap } from "react-leaflet";
 import { createPortal } from "react-dom";
 import SearchBar from "./SearchBar";
@@ -61,11 +61,7 @@ function MobileTopBarInner({
         <Navigation className="w-5 h-5" />
       </button>
     );
-    if (id === "tracks") return (
-      <button key="tracks" onClick={() => { setShowSettings(true); }} className={btnBase}>
-        <Route className="w-5 h-5" />
-      </button>
-    );
+
     if (id === "ruler") return (
       <button key="ruler" onClick={() => setShowRuler(p => !p)} className={`${btnBase} ${showRuler ? btnActive : ''}`}>
         <Ruler className="w-5 h-5" />
