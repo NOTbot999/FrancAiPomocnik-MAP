@@ -47,12 +47,10 @@ function MobileTopBarInner({
 
   const optionalButtons = prefs.order.map((id) => {
     if (!isVisible(id)) return null;
-
-    if (id === "search") return (
-      <button key="search" onClick={() => setShowSearch(p => !p)} className={`${btnBase} ${showSearch ? btnActive : ''}`}>
-        <Search className="w-5 h-5" />
-      </button>
-    );
+    // layers, zoom-in, zoom-out are rendered separately
+    if (id === "layers" || id === "zoom-in" || id === "zoom-out") return null;
+    // search is shown as persistent top bar when enabled
+    if (id === "search") return null;
     if (id === "locate") return (
       <button key="locate" onClick={handleLocate} disabled={locating} className={`${btnBase} disabled:opacity-60`}>
         {locating ? <LoaderCircle className="w-5 h-5 animate-spin" /> : <Locate className="w-5 h-5" />}
@@ -76,48 +74,69 @@ function MobileTopBarInner({
     return null;
   }).filter(Boolean);
 
+  const searchAlwaysVisible = isVisible("search");
+
   return createPortal(
     <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, zIndex: 950, pointerEvents: "none" }}>
 
-      {/* Right column */}
-      <div style={{ pointerEvents: "auto" }} className="absolute top-0 right-0 bottom-0 flex flex-col items-center gap-2 px-2 pt-3">
-        {/* Layers button — always visible */}
-        <button onClick={onTogglePanel} className={`${btnBase} relative ${isPanelOpen ? btnActive : ''}`}>
-          <Layers className="w-5 h-5" />
-          {activeLayerCount > 0 && (
-            <span className="absolute -top-1 -right-1 bg-emerald-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
-              {activeLayerCount}
-            </span>
-          )}
-        </button>
-
-        {/* Zoom controls — always visible */}
-        <button onClick={() => map.zoomIn()} className={btnBase}>
-          <Plus className="w-5 h-5" />
-        </button>
-        <button onClick={() => map.zoomOut()} className={btnBase}>
-          <Minus className="w-5 h-5" />
-        </button>
-
-        {/* Togglable buttons in user-defined order */}
-        {optionalButtons}
-
-        {/* Settings button — always at bottom */}
-        <div className="flex-1" />
-        <button onClick={() => setShowSettings(p => !p)} className={`${btnBase} mb-3 ${showSettings ? btnActive : ''}`}>
+      {/* Top-left: Settings button */}
+      <div style={{ pointerEvents: "auto" }} className="absolute top-3 left-3">
+        <button onClick={() => setShowSettings(p => !p)} className={`${btnBase} ${showSettings ? btnActive : ''}`}>
           <Settings className="w-5 h-5" />
         </button>
       </div>
 
-      {/* Search bar overlay */}
+      {/* Search bar — always visible if enabled, top center */}
+      {searchAlwaysVisible && (
+        <div style={{ pointerEvents: "auto" }} className="absolute top-3 left-14 right-14 z-[960]">
+          <SearchBar
+            onLocationSelect={(loc) => { onLocationSelect(loc); }}
+            autoFocus={false}
+          />
+        </div>
+      )}
+
+      {/* Right column */}
+      <div style={{ pointerEvents: "auto" }} className="absolute top-0 right-0 bottom-0 flex flex-col items-center gap-2 px-2 pt-3">
+        {/* Layers button — togglable */}
+        {isVisible("layers") && (
+          <button onClick={onTogglePanel} className={`${btnBase} relative ${isPanelOpen ? btnActive : ''}`}>
+            <Layers className="w-5 h-5" />
+            {activeLayerCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-emerald-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                {activeLayerCount}
+              </span>
+            )}
+          </button>
+        )}
+
+        {/* Zoom controls — togglable */}
+        {isVisible("zoom-in") && (
+          <button onClick={() => map.zoomIn()} className={btnBase}>
+            <Plus className="w-5 h-5" />
+          </button>
+        )}
+        {isVisible("zoom-out") && (
+          <button onClick={() => map.zoomOut()} className={btnBase}>
+            <Minus className="w-5 h-5" />
+          </button>
+        )}
+
+        {/* Togglable buttons in user-defined order (skip search since it's in top bar) */}
+        {optionalButtons}
+
+        <div className="flex-1" />
+      </div>
+
+      {/* Search bar overlay (when search button toggled manually, not from prefs) */}
       <AnimatePresence>
-        {showSearch && (
+        {!searchAlwaysVisible && showSearch && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             style={{ pointerEvents: "auto" }}
-            className="absolute top-3 left-3 right-14 z-[960]"
+            className="absolute top-3 left-14 right-14 z-[960]"
           >
             <SearchBar
               onLocationSelect={(loc) => { onLocationSelect(loc); setShowSearch(false); }}
