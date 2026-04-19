@@ -499,6 +499,51 @@ export const OVERLAY_CATEGORIES = [
         description: "Municipalities and statistical regions"
       }
     ]
+    // — POTI / ROUTES ————————————————————————
+{
+  id: "poti",
+  name: "Poti 🚴 🥾 🚂",
+  icon: "Map",
+  description: "Cycling routes, hiking trails, railways and roads",
+  layers: [
+    {
+      id: "cycling_routes",
+      name: "Kolesarske poti",
+      type: "tile",
+      url: "https://tile.waymarkedtrails.org/cycling/{z}/{x}/{y}.png",
+      transparent: true,
+      opacity: 0.9,
+      description: "Waymarked cycling routes overlay"
+    },
+    {
+      id: "hiking_routes",
+      name: "Pohodniške poti",
+      type: "tile",
+      url: "https://tile.waymarkedtrails.org/hiking/{z}/{x}/{y}.png",
+      transparent: true,
+      opacity: 0.9,
+      description: "Waymarked hiking trails overlay"
+    },
+    {
+      id: "railway_lines",
+      name: "Železnica",
+      type: "tile",
+      url: "https://tiles.openrailwaymap.org/standard/{z}/{x}/{y}.png",
+      transparent: true,
+      opacity: 0.9,
+      description: "OpenRailwayMap railway lines"
+    },
+    {
+      id: "opencyclemap",
+      name: "Ceste & Kolesarske (OCM)",
+      type: "tile",
+      url: "https://tile.thunderforest.com/cycle/{z}/{x}/{y}.png?apikey=pk.eyJ1IjoiIiwiYSI6IiJ9",
+      transparent: true,
+      opacity: 0.8,
+      description: "OpenCycleMap roads and cycling infrastructure"
+    }
+  ]
+
   }
 ];
 
