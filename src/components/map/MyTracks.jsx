@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Save, FolderOpen, Trash2, X, Loader2, Check, Route } from "lucide-react";
+import { Save, FolderOpen, Trash2, X, Loader2, Check, Route, Link2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import DeviceLink from "./DeviceLink";
 
 function calcDistance(track) {
   let total = 0;
@@ -25,12 +26,23 @@ function fmtDist(m) {
   return m < 1000 ? `${Math.round(m)} m` : `${(m / 1000).toFixed(2)} km`;
 }
 
+function getDeviceId() {
+  let id = localStorage.getItem("gis_device_id");
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem("gis_device_id", id);
+  }
+  return id;
+}
+
 export default function MyTracks({ gpsTrack, onLoadTrack, onClose }) {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
+  const [showDeviceLink, setShowDeviceLink] = useState(false);
+  const deviceId = getDeviceId();
 
   const loadSessions = async () => {
     setLoading(true);
@@ -72,10 +84,26 @@ export default function MyTracks({ gpsTrack, onLoadTrack, onClose }) {
           <Route className="w-4 h-4 text-emerald-500" />
           My GPS Tracks
         </div>
-        <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
-          <X className="w-4 h-4" />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setShowDeviceLink(p => !p)}
+            title="Link devices"
+            className={`p-1.5 rounded-lg transition ${showDeviceLink ? "text-emerald-500 bg-emerald-50" : "text-slate-400 hover:text-slate-600"}`}
+          >
+            <Link2 className="w-4 h-4" />
+          </button>
+          <button onClick={onClose} className="p-1.5 text-slate-400 hover:text-slate-600">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
       </div>
+
+      {/* Device Link panel */}
+      {showDeviceLink && (
+        <div className="px-4 py-3 border-b border-slate-100">
+          <DeviceLink deviceId={deviceId} onClose={() => setShowDeviceLink(false)} />
+        </div>
+      )}
 
       {/* Save current track */}
       <div className="px-4 py-3 border-b border-slate-100">

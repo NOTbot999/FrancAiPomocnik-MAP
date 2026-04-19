@@ -1,0 +1,51 @@
+{
+  "name": "GuestSession",
+  "type": "object",
+  "properties": {
+    "device_id": {
+      "type": "string",
+      "description": "Unique device identifier stored in localStorage"
+    },
+    "tracks": {
+      "type": "array",
+      "description": "Array of GPS track sessions",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "track_data": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            }
+          },
+          "distance_meters": {
+            "type": "number"
+          },
+          "saved_at": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "link_code": {
+      "type": "string",
+      "description": "6-digit one-time code for device linking"
+    },
+    "link_code_expires_at": {
+      "type": "string",
+      "description": "ISO timestamp when the link code expires"
+    }
+  },
+  "required": [
+    "device_id"
+  ]
+}
