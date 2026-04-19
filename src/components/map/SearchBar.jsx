@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Search, X, MapPin, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { base44 } from "@/api/base44Client";
 
 const TYPE_ICONS = {
   city: "🏙️", town: "🏘️", village: "🏡", hamlet: "🏠",
@@ -64,10 +65,12 @@ export default function SearchBar({ onLocationSelect }) {
     }
     setIsSearching(true);
     try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=12&addressdetails=1&countrycodes=si&featuretype=country,state,city,settlement,road,suburb,neighbourhood,quarter,hamlet,village,town,county`
-      );
-      const data = await res.json();
+      const res = await base44.functions.invoke("googleMaps", { action: "geocode", query: q });
+      const data = (res.data.results || []).map(r => ({
+        ...r,
+        lon: r.lon ?? r.lng,
+        lat: String(r.lat),
+      }));
       setResults(data);
       setIsOpen(true);
     } catch (e) {
@@ -96,9 +99,9 @@ export default function SearchBar({ onLocationSelect }) {
   const handleSelect = (item) => {
     onLocationSelect({
       lat: parseFloat(item.lat),
-      lng: parseFloat(item.lon),
+      lng: parseFloat(item.lon ?? item.lng),
       name: item.display_name,
-      zoom: item.type === "city" || item.type === "town" ? 13 : 16
+      zoom: 15,
     });
     setQuery(item.display_name.split(",")[0]);
     setIsOpen(false);

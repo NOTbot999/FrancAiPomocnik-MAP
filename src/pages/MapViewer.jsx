@@ -7,6 +7,7 @@ import MiniToolbar from "@/components/map/MiniToolbar";
 import MobileTopBar from "@/components/map/MobileTopBar";
 import SaveLoadDrawings from "@/components/map/SaveLoadDrawings";
 import MyTracks from "@/components/map/MyTracks";
+import NavigationPanel from "@/components/map/NavigationPanel";
 import { OVERLAY_CATEGORIES } from "@/components/map/layerConfig";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -102,6 +103,13 @@ export default function MapViewer() {
     setShowMyTracks(false);
   }, []);
 
+  const [routePolyline, setRoutePolyline] = useState(null);
+  const [isNavOpen, setIsNavOpen] = useState(false);
+
+  const handleRouteResult = useCallback((data) => {
+    setRoutePolyline(data ? data.polyline : null);
+  }, []);
+
   const activeLayerCount = Object.keys(activeLayers).length;
   const isMobile = useIsMobile();
 
@@ -115,6 +123,7 @@ export default function MapViewer() {
         onMeasurement={setMeasurements}
         drawings={drawings}
         setDrawings={setDrawings}
+        routePolyline={routePolyline}
         showZoomControls={!isMobile}
         mobileProps={isMobile ? {
           onTogglePanel: () => setIsPanelOpen(p => !p),
@@ -224,6 +233,14 @@ export default function MapViewer() {
         activeLayers={activeLayers}
         onToggleLayer={handleToggleLayer}
         onOpacityChange={handleOpacityChange}
+      />
+
+      {/* Navigation Panel — available on both mobile and desktop */}
+      <NavigationPanel
+        onRouteResult={handleRouteResult}
+        isOpen={isNavOpen}
+        onToggle={() => setIsNavOpen(p => !p)}
+        onClose={() => setIsNavOpen(false)}
       />
 
       {/* App title watermark */}

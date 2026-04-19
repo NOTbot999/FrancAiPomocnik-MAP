@@ -210,6 +210,7 @@ export default function MapContainerComponent({
   onMeasurement,
   drawings,
   setDrawings,
+  routePolyline,
   showZoomControls = true,
   mobileProps,
   gpsTracking,
@@ -309,6 +310,9 @@ export default function MapContainerComponent({
           onTrackUpdate={gpsTracking.onTrackUpdate}
           followLocation={gpsTracking.isTracking}
         />
+      )}
+      {routePolyline && routePolyline.length > 0 && (
+        <Polyline positions={routePolyline} color="#2563eb" weight={5} opacity={0.85} />
       )}
       <FlyToLocation location={flyToLocation} />
       <CoordsDisplay />
