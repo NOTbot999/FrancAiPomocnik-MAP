@@ -12,6 +12,7 @@ const DEFAULT_BUTTONS = [
   { id: "locate",  label: "My Location", icon: Locate },
   { id: "gps",     label: "GPS Track",   icon: Navigation },
   { id: "ruler",   label: "Ruler",       icon: Ruler },
+  { id: "nav",     label: "Navigation",  icon: Route },
 ];
 
 function loadPrefs() {

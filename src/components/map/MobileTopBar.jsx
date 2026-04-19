@@ -129,15 +129,17 @@ function MobileTopBarInner({
         {/* Togglable buttons in user-defined order (skip search since it's in top bar) */}
         {optionalButtons}
 
-        {/* Route / Navigation button */}
-        <button
-          onClick={() => setShowNav(p => !p)}
-          style={btnStyle}
-          className={`${btnBase} ${showNav ? btnActive : ''}`}
-          title="Route Planner"
-        >
-          <Route style={iconStyle} />
-        </button>
+        {/* Route / Navigation button — togglable via settings */}
+        {isVisible("nav") && (
+          <button
+            onClick={() => setShowNav(p => !p)}
+            style={btnStyle}
+            className={`${btnBase} ${showNav ? btnActive : ''}`}
+            title="Route Planner"
+          >
+            <Route style={iconStyle} />
+          </button>
+        )}
 
         <div className="flex-1" />
       </div>
