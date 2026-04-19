@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-
-import { Navigation, Plus, Trash2, X, ChevronDown, ChevronUp, Loader2, Route } from "lucide-react";
+import React, { useState } from "react";
+import { Navigation, Plus, Trash2, X, Loader2, Route } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 function PointInput({ label, value, onChange, onClear }) {
@@ -152,18 +152,7 @@ export default function NavigationPanel({ onRouteResult, onClose, isOpen, onTogg
   };
 
   return (
-    <div className="absolute bottom-16 left-2 z-[960]" style={{ pointerEvents: "auto" }}>
-      {/* Toggle button */}
-      <button
-        onClick={onToggle}
-        className={`flex items-center gap-1.5 px-3 py-2 rounded-xl shadow-lg border text-xs font-semibold transition-all ${
-          isOpen ? "bg-emerald-500 text-white border-emerald-500" : "bg-white/95 backdrop-blur-xl text-slate-700 border-slate-200/50"
-        }`}
-      >
-        <Route className="w-4 h-4" />
-        Navigate
-      </button>
-
+    <div className="absolute bottom-16 right-36 z-[960]" style={{ pointerEvents: "auto" }}>
       <AnimatePresence>
         {isOpen && (
           <motion.div

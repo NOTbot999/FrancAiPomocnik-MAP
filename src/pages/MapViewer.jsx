@@ -207,6 +207,8 @@ export default function MapViewer() {
               onLocate={setFlyToLocation}
               isGpsTracking={isGpsTracking}
               onGpsToggle={handleGpsToggle}
+              isNavOpen={isNavOpen}
+              onNavToggle={() => setIsNavOpen(p => !p)}
             />
           </div>
         </>
