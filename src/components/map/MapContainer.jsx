@@ -13,6 +13,7 @@ import {
 import ZoomControls from "./ZoomControls";
 import MobileTopBar from "./MobileTopBar";
 import GpsTracker from "./GpsTracker";
+import MyLocationDot from "./MyLocationDot";
 import { BASE_LAYERS, OVERLAY_CATEGORIES, SLOVENIA_CENTER, DEFAULT_ZOOM } from "./layerConfig";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
@@ -212,6 +213,7 @@ export default function MapContainerComponent({
   showZoomControls = true,
   mobileProps,
   gpsTracking,
+  locateTrigger,
 }) {
   const allLayers = getAllLayersFlat();
   const activeBaseLayerEntries = activeBaseLayers
@@ -299,6 +301,7 @@ export default function MapContainerComponent({
 
       {showZoomControls && <ZoomControls />}
       {mobileProps && <MobileTopBar {...mobileProps} />}
+      <MyLocationDot trigger={locateTrigger} />
       {gpsTracking && (
         <GpsTracker
           isTracking={gpsTracking.isTracking}

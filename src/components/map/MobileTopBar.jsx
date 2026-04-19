@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { Layers, Locate, LoaderCircle, Plus, Minus, Ruler, Search, X, Pentagon, MapPin, Trash2, MousePointer2, Navigation, EyeOff, Eye, Route } from "lucide-react";
+import { Layers, Locate, LoaderCircle, Plus, Minus, Ruler, Search, X, Pentagon, MapPin, Trash2, MousePointer2, Navigation, EyeOff, Eye, Route, Settings } from "lucide-react";
 import { useMap } from "react-leaflet";
 import { createPortal } from "react-dom";
 import SearchBar from "./SearchBar";
+import MobileSettingsPanel, { useMobileButtonPrefs } from "./MobileSettingsPanel";
 import { AnimatePresence, motion } from "framer-motion";
 
 const TOOLS = [
@@ -20,6 +21,8 @@ function MobileTopBarInner({ onTogglePanel, isPanelOpen, activeLayerCount, onLoc
   const [showSearch, setShowSearch] = useState(false);
   const [showRuler, setShowRuler] = useState(false);
   const [uiHidden, setUiHidden] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [prefs, setPrefs] = useMobileButtonPrefs();
 
   const handleLocate = () => {
     if (!navigator.geolocation) return;
@@ -36,12 +39,45 @@ function MobileTopBarInner({ onTogglePanel, isPanelOpen, activeLayerCount, onLoc
   const btnBase = "p-2.5 rounded-xl bg-white/95 backdrop-blur-xl text-slate-700 border border-slate-200/50 shadow-md transition-all duration-200 flex items-center justify-center";
   const btnActive = "bg-emerald-500 text-white border-emerald-500 shadow-emerald-500/30";
 
+  const isVisible = (id) => !prefs.hidden.includes(id);
+
+  // Ordered optional buttons
+  const optionalButtons = prefs.order.map((id) => {
+    if (!isVisible(id)) return null;
+    if (id === "search") return (
+      <button key="search" onClick={() => setShowSearch(true)} className={btnBase}>
+        <Search className="w-5 h-5" />
+      </button>
+    );
+    if (id === "locate") return (
+      <button key="locate" onClick={handleLocate} disabled={locating} className={`${btnBase} disabled:opacity-60`}>
+        {locating ? <LoaderCircle className="w-5 h-5 animate-spin" /> : <Locate className="w-5 h-5" />}
+      </button>
+    );
+    if (id === "gps") return (
+      <button key="gps" onClick={onGpsToggle} className={`${btnBase} ${isGpsTracking ? btnActive : ''}`}>
+        <Navigation className="w-5 h-5" />
+      </button>
+    );
+    if (id === "tracks") return (
+      <button key="tracks" onClick={onShowTracks} className={btnBase}>
+        <Route className="w-5 h-5" />
+      </button>
+    );
+    if (id === "ruler") return (
+      <button key="ruler" onClick={() => setShowRuler(p => !p)} className={`${btnBase} ${showRuler ? btnActive : ''}`}>
+        <Ruler className="w-5 h-5" />
+      </button>
+    );
+    return null;
+  }).filter(Boolean);
+
   return createPortal(
     <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, zIndex: 950, pointerEvents: "none" }}>
 
       {/* Hide/Show toggle — always visible */}
       <button
-        onClick={() => { setUiHidden(p => !p); setShowSearch(false); setShowRuler(false); }}
+        onClick={() => { setUiHidden(p => !p); setShowSearch(false); setShowRuler(false); setShowSettings(false); }}
         style={{ pointerEvents: "auto" }}
         className="absolute top-3 left-3 p-2.5 rounded-xl bg-white/95 backdrop-blur-xl text-slate-700 border border-slate-200/50 shadow-md"
       >
@@ -57,6 +93,7 @@ function MobileTopBarInner({ onTogglePanel, isPanelOpen, activeLayerCount, onLoc
             </button>
           ) : (
             <>
+              {/* Always-visible: Layers */}
               <button onClick={onTogglePanel} className={`${btnBase} relative ${isPanelOpen ? btnActive : ''}`}>
                 <Layers className="w-5 h-5" />
                 {activeLayerCount > 0 && (
@@ -65,30 +102,34 @@ function MobileTopBarInner({ onTogglePanel, isPanelOpen, activeLayerCount, onLoc
                   </span>
                 )}
               </button>
-              <button onClick={() => setShowSearch(true)} className={btnBase}>
-                <Search className="w-5 h-5" />
+
+              {/* Settings button */}
+              <button onClick={() => setShowSettings(p => !p)} className={`${btnBase} ${showSettings ? btnActive : ''}`}>
+                <Settings className="w-5 h-5" />
               </button>
-              <button onClick={handleLocate} disabled={locating} className={`${btnBase} disabled:opacity-60`}>
-                {locating ? <LoaderCircle className="w-5 h-5 animate-spin" /> : <Locate className="w-5 h-5" />}
-              </button>
-              <button onClick={onGpsToggle} className={`${btnBase} ${isGpsTracking ? btnActive : ''}`}>
-                <Navigation className="w-5 h-5" />
-              </button>
-              <button onClick={onShowTracks} className={btnBase}>
-                <Route className="w-5 h-5" />
-              </button>
+
+              {/* Optional buttons (user-controlled order & visibility) */}
+              {optionalButtons}
+
+              {/* Always-visible: Zoom */}
               <button onClick={() => map.zoomIn()} className={btnBase}>
                 <Plus className="w-5 h-5" />
               </button>
               <button onClick={() => map.zoomOut()} className={btnBase}>
                 <Minus className="w-5 h-5" />
               </button>
-              <button onClick={() => setShowRuler(p => !p)} className={`${btnBase} ${showRuler ? btnActive : ''}`}>
-                <Ruler className="w-5 h-5" />
-              </button>
             </>
           )}
         </div>
+      )}
+
+      {/* Settings panel */}
+      {!uiHidden && showSettings && (
+        <MobileSettingsPanel
+          onClose={() => setShowSettings(false)}
+          prefs={prefs}
+          setPrefs={setPrefs}
+        />
       )}
 
       {/* Search bar overlay */}

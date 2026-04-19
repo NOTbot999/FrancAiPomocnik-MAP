@@ -22,6 +22,12 @@ export default function MapViewer() {
   const [gpsTrack, setGpsTrack] = useState([]);
   const [isGpsTracking, setIsGpsTracking] = useState(false);
   const [showMyTracks, setShowMyTracks] = useState(false);
+  const [locateTrigger, setLocateTrigger] = useState(0);
+
+  const handleLocate = useCallback((loc) => {
+    setFlyToLocation(loc);
+    setLocateTrigger(t => t + 1);
+  }, []);
   const handleToggleLayer = useCallback((layerId) => {
     setActiveLayers(prev => {
       if (prev[layerId]) {
@@ -114,7 +120,7 @@ export default function MapViewer() {
           onTogglePanel: () => setIsPanelOpen(p => !p),
           isPanelOpen,
           activeLayerCount,
-          onLocate: setFlyToLocation,
+          onLocate: handleLocate,
           activeTool,
           onToolChange: setActiveTool,
           onClear: handleClearDrawings,
@@ -123,6 +129,7 @@ export default function MapViewer() {
           onGpsToggle: handleGpsToggle,
           onShowTracks: () => setShowMyTracks(p => !p),
         } : null}
+        locateTrigger={locateTrigger}
         gpsTracking={{
           isTracking: isGpsTracking,
           track: gpsTrack,
@@ -138,7 +145,7 @@ export default function MapViewer() {
             <MiniToolbar
               onTogglePanel={() => setIsPanelOpen(p => !p)}
               isPanelOpen={isPanelOpen}
-              onLocate={setFlyToLocation}
+              onLocate={handleLocate}
             />
             {activeLayerCount > 0 && (
               <div className="mt-2 bg-emerald-500/90 backdrop-blur-sm text-white text-xs font-bold px-3 py-2 rounded-xl shadow-lg text-center">
@@ -149,7 +156,7 @@ export default function MapViewer() {
 
           {/* Search bar — centered top */}
           <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[950] w-full max-w-md px-4">
-            <SearchBar onLocationSelect={(loc) => setFlyToLocation(loc)} />
+            <SearchBar onLocationSelect={(loc) => handleLocate(loc)} />
           </div>
 
           {/* My Tracks panel */}
