@@ -1,7 +1,8 @@
-import React, { useState } from "react";
-import { Layers, X, Building2, Droplets, Trees, CloudSun, MapPin, Wheat, Mountain, History, Landmark, ExternalLink, ChevronDown, Map } from "lucide-react";
+import React, { useState, useCallback } from "react";
+import { Layers, X, Building2, Droplets, Trees, CloudSun, MapPin, Wheat, Mountain, History, Landmark, ExternalLink, ChevronDown, Map, GripVertical } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { motion, AnimatePresence } from "framer-motion";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { OVERLAY_CATEGORIES, BASE_LAYERS } from "./layerConfig";
 import LayerCategory from "./LayerCategory";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -104,30 +105,144 @@ function BaseMapCategory({ activeBaseLayers, onToggleBaseLayer, onBaseOpacityCha
 
 }
 
-function PanelContent({ activeBaseLayers, onToggleBaseLayer, onBaseOpacityChange, activeLayers, onToggleLayer, onOpacityChange }) {
+function FavoritesCategory({ favoriteLayerIds, allCategories, activeLayers, onToggleLayer, onOpacityChange, onToggleFavorite }) {
+  const [isOpen, setIsOpen] = useState(true);
+  if (favoriteLayerIds.length === 0) return null;
+
+  // Collect all favorite layer objects
+  const favLayers = [];
+  for (const cat of allCategories) {
+    for (const layer of cat.layers) {
+      if (favoriteLayerIds.includes(layer.id)) {
+        favLayers.push({ ...layer, _categoryId: cat.id, _categoryName: cat.name });
+      }
+    }
+  }
+  if (favLayers.length === 0) return null;
+
+  return (
+    <div className="border-b border-slate-700/50">
+      <button onClick={() => setIsOpen(p => !p)} className="w-full flex items-center gap-2.5 px-4 py-3 hover:bg-slate-700/30 transition-colors">
+        <span className="text-base leading-none shrink-0">❤️</span>
+        <span className="text-sm font-medium text-slate-200 flex-1 text-left">Favorite ❤️</span>
+        {favLayers.filter(l => activeLayers[l.id]).length > 0 && (
+          <span className="text-[10px] font-bold bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded-full">
+            {favLayers.filter(l => activeLayers[l.id]).length}
+          </span>
+        )}
+        <ChevronDown className={`w-3.5 h-3.5 text-slate-500 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
+            <div className="px-3 pb-3 space-y-1.5">
+              {favLayers.map((layer) => {
+                const isActive = activeLayers[layer.id];
+                return (
+                  <div key={layer.id} className="group">
+                    <div className={`flex items-center gap-2.5 px-2 py-1.5 rounded-lg transition-colors ${isActive ? 'bg-slate-700/50' : 'hover:bg-slate-700/30'}`}>
+                      <div className={`w-10 h-7 rounded overflow-hidden shrink-0 border ${isActive ? 'border-emerald-500/60' : 'border-slate-600/40'}`}>
+                        <div className={`w-full h-full flex items-center justify-center text-[9px] font-bold ${isActive ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-700 text-slate-500'}`}>
+                          {layer.name.charAt(0)}
+                        </div>
+                      </div>
+                      <span className="text-slate-200 text-xs leading-tight flex-1">{layer.name}</span>
+                      <span className="text-[9px] text-slate-500">{layer._categoryName}</span>
+                      <button onClick={() => onToggleFavorite(layer.id)} className="shrink-0 text-base leading-none hover:scale-125 transition-transform">❤️</button>
+                      <button
+                        onClick={() => onToggleLayer(layer.id)}
+                        className={`shrink-0 px-2 py-0.5 rounded text-[10px] font-bold transition-all ${isActive ? 'bg-emerald-500 text-white' : 'bg-slate-700 text-slate-400 hover:bg-slate-600'}`}
+                      >
+                        {isActive ? 'ON' : 'OFF'}
+                      </button>
+                    </div>
+                    {isActive && (
+                      <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} className="px-3 pb-1 pt-0.5">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] text-slate-500 w-8">{Math.round((activeLayers[layer.id]?.opacity ?? layer.opacity) * 100)}%</span>
+                          <Slider value={[Math.round((activeLayers[layer.id]?.opacity ?? layer.opacity) * 100)]} onValueChange={([v]) => onOpacityChange(layer.id, v / 100)} max={100} min={0} step={5} className="flex-1" />
+                        </div>
+                      </motion.div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function PanelContent({ activeBaseLayers, onToggleBaseLayer, onBaseOpacityChange, activeLayers, onToggleLayer, onOpacityChange, favorites, onToggleFavorite, categoryOrder, onCategoryDragEnd }) {
   return (
     <div className="pt-2 pb-4">
       <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1 px-4">Layers</p>
-      {/* Base map first */}
+
+      {/* Favorites group — above Base Map */}
+      <FavoritesCategory
+        favoriteLayerIds={favorites}
+        allCategories={OVERLAY_CATEGORIES}
+        activeLayers={activeLayers}
+        onToggleLayer={onToggleLayer}
+        onOpacityChange={onOpacityChange}
+        onToggleFavorite={(id) => onToggleFavorite(id)}
+      />
+
+      {/* Base map */}
       <BaseMapCategory
         activeBaseLayers={activeBaseLayers}
         onToggleBaseLayer={onToggleBaseLayer}
         onBaseOpacityChange={onBaseOpacityChange} />
-      
-      {/* Data overlay categories */}
-      {OVERLAY_CATEGORIES.map((category) =>
-      <LayerCategory
-        key={category.id}
-        category={category}
-        activeLayers={activeLayers}
-        onToggleLayer={onToggleLayer}
-        onOpacityChange={onOpacityChange}
-        iconComponent={ICON_MAP[category.icon]}
-        thumbnail={CATEGORY_THUMBNAILS[category.id]} />
 
-      )}
-    </div>);
-
+      {/* Reorderable data overlay categories */}
+      <DragDropContext onDragEnd={onCategoryDragEnd}>
+        <Droppable droppableId="categories">
+          {(provided) => (
+            <div ref={provided.innerRef} {...provided.droppableProps}>
+              {categoryOrder.map((catId, index) => {
+                const category = OVERLAY_CATEGORIES.find(c => c.id === catId);
+                if (!category) return null;
+                return (
+                  <Draggable key={catId} draggableId={catId} index={index}>
+                    {(prov, snapshot) => (
+                      <div
+                        ref={prov.innerRef}
+                        {...prov.draggableProps}
+                        className={`relative ${snapshot.isDragging ? 'opacity-90 shadow-xl z-50' : ''}`}
+                      >
+                        {/* Drag handle — visible strip on the left */}
+                        <div
+                          {...prov.dragHandleProps}
+                          className="absolute left-0 top-0 bottom-0 w-6 flex items-center justify-center cursor-grab active:cursor-grabbing z-10 hover:bg-slate-700/40 transition-colors"
+                        >
+                          <GripVertical className="w-3.5 h-3.5 text-slate-600" />
+                        </div>
+                        <div className="pl-6">
+                          <LayerCategory
+                            category={category}
+                            activeLayers={activeLayers}
+                            onToggleLayer={onToggleLayer}
+                            onOpacityChange={onOpacityChange}
+                            iconComponent={ICON_MAP[category.icon]}
+                            thumbnail={CATEGORY_THUMBNAILS[category.id]}
+                            favorites={favorites}
+                            onToggleFavorite={(layerId, layerName, catId, catName) => onToggleFavorite(layerId, layerName, catId, catName)}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </Draggable>
+                );
+              })}
+              {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
+      </DragDropContext>
+    </div>
+  );
 }
 
 export default function LayerPanel({
@@ -141,6 +256,30 @@ export default function LayerPanel({
   onOpacityChange
 }) {
   const isMobile = useIsMobile();
+  const [favorites, setFavorites] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("layerFavorites") || "[]"); } catch { return []; }
+  });
+  const [categoryOrder, setCategoryOrder] = useState(() => OVERLAY_CATEGORIES.map(c => c.id));
+
+  const handleToggleFavorite = useCallback((layerId) => {
+    setFavorites(prev => {
+      const next = prev.includes(layerId) ? prev.filter(id => id !== layerId) : [...prev, layerId];
+      localStorage.setItem("layerFavorites", JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
+  const handleCategoryDragEnd = useCallback((result) => {
+    if (!result.destination) return;
+    setCategoryOrder(prev => {
+      const next = [...prev];
+      const [moved] = next.splice(result.source.index, 1);
+      next.splice(result.destination.index, 0, moved);
+      return next;
+    });
+  }, []);
+
+  const panelProps = { activeBaseLayers, onToggleBaseLayer, onBaseOpacityChange, activeLayers, onToggleLayer, onOpacityChange, favorites, onToggleFavorite: handleToggleFavorite, categoryOrder, onCategoryDragEnd: handleCategoryDragEnd };
 
   if (isMobile) {
     return (
@@ -176,14 +315,7 @@ export default function LayerPanel({
                 </button>
               </div>
               <ScrollArea className="flex-1 min-h-0">
-                <PanelContent
-                activeBaseLayers={activeBaseLayers}
-                onToggleBaseLayer={onToggleBaseLayer}
-                onBaseOpacityChange={onBaseOpacityChange}
-                activeLayers={activeLayers}
-                onToggleLayer={onToggleLayer}
-                onOpacityChange={onOpacityChange} />
-              
+                <PanelContent {...panelProps} />
               </ScrollArea>
             </motion.div>
           </>
@@ -213,14 +345,7 @@ export default function LayerPanel({
             </button>
           </div>
           <ScrollArea className="flex-1">
-            <PanelContent
-            activeBaseLayers={activeBaseLayers}
-            onToggleBaseLayer={onToggleBaseLayer}
-            onBaseOpacityChange={onBaseOpacityChange}
-            activeLayers={activeLayers}
-            onToggleLayer={onToggleLayer}
-            onOpacityChange={onOpacityChange} />
-          
+            <PanelContent {...panelProps} />
           </ScrollArea>
           <div className="px-4 py-3 border-t border-slate-700/50 space-y-1.5">
             <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">External Tools</p>

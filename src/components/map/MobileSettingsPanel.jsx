@@ -113,25 +113,25 @@ export default function MobileSettingsPanel({ onClose, prefs, setPrefs, gpsTrack
                       <div
                         ref={prov.innerRef}
                         {...prov.draggableProps}
-                        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all mb-0.5 ${
+                        {...prov.dragHandleProps}
+                        className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all mb-0.5 cursor-grab active:cursor-grabbing select-none ${
                           snapshot.isDragging ? "bg-white shadow-lg" : "bg-slate-50 hover:bg-white"
                         }`}
                       >
-                        <div {...prov.dragHandleProps} className="text-slate-300 cursor-grab active:cursor-grabbing">
-                          <GripVertical className="w-4 h-4" />
-                        </div>
-                        <Icon className={`w-4 h-4 ${isVisible ? "text-slate-600" : "text-slate-300"}`} />
+                        <GripVertical className="w-5 h-5 text-slate-300 shrink-0" />
+                        <Icon className={`w-4 h-4 shrink-0 ${isVisible ? "text-slate-600" : "text-slate-300"}`} />
                         <span className={`flex-1 text-xs font-medium ${isVisible ? "text-slate-600" : "text-slate-300"}`}>
                           {btn.label}
                         </span>
-                        {/* Toggle */}
+                        {/* Toggle — stop propagation so tap doesn't trigger drag */}
                         <button
-                          onClick={() => toggleHidden(btn.id)}
-                          className={`w-9 h-5 rounded-full transition-colors relative flex-shrink-0 ${
+                          onPointerDown={(e) => e.stopPropagation()}
+                          onClick={(e) => { e.stopPropagation(); toggleHidden(btn.id); }}
+                          className={`w-10 h-6 rounded-full transition-colors relative flex-shrink-0 ${
                             isVisible ? "bg-emerald-500" : "bg-slate-300"
                           }`}
                         >
-                          <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${
+                          <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all ${
                             isVisible ? "left-[18px]" : "left-0.5"
                           }`} />
                         </button>

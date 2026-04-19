@@ -5,7 +5,7 @@ import { Slider } from "@/components/ui/slider";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { base44 } from "@/api/base44Client";
 
-export default function LayerCategory({ category, activeLayers, onToggleLayer, onOpacityChange, iconComponent, thumbnail }) {
+export default function LayerCategory({ category, activeLayers, onToggleLayer, onOpacityChange, iconComponent, thumbnail, favorites = [], onToggleFavorite }) {
   const Icon = iconComponent;
   const [isOpen, setIsOpen] = useState(false);
 
@@ -81,6 +81,17 @@ export default function LayerCategory({ category, activeLayers, onToggleLayer, o
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
+
+                      {/* Favorite button */}
+                      {onToggleFavorite && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); onToggleFavorite(layer.id, layer.name, category.id, category.name); }}
+                          className="shrink-0 text-base leading-none hover:scale-125 transition-transform"
+                          title="Add to Favorites"
+                        >
+                          {favorites.includes(layer.id) ? "❤️" : "🤍"}
+                        </button>
+                      )}
 
                       {/* Toggle button */}
                       <button
