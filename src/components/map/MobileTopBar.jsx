@@ -84,7 +84,7 @@ function MobileTopBarInner({
 
       {/* Search bar — always visible if enabled, top center */}
       {searchAlwaysVisible && (
-        <div style={{ pointerEvents: "auto" }} className="absolute top-3 left-14 right-14 z-[960]">
+        <div style={{ pointerEvents: "auto" }} className="absolute top-3 left-3 right-14 z-[960]">
           <SearchBar
             onLocationSelect={(loc) => { onLocationSelect(loc); }}
             autoFocus={false}
@@ -137,7 +137,7 @@ function MobileTopBarInner({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             style={{ pointerEvents: "auto" }}
-            className="absolute top-3 left-14 right-14 z-[960]"
+            className="absolute top-3 left-3 right-14 z-[960]"
           >
             <SearchBar
               onLocationSelect={(loc) => { onLocationSelect(loc); setShowSearch(false); }}
