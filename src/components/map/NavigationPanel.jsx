@@ -177,6 +177,7 @@ export default function NavigationPanel({ onRouteResult, onClose, isOpen, onTogg
             transition={{ duration: 0.15 }}
             className="mt-1.5 w-72 bg-white/97 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/60 overflow-hidden"
           >
+
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
               <span className="text-sm font-semibold text-slate-800 flex items-center gap-2">
                 <Navigation className="w-4 h-4 text-emerald-500" /> Route Planner

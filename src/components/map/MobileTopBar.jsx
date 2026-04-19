@@ -1,11 +1,12 @@
 import React, { useState } from "react";
-import { Layers, Locate, LoaderCircle, Plus, Minus, Ruler, Search, Pentagon, MapPin, Trash2, MousePointer2, Navigation, Settings, Route } from "lucide-react";
+import { Layers, Locate, LoaderCircle, Plus, Minus, Ruler, Search, Pentagon, MapPin, Trash2, MousePointer2, Navigation, Settings, Route, WifiOff } from "lucide-react";
 import { useMap } from "react-leaflet";
 import { createPortal } from "react-dom";
 import SearchBar from "./SearchBar";
 import MobileSettingsPanel, { useMobileButtonPrefs } from "./MobileSettingsPanel";
 import { AnimatePresence, motion } from "framer-motion";
 import NavigationPanel from "./NavigationPanel";
+import OfflineManager from "./OfflineManager";
 
 const TOOLS = [
   { id: "pointer", icon: MousePointer2, label: "Select" },
@@ -29,6 +30,7 @@ function MobileTopBarInner({
   const [showRuler, setShowRuler] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showNav, setShowNav] = useState(false);
+  const [showOffline, setShowOffline] = useState(false);
   const [prefs, setPrefs] = useMobileButtonPrefs();
 
   const handleLocate = () => {
@@ -73,6 +75,11 @@ function MobileTopBarInner({
     if (id === "ruler") return (
       <button key="ruler" onClick={() => setShowRuler(p => !p)} style={btnStyle} className={`${btnBase} ${showRuler ? btnActive : ''}`}>
         <Ruler style={iconStyle} />
+      </button>
+    );
+    if (id === "offline") return (
+      <button key="offline" onClick={() => setShowOffline(p => !p)} style={btnStyle} className={`${btnBase} ${showOffline ? btnActive : ''}`}>
+        <WifiOff style={iconStyle} />
       </button>
     );
     return null;
@@ -173,15 +180,40 @@ function MobileTopBarInner({
         />
       )}
 
-      {/* Navigation Panel for mobile */}
-      <div style={{ pointerEvents: "auto" }} className="absolute bottom-4 right-14">
-        <NavigationPanel
-          onRouteResult={onRouteResult || (() => {})}
-          isOpen={showNav}
-          onToggle={() => setShowNav(p => !p)}
-          onClose={() => setShowNav(false)}
-        />
-      </div>
+      {/* Navigation Panel for mobile — positioned like settings panel */}
+      <AnimatePresence>
+        {showNav && (
+          <motion.div
+            initial={{ opacity: 0, x: 10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 10 }}
+            style={{ pointerEvents: "auto" }}
+            className="absolute top-3 right-14 z-[970] w-72"
+          >
+            <NavigationPanel
+              onRouteResult={onRouteResult || (() => {})}
+              isOpen={true}
+              onToggle={() => setShowNav(p => !p)}
+              onClose={() => setShowNav(false)}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Offline Manager for mobile — same position style as settings panel */}
+      <AnimatePresence>
+        {showOffline && (
+          <motion.div
+            initial={{ opacity: 0, x: 10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 10 }}
+            style={{ pointerEvents: "auto" }}
+            className="absolute top-3 right-14 z-[970] w-72"
+          >
+            <OfflineManager onClose={() => setShowOffline(false)} />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Ruler tool strip */}
       <AnimatePresence>
