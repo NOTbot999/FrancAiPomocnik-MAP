@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import React, { useState } from "react";
 import { Navigation, Plus, Trash2, X, Loader2, Route } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
