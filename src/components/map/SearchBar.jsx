@@ -2,18 +2,59 @@ import React, { useState, useRef, useEffect } from "react";
 import { Search, X, MapPin, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
+const TYPE_ICONS = {
+  city: "🏙️", town: "🏘️", village: "🏡", hamlet: "🏠",
+  suburb: "📍", neighbourhood: "📍", quarter: "📍",
+  road: "🛣️", street: "🛣️", path: "🛤️",
+  peak: "⛰️", mountain: "⛰️", hill: "⛰️",
+  lake: "🌊", river: "🌊", water: "🌊",
+  forest: "🌲", park: "🌳", nature_reserve: "🌿",
+  county: "🗺️", state: "🗺️", country: "🌍",
+  restaurant: "🍽️", hotel: "🏨", museum: "🏛️",
+  church: "⛪", castle: "🏰", monument: "🗿",
+};
+
+function getTypeIcon(item) {
+  const t = item.type || item.class || "";
+  return TYPE_ICONS[t] || "📌";
+}
+
+function getSubtitle(item) {
+  const parts = item.display_name.split(",").map(s => s.trim());
+  // Skip first part (main name), return next 2-3 meaningful parts
+  return parts.slice(1, 4).filter(Boolean).join(", ");
+}
+
+function getTypeLabel(item) {
+  const t = item.type || item.class || "";
+  return t.replace(/_/g, " ");
+}
+
 export default function SearchBar({ onLocationSelect }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [highlighted, setHighlighted] = useState(-1);
   const inputRef = useRef(null);
   const timeoutRef = useRef(null);
+  const containerRef = useRef(null);
 
   useEffect(() => {
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
+  }, []);
+
+  // Close on outside click
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
   const searchLocation = async (q) => {
@@ -24,7 +65,7 @@ export default function SearchBar({ onLocationSelect }) {
     setIsSearching(true);
     try {
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q + " Slovenia")}&limit=6&addressdetails=1&countrycodes=si`
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=12&addressdetails=1&countrycodes=si&featuretype=country,state,city,settlement,road,suburb,neighbourhood,quarter,hamlet,village,town,county`
       );
       const data = await res.json();
       setResults(data);
