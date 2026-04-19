@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { GripVertical, Search, Locate, Navigation, Route, Ruler, X, Link2, ChevronDown, ChevronUp, Layers, Plus } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
 import MyTracks from "./MyTracks";
 import DeviceLink from "./DeviceLink";
 
@@ -28,7 +29,7 @@ function loadPrefs() {
       return p;
     }
   } catch {}
-  return { order: DEFAULT_BUTTONS.map(b => b.id), hidden: ["layers", "zoom"] };
+  return { order: DEFAULT_BUTTONS.map(b => b.id), hidden: ["layers", "zoom"], buttonScale: 1.0 };
 }
 
 function savePrefs(prefs) {
@@ -142,6 +143,30 @@ export default function MobileSettingsPanel({ onClose, prefs, setPrefs, gpsTrack
           )}
         </Droppable>
       </DragDropContext>
+
+      {/* Divider */}
+      <div className="mx-4 border-t border-slate-200 my-2" />
+
+      {/* Button size slider */}
+      <div className="px-4 pb-2">
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Button Size</p>
+          <span className="text-[10px] font-bold text-emerald-600">{Math.round((prefs.buttonScale ?? 1.0) * 100)}%</span>
+        </div>
+        <Slider
+          value={[Math.round(((prefs.buttonScale ?? 1.0) - 0.5) / 2.5 * 100)]}
+          onValueChange={([v]) => {
+            const scale = 0.5 + (v / 100) * 2.5;
+            setPrefs({ ...prefs, buttonScale: Math.round(scale * 100) / 100 });
+          }}
+          min={0} max={100} step={1}
+          className="w-full"
+        />
+        <div className="flex justify-between mt-1">
+          <span className="text-[9px] text-slate-400">50%</span>
+          <span className="text-[9px] text-slate-400">300%</span>
+        </div>
+      </div>
 
       {/* Divider */}
       <div className="mx-4 border-t border-slate-200 my-2" />
