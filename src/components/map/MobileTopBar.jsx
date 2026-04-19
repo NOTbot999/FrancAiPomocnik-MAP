@@ -47,8 +47,8 @@ function MobileTopBarInner({
 
   const optionalButtons = prefs.order.map((id) => {
     if (!isVisible(id)) return null;
-    // layers, zoom-in, zoom-out are rendered separately
-    if (id === "layers" || id === "zoom-in" || id === "zoom-out") return null;
+    // layers and zoom are rendered separately
+    if (id === "layers" || id === "zoom") return null;
     // search is shown as persistent top bar when enabled
     if (id === "search") return null;
     if (id === "locate") return (
@@ -106,16 +106,16 @@ function MobileTopBarInner({
           </button>
         )}
 
-        {/* Zoom controls — togglable */}
-        {isVisible("zoom-in") && (
-          <button onClick={() => map.zoomIn()} className={btnBase}>
-            <Plus className="w-5 h-5" />
-          </button>
-        )}
-        {isVisible("zoom-out") && (
-          <button onClick={() => map.zoomOut()} className={btnBase}>
-            <Minus className="w-5 h-5" />
-          </button>
+        {/* Zoom controls — single combined button */}
+        {isVisible("zoom") && (
+          <div className="flex flex-col rounded-xl overflow-hidden border border-slate-200/50 shadow-md">
+            <button onClick={() => map.zoomIn()} className="p-2.5 bg-white/95 backdrop-blur-xl text-slate-700 transition-all duration-200 flex items-center justify-center hover:bg-white border-b border-slate-200/50">
+              <Plus className="w-5 h-5" />
+            </button>
+            <button onClick={() => map.zoomOut()} className="p-2.5 bg-white/95 backdrop-blur-xl text-slate-700 transition-all duration-200 flex items-center justify-center hover:bg-white">
+              <Minus className="w-5 h-5" />
+            </button>
+          </div>
         )}
 
         {/* Togglable buttons in user-defined order (skip search since it's in top bar) */}

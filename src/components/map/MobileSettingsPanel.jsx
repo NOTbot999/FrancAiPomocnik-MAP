@@ -1,13 +1,12 @@
 import React, { useState, useCallback } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { GripVertical, Search, Locate, Navigation, Route, Ruler, X, Link2, ChevronDown, ChevronUp, Layers, Plus, Minus } from "lucide-react";
+import { GripVertical, Search, Locate, Navigation, Route, Ruler, X, Link2, ChevronDown, ChevronUp, Layers, Plus } from "lucide-react";
 import MyTracks from "./MyTracks";
 import DeviceLink from "./DeviceLink";
 
 const DEFAULT_BUTTONS = [
   { id: "layers",  label: "Layers",      icon: Layers },
-  { id: "zoom-in", label: "Zoom In",     icon: Plus },
-  { id: "zoom-out",label: "Zoom Out",    icon: Minus },
+  { id: "zoom",    label: "Zoom",        icon: Plus },
   { id: "search",  label: "Search",      icon: Search },
   { id: "locate",  label: "My Location", icon: Locate },
   { id: "gps",     label: "GPS Track",   icon: Navigation },
@@ -29,7 +28,7 @@ function loadPrefs() {
       return p;
     }
   } catch {}
-  return { order: DEFAULT_BUTTONS.map(b => b.id), hidden: ["layers", "zoom-in", "zoom-out"] };
+  return { order: DEFAULT_BUTTONS.map(b => b.id), hidden: ["layers", "zoom"] };
 }
 
 function savePrefs(prefs) {
