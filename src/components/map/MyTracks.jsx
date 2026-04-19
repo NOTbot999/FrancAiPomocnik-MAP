@@ -35,7 +35,7 @@ function getDeviceId() {
   return id;
 }
 
-export default function MyTracks({ gpsTrack, onLoadTrack, onClose }) {
+export default function MyTracks({ gpsTrack, onLoadTrack, onClose, inline }) {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -76,29 +76,31 @@ export default function MyTracks({ gpsTrack, onLoadTrack, onClose }) {
   };
 
   return (
-    <div className="absolute bottom-8 right-16 z-[950] w-72 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/50">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
-        <div className="flex items-center gap-2 text-slate-700 font-semibold text-sm">
-          <Route className="w-4 h-4 text-emerald-500" />
-          My GPS Tracks
+    <div className={inline ? "w-full" : "absolute bottom-8 right-16 z-[950] w-72 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/50"}>
+      {/* Header — hidden in inline mode */}
+      {!inline && (
+        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+          <div className="flex items-center gap-2 text-slate-700 font-semibold text-sm">
+            <Route className="w-4 h-4 text-emerald-500" />
+            My GPS Tracks
+          </div>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setShowDeviceLink(p => !p)}
+              title="Link devices"
+              className={`p-1.5 rounded-lg transition ${showDeviceLink ? "text-emerald-500 bg-emerald-50" : "text-slate-400 hover:text-slate-600"}`}
+            >
+              <Link2 className="w-4 h-4" />
+            </button>
+            <button onClick={onClose} className="p-1.5 text-slate-400 hover:text-slate-600">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => setShowDeviceLink(p => !p)}
-            title="Link devices"
-            className={`p-1.5 rounded-lg transition ${showDeviceLink ? "text-emerald-500 bg-emerald-50" : "text-slate-400 hover:text-slate-600"}`}
-          >
-            <Link2 className="w-4 h-4" />
-          </button>
-          <button onClick={onClose} className="p-1.5 text-slate-400 hover:text-slate-600">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
+      )}
 
-      {/* Device Link panel */}
-      {showDeviceLink && (
+      {/* Device Link panel — hidden in inline mode (handled by settings panel) */}
+      {!inline && showDeviceLink && (
         <div className="px-4 py-3 border-b border-slate-100">
           <DeviceLink deviceId={deviceId} onClose={() => setShowDeviceLink(false)} />
         </div>

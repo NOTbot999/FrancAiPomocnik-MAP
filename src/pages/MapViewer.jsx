@@ -128,6 +128,8 @@ export default function MapViewer() {
           isGpsTracking,
           onGpsToggle: handleGpsToggle,
           onShowTracks: () => setShowMyTracks(p => !p),
+          gpsTrack,
+          onLoadTrack: handleLoadTrack,
         } : null}
         locateTrigger={locateTrigger}
         gpsTracking={{
