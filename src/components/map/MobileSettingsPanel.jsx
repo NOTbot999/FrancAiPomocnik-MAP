@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { GripVertical, Search, Locate, Navigation, Route, Ruler, X, Link2, ChevronDown, ChevronUp, Layers, Plus } from "lucide-react";
+import { GripVertical, Search, Locate, Navigation, Route, Ruler, X, Link2, ChevronDown, ChevronUp, Layers, Plus, WifiOff } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import MyTracks from "./MyTracks";
 import DeviceLink from "./DeviceLink";
@@ -13,6 +13,7 @@ const DEFAULT_BUTTONS = [
   { id: "gps",     label: "GPS Track",   icon: Navigation },
   { id: "ruler",   label: "Ruler",       icon: Ruler },
   { id: "nav",     label: "Navigation",  icon: Route },
+  { id: "offline", label: "Offline Maps", icon: WifiOff },
 ];
 
 function loadPrefs() {

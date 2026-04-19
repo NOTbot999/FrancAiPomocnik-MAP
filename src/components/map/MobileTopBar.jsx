@@ -82,6 +82,11 @@ function MobileTopBarInner({
         <WifiOff style={iconStyle} />
       </button>
     );
+    if (id === "nav") return (
+      <button key="nav" onClick={() => setShowNav(p => !p)} style={btnStyle} className={`${btnBase} ${showNav ? btnActive : ''}`}>
+        <Route style={iconStyle} />
+      </button>
+    );
     return null;
   }).filter(Boolean);
 
@@ -136,18 +141,6 @@ function MobileTopBarInner({
         {/* Togglable buttons in user-defined order (skip search since it's in top bar) */}
         {optionalButtons}
 
-        {/* Route / Navigation button — togglable via settings */}
-        {isVisible("nav") && (
-          <button
-            onClick={() => setShowNav(p => !p)}
-            style={btnStyle}
-            className={`${btnBase} ${showNav ? btnActive : ''}`}
-            title="Route Planner"
-          >
-            <Route style={iconStyle} />
-          </button>
-        )}
-
         <div className="flex-1" />
       </div>
 
@@ -195,6 +188,7 @@ function MobileTopBarInner({
               isOpen={true}
               onToggle={() => setShowNav(p => !p)}
               onClose={() => setShowNav(false)}
+              inline
             />
           </motion.div>
         )}
