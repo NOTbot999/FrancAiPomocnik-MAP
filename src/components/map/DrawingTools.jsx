@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import {
-  Ruler, Pentagon, MapPin, Trash2, MousePointer2, X, Navigation
+  Ruler, Pentagon, MapPin, Trash2, MousePointer2, X, Navigation, Route
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
@@ -16,7 +16,7 @@ const TOOLS = [
 
 const GPS_TOOL = { id: "gps", icon: Navigation, label: "GPS Track" };
 
-export default function DrawingTools({ activeTool, onToolChange, measurements, onClear, onLocate, isGpsTracking, onGpsToggle }) {
+export default function DrawingTools({ activeTool, onToolChange, measurements, onClear, onLocate, isGpsTracking, onGpsToggle, isNavOpen, onNavToggle }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
@@ -70,6 +70,24 @@ export default function DrawingTools({ activeTool, onToolChange, measurements, o
       {/* Bottom row: locate + gps + ruler toggle */}
       <div className="flex items-center gap-1.5">
         <LocateButton onLocate={onLocate} />
+        {/* Route / Navigation button */}
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={onNavToggle}
+                className={`p-3 rounded-xl shadow-lg transition-all duration-300 ${
+                  isNavOpen
+                    ? 'bg-emerald-500 text-white shadow-emerald-500/30'
+                    : 'bg-white/95 backdrop-blur-xl text-slate-700 hover:bg-white border border-slate-200/50'
+                }`}
+              >
+                <Route className="w-5 h-5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="left"><p className="text-xs">Route Planner</p></TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
         {/* GPS Track button */}
         <TooltipProvider>
           <Tooltip>

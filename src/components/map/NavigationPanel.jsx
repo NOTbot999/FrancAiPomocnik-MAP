@@ -13,19 +13,29 @@ function PointInput({ label, value, onChange, onClear }) {
     if (!q || q.length < 2) { setSuggestions([]); return; }
     clearTimeout(debounce);
     debounce = setTimeout(async () => {
-      setLoading(true);
-      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&addressdetails=1`;
-      const res = await fetch(url, { headers: { "Accept-Language": "en" } });
-      const data = await res.json();
-      setSuggestions(data);
-      setLoading(false);
-    }, 350);
+    setLoading(true);
+    // Use structured search for better house number resolution
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=8&addressdetails=1&namedetails=1&dedupe=1`;
+    const res = await fetch(url, { headers: { "Accept-Language": "en", "User-Agent": "SloveniaGISExplorer/1.0" } });
+    const data = await res.json();
+    setSuggestions(data);
+    setLoading(false);
+    }, 300);
   };
 
   const select = (s) => {
-    setQuery(s.display_name);
+    // Build a concise label: "Street 5, City" instead of full display_name
+    const a = s.address || {};
+    const parts = [
+      a.road || a.pedestrian || a.footway || a.path,
+      a.house_number,
+      a.city || a.town || a.village || a.hamlet || a.municipality,
+      a.country,
+    ].filter(Boolean);
+    const shortLabel = parts.length > 0 ? parts.join(", ") : s.display_name;
+    setQuery(shortLabel);
     setSuggestions([]);
-    onChange({ label: s.display_name, lat: parseFloat(s.lat), lng: parseFloat(s.lon) });
+    onChange({ label: shortLabel, lat: parseFloat(s.lat), lng: parseFloat(s.lon) });
   };
 
   const clear = () => {
@@ -55,15 +65,21 @@ function PointInput({ label, value, onChange, onClear }) {
       </div>
       {suggestions.length > 0 && (
         <div className="absolute left-7 right-0 top-full mt-0.5 bg-white border border-slate-200 rounded-lg shadow-lg z-[1000] max-h-40 overflow-y-auto">
-          {suggestions.map((s, i) => (
-            <button
-              key={i}
-              onClick={() => select(s)}
-              className="w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 border-b border-slate-100 last:border-0 truncate"
-            >
-              {s.display_name}
-            </button>
-          ))}
+          {suggestions.map((s, i) => {
+            const a = s.address || {};
+            const main = [a.road || a.pedestrian || a.footway || a.path, a.house_number].filter(Boolean).join(" ");
+            const sub = [a.city || a.town || a.village || a.hamlet || a.municipality, a.country].filter(Boolean).join(", ");
+            return (
+              <button
+                key={i}
+                onClick={() => select(s)}
+                className="w-full text-left px-3 py-2 hover:bg-emerald-50 border-b border-slate-100 last:border-0"
+              >
+                <div className="text-xs font-medium text-slate-800 truncate">{main || s.display_name}</div>
+                {sub && main && <div className="text-[10px] text-slate-400 truncate">{sub}</div>}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
