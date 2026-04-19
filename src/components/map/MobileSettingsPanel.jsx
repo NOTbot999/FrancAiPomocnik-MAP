@@ -1,15 +1,17 @@
 import React, { useState, useCallback } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { GripVertical, Search, Locate, Navigation, Route, Ruler, X, Link2, ChevronDown, ChevronUp } from "lucide-react";
+import { GripVertical, Search, Locate, Navigation, Route, Ruler, X, Link2, ChevronDown, ChevronUp, Layers, Plus, Minus } from "lucide-react";
 import MyTracks from "./MyTracks";
 import DeviceLink from "./DeviceLink";
 
 const DEFAULT_BUTTONS = [
-  { id: "search",  label: "Search",      icon: Search },
-  { id: "locate",  label: "My Location", icon: Locate },
-  { id: "gps",     label: "GPS Track",   icon: Navigation },
-  { id: "tracks",  label: "My Tracks",   icon: Route },
-  { id: "ruler",   label: "Ruler",       icon: Ruler },
+  { id: "layers",   label: "Layers",      icon: Layers },
+  { id: "locate",   label: "My Location", icon: Locate },
+  { id: "gps",      label: "GPS Track",   icon: Navigation },
+  { id: "tracks",   label: "My Tracks",   icon: Route },
+  { id: "ruler",    label: "Ruler",       icon: Ruler },
+  { id: "zoom-in",  label: "Zoom In",     icon: Plus },
+  { id: "zoom-out", label: "Zoom Out",    icon: Minus },
 ];
 
 function loadPrefs() {
@@ -17,7 +19,7 @@ function loadPrefs() {
     const saved = localStorage.getItem("mobileButtonPrefs");
     if (saved) return JSON.parse(saved);
   } catch {}
-  return { order: DEFAULT_BUTTONS.map(b => b.id), hidden: [] };
+  return { order: DEFAULT_BUTTONS.map(b => b.id), hidden: ["zoom-in", "zoom-out", "layers"] };
 }
 
 function savePrefs(prefs) {
