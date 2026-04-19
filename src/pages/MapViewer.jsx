@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from "react";
+import { AnimatePresence } from "framer-motion";
 import MapContainerComponent from "@/components/map/MapContainer";
 import LayerPanel from "@/components/map/LayerPanel";
 import SearchBar from "@/components/map/SearchBar";
@@ -11,6 +12,9 @@ import NavigationPanel from "@/components/map/NavigationPanel";
 import OfflineManager from "@/components/map/OfflineManager";
 import { OVERLAY_CATEGORIES } from "@/components/map/layerConfig";
 import { useIsMobile } from "@/hooks/use-mobile";
+import AskMapPanel from "@/components/map/AskMapPanel";
+import TrackAnalyzer from "@/components/map/TrackAnalyzer";
+import LocationSummarizer from "@/components/map/LocationSummarizer";
 
 
 export default function MapViewer() {
@@ -107,6 +111,11 @@ export default function MapViewer() {
   const [routePolyline, setRoutePolyline] = useState(null);
   const [isNavOpen, setIsNavOpen] = useState(false);
   const [isOfflineOpen, setIsOfflineOpen] = useState(false);
+  const [isAskMapOpen, setIsAskMapOpen] = useState(false);
+  const [isTrackAnalyzerOpen, setIsTrackAnalyzerOpen] = useState(false);
+  const [locationSummary, setLocationSummary] = useState(null); // { latlng: [lat, lng] }
+  const [mapCenter, setMapCenter] = useState([46.1512, 14.9955]);
+  const [mapZoom, setMapZoom] = useState(9);
 
   const handleRouteResult = useCallback((data) => {
     setRoutePolyline(data ? data.polyline : null);
@@ -129,6 +138,7 @@ export default function MapViewer() {
         offlineOpen={isOfflineOpen}
         onOfflineClose={() => setIsOfflineOpen(false)}
         showZoomControls={!isMobile}
+        onLocationSummary={(latlng) => setLocationSummary({ latlng })}
         mobileProps={isMobile ? {
           onTogglePanel: () => setIsPanelOpen(p => !p),
           isPanelOpen,
@@ -204,6 +214,42 @@ export default function MapViewer() {
             </button>
           </div>
 
+          {/* AI Panels — desktop */}
+          <AnimatePresence>
+            {isAskMapOpen && (
+              <div className="absolute right-4 bottom-72 z-[960]" key="ask-map">
+                <AskMapPanel
+                  onClose={() => setIsAskMapOpen(false)}
+                  activeLayers={activeLayers}
+                  onToggleLayer={handleToggleLayer}
+                  mapCenter={mapCenter}
+                  mapZoom={mapZoom}
+                />
+              </div>
+            )}
+          </AnimatePresence>
+          <AnimatePresence>
+            {isTrackAnalyzerOpen && (
+              <div className="absolute right-4 bottom-72 z-[960]" key="track-analyzer">
+                <TrackAnalyzer
+                  gpsTrack={gpsTrack}
+                  onClose={() => setIsTrackAnalyzerOpen(false)}
+                />
+              </div>
+            )}
+          </AnimatePresence>
+          <AnimatePresence>
+            {locationSummary && (
+              <div className="absolute left-1/2 top-20 -translate-x-1/2 z-[960]" key="loc-summary">
+                <LocationSummarizer
+                  latlng={locationSummary.latlng}
+                  activeLayers={activeLayers}
+                  onClose={() => setLocationSummary(null)}
+                />
+              </div>
+            )}
+          </AnimatePresence>
+
           {/* Bottom-right: drawing tools + save/load */}
           <div className="absolute right-4 bottom-8 z-[950] flex flex-col items-end gap-2">
             <button
@@ -234,6 +280,10 @@ export default function MapViewer() {
               onGpsToggle={handleGpsToggle}
               isNavOpen={isNavOpen}
               onNavToggle={() => setIsNavOpen(p => !p)}
+              isAskMapOpen={isAskMapOpen}
+              onAskMapToggle={() => setIsAskMapOpen(p => !p)}
+              isTrackAnalyzerOpen={isTrackAnalyzerOpen}
+              onTrackAnalyzerToggle={() => setIsTrackAnalyzerOpen(p => !p)}
             />
           </div>
         </>

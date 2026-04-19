@@ -215,6 +215,15 @@ function ArcGISExportLayer({ url, opacity, layerIds }) {
   return null;
 }
 
+function RightClickHandler({ onLocationSummary }) {
+  useMapEvents({
+    contextmenu(e) {
+      if (onLocationSummary) onLocationSummary([e.latlng.lat, e.latlng.lng]);
+    }
+  });
+  return null;
+}
+
 export default function MapContainerComponent({
   activeBaseLayers,
   activeLayers,
@@ -230,6 +239,7 @@ export default function MapContainerComponent({
   locateTrigger,
   offlineOpen,
   onOfflineClose,
+  onLocationSummary,
 }) {
   const allLayers = getAllLayersFlat();
   const activeBaseLayerEntries = activeBaseLayers
@@ -332,6 +342,7 @@ export default function MapContainerComponent({
       )}
       <FlyToLocation location={flyToLocation} />
       <CoordsDisplay />
+      <RightClickHandler onLocationSummary={onLocationSummary} />
       <DrawingHandler
         activeTool={activeTool}
         onMeasurement={onMeasurement}
