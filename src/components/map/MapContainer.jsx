@@ -223,7 +223,7 @@ export default function MapContainerComponent({
       center={SLOVENIA_CENTER}
       zoom={DEFAULT_ZOOM}
       minZoom={7}
-      maxZoom={19}
+      maxZoom={22}
       className="w-full h-full"
       zoomControl={false}
       doubleClickZoom={activeTool === "pointer"}
@@ -237,7 +237,7 @@ export default function MapContainerComponent({
         if (bl.type === 'arcgis_export') {
           return <ArcGISExportLayer key={bl.id} url={bl.arcgisUrl} opacity={opacity} />;
         }
-        return <TileLayer key={bl.id} url={bl.url} opacity={opacity} attribution={bl.attribution || ""} />;
+        return <TileLayer key={bl.id} url={bl.url} opacity={opacity} attribution={bl.attribution || ""} maxZoom={22} maxNativeZoom={19} />;
       })}
 
       {/* Active overlay layers */}

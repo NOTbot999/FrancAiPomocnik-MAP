@@ -41,6 +41,8 @@ export default function GpsTracker({ isTracking, gpsTrack, onTrackUpdate, follow
     if (isTracking) {
       watchIdRef.current = navigator.geolocation.watchPosition(
         (pos) => {
+          // Skip low-accuracy readings (> 50m)
+          if (pos.coords.accuracy > 50) return;
           const pt = [pos.coords.latitude, pos.coords.longitude];
           onTrackUpdate(pt);
           if (followLocation && !userDraggingRef.current) {
@@ -48,7 +50,7 @@ export default function GpsTracker({ isTracking, gpsTrack, onTrackUpdate, follow
           }
         },
         () => {},
-        { enableHighAccuracy: true, maximumAge: 2000, timeout: 10000 }
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
       );
     } else {
       if (watchIdRef.current !== null) {

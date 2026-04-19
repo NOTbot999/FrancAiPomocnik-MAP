@@ -103,6 +103,18 @@ export const OVERLAY_CATEGORIES = [
         description: "Ultra-detailed 1m resolution LIDAR hillshade from ARSO national airborne survey"
       },
       {
+        id: "gurs_dtk25",
+        name: "Topographic Map 1:25,000 (DTK25)",
+        type: "wms",
+        url: GURS_WMS,
+        layers: "SI.GURS.DK:DTK25",
+        format: "image/png",
+        transparent: false,
+        version: "1.1.1",
+        opacity: 1.0,
+        description: "Official Slovenian topographic map 1:25,000 (detailed)"
+      },
+      {
         id: "gurs_dtk50",
         name: "Topographic Map 1:50,000 (DTK50)",
         type: "wms",

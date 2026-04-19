@@ -1,0 +1,49 @@
+{
+  "name": "GpsTrackSession",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the GPS track session"
+    },
+    "description": {
+      "type": "string",
+      "description": "Optional description"
+    },
+    "track_data": {
+      "type": "array",
+      "description": "Array of [lat, lng] points",
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "number"
+        }
+      }
+    },
+    "distance_meters": {
+      "type": "number",
+      "description": "Total track distance in meters"
+    }
+  },
+  "required": [
+    "name",
+    "track_data"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "update": {
+      "created_by": "{{user.email}}"
+    },
+    "delete": {
+      "created_by": "{{user.email}}"
+    },
+    "write": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}

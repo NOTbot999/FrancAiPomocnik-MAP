@@ -6,6 +6,7 @@ import DrawingTools from "@/components/map/DrawingTools";
 import MiniToolbar from "@/components/map/MiniToolbar";
 import MobileTopBar from "@/components/map/MobileTopBar";
 import SaveLoadDrawings from "@/components/map/SaveLoadDrawings";
+import MyTracks from "@/components/map/MyTracks";
 import { OVERLAY_CATEGORIES } from "@/components/map/layerConfig";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -20,6 +21,7 @@ export default function MapViewer() {
   const [drawings, setDrawings] = useState({ markers: [], lines: [], polygons: [] });
   const [gpsTrack, setGpsTrack] = useState([]);
   const [isGpsTracking, setIsGpsTracking] = useState(false);
+  const [showMyTracks, setShowMyTracks] = useState(false);
   const handleToggleLayer = useCallback((layerId) => {
     setActiveLayers(prev => {
       if (prev[layerId]) {
@@ -89,6 +91,11 @@ export default function MapViewer() {
     }
   }, []);
 
+  const handleLoadTrack = useCallback((trackData) => {
+    setGpsTrack(trackData);
+    setShowMyTracks(false);
+  }, []);
+
   const activeLayerCount = Object.keys(activeLayers).length;
   const isMobile = useIsMobile();
 
@@ -144,8 +151,30 @@ export default function MapViewer() {
             <SearchBar onLocationSelect={(loc) => setFlyToLocation(loc)} />
           </div>
 
+          {/* My Tracks panel */}
+          {showMyTracks && (
+            <MyTracks
+              gpsTrack={gpsTrack}
+              onLoadTrack={handleLoadTrack}
+              onClose={() => setShowMyTracks(false)}
+            />
+          )}
+
           {/* Bottom-right: drawing tools + save/load */}
           <div className="absolute right-4 bottom-8 z-[950] flex flex-col items-end gap-2">
+            <button
+              onClick={() => setShowMyTracks(p => !p)}
+              className={`p-3 rounded-xl shadow-lg transition-all duration-300 border ${
+                showMyTracks
+                  ? 'bg-emerald-500 text-white border-emerald-500'
+                  : 'bg-white/95 backdrop-blur-xl text-slate-700 hover:bg-white border-slate-200/50'
+              }`}
+              title="My GPS Tracks"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 13l4.553 2.276A1 1 0 0021 21.382V10.618a1 1 0 00-.553-.894L15 7m0 13V7m0 0L9 7" />
+              </svg>
+            </button>
             <SaveLoadDrawings
               drawings={drawings}
               gpsTrack={gpsTrack}
