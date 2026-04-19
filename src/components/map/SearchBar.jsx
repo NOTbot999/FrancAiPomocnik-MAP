@@ -79,8 +79,18 @@ export default function SearchBar({ onLocationSelect }) {
 
   const handleInput = (value) => {
     setQuery(value);
+    setHighlighted(-1);
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(() => searchLocation(value), 400);
+    if (!value || value.length < 2) { setResults([]); setIsOpen(false); return; }
+    timeoutRef.current = setTimeout(() => searchLocation(value), 300);
+  };
+
+  const handleKeyDown = (e) => {
+    if (!isOpen || results.length === 0) return;
+    if (e.key === "ArrowDown") { e.preventDefault(); setHighlighted(h => Math.min(h + 1, results.length - 1)); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); setHighlighted(h => Math.max(h - 1, 0)); }
+    else if (e.key === "Enter" && highlighted >= 0) { e.preventDefault(); handleSelect(results[highlighted]); }
+    else if (e.key === "Escape") { setIsOpen(false); }
   };
 
   const handleSelect = (item) => {
@@ -96,7 +106,7 @@ export default function SearchBar({ onLocationSelect }) {
   };
 
   return (
-    <div className="relative z-[1000]">
+    <div ref={containerRef} className="relative z-[1000]">
       <div className="flex items-center bg-white/95 backdrop-blur-xl rounded-xl shadow-lg border border-white/20 overflow-hidden transition-all duration-300 hover:shadow-xl">
         <Search className="w-4 h-4 text-slate-400 ml-3.5 shrink-0" />
         <input
@@ -106,6 +116,7 @@ export default function SearchBar({ onLocationSelect }) {
           value={query}
           onChange={(e) => handleInput(e.target.value)}
           onFocus={() => results.length > 0 && setIsOpen(true)}
+          onKeyDown={handleKeyDown}
           className="w-full px-3 py-2.5 text-sm bg-transparent border-none outline-none text-slate-800 placeholder:text-slate-400"
         />
         {isSearching && <Loader2 className="w-4 h-4 text-emerald-500 animate-spin mr-3" />}
@@ -125,23 +136,30 @@ export default function SearchBar({ onLocationSelect }) {
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
-            className="absolute top-full left-0 right-0 mt-1.5 bg-white/95 backdrop-blur-xl rounded-xl shadow-xl border border-white/20 overflow-hidden max-h-72 overflow-y-auto"
+            className="absolute top-full left-0 right-0 mt-1.5 bg-white/95 backdrop-blur-xl rounded-xl shadow-xl border border-slate-100 overflow-hidden max-h-80 overflow-y-auto"
           >
             {results.map((item, i) => (
               <button
                 key={i}
                 onClick={() => handleSelect(item)}
-                className="w-full flex items-start gap-2.5 px-3.5 py-2.5 hover:bg-emerald-50 transition-colors text-left border-b border-slate-100 last:border-0"
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 transition-colors text-left border-b border-slate-100 last:border-0 ${
+                  highlighted === i ? "bg-emerald-50" : "hover:bg-slate-50"
+                }`}
               >
-                <MapPin className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
-                <div className="min-w-0">
+                <span className="text-base shrink-0">{getTypeIcon(item)}</span>
+                <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-slate-800 truncate">
                     {item.display_name.split(",")[0]}
                   </p>
-                  <p className="text-xs text-slate-500 truncate">
-                    {item.display_name.split(",").slice(1, 3).join(",")}
+                  <p className="text-xs text-slate-400 truncate">
+                    {getSubtitle(item)}
                   </p>
                 </div>
+                {getTypeLabel(item) && (
+                  <span className="text-[10px] font-medium text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded shrink-0 hidden sm:block">
+                    {getTypeLabel(item)}
+                  </span>
+                )}
               </button>
             ))}
           </motion.div>
