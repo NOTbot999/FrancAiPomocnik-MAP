@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Layers, Locate, LoaderCircle, Plus, Minus, Ruler, Pentagon, MapPin, Trash2, MousePointer2, Navigation, Route, Settings, X } from "lucide-react";
+import { Layers, Locate, LoaderCircle, Plus, Minus, Ruler, Search, X, Pentagon, MapPin, Trash2, MousePointer2, Navigation, Route, Settings } from "lucide-react";
 import { useMap } from "react-leaflet";
 import { createPortal } from "react-dom";
 import SearchBar from "./SearchBar";
@@ -23,6 +23,7 @@ function MobileTopBarInner({
   const map = useMap();
   const container = map.getContainer();
   const [locating, setLocating] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
   const [showRuler, setShowRuler] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [prefs, setPrefs] = useMobileButtonPrefs();
@@ -44,18 +45,12 @@ function MobileTopBarInner({
 
   const isVisible = (id) => !prefs.hidden.includes(id);
 
-  // Build the right-column buttons based on prefs order & visibility
   const optionalButtons = prefs.order.map((id) => {
     if (!isVisible(id)) return null;
 
-    if (id === "layers") return (
-      <button key="layers" onClick={onTogglePanel} className={`${btnBase} relative ${isPanelOpen ? btnActive : ''}`}>
-        <Layers className="w-5 h-5" />
-        {activeLayerCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-emerald-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
-            {activeLayerCount}
-          </span>
-        )}
+    if (id === "search") return (
+      <button key="search" onClick={() => setShowSearch(p => !p)} className={`${btnBase} ${showSearch ? btnActive : ''}`}>
+        <Search className="w-5 h-5" />
       </button>
     );
     if (id === "locate") return (
@@ -69,7 +64,7 @@ function MobileTopBarInner({
       </button>
     );
     if (id === "tracks") return (
-      <button key="tracks" onClick={() => setShowSettings(true)} className={btnBase}>
+      <button key="tracks" onClick={() => { setShowSettings(true); }} className={btnBase}>
         <Route className="w-5 h-5" />
       </button>
     );
@@ -78,39 +73,59 @@ function MobileTopBarInner({
         <Ruler className="w-5 h-5" />
       </button>
     );
-    if (id === "zoom-in") return (
-      <button key="zoom-in" onClick={() => map.zoomIn()} className={btnBase}>
-        <Plus className="w-5 h-5" />
-      </button>
-    );
-    if (id === "zoom-out") return (
-      <button key="zoom-out" onClick={() => map.zoomOut()} className={btnBase}>
-        <Minus className="w-5 h-5" />
-      </button>
-    );
     return null;
   }).filter(Boolean);
 
   return createPortal(
     <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, zIndex: 950, pointerEvents: "none" }}>
 
-      {/* Persistent search bar — top, left of right column */}
-      <div style={{ pointerEvents: "auto", position: "absolute", top: 12, left: 12, right: 56, zIndex: 960 }}>
-        <SearchBar
-          onLocationSelect={(loc) => { onLocationSelect(loc); }}
-        />
-      </div>
-
       {/* Right column */}
       <div style={{ pointerEvents: "auto" }} className="absolute top-0 right-0 bottom-0 flex flex-col items-center gap-2 px-2 pt-3">
-        {/* Settings button — always visible */}
-        <button onClick={() => setShowSettings(p => !p)} className={`${btnBase} ${showSettings ? btnActive : ''}`}>
-          <Settings className="w-5 h-5" />
+        {/* Layers button — always visible */}
+        <button onClick={onTogglePanel} className={`${btnBase} relative ${isPanelOpen ? btnActive : ''}`}>
+          <Layers className="w-5 h-5" />
+          {activeLayerCount > 0 && (
+            <span className="absolute -top-1 -right-1 bg-emerald-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+              {activeLayerCount}
+            </span>
+          )}
+        </button>
+
+        {/* Zoom controls — always visible */}
+        <button onClick={() => map.zoomIn()} className={btnBase}>
+          <Plus className="w-5 h-5" />
+        </button>
+        <button onClick={() => map.zoomOut()} className={btnBase}>
+          <Minus className="w-5 h-5" />
         </button>
 
         {/* Togglable buttons in user-defined order */}
         {optionalButtons}
+
+        {/* Settings button — always at bottom */}
+        <div className="flex-1" />
+        <button onClick={() => setShowSettings(p => !p)} className={`${btnBase} mb-3 ${showSettings ? btnActive : ''}`}>
+          <Settings className="w-5 h-5" />
+        </button>
       </div>
+
+      {/* Search bar overlay */}
+      <AnimatePresence>
+        {showSearch && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            style={{ pointerEvents: "auto" }}
+            className="absolute top-3 left-3 right-14 z-[960]"
+          >
+            <SearchBar
+              onLocationSelect={(loc) => { onLocationSelect(loc); setShowSearch(false); }}
+              autoFocus
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Settings panel */}
       {showSettings && (
@@ -131,7 +146,7 @@ function MobileTopBarInner({
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
             style={{ pointerEvents: "auto" }}
-            className="absolute bottom-8 right-14 flex flex-col gap-2 mr-12"
+            className="absolute bottom-8 right-14 flex flex-col gap-2"
           >
             {TOOLS.map((tool) => {
               const Icon = tool.icon;
@@ -143,7 +158,7 @@ function MobileTopBarInner({
                     if (tool.id === "clear") { onClear(); setShowRuler(false); }
                     else onToolChange(tool.id === activeTool ? "pointer" : tool.id);
                   }}
-                  className={`${btnBase} gap-1.5 text-[11px] font-medium ${
+                  className={`${btnBase} ${
                     isActive ? btnActive : tool.id === "clear" ? "text-red-400 border-red-200" : ""
                   }`}
                 >
