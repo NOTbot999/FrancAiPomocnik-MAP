@@ -121,6 +121,7 @@ export default function MapViewer() {
           onLocationSelect: setFlyToLocation,
           isGpsTracking,
           onGpsToggle: handleGpsToggle,
+          onShowTracks: () => setShowMyTracks(p => !p),
         } : null}
         gpsTracking={{
           isTracking: isGpsTracking,
@@ -191,6 +192,17 @@ export default function MapViewer() {
             />
           </div>
         </>
+      )}
+
+      {/* My Tracks panel (mobile) */}
+      {isMobile && showMyTracks && (
+        <div className="absolute bottom-16 right-12 z-[960]">
+          <MyTracks
+            gpsTrack={gpsTrack}
+            onLoadTrack={handleLoadTrack}
+            onClose={() => setShowMyTracks(false)}
+          />
+        </div>
       )}
 
       {/* Layer panel (both) */}

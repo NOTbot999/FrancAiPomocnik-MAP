@@ -9,7 +9,7 @@ export default function ZoomControls() {
 
   return createPortal(
     <div
-      style={{ position: "absolute", bottom: 120, right: 16, zIndex: 950 }}
+      style={{ position: "absolute", bottom: 32, left: 16, zIndex: 950 }}
       className="flex flex-col rounded-xl overflow-hidden shadow-lg border border-slate-200/50"
     >
       <button

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Layers, Locate, LoaderCircle, Plus, Minus, Ruler, Search, X, Pentagon, MapPin, Trash2, MousePointer2, Navigation, EyeOff, Eye } from "lucide-react";
+import { Layers, Locate, LoaderCircle, Plus, Minus, Ruler, Search, X, Pentagon, MapPin, Trash2, MousePointer2, Navigation, EyeOff, Eye, Route } from "lucide-react";
 import { useMap } from "react-leaflet";
 import { createPortal } from "react-dom";
 import SearchBar from "./SearchBar";
@@ -13,7 +13,7 @@ const TOOLS = [
   { id: "clear", icon: Trash2, label: "Clear" },
 ];
 
-function MobileTopBarInner({ onTogglePanel, isPanelOpen, activeLayerCount, onLocate, activeTool, onToolChange, onClear, onLocationSelect, isGpsTracking, onGpsToggle }) {
+function MobileTopBarInner({ onTogglePanel, isPanelOpen, activeLayerCount, onLocate, activeTool, onToolChange, onClear, onLocationSelect, isGpsTracking, onGpsToggle, onShowTracks }) {
   const map = useMap();
   const container = map.getContainer();
   const [locating, setLocating] = useState(false);
@@ -74,6 +74,9 @@ function MobileTopBarInner({ onTogglePanel, isPanelOpen, activeLayerCount, onLoc
               <button onClick={onGpsToggle} className={`${btnBase} ${isGpsTracking ? btnActive : ''}`}>
                 <Navigation className="w-5 h-5" />
               </button>
+              <button onClick={onShowTracks} className={btnBase}>
+                <Route className="w-5 h-5" />
+              </button>
               <button onClick={() => map.zoomIn()} className={btnBase}>
                 <Plus className="w-5 h-5" />
               </button>
@@ -116,7 +119,7 @@ function MobileTopBarInner({ onTogglePanel, isPanelOpen, activeLayerCount, onLoc
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
               style={{ pointerEvents: "auto" }}
-              className="absolute bottom-8 right-14 flex flex-col gap-2"
+              className="absolute bottom-8 right-14 flex flex-col gap-2 mr-12"
             >
               {TOOLS.map((tool) => {
                 const Icon = tool.icon;
