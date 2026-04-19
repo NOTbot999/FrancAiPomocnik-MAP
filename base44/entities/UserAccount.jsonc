@@ -1,0 +1,37 @@
+{
+  "name": "UserAccount",
+  "type": "object",
+  "properties": {
+    "username": {
+      "type": "string",
+      "description": "Unique username"
+    },
+    "email": {
+      "type": "string",
+      "description": "Email address (optional)"
+    },
+    "password_hash": {
+      "type": "string",
+      "description": "Hashed password"
+    },
+    "login_method": {
+      "type": "string",
+      "enum": [
+        "username",
+        "email",
+        "both"
+      ],
+      "default": "both",
+      "description": "How the user can log in"
+    },
+    "last_login": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last login timestamp"
+    }
+  },
+  "required": [
+    "username",
+    "password_hash"
+  ]
+}
