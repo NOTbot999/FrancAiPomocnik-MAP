@@ -40,13 +40,7 @@ function MobileTopBarInner({
     );
   };
 
-  const scale = prefs.buttonScale ?? 1.0;
-  const btnPx = Math.round(10 * scale);
-  const iconPx = Math.round(20 * scale);
-  const btnStyle = { padding: `${btnPx}px`, gap: `${Math.round(4 * scale)}px` };
-  const iconStyle = { width: `${iconPx}px`, height: `${iconPx}px`, flexShrink: 0 };
-
-  const btnBase = "rounded-xl bg-white/95 backdrop-blur-xl text-slate-700 border border-slate-200/50 shadow-md transition-all duration-200 flex items-center justify-center";
+  const btnBase = "p-2.5 rounded-xl bg-white/95 backdrop-blur-xl text-slate-700 border border-slate-200/50 shadow-md transition-all duration-200 flex items-center justify-center";
   const btnActive = "bg-emerald-500 text-white border-emerald-500 shadow-emerald-500/30";
 
   const isVisible = (id) => !prefs.hidden.includes(id);
@@ -58,18 +52,19 @@ function MobileTopBarInner({
     // search is shown as persistent top bar when enabled
     if (id === "search") return null;
     if (id === "locate") return (
-      <button key="locate" onClick={handleLocate} disabled={locating} style={btnStyle} className={`${btnBase} disabled:opacity-60`}>
-        {locating ? <LoaderCircle style={iconStyle} className="animate-spin" /> : <Locate style={iconStyle} />}
+      <button key="locate" onClick={handleLocate} disabled={locating} className={`${btnBase} disabled:opacity-60`}>
+        {locating ? <LoaderCircle className="w-5 h-5 animate-spin" /> : <Locate className="w-5 h-5" />}
       </button>
     );
     if (id === "gps") return (
-      <button key="gps" onClick={onGpsToggle} style={btnStyle} className={`${btnBase} ${isGpsTracking ? btnActive : ''}`}>
-        <Navigation style={iconStyle} />
+      <button key="gps" onClick={onGpsToggle} className={`${btnBase} ${isGpsTracking ? btnActive : ''}`}>
+        <Navigation className="w-5 h-5" />
       </button>
     );
+
     if (id === "ruler") return (
-      <button key="ruler" onClick={() => setShowRuler(p => !p)} style={btnStyle} className={`${btnBase} ${showRuler ? btnActive : ''}`}>
-        <Ruler style={iconStyle} />
+      <button key="ruler" onClick={() => setShowRuler(p => !p)} className={`${btnBase} ${showRuler ? btnActive : ''}`}>
+        <Ruler className="w-5 h-5" />
       </button>
     );
     return null;
@@ -84,7 +79,7 @@ function MobileTopBarInner({
 
       {/* Search bar — always visible if enabled, top center */}
       {searchAlwaysVisible && (
-        <div style={{ pointerEvents: "auto" }} className="absolute top-3 left-3 right-14 z-[960]">
+        <div style={{ pointerEvents: "auto" }} className="absolute top-3 left-14 right-14 z-[960]">
           <SearchBar
             onLocationSelect={(loc) => { onLocationSelect(loc); }}
             autoFocus={false}
@@ -93,16 +88,16 @@ function MobileTopBarInner({
       )}
 
       {/* Right column */}
-      <div style={{ pointerEvents: "auto", gap: `${Math.round(8 * scale)}px`, paddingTop: "12px", paddingRight: "8px", paddingLeft: "8px" }} className="absolute top-0 right-0 bottom-0 flex flex-col items-center overflow-y-auto">
+      <div style={{ pointerEvents: "auto" }} className="absolute top-0 right-0 bottom-0 flex flex-col items-center gap-2 px-2 pt-3">
         {/* Settings button — always on top */}
-        <button onClick={() => setShowSettings(p => !p)} style={btnStyle} className={`${btnBase} ${showSettings ? btnActive : ''}`}>
-          <Settings style={iconStyle} />
+        <button onClick={() => setShowSettings(p => !p)} className={`${btnBase} ${showSettings ? btnActive : ''}`}>
+          <Settings className="w-5 h-5" />
         </button>
 
         {/* Layers button — togglable */}
         {isVisible("layers") && (
-          <button onClick={onTogglePanel} style={btnStyle} className={`${btnBase} relative ${isPanelOpen ? btnActive : ''}`}>
-            <Layers style={iconStyle} />
+          <button onClick={onTogglePanel} className={`${btnBase} relative ${isPanelOpen ? btnActive : ''}`}>
+            <Layers className="w-5 h-5" />
             {activeLayerCount > 0 && (
               <span className="absolute -top-1 -right-1 bg-emerald-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
                 {activeLayerCount}
@@ -114,11 +109,11 @@ function MobileTopBarInner({
         {/* Zoom controls — single combined button */}
         {isVisible("zoom") && (
           <div className="flex flex-col rounded-xl overflow-hidden border border-slate-200/50 shadow-md">
-            <button onClick={() => map.zoomIn()} style={btnStyle} className="bg-white/95 backdrop-blur-xl text-slate-700 transition-all duration-200 flex items-center justify-center hover:bg-white border-b border-slate-200/50">
-              <Plus style={iconStyle} />
+            <button onClick={() => map.zoomIn()} className="p-2.5 bg-white/95 backdrop-blur-xl text-slate-700 transition-all duration-200 flex items-center justify-center hover:bg-white border-b border-slate-200/50">
+              <Plus className="w-5 h-5" />
             </button>
-            <button onClick={() => map.zoomOut()} style={btnStyle} className="bg-white/95 backdrop-blur-xl text-slate-700 transition-all duration-200 flex items-center justify-center hover:bg-white">
-              <Minus style={iconStyle} />
+            <button onClick={() => map.zoomOut()} className="p-2.5 bg-white/95 backdrop-blur-xl text-slate-700 transition-all duration-200 flex items-center justify-center hover:bg-white">
+              <Minus className="w-5 h-5" />
             </button>
           </div>
         )}
@@ -137,7 +132,7 @@ function MobileTopBarInner({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             style={{ pointerEvents: "auto" }}
-            className="absolute top-3 left-3 right-14 z-[960]"
+            className="absolute top-3 left-14 right-14 z-[960]"
           >
             <SearchBar
               onLocationSelect={(loc) => { onLocationSelect(loc); setShowSearch(false); }}

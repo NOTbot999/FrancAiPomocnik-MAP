@@ -3,7 +3,6 @@ import { ChevronDown, Eye, EyeOff, Info } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Slider } from "@/components/ui/slider";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
-import { base44 } from "@/api/base44Client";
 
 export default function LayerCategory({ category, activeLayers, onToggleLayer, onOpacityChange, iconComponent, thumbnail }) {
   const Icon = iconComponent;
@@ -84,19 +83,7 @@ export default function LayerCategory({ category, activeLayers, onToggleLayer, o
 
                       {/* Toggle button */}
                       <button
-                      onClick={() => {
-                        onToggleLayer(layer.id);
-                        base44.analytics.track({
-                          eventName: "layer_toggled",
-                          properties: {
-                            layer_id: layer.id,
-                            layer_name: layer.name,
-                            category_id: category.id,
-                            category_name: category.name,
-                            action: isActive ? "off" : "on",
-                          }
-                        });
-                      }}
+                      onClick={() => onToggleLayer(layer.id)}
                       className={`shrink-0 px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
                       isActive ?
                       'bg-emerald-500 text-white' :
