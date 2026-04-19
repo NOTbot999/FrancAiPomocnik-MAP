@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { GripVertical, Search, Locate, Navigation, Route, Ruler, X, Link2, ChevronDown, ChevronUp, Layers, Plus } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
 import MyTracks from "./MyTracks";
 import DeviceLink from "./DeviceLink";
 
@@ -25,10 +26,11 @@ function loadPrefs() {
         p.order = [...missingIds, ...p.order];
         p.hidden = [...p.hidden, ...missingIds];
       }
+      if (p.buttonScale === undefined) p.buttonScale = 100;
       return p;
     }
   } catch {}
-  return { order: DEFAULT_BUTTONS.map(b => b.id), hidden: ["layers", "zoom"] };
+  return { order: DEFAULT_BUTTONS.map(b => b.id), hidden: ["layers", "zoom"], buttonScale: 100 };
 }
 
 function savePrefs(prefs) {
@@ -166,6 +168,24 @@ export default function MobileSettingsPanel({ onClose, prefs, setPrefs, gpsTrack
             />
           </div>
         )}
+      </div>
+
+      {/* Button size slider */}
+      <div className="mx-4 border-t border-slate-200 my-2" />
+      <div className="px-4 pb-3">
+        <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Button Size</p>
+        <div className="flex items-center gap-3">
+          <span className="text-[10px] text-slate-400 w-6">75%</span>
+          <Slider
+            value={[prefs.buttonScale ?? 100]}
+            onValueChange={([v]) => setPrefs({ ...prefs, buttonScale: v })}
+            min={75}
+            max={225}
+            step={5}
+            className="flex-1"
+          />
+          <span className="text-[10px] text-slate-400 w-8 text-right">{prefs.buttonScale ?? 100}%</span>
+        </div>
       </div>
 
       {/* Link Devices section */}
