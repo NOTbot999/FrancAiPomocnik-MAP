@@ -267,9 +267,9 @@ export default function MapViewer() {
         onClose={() => setIsNavOpen(false)}
       />
 
-      {/* App title watermark */}
-      <div className="absolute bottom-3 right-3 z-[800]">
-        <div className="bg-white/80 backdrop-blur-sm px-3 py-1.5 rounded-lg shadow-sm">
+      {/* App title watermark — sits just above the Leaflet attribution bar */}
+      <div className="absolute bottom-5 right-0 z-[800]">
+        <div className="bg-white/80 backdrop-blur-sm px-2 py-0.5 rounded-tl-md">
           <p className="text-[10px] font-semibold text-slate-600 tracking-wider uppercase">Slovenia GIS Explorer</p>
         </div>
       </div>
