@@ -79,7 +79,8 @@
 
 .leaflet-attribution-flag,
 .leaflet-control-attribution img,
-.leaflet-control-attribution a img {
+.leaflet-control-attribution a img,
+.leaflet-control-attribution svg {
   display: none !important;
 }
 
