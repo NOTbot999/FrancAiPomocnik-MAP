@@ -1,4 +1,5 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
+import AuthModal from "@/components/AuthModal";
 import MapContainerComponent from "@/components/map/MapContainer";
 import LayerPanel from "@/components/map/LayerPanel";
 import SearchBar from "@/components/map/SearchBar";
@@ -120,6 +121,12 @@ export default function MapViewer() {
 
   const activeLayerCount = Object.keys(activeLayers).length;
   const isMobile = useIsMobile();
+
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  useEffect(() => {
+    const loggedIn = localStorage.getItem('userUsername');
+    if (!loggedIn) setShowAuthModal(true);
+  }, []);
 
   return (
     <div className="relative w-full h-screen overflow-hidden" style={{ backgroundColor: "#e8ede8", backgroundImage: "url('https://media.base44.com/images/public/69ad3ce309822f8e71f66838/b15473e19_5992128811794894233.jpg')", backgroundSize: "contain", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>
@@ -268,6 +275,12 @@ export default function MapViewer() {
       />
 
 
+      {showAuthModal && (
+        <AuthModal
+          onClose={() => setShowAuthModal(false)}
+          onSuccess={() => setShowAuthModal(false)}
+        />
+      )}
     </div>
   );
 }
