@@ -12,6 +12,9 @@ export const DEFAULT_THEME = {
   panelBg: "#0f172a",
   panelText: "#e2e8f0",
   accentColor: "#10b981",
+  menuBg: "#ffffff",
+  menuText: "#334155",
+  popupBg: "#ffffff",
 };
 
 export function loadTheme() {
@@ -31,6 +34,9 @@ const FIELDS = [
   { key: "toolbarText",     label: "Toolbar Icons" },
   { key: "buttonActiveBg",  label: "Active Button" },
   { key: "buttonActiveText",label: "Active Button Text" },
+  { key: "menuBg",          label: "Menu Background" },
+  { key: "menuText",        label: "Menu Text" },
+  { key: "popupBg",         label: "Popup Background" },
   { key: "panelBg",         label: "Panel Background" },
   { key: "panelText",       label: "Panel Text" },
   { key: "accentColor",     label: "Accent / Highlights" },

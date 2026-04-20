@@ -314,9 +314,10 @@ export default function DesktopToolbar({
               top: pos.y + 24,
               zIndex: 960,
             }}
-            className="flex flex-col gap-1 bg-white/97 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/60 p-2"
+            style={{ backgroundColor: theme.popupBg }}
+            className="flex flex-col gap-1 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/60 p-2"
           >
-            <p className="text-[10px] font-semibold text-slate-400 uppercase px-2 pt-1 pb-0.5">Drawing Tools</p>
+            <p className="text-[10px] font-semibold uppercase px-2 pt-1 pb-0.5 opacity-50" style={{ color: theme.menuText }}>Drawing Tools</p>
             <TooltipProvider delayDuration={300}>
               {RULER_TOOLS.map(tool => {
                 const Icon = tool.icon;
@@ -329,13 +330,11 @@ export default function DesktopToolbar({
                           if (tool.id === "clear") { onClear(); setRulerOpen(false); }
                           else onToolChange(activeTool === tool.id ? "pointer" : tool.id);
                         }}
-                        className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm transition-all ${
-                          isToolActive
-                            ? "bg-violet-500 text-white"
-                            : tool.id === "clear"
-                            ? "text-red-400 hover:bg-red-50"
-                            : "text-slate-600 hover:bg-slate-100"
-                        }`}
+                        style={isToolActive
+                          ? { backgroundColor: theme.buttonActiveBg, color: theme.buttonActiveText }
+                          : { color: tool.id === "clear" ? "#f87171" : theme.menuText }
+                        }
+                        className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm transition-all`}
                       >
                         <Icon className="w-4 h-4 flex-shrink-0" />
                         <span className="text-xs font-medium">{tool.label}</span>
@@ -386,16 +385,16 @@ export default function DesktopToolbar({
             initial={{ opacity: 0, scale: 0.95, x: 6 }}
             animate={{ opacity: 1, scale: 1, x: 0 }}
             exit={{ opacity: 0, scale: 0.95, x: 6 }}
-            style={{ position: "fixed", left: pos.x - 216, top: pos.y + 24, zIndex: 970 }}
-            className="bg-white/97 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/60 p-4 w-52 max-h-[80vh] overflow-y-auto"
+            style={{ position: "fixed", left: pos.x - 216, top: pos.y + 24, zIndex: 970, backgroundColor: theme.menuBg, color: theme.menuText }}
+            className="backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/60 p-4 w-52 max-h-[80vh] overflow-y-auto"
           >
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm font-semibold text-slate-800">Toolbar Buttons</span>
-              <button onClick={() => setShowSettings(false)} className="text-slate-400 hover:text-slate-600">
+              <span className="text-sm font-semibold" style={{ color: theme.menuText }}>Toolbar Buttons</span>
+              <button onClick={() => setShowSettings(false)} style={{ color: theme.menuText }} className="opacity-60 hover:opacity-100">
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <p className="text-[10px] text-slate-400 mb-3">Drag the grip to move the toolbar. Toggle visibility below.</p>
+            <p className="text-[10px] mb-3 opacity-50" style={{ color: theme.menuText }}>Drag the grip to move the toolbar. Toggle visibility below.</p>
             <div className="space-y-1">
               {BUTTON_DEFS.map(btn => {
                 const Icon = btn.icon;
@@ -404,9 +403,11 @@ export default function DesktopToolbar({
                   <button
                     key={btn.id}
                     onClick={() => toggleHidden(btn.id)}
-                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition text-sm ${
-                      isHidden ? "bg-slate-50 text-slate-400" : "bg-emerald-50 text-emerald-800"
-                    }`}
+                    style={isHidden
+                      ? { backgroundColor: theme.menuBg + "cc", color: theme.menuText, opacity: 0.5 }
+                      : { backgroundColor: theme.accentColor + "15", color: theme.menuText }
+                    }
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-xl transition text-sm"
                   >
                     <Icon className="w-4 h-4 flex-shrink-0" />
                     <span className="flex-1 text-left text-xs">{btn.label}</span>
@@ -423,7 +424,8 @@ export default function DesktopToolbar({
                 setHidden([]);
                 saveHidden([]);
               }}
-              className="mt-3 w-full text-xs text-slate-400 hover:text-slate-600 py-1 border-t border-slate-100 pt-2"
+            style={{ color: theme.menuText, borderColor: theme.menuText + "22" }}
+              className="mt-3 w-full text-xs py-1 border-t pt-2 opacity-50 hover:opacity-80 transition"
             >
               Reset toolbar
             </button>
