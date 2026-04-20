@@ -7,6 +7,7 @@ import MobileSettingsPanel, { useMobileButtonPrefs } from "./MobileSettingsPanel
 import { AnimatePresence, motion } from "framer-motion";
 import NavigationPanel from "./NavigationPanel";
 import OfflineManager from "./OfflineManager";
+import { loadTheme } from "@/components/map/ThemeCustomizer";
 
 const TOOLS = [
   { id: "pointer", icon: MousePointer2, label: "Select" },
@@ -45,14 +46,15 @@ function MobileTopBarInner({
     );
   };
 
+  const theme = loadTheme();
   const scale = prefs.buttonScale ?? 1.0;
   const btnPx = Math.round(10 * scale);
   const iconPx = Math.round(20 * scale);
-  const btnStyle = { padding: `${btnPx}px`, gap: `${Math.round(4 * scale)}px` };
+  const btnStyle = { padding: `${btnPx}px`, gap: `${Math.round(4 * scale)}px`, backgroundColor: theme.toolbarBg, color: theme.toolbarText, borderColor: "#e2e8f0" };
+  const btnActiveStyle = { padding: `${btnPx}px`, gap: `${Math.round(4 * scale)}px`, backgroundColor: theme.buttonActiveBg, color: theme.buttonActiveText, borderColor: theme.buttonActiveBg };
   const iconStyle = { width: `${iconPx}px`, height: `${iconPx}px`, flexShrink: 0 };
 
-  const btnBase = "rounded-xl bg-white/95 backdrop-blur-xl text-slate-700 border border-slate-200/50 shadow-md transition-all duration-200 flex items-center justify-center";
-  const btnActive = "bg-emerald-500 text-white border-emerald-500 shadow-emerald-500/30";
+  const btnBase = "rounded-xl backdrop-blur-xl border shadow-md transition-all duration-200 flex items-center justify-center";
 
   const isVisible = (id) => !prefs.hidden.includes(id);
 
@@ -68,22 +70,22 @@ function MobileTopBarInner({
       </button>
     );
     if (id === "gps") return (
-      <button key="gps" onClick={onGpsToggle} style={btnStyle} className={`${btnBase} ${isGpsTracking ? btnActive : ''}`}>
+      <button key="gps" onClick={onGpsToggle} style={isGpsTracking ? btnActiveStyle : btnStyle} className={btnBase}>
         <Navigation style={iconStyle} />
       </button>
     );
     if (id === "ruler") return (
-      <button key="ruler" onClick={() => setShowRuler(p => !p)} style={btnStyle} className={`${btnBase} ${showRuler ? btnActive : ''}`}>
+      <button key="ruler" onClick={() => setShowRuler(p => !p)} style={showRuler ? btnActiveStyle : btnStyle} className={btnBase}>
         <Ruler style={iconStyle} />
       </button>
     );
     if (id === "offline") return (
-      <button key="offline" onClick={() => setShowOffline(p => !p)} style={btnStyle} className={`${btnBase} ${showOffline ? btnActive : ''}`}>
+      <button key="offline" onClick={() => setShowOffline(p => !p)} style={showOffline ? btnActiveStyle : btnStyle} className={btnBase}>
         <WifiOff style={iconStyle} />
       </button>
     );
     if (id === "nav") return (
-      <button key="nav" onClick={() => setShowNav(p => !p)} style={btnStyle} className={`${btnBase} ${showNav ? btnActive : ''}`}>
+      <button key="nav" onClick={() => setShowNav(p => !p)} style={showNav ? btnActiveStyle : btnStyle} className={btnBase}>
         <Route style={iconStyle} />
       </button>
     );
@@ -110,13 +112,13 @@ function MobileTopBarInner({
       {/* Right column */}
       <div style={{ pointerEvents: "auto", gap: `${Math.round(8 * scale)}px`, paddingTop: "12px", paddingRight: "8px", paddingLeft: "8px" }} className="absolute top-0 right-0 bottom-0 flex flex-col items-center overflow-y-auto">
         {/* Settings button — always on top */}
-        <button onClick={() => setShowSettings(p => !p)} style={btnStyle} className={`${btnBase} ${showSettings ? btnActive : ''}`}>
+        <button onClick={() => setShowSettings(p => !p)} style={showSettings ? btnActiveStyle : btnStyle} className={btnBase}>
           <Settings style={iconStyle} />
         </button>
 
         {/* Layers button — togglable */}
         {isVisible("layers") && (
-          <button onClick={onTogglePanel} style={btnStyle} className={`${btnBase} relative ${isPanelOpen ? btnActive : ''}`}>
+          <button onClick={onTogglePanel} style={isPanelOpen ? btnActiveStyle : btnStyle} className={`${btnBase} relative`}>
             <Layers style={iconStyle} />
             {activeLayerCount > 0 && (
               <span className="absolute -top-1 -right-1 bg-emerald-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
@@ -129,10 +131,10 @@ function MobileTopBarInner({
         {/* Zoom controls — single combined button */}
         {isVisible("zoom") && (
           <div className="flex flex-col rounded-xl overflow-hidden border border-slate-200/50 shadow-md">
-            <button onClick={() => map.zoomIn()} style={btnStyle} className="bg-white/95 backdrop-blur-xl text-slate-700 transition-all duration-200 flex items-center justify-center hover:bg-white border-b border-slate-200/50">
+            <button onClick={() => map.zoomIn()} style={btnStyle} className="transition-all duration-200 flex items-center justify-center border-b border-slate-200/30">
               <Plus style={iconStyle} />
             </button>
-            <button onClick={() => map.zoomOut()} style={btnStyle} className="bg-white/95 backdrop-blur-xl text-slate-700 transition-all duration-200 flex items-center justify-center hover:bg-white">
+            <button onClick={() => map.zoomOut()} style={btnStyle} className="transition-all duration-200 flex items-center justify-center">
               <Minus style={iconStyle} />
             </button>
           </div>
@@ -239,9 +241,8 @@ function MobileTopBarInner({
                     else onToolChange(tool.id === activeTool ? "pointer" : tool.id);
                   }}
                   style={btnStyle}
-                  className={`${btnBase} ${
-                    isActive ? btnActive : tool.id === "clear" ? "text-red-400 border-red-200" : ""
-                  }`}
+                  style={isActive ? btnActiveStyle : tool.id === "clear" ? { ...btnStyle, color: "#f87171", borderColor: "#fecaca" } : btnStyle}
+                  className={btnBase}
                 >
                   <Icon style={iconStyle} className="shrink-0" />
                 </button>
