@@ -3,7 +3,7 @@ import {
   Layers, Locate, LoaderCircle, Ruler, Pentagon, MapPin, Trash2,
   MousePointer2, Navigation, Route, Sparkles, TrendingUp, X,
   Map, Settings, Eye, EyeOff, Save, FolderOpen,
-  Loader2, Check, Plus, Minus, GripVertical
+  Loader2, Check, GripVertical
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { motion, AnimatePresence } from "framer-motion";
@@ -12,8 +12,6 @@ import { base44 } from "@/api/base44Client";
 const BUTTON_DEFS = [
   { id: "layers",          icon: Layers,        label: "Toggle Layers",       color: "emerald" },
   { id: "locate",          icon: Locate,        label: "My Location",         color: "sky" },
-  { id: "zoomin",          icon: Plus,          label: "Zoom In",             color: "slate" },
-  { id: "zoomout",         icon: Minus,         label: "Zoom Out",            color: "slate" },
   { id: "ruler",           icon: Ruler,         label: "Drawing Tools",       color: "violet" },
   { id: "save",            icon: Save,          label: "Save Drawings",       color: "emerald" },
   { id: "load",            icon: FolderOpen,    label: "Load Drawings",       color: "amber" },
@@ -183,8 +181,6 @@ export default function DesktopToolbar({
   const handleClick = (id) => {
     if (id === "layers")        return onTogglePanel();
     if (id === "locate")        return handleLocate();
-    if (id === "zoomin")        return document.querySelector(".leaflet-control-zoom-in")?.click();
-    if (id === "zoomout")       return document.querySelector(".leaflet-control-zoom-out")?.click();
     if (id === "gps")           return onGpsToggle();
     if (id === "mytracks")      return onShowMyTracks();
     if (id === "nav")           return onNavToggle();
