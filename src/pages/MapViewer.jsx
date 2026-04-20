@@ -3,7 +3,6 @@ import MapContainerComponent from "@/components/map/MapContainer";
 import LayerPanel from "@/components/map/LayerPanel";
 import SearchBar from "@/components/map/SearchBar";
 import MobileTopBar from "@/components/map/MobileTopBar";
-import SaveLoadDrawings from "@/components/map/SaveLoadDrawings";
 import MyTracks from "@/components/map/MyTracks";
 import NavigationPanel from "@/components/map/NavigationPanel";
 import OfflineManager from "@/components/map/OfflineManager";
@@ -180,15 +179,6 @@ export default function MapViewer() {
             </div>
           )}
 
-          {/* Save/Load drawings — top-left */}
-          <div className="absolute top-4 left-4 z-[950]">
-            <SaveLoadDrawings
-              drawings={drawings}
-              gpsTrack={gpsTrack}
-              onLoad={handleLoadDrawings}
-            />
-          </div>
-
           {/* AI Panels — desktop */}
           {isAskMapOpen && (
             <div className="absolute right-20 bottom-72 z-[960]">
@@ -239,6 +229,9 @@ export default function MapViewer() {
             onAskMapToggle={() => setIsAskMapOpen(p => !p)}
             isTrackAnalyzerOpen={isTrackAnalyzerOpen}
             onTrackAnalyzerToggle={() => setIsTrackAnalyzerOpen(p => !p)}
+            drawings={drawings}
+            gpsTrack={gpsTrack}
+            onLoadDrawings={handleLoadDrawings}
           />
         </>
       )}

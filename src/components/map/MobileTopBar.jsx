@@ -180,6 +180,9 @@ function MobileTopBarInner({
             initial={{ opacity: 0, x: 10 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 10 }}
+            onPointerDown={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
             style={{ pointerEvents: "auto" }}
             className="absolute top-3 right-14 z-[970] w-72"
           >
@@ -201,6 +204,9 @@ function MobileTopBarInner({
             initial={{ opacity: 0, x: 10 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 10 }}
+            onPointerDown={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
             style={{ pointerEvents: "auto" }}
             className="absolute top-3 right-14 z-[970] w-72"
           >
@@ -209,15 +215,18 @@ function MobileTopBarInner({
         )}
       </AnimatePresence>
 
-      {/* Ruler tool strip */}
+      {/* Ruler tool strip — uses same scale as other buttons */}
       <AnimatePresence>
         {showRuler && (
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
-            style={{ pointerEvents: "auto" }}
-            className="absolute bottom-8 right-14 flex flex-col gap-2"
+            onPointerDown={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
+            style={{ pointerEvents: "auto", gap: `${Math.round(8 * scale)}px` }}
+            className="absolute bottom-8 right-14 flex flex-col"
           >
             {TOOLS.map((tool) => {
               const Icon = tool.icon;
@@ -229,11 +238,12 @@ function MobileTopBarInner({
                     if (tool.id === "clear") { onClear(); setShowRuler(false); }
                     else onToolChange(tool.id === activeTool ? "pointer" : tool.id);
                   }}
+                  style={btnStyle}
                   className={`${btnBase} ${
                     isActive ? btnActive : tool.id === "clear" ? "text-red-400 border-red-200" : ""
                   }`}
                 >
-                  <Icon className="w-4 h-4 shrink-0" />
+                  <Icon style={iconStyle} className="shrink-0" />
                 </button>
               );
             })}
