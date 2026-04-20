@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Users, Clock, Smartphone, Monitor, Globe, TrendingUp, LogOut, Map, RefreshCw, Star } from 'lucide-react';
+import { Users, Clock, Smartphone, Monitor, Globe, TrendingUp, LogOut, Map, RefreshCw, Star, Copy, Check } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 export default function AdminDashboard() {
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState('overview');
+  const [togglingPremium, setTogglingPremium] = useState({});
+  const [copiedId, setCopiedId] = useState(null);
 
   const load = async () => {
     setLoading(true);
@@ -69,6 +71,24 @@ export default function AdminDashboard() {
     regByDay.push({ label, count });
   }
 
+  const togglePremium = async (account) => {
+    setTogglingPremium(prev => ({ ...prev, [account.id]: true }));
+    const newValue = !account.is_premium;
+    await base44.entities.UserAccount.update(account.id, {
+      is_premium: newValue,
+      premium_since: newValue ? new Date().toISOString() : null,
+      premium_until: newValue ? null : null
+    });
+    setAccounts(prev => prev.map(a => a.id === account.id ? { ...a, is_premium: newValue } : a));
+    setTogglingPremium(prev => ({ ...prev, [account.id]: false }));
+  };
+
+  const copyToClipboard = (text, id) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 1500);
+  };
+
   const formatDate = (iso) => {
     if (!iso) return '—';
     return new Date(iso).toLocaleString('sl-SI', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
@@ -126,10 +146,10 @@ export default function AdminDashboard() {
 
             {/* Tabs */}
             <div className="flex gap-2 mb-6">
-              {['overview', 'users', 'devices'].map(t => (
+              {['overview', 'users', 'devices', 'analytics'].map(t => (
                 <button key={t} onClick={() => setTab(t)}
                   className={`px-4 py-2 rounded-xl text-sm font-semibold transition ${tab === t ? 'bg-emerald-500 text-white' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}`}>
-                  {t === 'overview' ? 'Pregled' : t === 'users' ? 'Uporabniki' : 'Naprave'}
+                  {t === 'overview' ? 'Pregled' : t === 'users' ? 'Uporabniki' : t === 'devices' ? 'Naprave' : 'Analytics'}
                 </button>
               ))}
             </div>
@@ -216,6 +236,64 @@ export default function AdminDashboard() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            )}
+
+            {/* Analytics tab */}
+            {tab === 'analytics' && (
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+                  <h3 className="font-semibold text-slate-800">Vsi uporabniki — Custom Event</h3>
+                  <span className="text-xs text-slate-400">{accounts.length} zapisov</span>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-slate-50 border-b border-slate-100">
+                      <tr>
+                        <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">ID</th>
+                        <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Uporabniško ime</th>
+                        <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">E-mail</th>
+                        <th className="text-center px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Premium</th>
+                        <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Registriran</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {accounts.map((a, i) => (
+                        <tr key={a.id} className={`border-b border-slate-50 hover:bg-slate-50/80 transition ${i % 2 === 0 ? '' : 'bg-slate-50/30'}`}>
+                          <td className="px-4 py-3">
+                            <button
+                              onClick={() => copyToClipboard(a.id, a.id)}
+                              className="flex items-center gap-1.5 font-mono text-xs text-slate-400 hover:text-slate-700 transition group"
+                              title="Kopiraj ID"
+                            >
+                              <span className="max-w-[100px] truncate">{a.id}</span>
+                              {copiedId === a.id
+                                ? <Check className="w-3 h-3 text-emerald-500 flex-shrink-0" />
+                                : <Copy className="w-3 h-3 opacity-0 group-hover:opacity-100 flex-shrink-0" />}
+                            </button>
+                          </td>
+                          <td className="px-4 py-3 font-medium text-slate-800">{a.username}</td>
+                          <td className="px-4 py-3 text-slate-500">{a.email || '—'}</td>
+                          <td className="px-4 py-3 text-center">
+                            <button
+                              onClick={() => togglePremium(a)}
+                              disabled={!!togglingPremium[a.id]}
+                              className={`w-5 h-5 rounded border-2 flex items-center justify-center mx-auto transition ${
+                                a.is_premium
+                                  ? 'bg-yellow-400 border-yellow-400'
+                                  : 'border-slate-300 hover:border-yellow-400'
+                              } ${togglingPremium[a.id] ? 'opacity-50' : ''}`}
+                              title={a.is_premium ? 'Odstrani premium' : 'Dodeli premium'}
+                            >
+                              {a.is_premium && <Check className="w-3 h-3 text-white" />}
+                            </button>
+                          </td>
+                          <td className="px-4 py-3 text-slate-500 text-xs">{formatDate(a.created_date)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
 
