@@ -17,6 +17,22 @@ export default function AdminDashboard() {
     setLoading(false);
   };
 
+  const [guestSessions, setGuestSessions] = useState([]);
+
+  const loadGuestSessions = async () => {
+    try {
+      const sessions = await base44.asServiceRole.entities.GuestSession.list('-created_date', 500);
+      setGuestSessions(sessions);
+    } catch (error) {
+      console.error('Failed to load guest sessions:', error);
+      setGuestSessions([]);
+    }
+  };
+
+  useEffect(() => {
+    loadGuestSessions();
+  }, []);
+
   useEffect(() => { load(); }, []);
 
   const handleLogout = () => {
@@ -241,58 +257,108 @@ export default function AdminDashboard() {
 
             {/* Analytics tab */}
             {tab === 'analytics' && (
-              <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-                  <h3 className="font-semibold text-slate-800">Vsi uporabniki — Custom Event</h3>
-                  <span className="text-xs text-slate-400">{accounts.length} zapisov</span>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead className="bg-slate-50 border-b border-slate-100">
-                      <tr>
-                        <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">ID</th>
-                        <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Uporabniško ime</th>
-                        <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">E-mail</th>
-                        <th className="text-center px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Premium</th>
-                        <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Registriran</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {accounts.map((a, i) => (
-                        <tr key={a.id} className={`border-b border-slate-50 hover:bg-slate-50/80 transition ${i % 2 === 0 ? '' : 'bg-slate-50/30'}`}>
-                          <td className="px-4 py-3">
-                            <button
-                              onClick={() => copyToClipboard(a.id, a.id)}
-                              className="flex items-center gap-1.5 font-mono text-xs text-slate-400 hover:text-slate-700 transition group"
-                              title="Kopiraj ID"
-                            >
-                              <span className="max-w-[100px] truncate">{a.id}</span>
-                              {copiedId === a.id
-                                ? <Check className="w-3 h-3 text-emerald-500 flex-shrink-0" />
-                                : <Copy className="w-3 h-3 opacity-0 group-hover:opacity-100 flex-shrink-0" />}
-                            </button>
-                          </td>
-                          <td className="px-4 py-3 font-medium text-slate-800">{a.username}</td>
-                          <td className="px-4 py-3 text-slate-500">{a.email || '—'}</td>
-                          <td className="px-4 py-3 text-center">
-                            <button
-                              onClick={() => togglePremium(a)}
-                              disabled={!!togglingPremium[a.id]}
-                              className={`w-5 h-5 rounded border-2 flex items-center justify-center mx-auto transition ${
-                                a.is_premium
-                                  ? 'bg-yellow-400 border-yellow-400'
-                                  : 'border-slate-300 hover:border-yellow-400'
-                              } ${togglingPremium[a.id] ? 'opacity-50' : ''}`}
-                              title={a.is_premium ? 'Odstrani premium' : 'Dodeli premium'}
-                            >
-                              {a.is_premium && <Check className="w-3 h-3 text-white" />}
-                            </button>
-                          </td>
-                          <td className="px-4 py-3 text-slate-500 text-xs">{formatDate(a.created_date)}</td>
+              <div className="space-y-6">
+                {/* Registered Users */}
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                  <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-emerald-50">
+                    <h3 className="font-semibold text-slate-800">Registrirani uporabniki</h3>
+                    <span className="text-xs text-slate-400">{accounts.length} zapisov</span>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-slate-50 border-b border-slate-100">
+                        <tr>
+                          <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">ID</th>
+                          <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Uporabniško ime</th>
+                          <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">E-mail</th>
+                          <th className="text-center px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Premium</th>
+                          <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Registriran</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {accounts.map((a, i) => (
+                          <tr key={a.id} className={`border-b border-slate-50 hover:bg-slate-50/80 transition ${i % 2 === 0 ? '' : 'bg-slate-50/30'}`}>
+                            <td className="px-4 py-3">
+                              <button
+                                onClick={() => copyToClipboard(a.id, a.id)}
+                                className="flex items-center gap-1.5 font-mono text-xs text-slate-400 hover:text-slate-700 transition group"
+                                title="Kopiraj ID"
+                              >
+                                <span className="max-w-[100px] truncate">{a.id}</span>
+                                {copiedId === a.id
+                                  ? <Check className="w-3 h-3 text-emerald-500 flex-shrink-0" />
+                                  : <Copy className="w-3 h-3 opacity-0 group-hover:opacity-100 flex-shrink-0" />}
+                              </button>
+                            </td>
+                            <td className="px-4 py-3 font-medium text-slate-800">{a.username}</td>
+                            <td className="px-4 py-3 text-slate-500">{a.email || '—'}</td>
+                            <td className="px-4 py-3 text-center">
+                              <button
+                                onClick={() => togglePremium(a)}
+                                disabled={!!togglingPremium[a.id]}
+                                className={`w-5 h-5 rounded border-2 flex items-center justify-center mx-auto transition ${
+                                  a.is_premium
+                                    ? 'bg-yellow-400 border-yellow-400'
+                                    : 'border-slate-300 hover:border-yellow-400'
+                                } ${togglingPremium[a.id] ? 'opacity-50' : ''}`}
+                                title={a.is_premium ? 'Odstrani premium' : 'Dodeli premium'}
+                              >
+                                {a.is_premium && <Check className="w-3 h-3 text-white" />}
+                              </button>
+                            </td>
+                            <td className="px-4 py-3 text-slate-500 text-xs">{formatDate(a.created_date)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Guest Sessions */}
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                  <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-blue-50">
+                    <h3 className="font-semibold text-slate-800">Gostinski seji</h3>
+                    <span className="text-xs text-slate-400">{guestSessions.length} zapisov</span>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-slate-50 border-b border-slate-100">
+                        <tr>
+                          <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Device ID</th>
+                          <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Št. sledi</th>
+                          <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Povezana koda</th>
+                          <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Ustvarjena</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {guestSessions.length > 0 ? (
+                          guestSessions.map((g, i) => (
+                            <tr key={g.id} className={`border-b border-slate-50 hover:bg-slate-50/80 transition ${i % 2 === 0 ? '' : 'bg-slate-50/30'}`}>
+                              <td className="px-4 py-3">
+                                <button
+                                  onClick={() => copyToClipboard(g.device_id, g.id)}
+                                  className="flex items-center gap-1.5 font-mono text-xs text-slate-400 hover:text-slate-700 transition group"
+                                  title="Kopiraj Device ID"
+                                >
+                                  <span className="max-w-[100px] truncate">{g.device_id}</span>
+                                  {copiedId === g.id
+                                    ? <Check className="w-3 h-3 text-blue-500 flex-shrink-0" />
+                                    : <Copy className="w-3 h-3 opacity-0 group-hover:opacity-100 flex-shrink-0" />}
+                                </button>
+                              </td>
+                              <td className="px-4 py-3 text-slate-600 font-semibold">{g.tracks?.length || 0}</td>
+                              <td className="px-4 py-3 text-slate-500">{g.link_code || '—'}</td>
+                              <td className="px-4 py-3 text-slate-500 text-xs">{formatDate(g.created_date)}</td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan="4" className="px-4 py-8 text-center text-slate-400">Ni gostinskih sej</td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             )}
