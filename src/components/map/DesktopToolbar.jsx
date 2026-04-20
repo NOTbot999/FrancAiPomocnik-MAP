@@ -3,11 +3,12 @@ import {
   Layers, Locate, LoaderCircle, Ruler, Pentagon, MapPin, Trash2,
   MousePointer2, Navigation, Route, Sparkles, TrendingUp, X,
   Map, Settings, Eye, EyeOff, Save, FolderOpen,
-  Loader2, Check, GripVertical
+  Loader2, Check, GripVertical, Palette
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { motion, AnimatePresence } from "framer-motion";
 import { base44 } from "@/api/base44Client";
+import ThemeCustomizer, { loadTheme, saveTheme, DEFAULT_THEME } from "@/components/map/ThemeCustomizer";
 
 const BUTTON_DEFS = [
   { id: "layers",          icon: Layers,        label: "Toggle Layers",       color: "emerald" },
@@ -80,6 +81,8 @@ export default function DesktopToolbar({
   const [pos, setPos] = useState(loadPos);
   const [hidden, setHidden] = useState(loadHidden);
   const [showSettings, setShowSettings] = useState(false);
+  const [showTheme, setShowTheme] = useState(false);
+  const [theme, setTheme] = useState(loadTheme);
   const [locating, setLocating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [savedOk, setSavedOk] = useState(false);
@@ -214,7 +217,7 @@ export default function DesktopToolbar({
         </div>
 
         {/* Cluster pill */}
-        <div className="flex flex-col items-center gap-1 bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-200/60 p-1.5">
+        <div className="flex flex-col items-center gap-1 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-200/60 p-1.5" style={{ backgroundColor: theme.toolbarBg + "f5" }}>
           <TooltipProvider delayDuration={400}>
             {visibleButtons.map((btn) => {
               let Icon = btn.id === "locate" && locating ? LoaderCircle
@@ -231,11 +234,11 @@ export default function DesktopToolbar({
                     <button
                       onClick={() => !disabled && handleClick(btn.id)}
                       disabled={disabled}
+                      style={active
+                        ? { backgroundColor: theme.buttonActiveBg, color: theme.buttonActiveText, borderColor: theme.buttonActiveBg }
+                        : { backgroundColor: theme.toolbarBg, color: theme.toolbarText, borderColor: "#e2e8f0" }
+                      }
                       className={`relative w-9 h-9 rounded-xl flex items-center justify-center border shadow-sm transition-all duration-150
-                        ${active
-                          ? `${activeColors[btn.color] || activeColors.emerald} shadow-md`
-                          : "bg-white text-slate-600 border-slate-200/60 hover:bg-slate-50 hover:text-slate-800"
-                        }
                         ${disabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}
                       `}
                     >
@@ -255,13 +258,31 @@ export default function DesktopToolbar({
             })}
           </TooltipProvider>
 
-          {/* Divider + Settings button */}
+          {/* Divider + Settings + Theme buttons */}
           <div className="w-6 h-px bg-slate-200 my-0.5" />
           <TooltipProvider delayDuration={400}>
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
-                  onClick={() => setShowSettings(p => !p)}
+                  onClick={() => { setShowTheme(p => !p); setShowSettings(false); }}
+                  className={`w-9 h-9 rounded-xl flex items-center justify-center border shadow-sm transition-all duration-150
+                    ${showTheme
+                      ? "bg-emerald-500 text-white border-transparent"
+                      : "bg-white text-slate-400 border-slate-200/60 hover:bg-slate-50 hover:text-slate-700"
+                    }
+                  `}
+                >
+                  <Palette className="w-4 h-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="left" className="z-[9999]" sideOffset={6}>
+                <p className="text-xs font-medium">Customize Colors</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => { setShowSettings(p => !p); setShowTheme(false); }}
                   className={`w-9 h-9 rounded-xl flex items-center justify-center border shadow-sm transition-all duration-150
                     ${showSettings
                       ? "bg-slate-800 text-white border-transparent"
@@ -345,6 +366,18 @@ export default function DesktopToolbar({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Theme customizer panel */}
+      {showTheme && (
+        <div style={{ position: "fixed", left: pos.x - 260, top: pos.y + 24, zIndex: 970 }}>
+          <ThemeCustomizer
+            isOpen={showTheme}
+            onClose={() => setShowTheme(false)}
+            theme={theme}
+            onThemeChange={setTheme}
+          />
+        </div>
+      )}
 
       {/* Settings panel */}
       <AnimatePresence>
