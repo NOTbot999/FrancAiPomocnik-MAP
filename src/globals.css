@@ -77,7 +77,9 @@
   border-radius: 6px 0 0 0 !important;
 }
 
-.leaflet-attribution-flag {
+.leaflet-attribution-flag,
+.leaflet-control-attribution img,
+.leaflet-control-attribution a img {
   display: none !important;
 }
 
