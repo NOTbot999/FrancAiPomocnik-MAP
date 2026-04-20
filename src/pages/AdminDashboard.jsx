@@ -12,8 +12,8 @@ export default function AdminDashboard() {
 
   const load = async () => {
     setLoading(true);
-    const data = await base44.entities.UserAccount.list('-created_date', 200);
-    setAccounts(data);
+    const res = await base44.functions.invoke('adminGetUsers', {});
+    setAccounts(res.data?.accounts || []);
     setLoading(false);
   };
 

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Navigation, Plus, Trash2, X, Loader2, Route } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { loadTheme } from "@/components/map/ThemeCustomizer";
 
 function PointInput({ label, value, onChange, onClear }) {
   const [query, setQuery] = useState(value?.label || "");
@@ -53,7 +54,8 @@ function PointInput({ label, value, onChange, onClear }) {
             value={query}
             onChange={e => search(e.target.value)}
             placeholder={`Search ${label === "A" ? "origin" : label === "B" ? "destination" : "waypoint"}...`}
-            className="w-full text-xs px-2 py-1.5 rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-1 focus:ring-emerald-400 pr-6"
+            className="w-full text-xs px-2 py-1.5 rounded-lg border focus:outline-none pr-6"
+            style={{ backgroundColor: "transparent", borderColor: "#e2e8f0", color: "inherit" }}
           />
           {loading && <Loader2 className="absolute right-2 top-1.5 w-3 h-3 animate-spin text-slate-400" />}
           {!loading && query && (
@@ -87,6 +89,7 @@ function PointInput({ label, value, onChange, onClear }) {
 }
 
 export default function NavigationPanel({ onRouteResult, onClose, isOpen, onToggle, inline = false }) {
+  const theme = loadTheme();
   const [origin, setOrigin] = useState(null);
   const [destination, setDestination] = useState(null);
   const [waypoints, setWaypoints] = useState([]);
@@ -167,12 +170,12 @@ export default function NavigationPanel({ onRouteResult, onClose, isOpen, onTogg
   };
 
   const panelInner = (
-    <div className="bg-white/97 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/60 overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
-        <span className="text-sm font-semibold text-slate-800 flex items-center gap-2">
-          <Navigation className="w-4 h-4 text-emerald-500" /> Route Planner
+    <div className="backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/60 overflow-hidden" style={{ backgroundColor: theme.menuBg, color: theme.menuText }}>
+      <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: theme.menuText + "22" }}>
+        <span className="text-sm font-semibold flex items-center gap-2" style={{ color: theme.menuText }}>
+          <Navigation className="w-4 h-4" style={{ color: theme.accentColor }} /> Route Planner
         </span>
-        <button onClick={onClose} className="text-slate-300 hover:text-slate-600">
+        <button onClick={onClose} className="opacity-50 hover:opacity-100" style={{ color: theme.menuText }}>
           <X className="w-4 h-4" />
         </button>
       </div>

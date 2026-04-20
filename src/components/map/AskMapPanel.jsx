@@ -3,6 +3,7 @@ import { X, Send, Sparkles, Loader2, Bot, User } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { base44 } from "@/api/base44Client";
 import { OVERLAY_CATEGORIES, BASE_LAYERS } from "./layerConfig";
+import { loadTheme } from "@/components/map/ThemeCustomizer";
 
 const LAYER_SUMMARY = [
   ...BASE_LAYERS.map(l => `Base: ${l.name}`),
@@ -28,6 +29,7 @@ When recommending layers to activate, include a JSON block at the end of your re
 Keep responses concise and practical. You have real-time context about the map.`;
 
 export default function AskMapPanel({ onClose, activeLayers, onToggleLayer, mapCenter, mapZoom }) {
+  const theme = loadTheme();
   const [messages, setMessages] = useState([
     { role: "assistant", content: "Hello! I'm your GIS assistant for Slovenia. Ask me anything about the map — I can activate layers, explain data, or answer questions about Slovenia's geography. Try: *\"Show me flood risk areas\"* or *\"What layers show caves?\"*" }
   ]);
@@ -103,16 +105,16 @@ export default function AskMapPanel({ onClose, activeLayers, onToggleLayer, mapC
       initial={{ opacity: 0, y: 10, scale: 0.97 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: 10, scale: 0.97 }}
-      className="flex flex-col bg-slate-900/97 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-700/60 overflow-hidden"
-      style={{ width: 340, height: 480 }}
+      className="flex flex-col backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-700/60 overflow-hidden"
+      style={{ width: 340, height: 480, backgroundColor: theme.panelBg, color: theme.panelText }}
     >
       {/* Header */}
-      <div className="flex items-center gap-2.5 px-4 py-3 border-b border-slate-700/50 shrink-0 bg-gradient-to-r from-emerald-900/40 to-slate-900/40">
+      <div className="flex items-center gap-2.5 px-4 py-3 border-b border-slate-700/50 shrink-0" style={{ backgroundColor: theme.panelBg }}>
         <div className="w-7 h-7 rounded-lg bg-emerald-500/20 flex items-center justify-center">
           <Sparkles className="w-4 h-4 text-emerald-400" />
         </div>
-        <span className="text-sm font-semibold text-white flex-1">Ask the Map</span>
-        <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors">
+        <span className="text-sm font-semibold flex-1" style={{ color: theme.panelText }}>Ask the Map</span>
+        <button onClick={onClose} className="opacity-60 hover:opacity-100 transition-opacity" style={{ color: theme.panelText }}>
           <X className="w-4 h-4" />
         </button>
       </div>
@@ -126,11 +128,11 @@ export default function AskMapPanel({ onClose, activeLayers, onToggleLayer, mapC
                 <Bot className="w-3.5 h-3.5 text-emerald-400" />
               </div>
             )}
-            <div className={`max-w-[85%] rounded-xl px-3 py-2 text-xs leading-relaxed ${
-              msg.role === "user"
-                ? "bg-emerald-600 text-white"
-                : "bg-slate-800 text-slate-200"
-            }`}>
+            <div className={`max-w-[85%] rounded-xl px-3 py-2 text-xs leading-relaxed`}
+              style={msg.role === "user"
+                ? { backgroundColor: theme.buttonActiveBg, color: theme.buttonActiveText }
+                : { backgroundColor: theme.menuBg + "33", color: theme.panelText, border: `1px solid ${theme.panelText}22` }
+              }>
               {msg.content.split(/\*([^*]+)\*/).map((part, j) =>
                 j % 2 === 1 ? <em key={j} className="not-italic font-semibold text-emerald-400">{part}</em> : part
               )}
@@ -147,7 +149,7 @@ export default function AskMapPanel({ onClose, activeLayers, onToggleLayer, mapC
             <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
               <Bot className="w-3.5 h-3.5 text-emerald-400" />
             </div>
-            <div className="bg-slate-800 rounded-xl px-3 py-2">
+            <div className="rounded-xl px-3 py-2" style={{ backgroundColor: theme.menuBg + "33" }}>
               <Loader2 className="w-3.5 h-3.5 text-emerald-400 animate-spin" />
             </div>
           </div>
@@ -156,13 +158,14 @@ export default function AskMapPanel({ onClose, activeLayers, onToggleLayer, mapC
       </div>
 
       {/* Input */}
-      <div className="flex items-center gap-2 px-3 py-3 border-t border-slate-700/50 shrink-0">
+      <div className="flex items-center gap-2 px-3 py-3 border-t border-slate-700/50 shrink-0" style={{ backgroundColor: theme.panelBg }}>
         <input
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => e.key === "Enter" && send()}
           placeholder="Ask about layers, places, data..."
-          className="flex-1 bg-slate-800 text-slate-200 text-xs rounded-xl px-3 py-2 outline-none border border-slate-700 focus:border-emerald-500 placeholder-slate-500"
+          className="flex-1 text-xs rounded-xl px-3 py-2 outline-none"
+          style={{ backgroundColor: theme.menuBg + "44", color: theme.panelText, border: `1px solid ${theme.panelText}33` }}
         />
         <button
           onClick={send}

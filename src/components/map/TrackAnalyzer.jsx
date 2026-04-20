@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { X, Sparkles, Loader2, TrendingUp, ChevronDown, ChevronUp } from "lucide-react";
 import { motion } from "framer-motion";
 import { base44 } from "@/api/base44Client";
+import { loadTheme } from "@/components/map/ThemeCustomizer";
 
 function calcDistance(track) {
   if (!track || track.length < 2) return 0;
@@ -24,6 +25,7 @@ function formatDist(m) {
 }
 
 export default function TrackAnalyzer({ gpsTrack, onClose }) {
+  const theme = loadTheme();
   const [analysis, setAnalysis] = useState(null);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(true);
@@ -117,19 +119,19 @@ Provide a JSON response with this exact structure:
       initial={{ opacity: 0, y: 10, scale: 0.97 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: 10, scale: 0.97 }}
-      className="bg-slate-900/97 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-700/60 overflow-hidden"
-      style={{ width: 320 }}
+      className="backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-700/60 overflow-hidden"
+      style={{ width: 320, backgroundColor: theme.panelBg, color: theme.panelText }}
     >
       {/* Header */}
-      <div className="flex items-center gap-2.5 px-4 py-3 border-b border-slate-700/50 bg-gradient-to-r from-blue-900/40 to-slate-900/40">
+      <div className="flex items-center gap-2.5 px-4 py-3 border-b border-slate-700/50" style={{ backgroundColor: theme.panelBg }}>
         <div className="w-7 h-7 rounded-lg bg-blue-500/20 flex items-center justify-center">
           <TrendingUp className="w-4 h-4 text-blue-400" />
         </div>
-        <span className="text-sm font-semibold text-white flex-1">Track Analyzer</span>
-        <button onClick={() => setExpanded(p => !p)} className="text-slate-500 hover:text-white mr-1">
+        <span className="text-sm font-semibold flex-1" style={{ color: theme.panelText }}>Track Analyzer</span>
+        <button onClick={() => setExpanded(p => !p)} className="opacity-60 hover:opacity-100 mr-1" style={{ color: theme.panelText }}>
           {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </button>
-        <button onClick={onClose} className="text-slate-500 hover:text-white">
+        <button onClick={onClose} className="opacity-60 hover:opacity-100" style={{ color: theme.panelText }}>
           <X className="w-4 h-4" />
         </button>
       </div>
@@ -138,18 +140,18 @@ Provide a JSON response with this exact structure:
         <div className="p-4 space-y-3 max-h-[60vh] overflow-y-auto">
           {/* Track stats */}
           <div className="grid grid-cols-2 gap-2">
-            <div className="bg-slate-800 rounded-xl p-2.5 text-center">
-              <p className="text-[10px] text-slate-500 uppercase tracking-wider">Distance</p>
-              <p className="text-sm font-bold text-white mt-0.5">{hasTrack ? formatDist(distance) : "—"}</p>
+            <div className="rounded-xl p-2.5 text-center" style={{ backgroundColor: theme.menuBg + "33" }}>
+              <p className="text-[10px] uppercase tracking-wider opacity-50" style={{ color: theme.panelText }}>Distance</p>
+              <p className="text-sm font-bold mt-0.5" style={{ color: theme.panelText }}>{hasTrack ? formatDist(distance) : "—"}</p>
             </div>
-            <div className="bg-slate-800 rounded-xl p-2.5 text-center">
-              <p className="text-[10px] text-slate-500 uppercase tracking-wider">Points</p>
-              <p className="text-sm font-bold text-white mt-0.5">{points}</p>
+            <div className="rounded-xl p-2.5 text-center" style={{ backgroundColor: theme.menuBg + "33" }}>
+              <p className="text-[10px] uppercase tracking-wider opacity-50" style={{ color: theme.panelText }}>Points</p>
+              <p className="text-sm font-bold mt-0.5" style={{ color: theme.panelText }}>{points}</p>
             </div>
           </div>
 
           {!hasTrack && (
-            <p className="text-xs text-slate-500 text-center py-2">Start a GPS track to analyze it.</p>
+            <p className="text-xs opacity-50 text-center py-2" style={{ color: theme.panelText }}>Start a GPS track to analyze it.</p>
           )}
 
           {hasTrack && !analysis && !loading && (

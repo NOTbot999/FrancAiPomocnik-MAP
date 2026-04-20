@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { Save, FolderOpen, Trash2, X, Loader2, Check, Route, Link2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import DeviceLink from "./DeviceLink";
+import { loadTheme } from "@/components/map/ThemeCustomizer";
 
 function calcDistance(track) {
   let total = 0;
@@ -36,6 +37,7 @@ function getDeviceId() {
 }
 
 export default function MyTracks({ gpsTrack, onLoadTrack, onClose, inline }) {
+  const theme = loadTheme();
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -76,12 +78,13 @@ export default function MyTracks({ gpsTrack, onLoadTrack, onClose, inline }) {
   };
 
   return (
-    <div className={inline ? "w-full" : "absolute bottom-8 right-16 z-[950] w-72 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/50"}>
+    <div className={inline ? "w-full" : "absolute bottom-8 right-16 z-[950] w-72 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/50"}
+      style={!inline ? { backgroundColor: theme.menuBg, color: theme.menuText } : {}}>
       {/* Header — hidden in inline mode */}
       {!inline && (
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
-          <div className="flex items-center gap-2 text-slate-700 font-semibold text-sm">
-            <Route className="w-4 h-4 text-emerald-500" />
+        <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: theme.menuText + "22" }}>
+          <div className="flex items-center gap-2 font-semibold text-sm" style={{ color: theme.menuText }}>
+            <Route className="w-4 h-4" style={{ color: theme.accentColor }} />
             My GPS Tracks
           </div>
           <div className="flex items-center gap-1">
@@ -92,7 +95,7 @@ export default function MyTracks({ gpsTrack, onLoadTrack, onClose, inline }) {
             >
               <Link2 className="w-4 h-4" />
             </button>
-            <button onClick={onClose} className="p-1.5 text-slate-400 hover:text-slate-600">
+            <button onClick={onClose} className="p-1.5 opacity-50 hover:opacity-100" style={{ color: theme.menuText }}>
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -101,13 +104,13 @@ export default function MyTracks({ gpsTrack, onLoadTrack, onClose, inline }) {
 
       {/* Device Link panel — hidden in inline mode (handled by settings panel) */}
       {!inline && showDeviceLink && (
-        <div className="px-4 py-3 border-b border-slate-100">
+        <div className="px-4 py-3 border-b" style={{ borderColor: theme.menuText + "22" }}>
           <DeviceLink deviceId={deviceId} onClose={() => setShowDeviceLink(false)} />
         </div>
       )}
 
       {/* Save current track */}
-      <div className="px-4 py-3 border-b border-slate-100">
+      <div className="px-4 py-3 border-b" style={{ borderColor: theme.menuText + "22" }}>
         <button
           onClick={handleSave}
           disabled={saving || gpsTrack.length < 2}
@@ -146,12 +149,13 @@ export default function MyTracks({ gpsTrack, onLoadTrack, onClose, inline }) {
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="flex items-center gap-2 px-4 py-2.5 hover:bg-slate-50 border-b border-slate-50 last:border-0"
+                  className="flex items-center gap-2 px-4 py-2.5 border-b last:border-0"
+                  style={{ borderColor: theme.menuText + "11" }}
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-slate-700 truncate">{s.name}</p>
+                    <p className="text-xs font-medium truncate" style={{ color: theme.menuText }}>{s.name}</p>
                     {s.distance_meters && (
-                      <p className="text-[10px] text-slate-400">{fmtDist(s.distance_meters)} · {s.track_data?.length} pts</p>
+                      <p className="text-[10px] opacity-50" style={{ color: theme.menuText }}>{fmtDist(s.distance_meters)} · {s.track_data?.length} pts</p>
                     )}
                   </div>
                   <button
