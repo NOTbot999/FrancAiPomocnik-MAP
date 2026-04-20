@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { Layers, X, Building2, Droplets, Trees, CloudSun, MapPin, Wheat, Mountain, History, Landmark, ExternalLink, ChevronDown, Map, GripVertical } from "lucide-react";
+import { base44 } from "@/api/base44Client";
 import { Slider } from "@/components/ui/slider";
 import { motion, AnimatePresence } from "framer-motion";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
@@ -309,6 +310,12 @@ export default function LayerPanel({
     });
   }, []);
 
+  const trackedToggleLayer = useCallback((layerId) => {
+    const willBeActive = !activeLayers[layerId];
+    if (willBeActive) base44.analytics.track({ eventName: "layer_toggled", properties: { layer_id: layerId } });
+    onToggleLayer(layerId);
+  }, [activeLayers, onToggleLayer]);
+
   const handleCategoryDragEnd = useCallback((result) => {
     if (!result.destination) return;
     setCategoryOrder(prev => {
@@ -329,7 +336,7 @@ export default function LayerPanel({
     });
   }, []);
 
-  const panelProps = { activeBaseLayers, onToggleBaseLayer, onBaseOpacityChange, activeLayers, onToggleLayer, onOpacityChange, favorites, onToggleFavorite: handleToggleFavorite, categoryOrder, onCategoryDragEnd: handleCategoryDragEnd, baseLayerOrder, onBaseLayerDragEnd: handleBaseLayerDragEnd };
+  const panelProps = { activeBaseLayers, onToggleBaseLayer, onBaseOpacityChange, activeLayers, onToggleLayer: trackedToggleLayer, onOpacityChange, favorites, onToggleFavorite: handleToggleFavorite, categoryOrder, onCategoryDragEnd: handleCategoryDragEnd, baseLayerOrder, onBaseLayerDragEnd: handleBaseLayerDragEnd };
 
   if (isMobile) {
     return (

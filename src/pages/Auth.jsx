@@ -23,6 +23,7 @@ export default function Auth() {
     try {
       const res = await base44.functions.invoke('registerUser', { username, password, email: email || null });
       if (res.data.success) {
+        base44.analytics.track({ eventName: "user_registered", properties: { has_email: !!(email) } });
         setIsLogin(true);
         setIdentifier(username);
         setUsername('');
@@ -46,6 +47,7 @@ export default function Auth() {
     try {
       const res = await base44.functions.invoke('loginUser', { login: identifier, password });
       if (res.data.success) {
+        base44.analytics.track({ eventName: "user_logged_in", properties: { role: res.data.role || 'user', is_premium: res.data.is_premium || false } });
         localStorage.setItem('userAccountId', res.data.accountId);
         localStorage.setItem('userUsername', res.data.username);
         localStorage.setItem('userEmail', res.data.email || '');

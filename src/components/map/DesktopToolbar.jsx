@@ -146,6 +146,7 @@ export default function DesktopToolbar({
       polygons: drawings.polygons,
       gps_tracks: gpsTrack?.length > 0 ? [gpsTrack] : [],
     });
+    base44.analytics.track({ eventName: "drawing_saved", properties: { markers: drawings.markers?.length || 0, lines: drawings.lines?.length || 0, polygons: drawings.polygons?.length || 0, gps_points: gpsTrack?.length || 0 } });
     setSaving(false);
     setSavedOk(true);
     setTimeout(() => setSavedOk(false), 2000);
@@ -181,11 +182,11 @@ export default function DesktopToolbar({
   const handleClick = (id) => {
     if (id === "layers")        return onTogglePanel();
     if (id === "locate")        return handleLocate();
-    if (id === "gps")           return onGpsToggle();
+    if (id === "gps")           { if (!isGpsTracking) base44.analytics.track({ eventName: "gps_tracking_started" }); return onGpsToggle(); }
     if (id === "mytracks")      return onShowMyTracks();
-    if (id === "nav")           return onNavToggle();
-    if (id === "askmap")        return onAskMapToggle();
-    if (id === "trackanalyzer") return onTrackAnalyzerToggle();
+    if (id === "nav")           { if (!isNavOpen) base44.analytics.track({ eventName: "route_planner_opened" }); return onNavToggle(); }
+    if (id === "askmap")        { if (!isAskMapOpen) base44.analytics.track({ eventName: "ask_map_opened" }); return onAskMapToggle(); }
+    if (id === "trackanalyzer") { if (!isTrackAnalyzerOpen) base44.analytics.track({ eventName: "track_analyzer_opened" }); return onTrackAnalyzerToggle(); }
     if (id === "ruler")         return setRulerOpen(p => !p);
     if (id === "save")          return handleSave();
     if (id === "load")          return handleLoad();
