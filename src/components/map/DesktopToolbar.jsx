@@ -1,15 +1,14 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import {
   Layers, Locate, LoaderCircle, Ruler, Pentagon, MapPin, Trash2,
   MousePointer2, Navigation, Route, Sparkles, TrendingUp, X,
-  Map, Settings, GripVertical, Eye, EyeOff, Save, FolderOpen,
-  Loader2, Check, Plus, Minus, ChevronRight, ChevronLeft
+  Map, Settings, Eye, EyeOff, Save, FolderOpen,
+  Loader2, Check, Plus, Minus, GripVertical
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { motion, AnimatePresence } from "framer-motion";
 import { base44 } from "@/api/base44Client";
 
-// Each button is a draggable "chip" with its own position
 const BUTTON_DEFS = [
   { id: "layers",          icon: Layers,        label: "Toggle Layers",       color: "emerald" },
   { id: "locate",          icon: Locate,        label: "My Location",         color: "sky" },
@@ -33,108 +32,41 @@ const RULER_TOOLS = [
   { id: "clear",    icon: Trash2,        label: "Clear All" },
 ];
 
-const DEFAULT_POSITIONS = {};
-// Default stacked column at bottom-right, each button offset vertically
-BUTTON_DEFS.forEach((btn, i) => {
-  DEFAULT_POSITIONS[btn.id] = { x: window.innerWidth - 56, y: window.innerHeight - 56 - i * 46 };
-});
+const STORAGE_KEY = "desktopToolbarPos";
 
-function loadButtonPrefs() {
+function loadPos() {
   try {
-    const raw = localStorage.getItem("desktopBtnPrefs2");
-    if (raw) {
-      const saved = JSON.parse(raw);
-      // merge any new buttons
-      const merged = { positions: { ...DEFAULT_POSITIONS, ...saved.positions }, hidden: saved.hidden || [] };
-      return merged;
-    }
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
   } catch {}
-  return { positions: { ...DEFAULT_POSITIONS }, hidden: [] };
+  return { x: window.innerWidth - 72, y: window.innerHeight / 2 - 200 };
 }
 
-function saveButtonPrefs(prefs) {
-  localStorage.setItem("desktopBtnPrefs2", JSON.stringify(prefs));
+function savePos(pos) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(pos));
 }
 
-// A single draggable button chip
-function DraggableBtn({ id, icon: Icon, label, color, pos, onPosChange, onPosCommit, onClick, active, disabled, children, badge }) {
-  const ref = useRef(null);
-  const dragOffset = useRef({ x: 0, y: 0 });
-  const draggingRef = useRef(false);
-  const movedRef = useRef(false);
-
-  const onMouseDown = (e) => {
-    if (e.button !== 0) return;
-    e.preventDefault();
-    const rect = ref.current.getBoundingClientRect();
-    dragOffset.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-    draggingRef.current = true;
-    movedRef.current = false;
-
-    const onMove = (ev) => {
-      const nx = ev.clientX - dragOffset.current.x;
-      const ny = ev.clientY - dragOffset.current.y;
-      movedRef.current = true;
-      onPosChange({ x: nx, y: ny });
-    };
-    const onUp = (ev) => {
-      window.removeEventListener("mousemove", onMove);
-      window.removeEventListener("mouseup", onUp);
-      draggingRef.current = false;
-      if (!movedRef.current) {
-        onClick();
-      } else {
-        const nx = ev.clientX - dragOffset.current.x;
-        const ny = ev.clientY - dragOffset.current.y;
-        onPosCommit({ x: nx, y: ny });
-      }
-    };
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("mouseup", onUp);
-  };
-
-  const activeColors = {
-    emerald: "bg-emerald-500 text-white shadow-emerald-400/40",
-    sky:     "bg-sky-500 text-white shadow-sky-400/40",
-    blue:    "bg-blue-500 text-white shadow-blue-400/40",
-    teal:    "bg-teal-500 text-white shadow-teal-400/40",
-    violet:  "bg-violet-500 text-white shadow-violet-400/40",
-    amber:   "bg-amber-500 text-white shadow-amber-400/40",
-    slate:   "bg-slate-700 text-white shadow-slate-400/40",
-  };
-
-  return (
-    <TooltipProvider delayDuration={400}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div
-            ref={ref}
-            onMouseDown={onMouseDown}
-            style={{ position: "fixed", left: pos.x, top: pos.y, zIndex: 950, cursor: "grab", userSelect: "none" }}
-            className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-lg border transition-all duration-200 relative
-              ${active
-                ? `${activeColors[color] || activeColors.emerald} border-transparent`
-                : "bg-white/95 backdrop-blur-xl text-slate-700 border-slate-200/60 hover:bg-white hover:shadow-xl"
-              }
-              ${disabled ? "opacity-40 cursor-not-allowed" : ""}
-            `}
-          >
-            <Icon className="w-5 h-5 flex-shrink-0" />
-            {badge != null && badge > 0 && (
-              <span className="absolute -top-1 -right-1 bg-emerald-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center pointer-events-none">
-                {badge}
-              </span>
-            )}
-            {children}
-          </div>
-        </TooltipTrigger>
-        <TooltipContent side="left" className="z-[9999]" sideOffset={6}>
-          <p className="text-xs font-medium">{label}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  );
+function loadHidden() {
+  try {
+    const raw = localStorage.getItem("desktopToolbarHidden");
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return [];
 }
+
+function saveHidden(hidden) {
+  localStorage.setItem("desktopToolbarHidden", JSON.stringify(hidden));
+}
+
+const activeColors = {
+  emerald: "bg-emerald-500 text-white border-emerald-500 shadow-emerald-400/30",
+  sky:     "bg-sky-500 text-white border-sky-500 shadow-sky-400/30",
+  blue:    "bg-blue-500 text-white border-blue-500 shadow-blue-400/30",
+  teal:    "bg-teal-500 text-white border-teal-500 shadow-teal-400/30",
+  violet:  "bg-violet-500 text-white border-violet-500 shadow-violet-400/30",
+  amber:   "bg-amber-500 text-white border-amber-500 shadow-amber-400/30",
+  slate:   "bg-slate-700 text-white border-slate-700 shadow-slate-400/30",
+};
 
 export default function DesktopToolbar({
   isPanelOpen, onTogglePanel, activeLayerCount,
@@ -146,9 +78,9 @@ export default function DesktopToolbar({
   isAskMapOpen, onAskMapToggle,
   isTrackAnalyzerOpen, onTrackAnalyzerToggle,
   drawings, gpsTrack, onLoadDrawings,
-  mapRef,
 }) {
-  const [prefs, setPrefs] = useState(loadButtonPrefs);
+  const [pos, setPos] = useState(loadPos);
+  const [hidden, setHidden] = useState(loadHidden);
   const [showSettings, setShowSettings] = useState(false);
   const [locating, setLocating] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -156,25 +88,42 @@ export default function DesktopToolbar({
   const [loadingDraw, setLoadingDraw] = useState(false);
   const [rulerOpen, setRulerOpen] = useState(false);
 
-  const updatePos = useCallback((id, pos) => {
-    setPrefs(prev => ({ ...prev, positions: { ...prev.positions, [id]: pos } }));
-  }, []);
+  const dragOffset = useRef({ x: 0, y: 0 });
+  const movedRef = useRef(false);
+  const toolbarRef = useRef(null);
 
-  const commitPos = useCallback((id, pos) => {
-    setPrefs(prev => {
-      const next = { ...prev, positions: { ...prev.positions, [id]: pos } };
-      saveButtonPrefs(next);
-      return next;
-    });
+  const onMouseDown = useCallback((e) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    const rect = toolbarRef.current.getBoundingClientRect();
+    dragOffset.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    movedRef.current = false;
+
+    const onMove = (ev) => {
+      const nx = ev.clientX - dragOffset.current.x;
+      const ny = ev.clientY - dragOffset.current.y;
+      movedRef.current = true;
+      setPos({ x: nx, y: ny });
+    };
+    const onUp = (ev) => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+      if (movedRef.current) {
+        const nx = ev.clientX - dragOffset.current.x;
+        const ny = ev.clientY - dragOffset.current.y;
+        const finalPos = { x: nx, y: ny };
+        setPos(finalPos);
+        savePos(finalPos);
+      }
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
   }, []);
 
   const toggleHidden = (id) => {
-    setPrefs(prev => {
-      const hidden = prev.hidden.includes(id)
-        ? prev.hidden.filter(x => x !== id)
-        : [...prev.hidden, id];
-      const next = { ...prev, hidden };
-      saveButtonPrefs(next);
+    setHidden(prev => {
+      const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
+      saveHidden(next);
       return next;
     });
   };
@@ -192,9 +141,8 @@ export default function DesktopToolbar({
     const hasAnything = drawings && (drawings.markers?.length || drawings.lines?.length || drawings.polygons?.length || gpsTrack?.length);
     if (!hasAnything) return;
     setSaving(true);
-    const name = `Drawing ${new Date().toLocaleString()}`;
     await base44.entities.MapDrawing.create({
-      name,
+      name: `Drawing ${new Date().toLocaleString()}`,
       markers: drawings.markers,
       lines: drawings.lines,
       polygons: drawings.polygons,
@@ -249,49 +197,103 @@ export default function DesktopToolbar({
 
   const hasAnything = drawings && (drawings.markers?.length || drawings.lines?.length || drawings.polygons?.length || gpsTrack?.length);
 
+  const visibleButtons = BUTTON_DEFS.filter(b => !hidden.includes(b.id));
+
   return (
     <>
-      {/* Individual draggable buttons */}
-      {BUTTON_DEFS.filter(b => !prefs.hidden.includes(b.id)).map(btn => {
-        const pos = prefs.positions[btn.id] || { x: window.innerWidth - 56, y: 100 };
-        let icon = btn.icon;
-        let disabled = false;
+      {/* Main draggable toolbar cluster */}
+      <div
+        ref={toolbarRef}
+        style={{ position: "fixed", left: pos.x, top: pos.y, zIndex: 950, userSelect: "none" }}
+        className="flex flex-col items-center gap-1"
+      >
+        {/* Drag handle */}
+        <div
+          onMouseDown={onMouseDown}
+          className="w-8 h-5 flex items-center justify-center cursor-grab text-slate-400 hover:text-slate-600 rounded-lg hover:bg-white/80 transition-all"
+          title="Drag to move"
+        >
+          <GripVertical className="w-4 h-4" />
+        </div>
 
-        if (btn.id === "locate" && locating) icon = LoaderCircle;
-        if (btn.id === "save" && saving)     icon = Loader2;
-        if (btn.id === "save" && savedOk)    icon = Check;
-        if (btn.id === "load" && loadingDraw) icon = Loader2;
-        if (btn.id === "save") disabled = !hasAnything && !savedOk;
+        {/* Cluster pill */}
+        <div className="flex flex-col items-center gap-1 bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-200/60 p-1.5">
+          <TooltipProvider delayDuration={400}>
+            {visibleButtons.map((btn) => {
+              let Icon = btn.id === "locate" && locating ? LoaderCircle
+                       : btn.id === "save" && saving    ? Loader2
+                       : btn.id === "save" && savedOk   ? Check
+                       : btn.id === "load" && loadingDraw ? Loader2
+                       : btn.icon;
+              const active = isActive(btn.id);
+              const disabled = btn.id === "save" && !hasAnything && !savedOk;
 
-        return (
-          <DraggableBtn
-            key={btn.id}
-            id={btn.id}
-            icon={icon}
-            label={btn.label}
-            color={btn.color}
-            pos={pos}
-            onPosChange={(p) => updatePos(btn.id, p)}
-            onPosCommit={(p) => commitPos(btn.id, p)}
-            onClick={() => handleClick(btn.id)}
-            active={isActive(btn.id)}
-            disabled={disabled}
-            badge={btn.id === "layers" ? (activeLayerCount > 0 ? activeLayerCount : null) : null}
-          />
-        );
-      })}
+              return (
+                <Tooltip key={btn.id}>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => !disabled && handleClick(btn.id)}
+                      disabled={disabled}
+                      className={`relative w-9 h-9 rounded-xl flex items-center justify-center border shadow-sm transition-all duration-150
+                        ${active
+                          ? `${activeColors[btn.color] || activeColors.emerald} shadow-md`
+                          : "bg-white text-slate-600 border-slate-200/60 hover:bg-slate-50 hover:text-slate-800"
+                        }
+                        ${disabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}
+                      `}
+                    >
+                      <Icon className={`w-4 h-4 flex-shrink-0 ${btn.id === "locate" && locating ? "animate-spin" : ""} ${(btn.id === "save" && saving) || (btn.id === "load" && loadingDraw) ? "animate-spin" : ""}`} />
+                      {btn.id === "layers" && activeLayerCount > 0 && (
+                        <span className="absolute -top-1 -right-1 bg-emerald-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center pointer-events-none">
+                          {activeLayerCount}
+                        </span>
+                      )}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="left" className="z-[9999]" sideOffset={6}>
+                    <p className="text-xs font-medium">{btn.label}</p>
+                  </TooltipContent>
+                </Tooltip>
+              );
+            })}
+          </TooltipProvider>
 
-      {/* Ruler sub-tools popup */}
+          {/* Divider + Settings button */}
+          <div className="w-6 h-px bg-slate-200 my-0.5" />
+          <TooltipProvider delayDuration={400}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => setShowSettings(p => !p)}
+                  className={`w-9 h-9 rounded-xl flex items-center justify-center border shadow-sm transition-all duration-150
+                    ${showSettings
+                      ? "bg-slate-800 text-white border-transparent"
+                      : "bg-white text-slate-400 border-slate-200/60 hover:bg-slate-50 hover:text-slate-700"
+                    }
+                  `}
+                >
+                  <Settings className="w-4 h-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="left" className="z-[9999]" sideOffset={6}>
+                <p className="text-xs font-medium">Customize Toolbar</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+      </div>
+
+      {/* Ruler sub-tools popup — anchored next to toolbar */}
       <AnimatePresence>
         {rulerOpen && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.9, x: 6 }}
+            animate={{ opacity: 1, scale: 1, x: 0 }}
+            exit={{ opacity: 0, scale: 0.9, x: 6 }}
             style={{
               position: "fixed",
-              left: (prefs.positions["ruler"]?.x ?? window.innerWidth - 56) - 128,
-              top: (prefs.positions["ruler"]?.y ?? 200) - 4,
+              left: pos.x - 148,
+              top: pos.y + 24,
               zIndex: 960,
             }}
             className="flex flex-col gap-1 bg-white/97 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/60 p-2"
@@ -347,37 +349,15 @@ export default function DesktopToolbar({
         )}
       </AnimatePresence>
 
-      {/* Settings button — fixed bottom-right corner always */}
-      <TooltipProvider delayDuration={300}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              onClick={() => setShowSettings(p => !p)}
-              style={{ position: "fixed", right: 12, bottom: 12, zIndex: 970 }}
-              className={`w-9 h-9 rounded-xl flex items-center justify-center shadow-lg border transition-all ${
-                showSettings
-                  ? "bg-slate-800 text-white border-transparent"
-                  : "bg-white/95 backdrop-blur-xl text-slate-400 border-slate-200/60 hover:text-slate-700 hover:bg-white"
-              }`}
-            >
-              <Settings className="w-4 h-4" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="left" className="z-[9999]">
-            <p className="text-xs font-medium">Customize Toolbar</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-
       {/* Settings panel */}
       <AnimatePresence>
         {showSettings && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            style={{ position: "fixed", right: 52, bottom: 12, zIndex: 970 }}
-            className="bg-white/97 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/60 p-4 w-60 max-h-[80vh] overflow-y-auto"
+            initial={{ opacity: 0, scale: 0.95, x: 6 }}
+            animate={{ opacity: 1, scale: 1, x: 0 }}
+            exit={{ opacity: 0, scale: 0.95, x: 6 }}
+            style={{ position: "fixed", left: pos.x - 216, top: pos.y + 24, zIndex: 970 }}
+            className="bg-white/97 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/60 p-4 w-52 max-h-[80vh] overflow-y-auto"
           >
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm font-semibold text-slate-800">Toolbar Buttons</span>
@@ -385,35 +365,37 @@ export default function DesktopToolbar({
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <p className="text-[10px] text-slate-400 mb-3">Drag buttons anywhere on screen. Toggle visibility here.</p>
+            <p className="text-[10px] text-slate-400 mb-3">Drag the grip to move the toolbar. Toggle visibility below.</p>
             <div className="space-y-1">
               {BUTTON_DEFS.map(btn => {
                 const Icon = btn.icon;
-                const hidden = prefs.hidden.includes(btn.id);
+                const isHidden = hidden.includes(btn.id);
                 return (
                   <button
                     key={btn.id}
                     onClick={() => toggleHidden(btn.id)}
                     className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition text-sm ${
-                      hidden ? "bg-slate-50 text-slate-400" : "bg-emerald-50 text-emerald-800"
+                      isHidden ? "bg-slate-50 text-slate-400" : "bg-emerald-50 text-emerald-800"
                     }`}
                   >
                     <Icon className="w-4 h-4 flex-shrink-0" />
                     <span className="flex-1 text-left text-xs">{btn.label}</span>
-                    {hidden ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    {isHidden ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                   </button>
                 );
               })}
             </div>
             <button
               onClick={() => {
-                const fresh = { positions: { ...DEFAULT_POSITIONS }, hidden: [] };
-                setPrefs(fresh);
-                saveButtonPrefs(fresh);
+                const fresh = { x: window.innerWidth - 72, y: window.innerHeight / 2 - 200 };
+                setPos(fresh);
+                savePos(fresh);
+                setHidden([]);
+                saveHidden([]);
               }}
               className="mt-3 w-full text-xs text-slate-400 hover:text-slate-600 py-1 border-t border-slate-100 pt-2"
             >
-              Reset positions & visibility
+              Reset toolbar
             </button>
           </motion.div>
         )}
