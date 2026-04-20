@@ -254,6 +254,7 @@ export default function MapContainerComponent({
       maxZoom={22}
       className="w-full h-full"
       zoomControl={false}
+      attributionControl={false}
       doubleClickZoom={activeTool === "pointer"}
       style={{ zIndex: 1 }}
     >
