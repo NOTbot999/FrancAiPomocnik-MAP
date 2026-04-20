@@ -48,10 +48,12 @@ Deno.serve(async (req) => {
 
     return Response.json({
       success: true,
-      username: account.username,
-      email: account.email,
       accountId: account.id,
-      role: account.role || 'user'
+      username: account.username,
+      email: account.email || null,
+      role: account.role || 'user',
+      is_premium: account.is_premium || false,
+      premium_until: account.premium_until || null
     });
   } catch (error) {
     console.error('Login error:', error);

@@ -8,7 +8,7 @@
     },
     "email": {
       "type": "string",
-      "description": "Email address (optional)"
+      "description": "Email address (optional, used for login and premium)"
     },
     "password_hash": {
       "type": "string",
@@ -35,11 +35,11 @@
     },
     "os": {
       "type": "string",
-      "description": "Operating system detected at registration"
+      "description": "Operating system detected at login"
     },
     "browser": {
       "type": "string",
-      "description": "Browser detected at registration"
+      "description": "Browser detected at login"
     },
     "role": {
       "type": "string",
@@ -49,6 +49,21 @@
       ],
       "default": "user",
       "description": "User role"
+    },
+    "is_premium": {
+      "type": "boolean",
+      "default": false,
+      "description": "Premium subscription status"
+    },
+    "premium_since": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When premium was activated"
+    },
+    "premium_until": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Premium expiry date (null = lifetime)"
     }
   },
   "required": [

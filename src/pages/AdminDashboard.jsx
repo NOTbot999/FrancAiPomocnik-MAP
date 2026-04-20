@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Users, Clock, Smartphone, Monitor, Globe, TrendingUp, LogOut, Map, RefreshCw } from 'lucide-react';
+import { Users, Clock, Smartphone, Monitor, Globe, TrendingUp, LogOut, Map, RefreshCw, Star } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 export default function AdminDashboard() {
@@ -26,6 +26,7 @@ export default function AdminDashboard() {
 
   // Analytics calculations
   const totalUsers = accounts.length;
+  const premiumUsers = accounts.filter(a => a.is_premium).length;
   const activeToday = accounts.filter(a => {
     if (!a.last_login) return false;
     const diff = Date.now() - new Date(a.last_login).getTime();
@@ -118,9 +119,9 @@ export default function AdminDashboard() {
             {/* Stat cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
               <StatCard icon={Users} label="Skupaj uporabnikov" value={totalUsers} color="bg-emerald-500" />
+              <StatCard icon={Star} label="Premium uporabniki" value={premiumUsers} color="bg-yellow-500" />
               <StatCard icon={Clock} label="Aktivni danes" value={activeToday} color="bg-blue-500" />
               <StatCard icon={TrendingUp} label="Aktivni ta teden" value={activeThisWeek} color="bg-violet-500" />
-              <StatCard icon={Globe} label="Nikoli prijavljeni" value={neverLoggedIn} color="bg-amber-500" />
             </div>
 
             {/* Tabs */}
@@ -183,7 +184,7 @@ export default function AdminDashboard() {
                 <table className="w-full text-sm">
                   <thead className="bg-slate-50 border-b border-slate-100">
                     <tr>
-                      {['Uporabnik', 'Email', 'Naprava', 'OS', 'Registriran', 'Zadnja prijava'].map(h => (
+                      {['Uporabnik', 'Email', 'Premium', 'Naprava', 'OS', 'Registriran', 'Zadnja prijava'].map(h => (
                         <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">{h}</th>
                       ))}
                     </tr>
@@ -193,6 +194,15 @@ export default function AdminDashboard() {
                       <tr key={a.id} className={`border-b border-slate-50 ${i % 2 === 0 ? '' : 'bg-slate-50/50'}`}>
                         <td className="px-4 py-3 font-medium text-slate-800">{a.username}</td>
                         <td className="px-4 py-3 text-slate-500">{a.email || '—'}</td>
+                        <td className="px-4 py-3">
+                          {a.is_premium ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-yellow-100 text-yellow-700 text-xs font-semibold rounded-full">
+                              <Star className="w-3 h-3" /> Premium
+                            </span>
+                          ) : (
+                            <span className="text-slate-400 text-xs">—</span>
+                          )}
+                        </td>
                         <td className="px-4 py-3">
                           <span className="flex items-center gap-1 text-slate-600">
                             {a.device_type === 'mobile' ? <Smartphone className="w-3.5 h-3.5" /> : <Monitor className="w-3.5 h-3.5" />}
