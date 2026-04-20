@@ -15,11 +15,13 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Login and password required' }, { status: 400 });
     }
 
-    // Find account by username or email
-    const accounts = await base44.asServiceRole.entities.UserAccount.filter([
-      { username: login.toLowerCase() },
-      { email: login.toLowerCase() }
+    // Find account by username or email (try both)
+    const loginLower = login.toLowerCase();
+    const [byUsername, byEmail] = await Promise.all([
+      base44.asServiceRole.entities.UserAccount.filter({ username: loginLower }),
+      base44.asServiceRole.entities.UserAccount.filter({ email: loginLower })
     ]);
+    const accounts = byUsername.length > 0 ? byUsername : byEmail;
 
     if (accounts.length === 0) {
       return Response.json({ error: 'Invalid credentials' }, { status: 401 });
