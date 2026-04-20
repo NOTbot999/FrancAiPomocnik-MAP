@@ -2,8 +2,6 @@ import React, { useState, useCallback } from "react";
 import MapContainerComponent from "@/components/map/MapContainer";
 import LayerPanel from "@/components/map/LayerPanel";
 import SearchBar from "@/components/map/SearchBar";
-import DrawingTools from "@/components/map/DrawingTools";
-import MiniToolbar from "@/components/map/MiniToolbar";
 import MobileTopBar from "@/components/map/MobileTopBar";
 import SaveLoadDrawings from "@/components/map/SaveLoadDrawings";
 import MyTracks from "@/components/map/MyTracks";
@@ -14,6 +12,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import AskMapPanel from "@/components/map/AskMapPanel";
 import TrackAnalyzer from "@/components/map/TrackAnalyzer";
 import LocationSummarizer from "@/components/map/LocationSummarizer";
+import DesktopToolbar from "@/components/map/DesktopToolbar";
 
 
 export default function MapViewer() {
@@ -165,20 +164,6 @@ export default function MapViewer() {
       {/* ── DESKTOP ONLY ── */}
       {!isMobile && (
         <>
-          {/* Top-left: layers toggle */}
-          <div className="absolute top-4 left-4 z-[950]">
-            <MiniToolbar
-              onTogglePanel={() => setIsPanelOpen(p => !p)}
-              isPanelOpen={isPanelOpen}
-              onLocate={handleLocate}
-            />
-            {activeLayerCount > 0 && (
-              <div className="mt-2 bg-emerald-500/90 backdrop-blur-sm text-white text-xs font-bold px-3 py-2 rounded-xl shadow-lg text-center">
-                {activeLayerCount} layer{activeLayerCount > 1 ? 's' : ''}
-              </div>
-            )}
-          </div>
-
           {/* Search bar — centered top */}
           <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[950] w-full max-w-md px-4">
             <SearchBar onLocationSelect={(loc) => handleLocate(loc)} />
@@ -186,36 +171,27 @@ export default function MapViewer() {
 
           {/* My Tracks panel */}
           {showMyTracks && (
-            <MyTracks
-              gpsTrack={gpsTrack}
-              onLoadTrack={handleLoadTrack}
-              onClose={() => setShowMyTracks(false)}
-            />
+            <div className="absolute right-20 bottom-8 z-[960]">
+              <MyTracks
+                gpsTrack={gpsTrack}
+                onLoadTrack={handleLoadTrack}
+                onClose={() => setShowMyTracks(false)}
+              />
+            </div>
           )}
 
-          {/* Offline button */}
-          <div className="absolute right-4 bottom-56 z-[950] flex flex-col items-end gap-2">
-            <button
-              onClick={() => setIsOfflineOpen(p => !p)}
-              className={`p-3 rounded-xl shadow-lg transition-all duration-300 border ${
-                isOfflineOpen
-                  ? 'bg-slate-800 text-white border-slate-800'
-                  : 'bg-white/95 backdrop-blur-xl text-slate-700 hover:bg-white border-slate-200/50'
-              }`}
-              title="Offline Maps"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/>
-                <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.56 9"/>
-                <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
-                <line x1="12" y1="20" x2="12.01" y2="20"/>
-              </svg>
-            </button>
+          {/* Save/Load drawings — top-left */}
+          <div className="absolute top-4 left-4 z-[950]">
+            <SaveLoadDrawings
+              drawings={drawings}
+              gpsTrack={gpsTrack}
+              onLoad={handleLoadDrawings}
+            />
           </div>
 
           {/* AI Panels — desktop */}
           {isAskMapOpen && (
-            <div className="absolute right-4 bottom-72 z-[960]">
+            <div className="absolute right-20 bottom-72 z-[960]">
               <AskMapPanel
                 onClose={() => setIsAskMapOpen(false)}
                 activeLayers={activeLayers}
@@ -226,7 +202,7 @@ export default function MapViewer() {
             </div>
           )}
           {isTrackAnalyzerOpen && (
-            <div className="absolute right-4 bottom-72 z-[960]">
+            <div className="absolute right-20 bottom-72 z-[960]">
               <TrackAnalyzer
                 gpsTrack={gpsTrack}
                 onClose={() => setIsTrackAnalyzerOpen(false)}
@@ -243,42 +219,27 @@ export default function MapViewer() {
             </div>
           )}
 
-          {/* Bottom-right: drawing tools + save/load */}
-          <div className="absolute right-4 bottom-8 z-[950] flex flex-col items-end gap-2">
-            <button
-              onClick={() => setShowMyTracks(p => !p)}
-              className={`p-3 rounded-xl shadow-lg transition-all duration-300 border ${
-                showMyTracks
-                  ? 'bg-emerald-500 text-white border-emerald-500'
-                  : 'bg-white/95 backdrop-blur-xl text-slate-700 hover:bg-white border-slate-200/50'
-              }`}
-              title="My GPS Tracks"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 13l4.553 2.276A1 1 0 0021 21.382V10.618a1 1 0 00-.553-.894L15 7m0 13V7m0 0L9 7" />
-              </svg>
-            </button>
-            <SaveLoadDrawings
-              drawings={drawings}
-              gpsTrack={gpsTrack}
-              onLoad={handleLoadDrawings}
-            />
-            <DrawingTools
-              activeTool={activeTool}
-              onToolChange={setActiveTool}
-              measurements={measurements}
-              onClear={handleClearDrawings}
-              onLocate={setFlyToLocation}
-              isGpsTracking={isGpsTracking}
-              onGpsToggle={handleGpsToggle}
-              isNavOpen={isNavOpen}
-              onNavToggle={() => setIsNavOpen(p => !p)}
-              isAskMapOpen={isAskMapOpen}
-              onAskMapToggle={() => setIsAskMapOpen(p => !p)}
-              isTrackAnalyzerOpen={isTrackAnalyzerOpen}
-              onTrackAnalyzerToggle={() => setIsTrackAnalyzerOpen(p => !p)}
-            />
-          </div>
+          {/* Unified draggable toolbar */}
+          <DesktopToolbar
+            isPanelOpen={isPanelOpen}
+            onTogglePanel={() => setIsPanelOpen(p => !p)}
+            activeLayerCount={activeLayerCount}
+            activeTool={activeTool}
+            onToolChange={setActiveTool}
+            measurements={measurements}
+            onClear={handleClearDrawings}
+            isGpsTracking={isGpsTracking}
+            onGpsToggle={handleGpsToggle}
+            showMyTracks={showMyTracks}
+            onShowMyTracks={() => setShowMyTracks(p => !p)}
+            onLocate={handleLocate}
+            isNavOpen={isNavOpen}
+            onNavToggle={() => setIsNavOpen(p => !p)}
+            isAskMapOpen={isAskMapOpen}
+            onAskMapToggle={() => setIsAskMapOpen(p => !p)}
+            isTrackAnalyzerOpen={isTrackAnalyzerOpen}
+            onTrackAnalyzerToggle={() => setIsTrackAnalyzerOpen(p => !p)}
+          />
         </>
       )}
 
