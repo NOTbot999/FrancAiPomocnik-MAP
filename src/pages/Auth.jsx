@@ -69,8 +69,13 @@ export default function Auth() {
       if (res.data.success) {
         // Store login info in localStorage
         localStorage.setItem('userUsername', res.data.username);
-        localStorage.setItem('userEmail', res.data.email);
-        window.location.href = '/';
+        localStorage.setItem('userEmail', res.data.email || '');
+        localStorage.setItem('userRole', res.data.role || 'user');
+        if (res.data.role === 'admin') {
+          window.location.href = '/admin';
+        } else {
+          window.location.href = '/';
+        }
       }
     } catch (err) {
       setError(err.response?.data?.error || 'Login failed');

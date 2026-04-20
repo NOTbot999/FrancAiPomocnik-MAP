@@ -33,16 +33,25 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Invalid credentials' }, { status: 401 });
     }
 
-    // Update last login
+    // Update last login + device info from headers
+    const ua = req.headers.get('user-agent') || '';
+    const isMobile = /Mobile|Android|iPhone|iPad/.test(ua);
+    const os = /Windows/.test(ua) ? 'Windows' : /Mac/.test(ua) ? 'macOS' : /Android/.test(ua) ? 'Android' : /iPhone|iPad/.test(ua) ? 'iOS' : /Linux/.test(ua) ? 'Linux' : 'unknown';
+    const browser = /Chrome/.test(ua) ? 'Chrome' : /Firefox/.test(ua) ? 'Firefox' : /Safari/.test(ua) ? 'Safari' : /Edge/.test(ua) ? 'Edge' : 'unknown';
+
     await base44.asServiceRole.entities.UserAccount.update(account.id, {
-      last_login: new Date().toISOString()
+      last_login: new Date().toISOString(),
+      device_type: isMobile ? 'mobile' : 'desktop',
+      os,
+      browser
     });
 
     return Response.json({
       success: true,
       username: account.username,
       email: account.email,
-      accountId: account.id
+      accountId: account.id,
+      role: account.role || 'user'
     });
   } catch (error) {
     console.error('Login error:', error);

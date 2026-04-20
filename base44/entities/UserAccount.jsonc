@@ -28,10 +28,41 @@
       "type": "string",
       "format": "date-time",
       "description": "Last login timestamp"
+    },
+    "device_type": {
+      "type": "string",
+      "description": "mobile or desktop"
+    },
+    "os": {
+      "type": "string",
+      "description": "Operating system detected at registration"
+    },
+    "browser": {
+      "type": "string",
+      "description": "Browser detected at registration"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "user",
+        "admin"
+      ],
+      "default": "user",
+      "description": "User role"
     }
   },
   "required": [
     "username",
     "password_hash"
-  ]
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {},
+        {
+          "created_by": "{{user.email}}"
+        }
+      ]
+    }
+  }
 }
