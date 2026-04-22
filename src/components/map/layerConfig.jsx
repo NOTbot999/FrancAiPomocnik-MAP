@@ -15,6 +15,14 @@ export const BASE_LAYERS = [
     id: "osm",
     name: "OpenStreetMap",
     type: "tile",
+    url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    thumbnail: "https://images.unsplash.com/photo-1524661135-423995f22d0b?w=80&h=60&fit=crop"
+  },
+  {
+    id: "carto_voyager",
+    name: "Carto Voyager",
+    type: "tile",
     url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
     thumbnail: "https://images.unsplash.com/photo-1524661135-423995f22d0b?w=80&h=60&fit=crop"
@@ -110,7 +118,7 @@ export const OVERLAY_CATEGORIES = [
         layers: "SI.GURS.DK:DTK25",
         format: "image/png",
         transparent: false,
-        version: "1.3.0",
+        version: "1.1.1",
         opacity: 1.0,
         description: "Official Slovenian topographic map 1:25,000 (detailed)"
       },
@@ -122,7 +130,7 @@ export const OVERLAY_CATEGORIES = [
         layers: "SI.GURS.DK:DTK50",
         format: "image/png",
         transparent: false,
-        version: "1.3.0",
+        version: "1.1.1",
         opacity: 1.0,
         description: "Official Slovenian topographic map 1:50,000"
       },
@@ -134,7 +142,7 @@ export const OVERLAY_CATEGORIES = [
         layers: "SI.GURS.DK:DPK250",
         format: "image/jpeg",
         transparent: false,
-        version: "1.3.0",
+        version: "1.1.1",
         opacity: 1.0,
         description: "State overview cartographic map 1:250,000"
       },
