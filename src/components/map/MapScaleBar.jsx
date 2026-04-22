@@ -14,7 +14,7 @@ const NICE_DISTANCES = [
 
 function getScaleInfo(map) {
   const mapSizePx = map.getSize().x;
-  const targetPx = mapSizePx * 0.2; // aim for ~20% of map width
+  const targetPx = mapSizePx * 0.24; // aim for ~24% of map width (20% bigger)
 
   const center = map.getCenter();
   const leftPt = L.point(0, map.getSize().y / 2);
@@ -56,12 +56,12 @@ function ScaleBarInner() {
       style={{ width: pxWidth + 2, transform: "translateX(-50%)" }}
     >
       {/* Top label row: 0 on left, half in middle, full on right */}
-      <div className="relative flex items-end mb-0.5" style={{ height: 14 }}>
-        <span className="absolute left-0 text-[9px] font-bold font-mono leading-none px-0.5 rounded" style={{ transform: "translateX(-50%)", color: "#fff", textShadow: "0 0 3px #000, 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000" }}>0</span>
+      <div className="relative flex items-end mb-0.5" style={{ height: 20 }}>
+        <span className="absolute left-0 text-[14px] font-bold font-mono leading-none px-0.5 rounded" style={{ transform: "translateX(-50%)", color: "#fff", textShadow: "0 0 3px #000, 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000" }}>0</span>
         {halfLabel && (
-          <span className="absolute text-[9px] font-bold font-mono leading-none px-0.5 rounded" style={{ left: pxWidth / 2, transform: "translateX(-50%)", color: "#fff", textShadow: "0 0 3px #000, 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000" }}>{halfLabel}</span>
+          <span className="absolute text-[14px] font-bold font-mono leading-none px-0.5 rounded" style={{ left: pxWidth / 2, transform: "translateX(-50%)", color: "#fff", textShadow: "0 0 3px #000, 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000" }}>{halfLabel}</span>
         )}
-        <span className="absolute right-0 text-[9px] font-bold font-mono leading-none px-0.5 rounded" style={{ transform: "translateX(50%)", color: "#fff", textShadow: "0 0 3px #000, 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000" }}>{label}</span>
+        <span className="absolute right-0 text-[14px] font-bold font-mono leading-none px-0.5 rounded" style={{ transform: "translateX(50%)", color: "#fff", textShadow: "0 0 3px #000, 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000" }}>{label}</span>
       </div>
 
       {/* Scale bar: two alternating segments with outer border */}
