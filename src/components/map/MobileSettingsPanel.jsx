@@ -32,11 +32,12 @@ function loadPrefs() {
       return p;
     }
   } catch {}
-  return { order: DEFAULT_BUTTONS.map(b => b.id), hidden: ["layers", "zoom"], buttonScale: 1.0 };
+  return { order: DEFAULT_BUTTONS.map(b => b.id), hidden: ["layers", "zoom"], buttonScale: 1.0, scaleBarVisible: true, scaleBarScale: 1.0 };
 }
 
 function savePrefs(prefs) {
   localStorage.setItem("mobileButtonPrefs", JSON.stringify(prefs));
+  window.dispatchEvent(new CustomEvent("mobilePrefsChanged", { detail: prefs }));
 }
 
 export function useMobileButtonPrefs() {
@@ -174,6 +175,44 @@ export default function MobileSettingsPanel({ onClose, prefs, setPrefs, gpsTrack
           <span className="text-[9px] text-slate-400">50%</span>
           <span className="text-[9px] text-slate-400">300%</span>
         </div>
+      </div>
+
+      {/* Divider */}
+      <div className="mx-4 border-t border-slate-200 my-2" />
+
+      {/* Scale Bar section */}
+      <div className="px-4 pb-2">
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Scale Bar</p>
+          <button
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => { e.stopPropagation(); setPrefs({ ...prefs, scaleBarVisible: !prefs.scaleBarVisible }); }}
+            className={`w-10 h-6 rounded-full transition-colors relative flex-shrink-0 ${prefs.scaleBarVisible !== false ? "bg-emerald-500" : "bg-slate-300"}`}
+          >
+            <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all ${prefs.scaleBarVisible !== false ? "left-[18px]" : "left-0.5"}`} />
+          </button>
+        </div>
+        {prefs.scaleBarVisible !== false && (
+          <>
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-[10px] text-slate-400">Scale Bar Size</p>
+              <span className="text-[10px] font-bold text-emerald-600">{Math.round((prefs.scaleBarScale ?? 1.0) * 100)}%</span>
+            </div>
+            <Slider
+              value={[Math.round(((prefs.scaleBarScale ?? 1.0) - 0.5) / 1.5 * 100)]}
+              onValueChange={([v]) => {
+                const scale = 0.5 + (v / 100) * 1.5;
+                setPrefs({ ...prefs, scaleBarScale: Math.round(scale * 100) / 100 });
+              }}
+              min={0} max={100} step={1}
+              className="w-full"
+            />
+            <div className="flex justify-between mt-1">
+              <span className="text-[9px] text-slate-400">50%</span>
+              <span className="text-[9px] text-slate-400">200%</span>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Divider */}

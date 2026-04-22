@@ -40,34 +40,58 @@ function getScaleInfo(map) {
   return { pxWidth, label, halfLabel };
 }
 
+function loadScaleBarPrefs() {
+  try {
+    const p = JSON.parse(localStorage.getItem("mobileButtonPrefs") || "{}");
+    return { visible: p.scaleBarVisible !== false, sizeScale: p.scaleBarScale ?? 1.0 };
+  } catch { return { visible: true, sizeScale: 1.0 }; }
+}
+
 function ScaleBarInner() {
   const map = useMap();
   const [scale, setScale] = useState(() => getScaleInfo(map));
+  const [barPrefs, setBarPrefs] = useState(loadScaleBarPrefs);
 
   const update = () => setScale(getScaleInfo(map));
   useMapEvents({ zoom: update, move: update, resize: update });
   useEffect(() => { update(); }, []);
 
+  useEffect(() => {
+    const handler = (e) => {
+      const p = e.detail || {};
+      setBarPrefs({ visible: p.scaleBarVisible !== false, sizeScale: p.scaleBarScale ?? 1.0 });
+    };
+    window.addEventListener("mobilePrefsChanged", handler);
+    return () => window.removeEventListener("mobilePrefsChanged", handler);
+  }, []);
+
+  const { visible, sizeScale } = barPrefs;
+  if (!visible) return null;
+
   const { pxWidth, label, halfLabel } = scale;
+  const scaledWidth = Math.round(pxWidth * sizeScale);
+  const fontSize = Math.round(14 * sizeScale);
+  const barHeight = Math.round(6 * sizeScale);
+  const labelHeight = Math.round(20 * sizeScale);
 
   return (
     <div
       className="absolute bottom-7 left-1/2 z-[800] pointer-events-none select-none"
-      style={{ width: pxWidth + 2, transform: "translateX(-50%)" }}
+      style={{ width: scaledWidth + 2, transform: "translateX(-50%)" }}
     >
       {/* Top label row: 0 on left, half in middle, full on right */}
-      <div className="relative flex items-end mb-0.5" style={{ height: 20 }}>
-        <span className="absolute left-0 text-[14px] font-bold font-mono leading-none px-0.5 rounded" style={{ transform: "translateX(-50%)", color: "#fff", textShadow: "0 0 3px #000, 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000" }}>0</span>
+      <div className="relative flex items-end mb-0.5" style={{ height: labelHeight }}>
+        <span className="absolute left-0 font-bold font-mono leading-none px-0.5 rounded" style={{ fontSize, transform: "translateX(-50%)", color: "#fff", textShadow: "0 0 3px #000, 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000" }}>0</span>
         {halfLabel && (
-          <span className="absolute text-[14px] font-bold font-mono leading-none px-0.5 rounded" style={{ left: pxWidth / 2, transform: "translateX(-50%)", color: "#fff", textShadow: "0 0 3px #000, 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000" }}>{halfLabel}</span>
+          <span className="absolute font-bold font-mono leading-none px-0.5 rounded" style={{ fontSize, left: scaledWidth / 2, transform: "translateX(-50%)", color: "#fff", textShadow: "0 0 3px #000, 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000" }}>{halfLabel}</span>
         )}
-        <span className="absolute right-0 text-[14px] font-bold font-mono leading-none px-0.5 rounded" style={{ transform: "translateX(50%)", color: "#fff", textShadow: "0 0 3px #000, 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000" }}>{label}</span>
+        <span className="absolute right-0 font-bold font-mono leading-none px-0.5 rounded" style={{ fontSize, transform: "translateX(50%)", color: "#fff", textShadow: "0 0 3px #000, 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000" }}>{label}</span>
       </div>
 
       {/* Scale bar: two alternating segments with outer border */}
       <div
         className="relative border border-slate-800"
-        style={{ width: pxWidth, height: 6, display: "flex" }}
+        style={{ width: scaledWidth, height: barHeight, display: "flex" }}
       >
         {/* Left half — black */}
         <div style={{ width: "50%", height: "100%", backgroundColor: "#1e293b" }} />
