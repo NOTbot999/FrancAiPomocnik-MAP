@@ -21,9 +21,25 @@ function getTypeIcon(item) {
 }
 
 function getSubtitle(item) {
-  const parts = item.display_name.split(",").map(s => s.trim());
-  // Skip first part (main name), return next 2-3 meaningful parts
-  return parts.slice(1, 4).filter(Boolean).join(", ");
+  // Build a detailed subtitle using addressdetails
+  const a = item.address || {};
+  const parts = [];
+  // Add house number + road for precise locations
+  if (a.house_number && a.road) parts.push(`${a.road} ${a.house_number}`);
+  else if (a.road) parts.push(a.road);
+  if (a.suburb || a.neighbourhood) parts.push(a.suburb || a.neighbourhood);
+  if (a.village || a.town || a.city) parts.push(a.village || a.town || a.city);
+  if (a.postcode) parts.push(a.postcode);
+  if (parts.length > 0) return parts.join(", ");
+  // Fallback
+  return item.display_name.split(",").slice(1, 4).filter(Boolean).join(", ");
+}
+
+function getMainName(item) {
+  const a = item.address || {};
+  // For house number results, show road + number as main title
+  if (a.house_number && a.road) return `${a.road} ${a.house_number}`;
+  return item.display_name.split(",")[0];
 }
 
 function getTypeLabel(item) {
@@ -65,9 +81,17 @@ export default function SearchBar({ onLocationSelect }) {
     }
     setIsSearching(true);
     try {
-      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=8&addressdetails=1`;
-      const res = await fetch(url, { headers: { "Accept-Language": "en" } });
-      const data = await res.json();
+      // Use addressdetails=1 and add Slovenia country bias for better results
+      // Also request house numbers and street-level detail
+      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=10&addressdetails=1&countrycodes=si&dedupe=1`;
+      const res = await fetch(url, { headers: { "Accept-Language": "sl,en" } });
+      let data = await res.json();
+      // If no results with country bias, search globally
+      if (data.length === 0) {
+        const urlGlobal = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=8&addressdetails=1&dedupe=1`;
+        const resGlobal = await fetch(urlGlobal, { headers: { "Accept-Language": "sl,en" } });
+        data = await resGlobal.json();
+      }
       setResults(data);
       setIsOpen(true);
     } catch (e) {
@@ -149,7 +173,7 @@ export default function SearchBar({ onLocationSelect }) {
                 <span className="text-base shrink-0">{getTypeIcon(item)}</span>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-slate-800 truncate">
-                    {item.display_name.split(",")[0]}
+                    {getMainName(item)}
                   </p>
                   <p className="text-xs text-slate-400 truncate">
                     {getSubtitle(item)}

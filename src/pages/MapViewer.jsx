@@ -13,9 +13,13 @@ import AskMapPanel from "@/components/map/AskMapPanel";
 import TrackAnalyzer from "@/components/map/TrackAnalyzer";
 import LocationSummarizer from "@/components/map/LocationSummarizer";
 import DesktopToolbar from "@/components/map/DesktopToolbar";
+import TerrainAI from "@/components/map/TerrainAI";
+import { useUserSettings } from "@/hooks/useUserSettings";
 
 
 export default function MapViewer() {
+  const { settings, updateSettings, isLoaded } = useUserSettings();
+
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [activeBaseLayers, setActiveBaseLayers] = useState({ osm: { opacity: 1 } });
   const [activeLayers, setActiveLayers] = useState({});
@@ -27,6 +31,23 @@ export default function MapViewer() {
   const [isGpsTracking, setIsGpsTracking] = useState(false);
   const [showMyTracks, setShowMyTracks] = useState(false);
   const [locateTrigger, setLocateTrigger] = useState(0);
+  const [isTerrainAIOpen, setIsTerrainAIOpen] = useState(false);
+
+  // Check premium status
+  const isPremium = (() => {
+    try { return localStorage.getItem("userIsPremium") === "true"; } catch { return false; }
+  })();
+
+  // Restore saved settings once loaded
+  useEffect(() => {
+    if (!isLoaded || !settings) return;
+    if (settings.active_base_layers && Object.keys(settings.active_base_layers).length > 0) {
+      setActiveBaseLayers(settings.active_base_layers);
+    }
+    if (settings.active_layers) {
+      setActiveLayers(settings.active_layers);
+    }
+  }, [isLoaded]);
 
   const handleLocate = useCallback((loc) => {
     setFlyToLocation(loc);
@@ -34,45 +55,52 @@ export default function MapViewer() {
   }, []);
   const handleToggleLayer = useCallback((layerId) => {
     setActiveLayers(prev => {
+      let next;
       if (prev[layerId]) {
-        const next = { ...prev };
+        next = { ...prev };
         delete next[layerId];
-        return next;
-      }
-      // Find the layer config to get default opacity
-      let defaultOpacity = 0.7;
-      for (const cat of OVERLAY_CATEGORIES) {
-        const found = cat.layers.find(l => l.id === layerId);
-        if (found) {
-          defaultOpacity = found.opacity;
-          break;
+      } else {
+        let defaultOpacity = 0.7;
+        for (const cat of OVERLAY_CATEGORIES) {
+          const found = cat.layers.find(l => l.id === layerId);
+          if (found) { defaultOpacity = found.opacity; break; }
         }
+        next = { ...prev, [layerId]: { opacity: defaultOpacity } };
       }
-      return { ...prev, [layerId]: { opacity: defaultOpacity } };
+      updateSettings({ active_layers: next });
+      return next;
     });
-  }, []);
+  }, [updateSettings]);
 
   const handleOpacityChange = useCallback((layerId, opacity) => {
-    setActiveLayers(prev => ({
-      ...prev,
-      [layerId]: { ...prev[layerId], opacity }
-    }));
-  }, []);
+    setActiveLayers(prev => {
+      const next = { ...prev, [layerId]: { ...prev[layerId], opacity } };
+      updateSettings({ active_layers: next });
+      return next;
+    });
+  }, [updateSettings]);
 
   const handleToggleBaseLayer = useCallback((layerId, defaultOpacity = 1) => {
     setActiveBaseLayers(prev => {
+      let next;
       if (prev[layerId]) {
-        const next = { ...prev };
+        next = { ...prev };
         delete next[layerId];
-        return next;
+      } else {
+        next = { ...prev, [layerId]: { opacity: defaultOpacity } };
       }
-      return { ...prev, [layerId]: { opacity: defaultOpacity } };
+      updateSettings({ active_base_layers: next });
+      return next;
     });
-  }, []);
+  }, [updateSettings]);
 
   const handleBaseOpacityChange = useCallback((layerId, opacity) => {
-    setActiveBaseLayers(prev => ({ ...prev, [layerId]: { ...prev[layerId], opacity } }));
-  }, []);
+    setActiveBaseLayers(prev => {
+      const next = { ...prev, [layerId]: { ...prev[layerId], opacity } };
+      updateSettings({ active_base_layers: next });
+      return next;
+    });
+  }, [updateSettings]);
 
   const handleClearDrawings = useCallback(() => {
     setDrawings({ markers: [], lines: [], polygons: [] });
@@ -143,6 +171,7 @@ export default function MapViewer() {
         onOfflineClose={() => setIsOfflineOpen(false)}
         showZoomControls={!isMobile}
         onLocationSummary={(latlng) => setLocationSummary({ latlng })}
+        onMapMove={(center, zoom) => { setMapCenter(center); setMapZoom(zoom); }}
         mobileProps={isMobile ? {
           onTogglePanel: () => setIsPanelOpen(p => !p),
           isPanelOpen,
@@ -206,6 +235,17 @@ export default function MapViewer() {
               />
             </div>
           )}
+          {isTerrainAIOpen && (
+            <div className="absolute right-20 bottom-8 z-[960]">
+              <TerrainAI
+                mapCenter={mapCenter}
+                mapZoom={mapZoom}
+                activeLayers={activeLayers}
+                isPremium={isPremium}
+                onClose={() => setIsTerrainAIOpen(false)}
+              />
+            </div>
+          )}
           {locationSummary && (
             <div className="absolute left-1/2 top-20 -translate-x-1/2 z-[960]">
               <LocationSummarizer
@@ -236,6 +276,8 @@ export default function MapViewer() {
             onAskMapToggle={() => setIsAskMapOpen(p => !p)}
             isTrackAnalyzerOpen={isTrackAnalyzerOpen}
             onTrackAnalyzerToggle={() => setIsTrackAnalyzerOpen(p => !p)}
+            isTerrainAIOpen={isTerrainAIOpen}
+            onTerrainAIToggle={() => setIsTerrainAIOpen(p => !p)}
             drawings={drawings}
             gpsTrack={gpsTrack}
             onLoadDrawings={handleLoadDrawings}

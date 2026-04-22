@@ -21,6 +21,7 @@ const BUTTON_DEFS = [
   { id: "nav",             icon: Route,         label: "Route Planner",       color: "emerald" },
   { id: "askmap",          icon: Sparkles,      label: "Ask the Map (AI)",    color: "emerald" },
   { id: "trackanalyzer",   icon: TrendingUp,    label: "Track Analyzer (AI)", color: "blue" },
+  { id: "terrainai",       icon: Sparkles,      label: "Terrain AI (Premium)", color: "amber" },
 ];
 
 const RULER_TOOLS = [
@@ -64,6 +65,7 @@ const activeColors = {
   teal:    "bg-teal-500 text-white border-teal-500 shadow-teal-400/30",
   violet:  "bg-violet-500 text-white border-violet-500 shadow-violet-400/30",
   amber:   "bg-amber-500 text-white border-amber-500 shadow-amber-400/30",
+  orange:  "bg-orange-500 text-white border-orange-500 shadow-orange-400/30",
   slate:   "bg-slate-700 text-white border-slate-700 shadow-slate-400/30",
 };
 
@@ -76,6 +78,7 @@ export default function DesktopToolbar({
   isNavOpen, onNavToggle,
   isAskMapOpen, onAskMapToggle,
   isTrackAnalyzerOpen, onTrackAnalyzerToggle,
+  isTerrainAIOpen, onTerrainAIToggle,
   drawings, gpsTrack, onLoadDrawings,
 }) {
   const [pos, setPos] = useState(loadPos);
@@ -177,6 +180,7 @@ export default function DesktopToolbar({
     if (id === "nav")           return isNavOpen;
     if (id === "askmap")        return isAskMapOpen;
     if (id === "trackanalyzer") return isTrackAnalyzerOpen;
+    if (id === "terrainai")     return isTerrainAIOpen;
     if (id === "ruler")         return rulerOpen || ["distance","area","marker"].includes(activeTool);
     if (id === "save")          return savedOk;
     return false;
@@ -190,6 +194,7 @@ export default function DesktopToolbar({
     if (id === "nav")           { if (!isNavOpen) base44.analytics.track({ eventName: "route_planner_opened" }); return onNavToggle(); }
     if (id === "askmap")        { if (!isAskMapOpen) base44.analytics.track({ eventName: "ask_map_opened" }); return onAskMapToggle(); }
     if (id === "trackanalyzer") { if (!isTrackAnalyzerOpen) base44.analytics.track({ eventName: "track_analyzer_opened" }); return onTrackAnalyzerToggle(); }
+    if (id === "terrainai")     { if (!isTerrainAIOpen) base44.analytics.track({ eventName: "terrain_ai_opened" }); return onTerrainAIToggle(); }
     if (id === "ruler")         return setRulerOpen(p => !p);
     if (id === "save")          return handleSave();
     if (id === "load")          return handleLoad();

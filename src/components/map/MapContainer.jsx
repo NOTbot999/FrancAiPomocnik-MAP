@@ -13,6 +13,7 @@ import {
 import { createPortal } from "react-dom";
 import ZoomControls from "./ZoomControls";
 import MobileTopBar from "./MobileTopBar";
+import MapScaleBar from "./MapScaleBar";
 import GpsTracker from "./GpsTracker";
 import MyLocationDot from "./MyLocationDot";
 import OfflineManager from "./OfflineManager";
@@ -49,12 +50,22 @@ function FlyToLocation({ location }) {
   return null;
 }
 
-function CoordsDisplay() {
+function CoordsDisplay({ onMapMove }) {
   const [coords, setCoords] = useState(null);
   const [zoom, setZoom] = useState(DEFAULT_ZOOM);
   useMapEvents({
     mousemove: (e) => setCoords({ lat: e.latlng.lat, lng: e.latlng.lng }),
-    zoom: (e) => setZoom(e.target.getZoom()),
+    zoom: (e) => {
+      const z = e.target.getZoom();
+      const c = e.target.getCenter();
+      setZoom(z);
+      if (onMapMove) onMapMove([c.lat, c.lng], z);
+    },
+    moveend: (e) => {
+      const c = e.target.getCenter();
+      const z = e.target.getZoom();
+      if (onMapMove) onMapMove([c.lat, c.lng], z);
+    },
   });
   if (!coords) return null;
   return (
@@ -240,6 +251,7 @@ export default function MapContainerComponent({
   offlineOpen,
   onOfflineClose,
   onLocationSummary,
+  onMapMove,
 }) {
   const allLayers = getAllLayersFlat();
   const activeBaseLayerEntries = activeBaseLayers
@@ -328,6 +340,7 @@ export default function MapContainerComponent({
 
       {offlineOpen && <OfflineManagerPortal onClose={onOfflineClose} />}
       {showZoomControls && <ZoomControls />}
+      <MapScaleBar />
       {mobileProps && <MobileTopBar {...mobileProps} />}
       <MyLocationDot trigger={locateTrigger} />
       {gpsTracking && (
@@ -342,7 +355,7 @@ export default function MapContainerComponent({
         <Polyline positions={routePolyline} color="#2563eb" weight={5} opacity={0.85} />
       )}
       <FlyToLocation location={flyToLocation} />
-      <CoordsDisplay />
+      <CoordsDisplay onMapMove={onMapMove} />
       <RightClickHandler onLocationSummary={onLocationSummary} />
       <DrawingHandler
         activeTool={activeTool}

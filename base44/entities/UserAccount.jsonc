@@ -64,6 +64,46 @@
       "type": "string",
       "format": "date-time",
       "description": "Premium expiry date (null = lifetime)"
+    },
+    "map_settings": {
+      "type": "object",
+      "description": "Saved map preferences per user",
+      "properties": {
+        "active_base_layers": {
+          "type": "object",
+          "description": "Active base layers with opacity"
+        },
+        "active_layers": {
+          "type": "object",
+          "description": "Active overlay layers with opacity"
+        },
+        "favorite_layers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Favorite layer IDs"
+        },
+        "button_scale": {
+          "type": "number",
+          "description": "Mobile button scale"
+        },
+        "toolbar_hidden": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Hidden toolbar button IDs"
+        },
+        "toolbar_pos": {
+          "type": "object",
+          "description": "Desktop toolbar position {x, y}"
+        },
+        "theme": {
+          "type": "object",
+          "description": "UI theme colors"
+        }
+      }
     }
   },
   "required": [
@@ -72,12 +112,38 @@
   ],
   "rls": {
     "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
       "$or": [
-        {},
         {
-          "created_by": "{{user.email}}"
+          "data.email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
         }
       ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
     }
   }
 }

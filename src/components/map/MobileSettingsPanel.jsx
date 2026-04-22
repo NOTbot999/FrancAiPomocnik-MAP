@@ -1,9 +1,10 @@
 import React, { useState, useCallback } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { GripVertical, Search, Locate, Navigation, Route, Ruler, X, Link2, ChevronDown, ChevronUp, Layers, Plus, WifiOff } from "lucide-react";
+import { GripVertical, Search, Locate, Navigation, Route, Ruler, X, Link2, ChevronDown, ChevronUp, Layers, Plus, WifiOff, Palette } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import MyTracks from "./MyTracks";
 import DeviceLink from "./DeviceLink";
+import ThemeCustomizer, { loadTheme } from "@/components/map/ThemeCustomizer";
 
 const DEFAULT_BUTTONS = [
   { id: "layers",  label: "Layers",      icon: Layers },
@@ -61,6 +62,8 @@ function getDeviceId() {
 export default function MobileSettingsPanel({ onClose, prefs, setPrefs, gpsTrack, onLoadTrack }) {
   const [showTracks, setShowTracks] = useState(false);
   const [showDeviceLink, setShowDeviceLink] = useState(false);
+  const [showTheme, setShowTheme] = useState(false);
+  const [theme, setTheme] = useState(loadTheme);
   const deviceId = getDeviceId();
 
   const orderedButtons = prefs.order
@@ -193,6 +196,28 @@ export default function MobileSettingsPanel({ onClose, prefs, setPrefs, gpsTrack
               onLoadTrack={onLoadTrack}
               onClose={() => setShowTracks(false)}
               inline
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Theme Customizer section */}
+      <div className="px-2 pb-1">
+        <button
+          onClick={() => { setShowTheme(p => !p); setShowTracks(false); setShowDeviceLink(false); }}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-slate-50 hover:bg-white transition-all text-slate-700"
+        >
+          <Palette className="w-4 h-4 text-emerald-500" />
+          <span className="flex-1 text-xs font-medium text-left">Barve vmesnika</span>
+          {showTheme ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+        </button>
+        {showTheme && (
+          <div className="mt-1 bg-white rounded-xl overflow-hidden border border-slate-200 p-1">
+            <ThemeCustomizer
+              isOpen={true}
+              onClose={() => setShowTheme(false)}
+              theme={theme}
+              onThemeChange={(t) => { setTheme(t); }}
             />
           </div>
         )}
