@@ -52,8 +52,8 @@ function ScaleBarInner() {
 
   return (
     <div
-      className="absolute bottom-7 left-3 z-[800] pointer-events-none select-none"
-      style={{ width: pxWidth + 2 }}
+      className="absolute bottom-7 left-1/2 z-[800] pointer-events-none select-none"
+      style={{ width: pxWidth + 2, transform: "translateX(-50%)" }}
     >
       {/* Top label row: 0 on left, half in middle, full on right */}
       <div className="relative flex items-end mb-0.5" style={{ height: 14 }}>
