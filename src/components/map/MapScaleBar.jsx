@@ -57,11 +57,11 @@ function ScaleBarInner() {
     >
       {/* Top label row: 0 on left, half in middle, full on right */}
       <div className="relative flex items-end mb-0.5" style={{ height: 14 }}>
-        <span className="absolute left-0 text-[9px] font-mono text-slate-800 leading-none" style={{ transform: "translateX(-50%)" }}>0</span>
+        <span className="absolute left-0 text-[9px] font-bold font-mono leading-none px-0.5 rounded" style={{ transform: "translateX(-50%)", color: "#fff", textShadow: "0 0 3px #000, 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000" }}>0</span>
         {halfLabel && (
-          <span className="absolute text-[9px] font-mono text-slate-800 leading-none" style={{ left: pxWidth / 2, transform: "translateX(-50%)" }}>{halfLabel}</span>
+          <span className="absolute text-[9px] font-bold font-mono leading-none px-0.5 rounded" style={{ left: pxWidth / 2, transform: "translateX(-50%)", color: "#fff", textShadow: "0 0 3px #000, 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000" }}>{halfLabel}</span>
         )}
-        <span className="absolute right-0 text-[9px] font-mono text-slate-800 leading-none" style={{ transform: "translateX(50%)" }}>{label}</span>
+        <span className="absolute right-0 text-[9px] font-bold font-mono leading-none px-0.5 rounded" style={{ transform: "translateX(50%)", color: "#fff", textShadow: "0 0 3px #000, 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000" }}>{label}</span>
       </div>
 
       {/* Scale bar: two alternating segments with outer border */}
