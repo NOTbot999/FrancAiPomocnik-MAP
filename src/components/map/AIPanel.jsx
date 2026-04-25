@@ -831,10 +831,8 @@ export default function AIPanel({
     >
       {/* Header */}
       <div className="flex items-center gap-2.5 px-4 py-3 shrink-0" style={{ borderBottom: `1px solid ${theme.panelText}18` }}>
-        <div className="w-7 h-7 rounded-lg bg-amber-500/20 flex items-center justify-center">
-          <Sparkles className="w-4 h-4 text-amber-400" />
-        </div>
-        <span className="text-sm font-semibold flex-1" style={{ color: theme.panelText }}>AI Asistent</span>
+        <img src="https://media.base44.com/images/public/69ad3ce309822f8e71f66838/7aa56bc1c_EZU3mXIlM90xjxOrcrhU--0--SNgLs.jpg" alt="Franc" className="w-7 h-7 rounded-lg object-cover" />
+        <span className="text-sm font-semibold flex-1" style={{ color: theme.panelText }}>Franc</span>
         {isPremium && (
           <span className="text-[9px] bg-amber-500/20 text-amber-400 font-bold px-1.5 py-0.5 rounded-full">PREMIUM</span>
         )}
