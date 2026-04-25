@@ -275,6 +275,68 @@ export const OVERLAY_CATEGORIES = [
         description: "OpenCycleMap ceste in kolesarska infrastruktura"
       }
     ]
+  },
+
+  // ─── ISKANJE NEZNANIH OBJEKTOV ────────────────────────────────
+  {
+    id: "urbex",
+    name: "🔍 Iskanje objektov / Urbex",
+    icon: "Search",
+    description: "Sloji za iskanje neznanih objektov, človeških posegov v naravo in opuščenih struktur",
+    layers: [
+      {
+        id: "stamen_toner",
+        name: "Toner (visok kontrast)",
+        type: "tile",
+        url: "https://stamen-tiles.a.ssl.fastly.net/toner/{z}/{x}/{y}.png",
+        opacity: 0.85,
+        description: "Visokokontrastna B/W karta — izpostavi ceste, zgradbe, poti ki niso na navadni karti"
+      },
+      {
+        id: "osm_buildings",
+        name: "OSM Zgradbe (overpass)",
+        type: "tile",
+        url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        opacity: 0.5,
+        transparent: true,
+        description: "OpenStreetMap osnova — primerjaj z satelitom za neoznačene zgradbe"
+      },
+      {
+        id: "openinframap",
+        name: "Infrastruktura (OpenInfraMap)",
+        type: "tile",
+        url: "https://tiles.openinframap.org/power/{z}/{x}/{y}.png",
+        opacity: 0.8,
+        transparent: true,
+        description: "Električna infrastruktura — daljnovodi, transformatorji, ki so lahko pri neznanih objektih"
+      },
+      {
+        id: "lidar_overlay",
+        name: "LIDAR senčenje (prekrivni sloj)",
+        type: "arcgis_export",
+        url: "https://gis.arso.gov.si/arcgis/rest/services/Lidar_hillshade_D96TM/MapServer/export",
+        opacity: 0.7,
+        description: "LIDAR kot overlay — razkrije reliefne anomalije, jarke, nasipe, temelje zgradb"
+      },
+      {
+        id: "wayback_2006",
+        name: "Esri Worldview satelit (primerjava)",
+        type: "tile",
+        url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        opacity: 0.9,
+        transparent: false,
+        description: "Visokoločljiv satelit Esri — primerjaj z OSM za neoznačene zgradbe in posege"
+      },
+      {
+        id: "humanitarian",
+        name: "Humanitarna karta (HOT OSM)",
+        type: "tile",
+        url: "https://tile-{s}.openstreetmap.fr/hot/{z}/{x}/{y}.png",
+        opacity: 0.85,
+        transparent: true,
+        description: "HOT OSM — izpostavi vse umetne strukture, poti in zgradbe vključno z manjšimi"
+      }
+    ]
   }
 ];
 
