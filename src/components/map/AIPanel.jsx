@@ -794,13 +794,13 @@ Območje analize: ${km}×${km} km`;
 
 // ─── Main AIPanel ─────────────────────────────────────────────────────────────
 const TABS = [
-  { id: "ask", label: "Vprašaj karto", emoji: "💬" },
+  { id: "ask", label: "Vprašaj Franca", emoji: "💬" },
   { id: "analysis", label: "Analiza", emoji: "🛰️" },
 ];
 
 const ANALYSIS_SUBTABS = [
-  { id: "terrain", label: "Teren AI", emoji: "🛰️" },
-  { id: "urbex", label: "Iskanje", emoji: "🔍" },
+  { id: "terrain", label: "AI analize terena", emoji: "🛰️" },
+  { id: "urbex", label: "Iskanje neznanih objektov", emoji: "🔍" },
 ];
 
 const AI_PANEL_STORAGE_KEY = "ai_panel_tab";
