@@ -23,6 +23,8 @@ const ASK_SYSTEM = `Si AI asistent za GIS Explorer Slovenije. VEDNO odgovarjaj v
 Razpoložljivi sloji:\n${LAYER_SUMMARY}
 Pomagaj uporabnikom aktivirati sloje, odgovori na vprašanja o geografiji Slovenije, razloži podatke.
 Ko priporočaš sloje, vključi: <activate_layers>["id1","id2"]</activate_layers>
+Ko želiš narisati custom layer (npr. izbrane poti, arheološka gradišča, ali druge feature-je), vključi:
+<custom_layer>{"name":"Naziv","color":"#hexcolor","features":[{"type":"LineString","coords":[[lat,lng],[lat,lng],...]}]}</custom_layer>
 Odgovori naj bodo kratki in praktični.`;
 
 // ─── Premium Lock screen ──────────────────────────────────────────────────────
@@ -43,7 +45,7 @@ function PremiumLock({ theme }) {
 }
 
 // ─── Ask Franc tab ────────────────────────────────────────────────────────────
-function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme, messages, setMessages, onResetChat }) {
+function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme, messages, setMessages, onResetChat, onAddCustomLayer, onRemoveCustomLayer }) {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef(null);
@@ -71,12 +73,14 @@ function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme, messag
       add_context_from_internet: true, model: "gemini_3_flash"
     });
     const text = typeof res === "string" ? res : res?.content || JSON.stringify(res);
-    const match = text.match(/<activate_layers>(.*?)<\/activate_layers>/s);
-    let cleanText = text.replace(/<activate_layers>.*?<\/activate_layers>/s, "").trim();
+    const layerMatch = text.match(/<activate_layers>(.*?)<\/activate_layers>/s);
+    const customMatch = text.match(/<custom_layer>(.*?)<\/custom_layer>/s);
+    let cleanText = text.replace(/<activate_layers>.*?<\/activate_layers>/s, "").replace(/<custom_layer>.*?<\/custom_layer>/s, "").trim();
+    
     let activated = [];
-    if (match) {
+    if (layerMatch) {
       try {
-        const ids = JSON.parse(match[1]);
+        const ids = JSON.parse(layerMatch[1]);
         ids.forEach(id => {
           if (!activeLayers[id]) { onToggleLayer(id); }
           const all = OVERLAY_CATEGORIES.flatMap(c => c.layers).concat(BASE_LAYERS);
@@ -86,6 +90,15 @@ function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme, messag
       } catch {}
     }
     if (activated.length > 0) cleanText += `\n\n✅ Aktivirano: ${activated.join(", ")}`;
+    
+    if (customMatch) {
+      try {
+        const customLayer = JSON.parse(customMatch[1]);
+        if (onAddCustomLayer) onAddCustomLayer(customLayer);
+        cleanText += `\n\n🎨 Custom layer: ${customLayer.name}`;
+      } catch {}
+    }
+    
     setMessages(prev => [...prev, { role: "assistant", content: cleanText }]);
     setLoading(false);
   };
@@ -174,6 +187,8 @@ export default function AIPanel({
   onShowRoute,
   onRequestPin,
   pinnedLocation,
+  onAddCustomLayer,
+  onRemoveCustomLayer,
 }) {
   const theme = loadTheme();
   const [tab, setTab] = useState(() => {
@@ -273,6 +288,8 @@ export default function AIPanel({
                 messages={messages}
                 setMessages={setMessages}
                 onResetChat={handleResetChat}
+                onAddCustomLayer={onAddCustomLayer}
+                onRemoveCustomLayer={onRemoveCustomLayer}
               />
             )}
             {tab === "analysis" && (
