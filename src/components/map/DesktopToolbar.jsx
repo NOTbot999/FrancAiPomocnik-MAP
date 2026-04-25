@@ -318,8 +318,8 @@ export default function DesktopToolbar({
               left: pos.x - 148,
               top: pos.y + 24,
               zIndex: 960,
+              backgroundColor: theme.popupBg,
             }}
-            style={{ backgroundColor: theme.popupBg }}
             className="flex flex-col gap-1 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/60 p-2"
           >
             <p className="text-[10px] font-semibold uppercase px-2 pt-1 pb-0.5 opacity-50" style={{ color: theme.menuText }}>Drawing Tools</p>

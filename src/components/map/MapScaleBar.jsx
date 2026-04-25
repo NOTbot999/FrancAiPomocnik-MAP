@@ -69,10 +69,11 @@ function ScaleBarInner() {
   if (!visible) return null;
 
   const { pxWidth, label, halfLabel } = scale;
-  const scaledWidth = Math.round(pxWidth * sizeScale);
-  const fontSize = Math.round(14 * sizeScale);
-  const barHeight = Math.round(6 * sizeScale);
-  const labelHeight = Math.round(20 * sizeScale);
+  // sizeScale only affects visual thickness/font, NOT the width (which must stay accurate)
+  const fontSize = Math.round(12 * sizeScale);
+  const barHeight = Math.round(5 * sizeScale);
+  const labelHeight = Math.round(18 * sizeScale);
+  const scaledWidth = pxWidth; // always accurate to the map scale
 
   return (
     <div
