@@ -363,9 +363,9 @@ ANALIZIRAJ TOČNO TO LOKACIJO: ${placeName || `${analysisLat.toFixed(4)}°N ${an
   ];
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 py-3 min-h-0">
+    <>
       {!result && !loading && (
-        <div className="text-center py-4">
+        <div className="text-center py-2">
           <div className="w-12 h-12 bg-amber-500/15 rounded-2xl flex items-center justify-center mx-auto mb-3">
             <Sparkles className="w-6 h-6 text-amber-400" />
           </div>
@@ -557,7 +557,7 @@ ANALIZIRAJ TOČNO TO LOKACIJO: ${placeName || `${analysisLat.toFixed(4)}°N ${an
           </button>
         </div>
       )}
-    </div>
+    </>
   );
 }
 
@@ -671,10 +671,10 @@ Območje analize: ${km}×${km} km`;
   };
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 py-3 min-h-0">
+    <>
       {!result && !loading && (
         <div className="py-2">
-          <div className="w-12 h-12 bg-red-500/15 rounded-2xl flex items-center justify-center mx-auto mb-3">
+          <div className="w-12 h-12 bg-red-500/15 rounded-2xl flex items-center justify-center mx-auto mb-2">
             <span className="text-2xl">🔍</span>
           </div>
           <p className="text-sm font-semibold mb-1 text-center" style={{ color: theme.panelText }}>Iskanje neznanih objektov</p>
@@ -835,7 +835,7 @@ Območje analize: ${km}×${km} km`;
           </button>
         </div>
       )}
-    </div>
+    </>
   );
 }
 
@@ -843,11 +843,6 @@ Območje analize: ${km}×${km} km`;
 const TABS = [
   { id: "ask", label: "Vprašaj Franca", emoji: "💬" },
   { id: "analysis", label: "Analiza", emoji: "🛰️" },
-];
-
-const ANALYSIS_SUBTABS = [
-  { id: "terrain", label: "AI analize terena", emoji: "🛰️" },
-  { id: "urbex", label: "Iskanje neznanih objektov", emoji: "🔍" },
 ];
 
 const AI_PANEL_STORAGE_KEY = "ai_panel_tab";
@@ -871,18 +866,12 @@ export default function AIPanel({
     const saved = localStorage.getItem(AI_PANEL_STORAGE_KEY);
     return saved && TABS.some(t => t.id === saved) ? saved : "ask";
   });
-  const [analysisSubtab, setAnalysisSubtab] = useState(() => {
-    const saved = localStorage.getItem("ai_analysis_subtab");
-    return saved && ANALYSIS_SUBTABS.some(t => t.id === saved) ? saved : "terrain";
-  });
+  const [terrainEnabled, setTerrainEnabled] = useState(true);
+  const [urbexEnabled, setUrbexEnabled] = useState(true);
 
   useEffect(() => {
     localStorage.setItem(AI_PANEL_STORAGE_KEY, tab);
   }, [tab]);
-
-  useEffect(() => {
-    localStorage.setItem("ai_analysis_subtab", analysisSubtab);
-  }, [analysisSubtab]);
   
 
   return (
@@ -922,23 +911,31 @@ export default function AIPanel({
         ))}
       </div>
 
-      {/* Analysis sub-tabs */}
+      {/* Analysis toggles */}
       {tab === "analysis" && (
-        <div className="flex shrink-0 px-3 pt-2 pb-0 gap-1">
-          {ANALYSIS_SUBTABS.map(st => (
-            <button
-              key={st.id}
-              onClick={() => setAnalysisSubtab(st.id)}
-              className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all duration-200"
-              style={analysisSubtab === st.id
-                ? { backgroundColor: theme.buttonActiveBg, color: theme.buttonActiveText, boxShadow: `0 2px 8px ${theme.buttonActiveBg}40` }
-                : { backgroundColor: `${theme.panelText}06`, color: theme.panelText, opacity: 0.4 }
-              }
-            >
-              <span>{st.emoji}</span>
-              <span className="hidden sm:inline">{st.label}</span>
-            </button>
-          ))}
+        <div className="flex shrink-0 px-3 pt-2 pb-0 gap-2 text-xs">
+          <button
+            onClick={() => setTerrainEnabled(!terrainEnabled)}
+            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg font-semibold transition-all duration-200"
+            style={terrainEnabled
+              ? { backgroundColor: theme.buttonActiveBg, color: theme.buttonActiveText, boxShadow: `0 2px 8px ${theme.buttonActiveBg}40` }
+              : { backgroundColor: `${theme.panelText}06`, color: theme.panelText, opacity: 0.4 }
+            }
+          >
+            <span>🛰️</span>
+            <span className="hidden sm:inline">Teren</span>
+          </button>
+          <button
+            onClick={() => setUrbexEnabled(!urbexEnabled)}
+            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg font-semibold transition-all duration-200"
+            style={urbexEnabled
+              ? { backgroundColor: theme.buttonActiveBg, color: theme.buttonActiveText, boxShadow: `0 2px 8px ${theme.buttonActiveBg}40` }
+              : { backgroundColor: `${theme.panelText}06`, color: theme.panelText, opacity: 0.4 }
+            }
+          >
+            <span>🔍</span>
+            <span className="hidden sm:inline">Iskanje</span>
+          </button>
         </div>
       )}
 
@@ -964,34 +961,47 @@ export default function AIPanel({
                 theme={theme}
               />
             )}
-            {tab === "analysis" && analysisSubtab === "terrain" && (
-              <TerrainTab
-                mapCenter={mapCenter}
-                mapZoom={mapZoom}
-                activeLayers={activeLayers}
-                onAddMarkers={onAddMarkers}
-                onRemoveAiMarkers={onRemoveAiMarkers}
-                onFlyTo={onFlyTo}
-                onShowRoute={onShowRoute}
-                theme={theme}
-                onRequestPin={onRequestPin}
-                pinnedLocation={pinnedLocation}
-              />
-            )}
-            {tab === "analysis" && analysisSubtab === "urbex" && (
-              <UrbexTab
-                mapCenter={mapCenter}
-                mapZoom={mapZoom}
-                activeLayers={activeLayers}
-                onToggleLayer={onToggleLayer}
-                onAddMarkers={onAddMarkers}
-                onRemoveAiMarkers={onRemoveAiMarkers}
-                onFlyTo={onFlyTo}
-                onShowRoute={onShowRoute}
-                theme={theme}
-                onRequestPin={onRequestPin}
-                pinnedLocation={pinnedLocation}
-              />
+            {tab === "analysis" && (
+              <div className="flex-1 overflow-y-auto px-4 py-3 min-h-0 space-y-4">
+                {terrainEnabled && (
+                  <div className="space-y-3 pb-3 border-b" style={{ borderColor: `${theme.panelText}18` }}>
+                    <TerrainTab
+                      mapCenter={mapCenter}
+                      mapZoom={mapZoom}
+                      activeLayers={activeLayers}
+                      onAddMarkers={onAddMarkers}
+                      onRemoveAiMarkers={onRemoveAiMarkers}
+                      onFlyTo={onFlyTo}
+                      onShowRoute={onShowRoute}
+                      theme={theme}
+                      onRequestPin={onRequestPin}
+                      pinnedLocation={pinnedLocation}
+                    />
+                  </div>
+                )}
+                {urbexEnabled && (
+                  <div className="space-y-3">
+                    <UrbexTab
+                      mapCenter={mapCenter}
+                      mapZoom={mapZoom}
+                      activeLayers={activeLayers}
+                      onToggleLayer={onToggleLayer}
+                      onAddMarkers={onAddMarkers}
+                      onRemoveAiMarkers={onRemoveAiMarkers}
+                      onFlyTo={onFlyTo}
+                      onShowRoute={onShowRoute}
+                      theme={theme}
+                      onRequestPin={onRequestPin}
+                      pinnedLocation={pinnedLocation}
+                    />
+                  </div>
+                )}
+                {!terrainEnabled && !urbexEnabled && (
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <p className="text-sm opacity-60" style={{ color: theme.panelText }}>Omogoči funkcije za analizo</p>
+                  </div>
+                )}
+              </div>
             )}
           </motion.div>
         </AnimatePresence>
