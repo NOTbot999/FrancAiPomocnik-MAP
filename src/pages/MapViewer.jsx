@@ -15,6 +15,7 @@ import LocationSummarizer from "@/components/map/LocationSummarizer";
 import DesktopToolbar from "@/components/map/DesktopToolbar";
 import TerrainAI from "@/components/map/TerrainAI";
 import { useUserSettings } from "@/hooks/useUserSettings";
+import { base44 } from "@/api/base44Client";
 
 
 export default function MapViewer() {
@@ -33,8 +34,12 @@ export default function MapViewer() {
   const [locateTrigger, setLocateTrigger] = useState(0);
   const [isTerrainAIOpen, setIsTerrainAIOpen] = useState(false);
 
-  // Check premium status
-  const isPremium = (() => {
+  // Check premium status — admins always get access
+  const [currentUser, setCurrentUser] = useState(null);
+  useEffect(() => {
+    base44.auth.me().then(u => setCurrentUser(u)).catch(() => {});
+  }, []);
+  const isPremium = currentUser?.role === "admin" || currentUser?.is_premium === true || (() => {
     try { return localStorage.getItem("userIsPremium") === "true"; } catch { return false; }
   })();
 
