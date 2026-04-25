@@ -6,10 +6,12 @@ import { OVERLAY_CATEGORIES } from "./layerConfig";
 import ReactMarkdown from "react-markdown";
 
 const AREA_OPTIONS = [
+  { label: "100×100 m", km: 0.1, latDelta: 0.00045, lngDelta: 0.00072 },
+  { label: "500×500 m", km: 0.5, latDelta: 0.00225, lngDelta: 0.0036 },
   { label: "1×1 km", km: 1, latDelta: 0.0045, lngDelta: 0.0072 },
   { label: "3×3 km", km: 3, latDelta: 0.0135, lngDelta: 0.0215 },
-  { label: "4×4 km", km: 4, latDelta: 0.019,  lngDelta: 0.030  },
-  { label: "5×5 km", km: 5, latDelta: 0.0225, lngDelta: 0.036  },
+  { label: "5×5 km", km: 5, latDelta: 0.0225, lngDelta: 0.036 },
+  { label: "10×10 km", km: 10, latDelta: 0.045, lngDelta: 0.072 },
 ];
 
 const TERRAIN_SYSTEM = `Si strokovni GIS analitik za Slovenijo. VEDNO odgovarjaj v SLOVENŠČINI.
