@@ -242,11 +242,11 @@ export default function MapViewer() {
                   setIsPinPicking(true);
                 }}
                 onShowRoute={(coords) => setAiRoutePolyline(coords)}
+                onFlyTo={(loc) => setFlyToLocation(loc)}
                 onAddMarkers={(markers) => {
                   const newMarkers = markers.filter(m => m.lat && m.lng).map(m => ({ lat: m.lat, lng: m.lng, label: m.label }));
                   if (newMarkers.length > 0) {
                     setDrawings(prev => ({ ...prev, markers: [...prev.markers, ...newMarkers] }));
-                    setFlyToLocation({ lat: newMarkers[0].lat, lng: newMarkers[0].lng, zoom: 15 });
                   }
                 }}
               />
@@ -314,11 +314,11 @@ export default function MapViewer() {
               setIsAIOpen(false);
             }}
             onShowRoute={(coords) => setAiRoutePolyline(coords)}
+            onFlyTo={(loc) => setFlyToLocation(loc)}
             onAddMarkers={(markers) => {
               const newMarkers = markers.filter(m => m.lat && m.lng).map(m => ({ lat: m.lat, lng: m.lng, label: m.label }));
               if (newMarkers.length > 0) {
                 setDrawings(prev => ({ ...prev, markers: [...prev.markers, ...newMarkers] }));
-                setFlyToLocation({ lat: newMarkers[0].lat, lng: newMarkers[0].lng, zoom: 15 });
               }
             }}
           />

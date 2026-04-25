@@ -169,6 +169,7 @@ function DrawingHandler({ activeTool, onMeasurement, drawings, setDrawings }) {
       {(drawings.markers || []).map((m, i) => (
         <Marker key={`mk-${i}`} position={[m.lat, m.lng]}>
           <Popup>
+            {m.label && <div className="font-semibold text-xs mb-1">{m.label}</div>}
             <span className="font-mono text-xs">{m.lat.toFixed(5)}, {m.lng.toFixed(5)}</span>
           </Popup>
         </Marker>

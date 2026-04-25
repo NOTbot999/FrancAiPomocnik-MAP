@@ -170,7 +170,7 @@ function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme }) {
 }
 
 // ─── Terrain AI tab ───────────────────────────────────────────────────────────
-function TerrainTab({ mapCenter, mapZoom, activeLayers, onAddMarkers, onShowRoute, theme, onRequestPin, pinnedLocation }) {
+function TerrainTab({ mapCenter, mapZoom, activeLayers, onAddMarkers, onFlyTo, onShowRoute, theme, onRequestPin, pinnedLocation }) {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [markers, setMarkers] = useState([]);
@@ -214,22 +214,28 @@ Natančno analiziraj to slovensko lokacijo in okolico 4,2 km × 4,2 km. Uporabi 
     setLoading(false);
   };
 
+  const [placedMarkers, setPlacedMarkers] = useState(new Set());
+
   const handleItemClick = (marker, idx) => {
     if (marker.type === "route" && marker.coords?.length > 0) {
-      // Toggle route display
       if (activeRouteIdx === idx) {
         setActiveRouteIdx(null);
         if (onShowRoute) onShowRoute(null);
       } else {
         setActiveRouteIdx(idx);
         if (onShowRoute) onShowRoute(marker.coords);
-        // Fly to start of route
-        if (onAddMarkers && marker.coords[0]) {
-          onAddMarkers([{ lat: marker.coords[0][0], lng: marker.coords[0][1], label: marker.label, _nofly: false }]);
+        // Fly to start of route only
+        if (onFlyTo && marker.coords[0]) {
+          onFlyTo({ lat: marker.coords[0][0], lng: marker.coords[0][1], zoom: 14 });
         }
       }
     } else if (marker.lat && marker.lng) {
-      if (onAddMarkers) onAddMarkers([marker]);
+      // Place marker only once, then just fly
+      if (!placedMarkers.has(idx)) {
+        if (onAddMarkers) onAddMarkers([{ lat: marker.lat, lng: marker.lng, label: marker.label }]);
+        setPlacedMarkers(prev => new Set([...prev, idx]));
+      }
+      if (onFlyTo) onFlyTo({ lat: marker.lat, lng: marker.lng, zoom: 16 });
     }
   };
 
@@ -318,11 +324,24 @@ Natančno analiziraj to slovensko lokacijo in okolico 4,2 km × 4,2 km. Uporabi 
       {result && !loading && (
         <div className="space-y-3">
           {/* Analyzed coords */}
-          <div className="flex items-center gap-2 text-[10px] opacity-50" style={{ color: theme.panelText }}>
-            <MapPin className="w-3 h-3" />
-            <span className="font-mono">{analysisLat?.toFixed(5)}, {analysisLng?.toFixed(5)}</span>
-            {pinnedLocation && <span className="text-emerald-400 opacity-100">• označena točka</span>}
-            <span className="opacity-60">· 4,2km × 4,2km</span>
+          <div className="rounded-xl px-3 py-2 mb-1" style={{ backgroundColor: `${theme.panelText}10`, border: `1px solid ${theme.panelText}18` }}>
+            {pinnedLocation && (
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] font-bold text-emerald-400">📍 Označena točka</span>
+                <button
+                  onClick={() => onRequestPin && onRequestPin(null)}
+                  className="text-[10px] opacity-50 hover:opacity-100 transition-opacity flex items-center gap-1"
+                  style={{ color: theme.panelText }}
+                >
+                  <X className="w-3 h-3" /> Odstrani
+                </button>
+              </div>
+            )}
+            <div className="flex items-center gap-2 text-[10px] opacity-60" style={{ color: theme.panelText }}>
+              <MapPin className="w-3 h-3 shrink-0" />
+              <span className="font-mono">{analysisLat?.toFixed(5)}, {analysisLng?.toFixed(5)}</span>
+              <span className="opacity-60">· 4,2km²</span>
+            </div>
           </div>
 
           {/* Grouped clickable markers */}
@@ -422,6 +441,7 @@ export default function AIPanel({
   mapZoom,
   isPremium,
   onAddMarkers,
+  onFlyTo,
   onShowRoute,
   onRequestPin,
   pinnedLocation,
@@ -497,6 +517,7 @@ export default function AIPanel({
                 mapZoom={mapZoom}
                 activeLayers={activeLayers}
                 onAddMarkers={onAddMarkers}
+                onFlyTo={onFlyTo}
                 onShowRoute={onShowRoute}
                 theme={theme}
                 onRequestPin={onRequestPin}
