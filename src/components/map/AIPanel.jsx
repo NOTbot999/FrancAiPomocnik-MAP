@@ -795,9 +795,15 @@ Območje analize: ${km}×${km} km`;
 // ─── Main AIPanel ─────────────────────────────────────────────────────────────
 const TABS = [
   { id: "ask", label: "Vprašaj karto", emoji: "💬" },
+  { id: "analysis", label: "Analiza", emoji: "🛰️" },
+];
+
+const ANALYSIS_SUBTABS = [
   { id: "terrain", label: "Teren AI", emoji: "🛰️" },
   { id: "urbex", label: "Iskanje", emoji: "🔍" },
 ];
+
+const AI_PANEL_STORAGE_KEY = "ai_panel_tab";
 
 export default function AIPanel({
   onClose,
@@ -814,7 +820,22 @@ export default function AIPanel({
   pinnedLocation,
 }) {
   const theme = loadTheme();
-  const [tab, setTab] = useState("ask");
+  const [tab, setTab] = useState(() => {
+    const saved = localStorage.getItem(AI_PANEL_STORAGE_KEY);
+    return saved && TABS.some(t => t.id === saved) ? saved : "ask";
+  });
+  const [analysisSubtab, setAnalysisSubtab] = useState(() => {
+    const saved = localStorage.getItem("ai_analysis_subtab");
+    return saved && ANALYSIS_SUBTABS.some(t => t.id === saved) ? saved : "terrain";
+  });
+
+  useEffect(() => {
+    localStorage.setItem(AI_PANEL_STORAGE_KEY, tab);
+  }, [tab]);
+
+  useEffect(() => {
+    localStorage.setItem("ai_analysis_subtab", analysisSubtab);
+  }, [analysisSubtab]);
   
 
   return (
@@ -854,6 +875,26 @@ export default function AIPanel({
         ))}
       </div>
 
+      {/* Analysis sub-tabs */}
+      {tab === "analysis" && (
+        <div className="flex shrink-0 px-3 pt-2 pb-0 gap-1">
+          {ANALYSIS_SUBTABS.map(st => (
+            <button
+              key={st.id}
+              onClick={() => setAnalysisSubtab(st.id)}
+              className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg text-xs font-semibold transition-all"
+              style={analysisSubtab === st.id
+                ? { backgroundColor: theme.buttonActiveBg, color: theme.buttonActiveText }
+                : { backgroundColor: `${theme.panelText}10`, color: theme.panelText, opacity: 0.5 }
+              }
+            >
+              <span>{st.emoji}</span>
+              <span>{st.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Content */}
       {!isPremium ? (
         <PremiumLock theme={theme} />
@@ -876,7 +917,7 @@ export default function AIPanel({
                 theme={theme}
               />
             )}
-            {tab === "terrain" && (
+            {tab === "analysis" && analysisSubtab === "terrain" && (
               <TerrainTab
                 mapCenter={mapCenter}
                 mapZoom={mapZoom}
@@ -890,7 +931,7 @@ export default function AIPanel({
                 pinnedLocation={pinnedLocation}
               />
             )}
-            {tab === "urbex" && (
+            {tab === "analysis" && analysisSubtab === "urbex" && (
               <UrbexTab
                 mapCenter={mapCenter}
                 mapZoom={mapZoom}
