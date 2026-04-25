@@ -231,6 +231,70 @@ export const OVERLAY_CATEGORIES = [
     ]
   },
 
+  // ─── INFRASTRUKTURA IN ZNAČILNOSTI ────────────────────────────
+  {
+    id: "infrastructure",
+    name: "Infrastruktura & Značilnosti",
+    icon: "Wrench",
+    description: "Ceste, reke, jezera, imena, daljnovodi, gasilni domovi, avtobusne postaje, križev, gradovi, pipe",
+    layers: [
+      {
+        id: "osm_infrastructure",
+        name: "OpenStreetMap (Ceste, Reke, Jezera)",
+        type: "tile",
+        url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        opacity: 0.95,
+        description: "Osnovna OSM karta s cestami, rekami, jezeri in osnovno infrastrukturo"
+      },
+      {
+        id: "humanitarian_osm",
+        name: "HOT OSM (Detajli, Označbe)",
+        type: "tile",
+        url: "https://tile-{s}.openstreetmap.fr/hot/{z}/{x}/{y}.png",
+        opacity: 0.85,
+        transparent: true,
+        description: "Humanitarna OSM karta — izpostavi gasilne domove, avtobusne postaje, križev, pipe, razne objekte"
+      },
+      {
+        id: "openinframap_power",
+        name: "Daljnovodi (OpenInfraMap)",
+        type: "tile",
+        url: "https://tiles.openinframap.org/power/{z}/{x}/{y}.png",
+        transparent: true,
+        opacity: 0.9,
+        description: "Električni daljnovodi in transformatorji"
+      },
+      {
+        id: "openinframap_water",
+        name: "Vodovod & Kanalizacija",
+        type: "tile",
+        url: "https://tiles.openinframap.org/water/{z}/{x}/{y}.png",
+        transparent: true,
+        opacity: 0.8,
+        description: "Vodovod, kanalizacijske linije in pipe"
+      },
+      {
+        id: "openinframap_telecoms",
+        name: "Telekomunikacije",
+        type: "tile",
+        url: "https://tiles.openinframap.org/telecoms/{z}/{x}/{y}.png",
+        transparent: true,
+        opacity: 0.8,
+        description: "Telekomunikacijska infrastruktura"
+      },
+      {
+        id: "stamen_terrain",
+        name: "Stamen Terrain (Topografija, Imena)",
+        type: "tile",
+        url: "https://stamen-tiles.a.ssl.fastly.net/terrain/{z}/{x}/{y}.png",
+        attribution: "&copy; Stamen Design",
+        opacity: 0.7,
+        description: "Toner z elevacijo in navi imeni mest ter geografskim oznakami"
+      }
+    ]
+  },
+
   // — POTI ————————————————————————
   {
     id: "poti",
