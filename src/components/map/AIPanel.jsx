@@ -206,10 +206,18 @@ const AREA_OPTIONS = [
 ];
 
 function TerrainTab({ mapCenter, mapZoom, activeLayers, onAddMarkers, onRemoveAiMarkers, onFlyTo, onShowRoute, theme, onRequestPin, pinnedLocation }) {
-  const [result, setResult] = useState(null);
+  const [result, setResult] = useState(() => localStorage.getItem("ai_terrain_result") || null);
   const [loading, setLoading] = useState(false);
-  const [markers, setMarkers] = useState([]);
+  const [markers, setMarkers] = useState(() => {
+    try {
+      const saved = localStorage.getItem("ai_terrain_markers");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   const [activeRouteIdx, setActiveRouteIdx] = useState(null);
+  const [visibleMarkers, setVisibleMarkers] = useState({});
   const [selectedArea, setSelectedArea] = useState(AREA_OPTIONS[2]); // default 4×4
   const [frozenCoords, setFrozenCoords] = useState(null);
   const [pinnedPlaceName, setPinnedPlaceName] = useState(null);
@@ -298,10 +306,12 @@ ANALIZIRAJ TOČNO TO LOKACIJO: ${placeName || `${analysisLat.toFixed(4)}°N ${an
     }
     setMarkers(parsedMarkers);
     setResult(cleanText);
+    localStorage.setItem("ai_terrain_markers", JSON.stringify(parsedMarkers));
+    localStorage.setItem("ai_terrain_result", cleanText);
     setLoading(false);
-  };
+    };
 
-  const handleItemClick = (marker, idx) => {
+    const handleItemClick = (marker, idx) => {
     if (marker.type === "route" && marker.coords?.length > 0) {
       if (activeRouteIdx === idx) {
         setActiveRouteIdx(null);
@@ -314,16 +324,28 @@ ANALIZIRAJ TOČNO TO LOKACIJO: ${placeName || `${analysisLat.toFixed(4)}°N ${an
         }
       }
     } else if (marker.lat && marker.lng) {
-      if (onAddMarkers) onAddMarkers([{ lat: marker.lat, lng: marker.lng, label: marker.label }], true /* isAi */);
-      if (onFlyTo) onFlyTo({ lat: marker.lat, lng: marker.lng, zoom: 16 });
+      const key = `${marker.lat}-${marker.lng}`;
+      setVisibleMarkers(prev => {
+        const next = { ...prev, [key]: !prev[key] };
+        if (next[key]) {
+          if (onAddMarkers) onAddMarkers([{ lat: marker.lat, lng: marker.lng, label: marker.label }], true);
+          if (onFlyTo) onFlyTo({ lat: marker.lat, lng: marker.lng, zoom: 16 });
+        } else {
+          if (onRemoveAiMarkers) onRemoveAiMarkers();
+        }
+        return next;
+      });
     }
   };
 
   const handleReset = () => {
     setResult(null);
     setMarkers([]);
+    setVisibleMarkers({});
     setActiveRouteIdx(null);
     setFrozenCoords(null);
+    localStorage.removeItem("ai_terrain_result");
+    localStorage.removeItem("ai_terrain_markers");
     if (onShowRoute) onShowRoute(null);
     if (onRemoveAiMarkers) onRemoveAiMarkers();
   };
@@ -541,9 +563,17 @@ ANALIZIRAJ TOČNO TO LOKACIJO: ${placeName || `${analysisLat.toFixed(4)}°N ${an
 
 // ─── Urbex / Object Finder tab ────────────────────────────────────────────────
 function UrbexTab({ mapCenter, mapZoom, activeLayers, onToggleLayer, onAddMarkers, onRemoveAiMarkers, onFlyTo, onShowRoute, theme, onRequestPin, pinnedLocation }) {
-  const [result, setResult] = useState(null);
+  const [result, setResult] = useState(() => localStorage.getItem("ai_urbex_result") || null);
   const [loading, setLoading] = useState(false);
-  const [markers, setMarkers] = useState([]);
+  const [markers, setMarkers] = useState(() => {
+    try {
+      const saved = localStorage.getItem("ai_urbex_markers");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [visibleMarkers, setVisibleMarkers] = useState({});
   const [frozenCoords, setFrozenCoords] = useState(null);
   const [selectedArea, setSelectedArea] = useState(AREA_OPTIONS[2]);
   const [pinnedPlaceName, setPinnedPlaceName] = useState(null);
@@ -624,13 +654,18 @@ Območje analize: ${km}×${km} km`;
     }
     setMarkers(parsedMarkers);
     setResult(cleanText);
+    localStorage.setItem("ai_urbex_markers", JSON.stringify(parsedMarkers));
+    localStorage.setItem("ai_urbex_result", cleanText);
     setLoading(false);
   };
 
   const handleReset = () => {
     setResult(null);
     setMarkers([]);
+    setVisibleMarkers({});
     setFrozenCoords(null);
+    localStorage.removeItem("ai_urbex_result");
+    localStorage.removeItem("ai_urbex_markers");
     if (onRemoveAiMarkers) onRemoveAiMarkers();
     if (onShowRoute) onShowRoute(null);
   };
@@ -739,14 +774,25 @@ Območje analize: ${km}×${km} km`;
                 🏚️ Najdeni objekti ({markers.length})
               </p>
               <div className="space-y-1">
-                {markers.map((m, i) => (
+                {markers.map((m, i) => {
+                const key = `${m.lat}-${m.lng}`;
+                const isVisible = visibleMarkers[key];
+                return (
                   <motion.button key={i} whileHover={{ x: 2 }} whileTap={{ scale: 0.97 }}
                     onClick={() => {
-                      if (onAddMarkers) onAddMarkers([{ lat: m.lat, lng: m.lng, label: m.label }], true);
-                      if (onFlyTo) onFlyTo({ lat: m.lat, lng: m.lng, zoom: 16 });
+                      setVisibleMarkers(prev => {
+                        const next = { ...prev, [key]: !prev[key] };
+                        if (next[key]) {
+                          if (onAddMarkers) onAddMarkers([{ lat: m.lat, lng: m.lng, label: m.label }], true);
+                          if (onFlyTo) onFlyTo({ lat: m.lat, lng: m.lng, zoom: 16 });
+                        } else {
+                          if (onRemoveAiMarkers) onRemoveAiMarkers();
+                        }
+                        return next;
+                      });
                     }}
                     className="w-full flex items-start gap-2.5 px-3 py-2 rounded-xl text-left transition-all"
-                    style={{ border: `1px solid rgba(239,68,68,0.25)`, backgroundColor: "rgba(239,68,68,0.08)" }}
+                    style={{ border: `1px solid ${isVisible ? "rgba(239,68,68,0.5)" : "rgba(239,68,68,0.25)"}`, backgroundColor: isVisible ? "rgba(239,68,68,0.15)" : "rgba(239,68,68,0.08)" }}
                   >
                     <span className="text-sm mt-0.5 shrink-0">🏚️</span>
                     <div className="flex-1 min-w-0">
@@ -754,10 +800,11 @@ Območje analize: ${km}×${km} km`;
                       {m.description && <p className="text-[10px] opacity-60 leading-snug mt-0.5" style={{ color: theme.panelText }}>{m.description}</p>}
                       <p className="text-[10px] mt-0.5 text-red-400">{m.lat.toFixed(4)}, {m.lng.toFixed(4)} · klikni za prikaz</p>
                     </div>
-                    <MapPin className="w-3 h-3 shrink-0 opacity-40 mt-0.5 text-red-400" />
+                    <span className={`text-sm shrink-0 mt-0.5 ${isVisible ? "text-red-400" : "text-red-300"}`}>{isVisible ? "✓" : "○"}</span>
                   </motion.button>
-                ))}
-              </div>
+                );
+                })}
+                </div>
             </div>
           )}
 
@@ -882,14 +929,14 @@ export default function AIPanel({
             <button
               key={st.id}
               onClick={() => setAnalysisSubtab(st.id)}
-              className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg text-xs font-semibold transition-all"
+              className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all duration-200"
               style={analysisSubtab === st.id
-                ? { backgroundColor: theme.buttonActiveBg, color: theme.buttonActiveText }
-                : { backgroundColor: `${theme.panelText}10`, color: theme.panelText, opacity: 0.5 }
+                ? { backgroundColor: theme.buttonActiveBg, color: theme.buttonActiveText, boxShadow: `0 2px 8px ${theme.buttonActiveBg}40` }
+                : { backgroundColor: `${theme.panelText}06`, color: theme.panelText, opacity: 0.4 }
               }
             >
               <span>{st.emoji}</span>
-              <span>{st.label}</span>
+              <span className="hidden sm:inline">{st.label}</span>
             </button>
           ))}
         </div>
