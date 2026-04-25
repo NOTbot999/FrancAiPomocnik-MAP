@@ -73,9 +73,11 @@ export default function UnifiedAnalysisPanel({
   onRequestPin,
   pinnedLocation,
 }) {
-  const [mode, setMode] = useState("terrain"); // "terrain" or "urbex"
+  const [showTerrain, setShowTerrain] = useState(true);
+  const [showUrbex, setShowUrbex] = useState(false);
   const [selectedArea, setSelectedArea] = useState(AREA_OPTIONS[2]);
   const [pinnedPlaceName, setPinnedPlaceName] = useState(null);
+  const [frozenCoords, setFrozenCoords] = useState(null);
 
   // Terrain state
   const [terrainResult, setTerrainResult] = useState(() => localStorage.getItem("ai_terrain_result") || null);
@@ -90,7 +92,6 @@ export default function UnifiedAnalysisPanel({
   });
   const [terrainVisibleMarkers, setTerrainVisibleMarkers] = useState({});
   const [terrainActiveRouteIdx, setTerrainActiveRouteIdx] = useState(null);
-  const [terrainFrozenCoords, setTerrainFrozenCoords] = useState(null);
 
   // Urbex state
   const [urbexResult, setUrbexResult] = useState(() => localStorage.getItem("ai_urbex_result") || null);
@@ -104,7 +105,6 @@ export default function UnifiedAnalysisPanel({
     }
   });
   const [urbexVisibleMarkers, setUrbexVisibleMarkers] = useState({});
-  const [urbexFrozenCoords, setUrbexFrozenCoords] = useState(null);
 
   useEffect(() => {
     if (!pinnedLocation) { setPinnedPlaceName(null); return; }
@@ -120,7 +120,6 @@ export default function UnifiedAnalysisPanel({
       .catch(() => setPinnedPlaceName(null));
   }, [pinnedLocation]);
 
-  const frozenCoords = mode === "terrain" ? terrainFrozenCoords : urbexFrozenCoords;
   const displayLat = frozenCoords ? frozenCoords[0] : (pinnedLocation ? pinnedLocation[0] : mapCenter?.[0]);
   const displayLng = frozenCoords ? frozenCoords[1] : (pinnedLocation ? pinnedLocation[1] : mapCenter?.[1]);
 
@@ -128,15 +127,17 @@ export default function UnifiedAnalysisPanel({
     const analysisLat = pinnedLocation ? pinnedLocation[0] : mapCenter?.[0];
     const analysisLng = pinnedLocation ? pinnedLocation[1] : mapCenter?.[1];
     
-    if (mode === "terrain") {
-      setTerrainFrozenCoords([analysisLat, analysisLng]);
+    setFrozenCoords([analysisLat, analysisLng]);
+    
+    if (showTerrain) {
       setTerrainLoading(true);
       setTerrainResult(null);
       setTerrainMarkers([]);
       setTerrainActiveRouteIdx(null);
       setTerrainVisibleMarkers({});
-    } else {
-      setUrbexFrozenCoords([analysisLat, analysisLng]);
+    }
+    
+    if (showUrbex) {
       setUrbexLoading(true);
       setUrbexResult(null);
       setUrbexMarkers([]);
@@ -160,60 +161,61 @@ export default function UnifiedAnalysisPanel({
     const minLng = (analysisLng - lngDelta).toFixed(5);
     const maxLng = (analysisLng + lngDelta).toFixed(5);
 
-    const systemPrompt = mode === "terrain" ? TERRAIN_SYSTEM : URBEX_SYSTEM;
-    const prompt = `${systemPrompt}
+    // Run both analyses if both are enabled
+    const runAnalysis = async (systemPrompt, isUrbex) => {
+      const fullPrompt = `${systemPrompt}
 
 LOKACIJA: ${placeName ? `"${placeName}"` : "neznana"} | Koordinate: ${analysisLat.toFixed(5)}°N, ${analysisLng.toFixed(5)}°E
 BOUNDING BOX — VSE koordinate v JSON MORAJO biti ZNOTRAJ:
   minLat=${minLat}, maxLat=${maxLat}, minLng=${minLng}, maxLng=${maxLng}
 Območje analize: ${km}×${km} km`;
 
-    const res = await base44.integrations.Core.InvokeLLM({
-      prompt, add_context_from_internet: true, model: "gemini_3_flash"
-    });
-    const text = typeof res === "string" ? res : res?.content || JSON.stringify(res);
+      const res = await base44.integrations.Core.InvokeLLM({
+        prompt: fullPrompt, add_context_from_internet: true, model: "gemini_3_flash"
+      });
+      const text = typeof res === "string" ? res : res?.content || JSON.stringify(res);
 
-    const markerMatch = text.match(/<map_markers>(.*?)<\/map_markers>/s);
-    let cleanText = text.replace(/<map_markers>.*?<\/map_markers>/s, "").trim();
-    let parsedMarkers = [];
-    if (markerMatch) {
-      try {
-        const raw = JSON.parse(markerMatch[1]);
-        parsedMarkers = raw.filter(m => {
-          if (m.type === "route") return true;
-          if (!m.lat || !m.lng) return false;
-          return m.lat >= parseFloat(minLat) && m.lat <= parseFloat(maxLat) &&
-                 m.lng >= parseFloat(minLng) && m.lng <= parseFloat(maxLng);
-        });
-      } catch {}
-    }
+      const markerMatch = text.match(/<map_markers>(.*?)<\/map_markers>/s);
+      let cleanText = text.replace(/<map_markers>.*?<\/map_markers>/s, "").trim();
+      let parsedMarkers = [];
+      if (markerMatch) {
+        try {
+          const raw = JSON.parse(markerMatch[1]);
+          parsedMarkers = raw.filter(m => {
+            if (m.type === "route") return true;
+            if (!m.lat || !m.lng) return false;
+            return m.lat >= parseFloat(minLat) && m.lat <= parseFloat(maxLat) &&
+                   m.lng >= parseFloat(minLng) && m.lng <= parseFloat(maxLng);
+          });
+        } catch {}
+      }
 
-    if (mode === "terrain") {
-      setTerrainMarkers(parsedMarkers);
-      setTerrainResult(cleanText);
-      localStorage.setItem("ai_terrain_markers", JSON.stringify(parsedMarkers));
-      localStorage.setItem("ai_terrain_result", cleanText);
-      setTerrainLoading(false);
-    } else {
-      setUrbexMarkers(parsedMarkers);
-      setUrbexResult(cleanText);
-      localStorage.setItem("ai_urbex_markers", JSON.stringify(parsedMarkers));
-      localStorage.setItem("ai_urbex_result", cleanText);
-      setUrbexLoading(false);
-    }
+      if (isUrbex) {
+        setUrbexMarkers(parsedMarkers);
+        setUrbexResult(cleanText);
+        localStorage.setItem("ai_urbex_markers", JSON.stringify(parsedMarkers));
+        localStorage.setItem("ai_urbex_result", cleanText);
+        setUrbexLoading(false);
+      } else {
+        setTerrainMarkers(parsedMarkers);
+        setTerrainResult(cleanText);
+        localStorage.setItem("ai_terrain_markers", JSON.stringify(parsedMarkers));
+        localStorage.setItem("ai_terrain_result", cleanText);
+        setTerrainLoading(false);
+      }
+    };
+
+    if (showTerrain) await runAnalysis(TERRAIN_SYSTEM, false);
+    if (showUrbex) await runAnalysis(URBEX_SYSTEM, true);
   };
 
   const handleMarkerClick = (marker, idx) => {
-    const visibleMarkersState = mode === "terrain" ? terrainVisibleMarkers : urbexVisibleMarkers;
-    const setVisibleMarkers = mode === "terrain" ? setTerrainVisibleMarkers : setUrbexVisibleMarkers;
-    
     if (marker.type === "route" && marker.coords?.length > 0) {
-      const routeIdx = mode === "terrain" ? terrainActiveRouteIdx : null;
-      if (routeIdx === idx) {
-        if (mode === "terrain") setTerrainActiveRouteIdx(null);
+      if (terrainActiveRouteIdx === idx) {
+        setTerrainActiveRouteIdx(null);
         if (onShowRoute) onShowRoute(null);
       } else {
-        if (mode === "terrain") setTerrainActiveRouteIdx(idx);
+        setTerrainActiveRouteIdx(idx);
         if (onShowRoute) onShowRoute(marker.coords);
         if (onFlyTo && marker.coords[0]) {
           onFlyTo({ lat: marker.coords[0][0], lng: marker.coords[0][1], zoom: 14 });
@@ -221,44 +223,57 @@ Območje analize: ${km}×${km} km`;
       }
     } else if (marker.lat && marker.lng) {
       const key = `${marker.lat}-${marker.lng}`;
-      setVisibleMarkers(prev => {
-        const next = { ...prev, [key]: !prev[key] };
-        if (next[key]) {
-          if (onAddMarkers) onAddMarkers([{ lat: marker.lat, lng: marker.lng, label: marker.label }], true);
-          if (onFlyTo) onFlyTo({ lat: marker.lat, lng: marker.lng, zoom: 16 });
-        } else {
-          if (onRemoveAiMarkers) onRemoveAiMarkers();
-        }
-        return next;
-      });
+      const isTerrainMarker = terrainMarkers.some(m => m.lat === marker.lat && m.lng === marker.lng);
+      
+      if (isTerrainMarker) {
+        setTerrainVisibleMarkers(prev => {
+          const next = { ...prev, [key]: !prev[key] };
+          if (next[key]) {
+            if (onAddMarkers) onAddMarkers([{ lat: marker.lat, lng: marker.lng, label: marker.label }], true);
+            if (onFlyTo) onFlyTo({ lat: marker.lat, lng: marker.lng, zoom: 16 });
+          } else {
+            if (onRemoveAiMarkers) onRemoveAiMarkers();
+          }
+          return next;
+        });
+      } else {
+        setUrbexVisibleMarkers(prev => {
+          const next = { ...prev, [key]: !prev[key] };
+          if (next[key]) {
+            if (onAddMarkers) onAddMarkers([{ lat: marker.lat, lng: marker.lng, label: marker.label }], true);
+            if (onFlyTo) onFlyTo({ lat: marker.lat, lng: marker.lng, zoom: 16 });
+          } else {
+            if (onRemoveAiMarkers) onRemoveAiMarkers();
+          }
+          return next;
+        });
+      }
     }
   };
 
   const handleReset = () => {
-    if (mode === "terrain") {
+    if (showTerrain) {
       setTerrainResult(null);
       setTerrainMarkers([]);
       setTerrainVisibleMarkers({});
       setTerrainActiveRouteIdx(null);
-      setTerrainFrozenCoords(null);
       localStorage.removeItem("ai_terrain_result");
       localStorage.removeItem("ai_terrain_markers");
-    } else {
+    }
+    if (showUrbex) {
       setUrbexResult(null);
       setUrbexMarkers([]);
       setUrbexVisibleMarkers({});
-      setUrbexFrozenCoords(null);
       localStorage.removeItem("ai_urbex_result");
       localStorage.removeItem("ai_urbex_markers");
     }
+    setFrozenCoords(null);
     if (onShowRoute) onShowRoute(null);
     if (onRemoveAiMarkers) onRemoveAiMarkers();
   };
 
-  const result = mode === "terrain" ? terrainResult : urbexResult;
-  const loading = mode === "terrain" ? terrainLoading : urbexLoading;
-  const markers = mode === "terrain" ? terrainMarkers : urbexMarkers;
-  const visibleMarkers = mode === "terrain" ? terrainVisibleMarkers : urbexVisibleMarkers;
+  const isLoading = terrainLoading || urbexLoading;
+  const hasResults = terrainResult || urbexResult;
 
   const typeColor = { structure: "text-orange-400", poi: "text-emerald-400", route: "text-blue-400", landmark: "text-amber-400" };
   const typeIcon = { structure: "🏗️", poi: "📍", route: "🛤️", landmark: "🗺️" };
@@ -272,12 +287,12 @@ Območje analize: ${km}×${km} km`;
 
   return (
     <div className="space-y-3">
-      {/* Mode toggle */}
+      {/* Toggle buttons for Terrain and Urbex */}
       <div className="flex gap-2">
         <button
-          onClick={() => setMode("terrain")}
+          onClick={() => setShowTerrain(!showTerrain)}
           className="flex-1 py-2 px-3 rounded-lg text-xs font-semibold transition-all"
-          style={mode === "terrain"
+          style={showTerrain
             ? { backgroundColor: theme.buttonActiveBg, color: theme.buttonActiveText, boxShadow: `0 2px 8px ${theme.buttonActiveBg}40` }
             : { backgroundColor: `${theme.panelText}06`, color: theme.panelText, opacity: 0.4 }
           }
@@ -285,9 +300,9 @@ Območje analize: ${km}×${km} km`;
           🛰️ Teren
         </button>
         <button
-          onClick={() => setMode("urbex")}
+          onClick={() => setShowUrbex(!showUrbex)}
           className="flex-1 py-2 px-3 rounded-lg text-xs font-semibold transition-all"
-          style={mode === "urbex"
+          style={showUrbex
             ? { backgroundColor: theme.buttonActiveBg, color: theme.buttonActiveText, boxShadow: `0 2px 8px ${theme.buttonActiveBg}40` }
             : { backgroundColor: `${theme.panelText}06`, color: theme.panelText, opacity: 0.4 }
           }
@@ -297,10 +312,10 @@ Območje analize: ${km}×${km} km`;
       </div>
 
       {/* Main content */}
-      {!result && !loading && (
+      {!hasResults && !isLoading && (
         <div className="text-center py-2 space-y-3">
           <p className="text-sm font-semibold" style={{ color: theme.panelText }}>
-            {mode === "terrain" ? "AI analiza terena" : "Iskanje neznanih objektov"}
+            AI analiza in iskanje
           </p>
 
           {/* Location section */}
@@ -368,18 +383,18 @@ Območje analize: ${km}×${km} km`;
 
           <button onClick={analyze}
             className="w-full py-2.5 font-semibold rounded-xl text-white transition shadow"
-            style={{ background: mode === "terrain" ? "linear-gradient(to right, #f59e0b, #10b981)" : "linear-gradient(to right, #ef4444, #f97316)" }}
+            style={{ background: "linear-gradient(to right, #f59e0b, #10b981)" }}
           >
-            {mode === "terrain" ? "🛰️ Analiziraj lokacijo" : "🔍 Iskanje neznanih objektov"}
+            🔍 Analiziraj
           </button>
         </div>
       )}
 
-      {loading && (
+      {isLoading && (
         <div className="flex flex-col items-center justify-center py-8 gap-3">
-          <Loader2 className="w-7 h-7 animate-spin" style={{ color: mode === "terrain" ? "#f59e0b" : "#ef4444" }} />
+          <Loader2 className="w-7 h-7 animate-spin text-emerald-400" />
           <p className="text-sm opacity-60" style={{ color: theme.panelText }}>
-            {mode === "terrain" ? "AI analizira teren..." : "AI išče neznane objekte..."}
+            {showTerrain && showUrbex ? "AI analizira..." : (showTerrain ? "Analiza terena..." : "Iskanje objektov...")}
           </p>
           <p className="text-xs opacity-40 font-mono" style={{ color: theme.panelText }}>
             {displayLat?.toFixed(4)}, {displayLng?.toFixed(4)} · {selectedArea.label}
@@ -387,7 +402,7 @@ Območje analize: ${km}×${km} km`;
         </div>
       )}
 
-      {result && !loading && (
+      {hasResults && !isLoading && (
         <div className="space-y-3">
           <div className="rounded-xl px-3 py-2" style={{ backgroundColor: `${theme.panelText}10`, border: `1px solid ${theme.panelText}18` }}>
             <div className="flex items-center gap-2 text-[10px] opacity-60" style={{ color: theme.panelText }}>
@@ -397,84 +412,133 @@ Območje analize: ${km}×${km} km`;
             </div>
           </div>
 
-          {/* Markers */}
-          {markers.length > 0 && groups.map(group => {
-            const items = markers.map((m, i) => ({ ...m, _idx: i })).filter(m => m.type === group.key);
-            if (items.length === 0) return null;
-            return (
-              <div key={group.key}>
-                <p className="text-[10px] font-bold uppercase tracking-widest opacity-40 mb-1.5" style={{ color: theme.panelText }}>
-                  <span>{typeIcon[group.key]}</span> {group.label}
-                </p>
-                <div className="space-y-1">
-                  {items.map((m) => {
-                    const key = `${m.lat}-${m.lng}`;
-                    const isVisible = visibleMarkers[key];
-                    return (
-                      <motion.button
-                        key={m._idx}
-                        whileHover={{ x: 2 }}
-                        whileTap={{ scale: 0.97 }}
-                        onClick={() => handleMarkerClick(m, m._idx)}
-                        className="w-full flex items-start gap-2.5 px-3 py-2 rounded-xl text-left transition-all"
-                        style={{
-                          border: `1px solid ${isVisible ? `${theme.buttonActiveBg}80` : theme.panelText + "18"}`,
-                          backgroundColor: isVisible ? `${theme.buttonActiveBg}15` : typeBg[m.type] || "transparent",
-                        }}
-                      >
-                        <span className="text-sm leading-none mt-0.5 shrink-0">{typeIcon[m.type] || "📍"}</span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-semibold" style={{ color: theme.panelText }}>{m.label}</p>
-                          {m.description && (
-                            <p className="text-[10px] opacity-60 leading-snug mt-0.5" style={{ color: theme.panelText }}>{m.description}</p>
-                          )}
-                          {m.type === "route" && m.coords?.length > 0 ? (
-                            <p className={`text-[10px] mt-0.5 font-medium ${isVisible ? "text-blue-400" : typeColor[m.type]}`}>
-                              {isVisible ? "✓ Prikazano" : `🛤️ ${m.coords.length} točk`}
-                            </p>
-                          ) : m.lat && m.lng ? (
-                            <p className={`text-[10px] mt-0.5 ${typeColor[m.type] || "text-slate-400"}`}>
-                              {m.lat.toFixed(4)}, {m.lng.toFixed(4)}
-                            </p>
-                          ) : null}
-                        </div>
-                        <span className="text-sm shrink-0 mt-0.5" style={{ color: isVisible ? theme.buttonActiveBg : theme.panelText + "80" }}>
-                          {isVisible ? "✓" : "○"}
-                        </span>
-                      </motion.button>
-                    );
-                  })}
-                </div>
+          {/* Terrain results */}
+          {showTerrain && terrainResult && (
+            <div className="space-y-2 pb-3 border-b" style={{ borderColor: `${theme.panelText}18` }}>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-amber-400">🛰️ Analiza terena</p>
+              {terrainMarkers.length > 0 && groups.map(group => {
+                const items = terrainMarkers.map((m, i) => ({ ...m, _idx: i })).filter(m => m.type === group.key);
+                if (items.length === 0) return null;
+                return (
+                  <div key={group.key}>
+                    <p className="text-[10px] font-bold uppercase tracking-widest opacity-40 mb-1" style={{ color: theme.panelText }}>
+                      {typeIcon[group.key]} {group.label}
+                    </p>
+                    <div className="space-y-1">
+                      {items.map((m) => {
+                        const key = `${m.lat}-${m.lng}`;
+                        const isVisible = terrainVisibleMarkers[key];
+                        return (
+                          <motion.button
+                            key={m._idx}
+                            whileHover={{ x: 2 }}
+                            whileTap={{ scale: 0.97 }}
+                            onClick={() => handleMarkerClick(m, m._idx)}
+                            className="w-full flex items-start gap-2.5 px-3 py-2 rounded-xl text-left transition-all"
+                            style={{
+                              border: `1px solid ${isVisible ? `${theme.buttonActiveBg}80` : theme.panelText + "18"}`,
+                              backgroundColor: isVisible ? `${theme.buttonActiveBg}15` : typeBg[m.type] || "transparent",
+                            }}
+                          >
+                            <span className="text-sm leading-none mt-0.5 shrink-0">{typeIcon[m.type] || "📍"}</span>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-semibold" style={{ color: theme.panelText }}>{m.label}</p>
+                              {m.description && (
+                                <p className="text-[10px] opacity-60 leading-snug mt-0.5" style={{ color: theme.panelText }}>{m.description}</p>
+                              )}
+                              {m.type === "route" && m.coords?.length > 0 ? (
+                                <p className={`text-[10px] mt-0.5 font-medium ${isVisible ? "text-blue-400" : typeColor[m.type]}`}>
+                                  {isVisible ? "✓ Prikazano" : `🛤️ ${m.coords.length} točk`}
+                                </p>
+                              ) : m.lat && m.lng ? (
+                                <p className={`text-[10px] mt-0.5 ${typeColor[m.type] || "text-slate-400"}`}>
+                                  {m.lat.toFixed(4)}, {m.lng.toFixed(4)}
+                                </p>
+                              ) : null}
+                            </div>
+                            <span className="text-sm shrink-0 mt-0.5" style={{ color: isVisible ? theme.buttonActiveBg : theme.panelText + "80" }}>
+                              {isVisible ? "✓" : "○"}
+                            </span>
+                          </motion.button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+              <div className="prose prose-xs max-w-none">
+                <ReactMarkdown
+                  components={{
+                    h1: ({ children }) => <h1 className="text-sm font-bold mt-3 mb-1" style={{ color: theme.panelText }}>{children}</h1>,
+                    h2: ({ children }) => <h2 className="text-xs font-bold mt-2.5 mb-1" style={{ color: theme.panelText }}>{children}</h2>,
+                    h3: ({ children }) => <h3 className="text-xs font-semibold mt-2 mb-0.5" style={{ color: theme.panelText }}>{children}</h3>,
+                    p: ({ children }) => <p className="text-xs mb-1.5 leading-relaxed opacity-80" style={{ color: theme.panelText }}>{children}</p>,
+                    ul: ({ children }) => <ul className="text-xs ml-3 space-y-0.5 mb-1.5 opacity-80" style={{ color: theme.panelText }}>{children}</ul>,
+                    li: ({ children }) => <li className="list-disc">{children}</li>,
+                    strong: ({ children }) => <strong className="font-semibold opacity-100" style={{ color: theme.panelText }}>{children}</strong>,
+                  }}
+                >
+                  {terrainResult}
+                </ReactMarkdown>
               </div>
-            );
-          })}
+            </div>
+          )}
 
-          {/* Analysis text */}
-          <div>
-            <div className="text-[11px] flex items-center gap-1 opacity-50 mb-1" style={{ color: theme.panelText }}>
-              <Star className="w-3 h-3 opacity-100" /> Analiza
+          {/* Urbex results */}
+          {showUrbex && urbexResult && (
+            <div className="space-y-2">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-red-400">🔍 Iskanje objektov</p>
+              {urbexMarkers.length > 0 && urbexMarkers.map((m, i) => {
+                const key = `${m.lat}-${m.lng}`;
+                const isVisible = urbexVisibleMarkers[key];
+                return (
+                  <motion.button
+                    key={i}
+                    whileHover={{ x: 2 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => handleMarkerClick(m, i)}
+                    className="w-full flex items-start gap-2.5 px-3 py-2 rounded-xl text-left transition-all"
+                    style={{
+                      border: `1px solid ${isVisible ? "rgba(239,68,68,0.5)" : theme.panelText + "18"}`,
+                      backgroundColor: isVisible ? "rgba(239,68,68,0.15)" : "rgba(239,68,68,0.08)",
+                    }}
+                  >
+                    <span className="text-sm leading-none mt-0.5 shrink-0">🏚️</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold" style={{ color: theme.panelText }}>{m.label}</p>
+                      {m.description && (
+                        <p className="text-[10px] opacity-60 leading-snug mt-0.5" style={{ color: theme.panelText }}>{m.description}</p>
+                      )}
+                      <p className="text-[10px] mt-0.5 text-red-400">{m.lat.toFixed(4)}, {m.lng.toFixed(4)}</p>
+                    </div>
+                    <span className="text-sm shrink-0 mt-0.5" style={{ color: isVisible ? "#ef4444" : theme.panelText + "80" }}>
+                      {isVisible ? "✓" : "○"}
+                    </span>
+                  </motion.button>
+                );
+              })}
+              <div className="prose prose-xs max-w-none">
+                <ReactMarkdown
+                  components={{
+                    h1: ({ children }) => <h1 className="text-sm font-bold mt-3 mb-1" style={{ color: theme.panelText }}>{children}</h1>,
+                    h2: ({ children }) => <h2 className="text-xs font-bold mt-2.5 mb-1" style={{ color: theme.panelText }}>{children}</h2>,
+                    h3: ({ children }) => <h3 className="text-xs font-semibold mt-2 mb-0.5" style={{ color: theme.panelText }}>{children}</h3>,
+                    p: ({ children }) => <p className="text-xs mb-1.5 leading-relaxed opacity-80" style={{ color: theme.panelText }}>{children}</p>,
+                    ul: ({ children }) => <ul className="text-xs ml-3 space-y-0.5 mb-1.5 opacity-80" style={{ color: theme.panelText }}>{children}</ul>,
+                    li: ({ children }) => <li className="list-disc">{children}</li>,
+                    strong: ({ children }) => <strong className="font-semibold opacity-100" style={{ color: theme.panelText }}>{children}</strong>,
+                  }}
+                >
+                  {urbexResult}
+                </ReactMarkdown>
+              </div>
             </div>
-            <div className="prose prose-xs max-w-none">
-              <ReactMarkdown
-                components={{
-                  h1: ({ children }) => <h1 className="text-sm font-bold mt-3 mb-1" style={{ color: theme.panelText }}>{children}</h1>,
-                  h2: ({ children }) => <h2 className="text-xs font-bold mt-2.5 mb-1" style={{ color: theme.panelText }}>{children}</h2>,
-                  h3: ({ children }) => <h3 className="text-xs font-semibold mt-2 mb-0.5" style={{ color: theme.panelText }}>{children}</h3>,
-                  p: ({ children }) => <p className="text-xs mb-1.5 leading-relaxed opacity-80" style={{ color: theme.panelText }}>{children}</p>,
-                  ul: ({ children }) => <ul className="text-xs ml-3 space-y-0.5 mb-1.5 opacity-80" style={{ color: theme.panelText }}>{children}</ul>,
-                  li: ({ children }) => <li className="list-disc">{children}</li>,
-                  strong: ({ children }) => <strong className="font-semibold opacity-100" style={{ color: theme.panelText }}>{children}</strong>,
-                }}
-              >
-                {result}
-              </ReactMarkdown>
-            </div>
-          </div>
+          )}
 
           <button onClick={handleReset}
             className="w-full py-2 text-xs font-medium rounded-xl transition opacity-50 hover:opacity-80"
             style={{ border: `1px solid ${theme.panelText}33`, color: theme.panelText }}>
-            Nova analiza
+            Počisti
           </button>
         </div>
       )}
