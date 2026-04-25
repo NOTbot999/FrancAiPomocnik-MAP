@@ -172,11 +172,19 @@ function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme }) {
 }
 
 // ─── Terrain AI tab ───────────────────────────────────────────────────────────
+const AREA_OPTIONS = [
+  { label: "1×1 km", km: 1, latDelta: 0.0045, lngDelta: 0.0072 },
+  { label: "3×3 km", km: 3, latDelta: 0.0135, lngDelta: 0.0215 },
+  { label: "4×4 km", km: 4, latDelta: 0.019,  lngDelta: 0.030  },
+  { label: "5×5 km", km: 5, latDelta: 0.0225, lngDelta: 0.036  },
+];
+
 function TerrainTab({ mapCenter, mapZoom, activeLayers, onAddMarkers, onFlyTo, onShowRoute, theme, onRequestPin, pinnedLocation }) {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [markers, setMarkers] = useState([]);
   const [activeRouteIdx, setActiveRouteIdx] = useState(null);
+  const [selectedArea, setSelectedArea] = useState(AREA_OPTIONS[2]); // default 4×4
   // Freeze the analysis coordinates when analysis starts — don't follow live mapCenter
   const [frozenCoords, setFrozenCoords] = useState(null);
 
@@ -199,9 +207,7 @@ function TerrainTab({ mapCenter, mapZoom, activeLayers, onAddMarkers, onFlyTo, o
       }
       return id;
     });
-    // Calculate bounding box ~2.1km in each direction
-    const latDelta = 0.019; // ~2.1km latitude
-    const lngDelta = 0.030; // ~2.1km longitude at Slovenia's latitude
+    const { latDelta, lngDelta, km } = selectedArea;
     const minLat = (analysisLat - latDelta).toFixed(5);
     const maxLat = (analysisLat + latDelta).toFixed(5);
     const minLng = (analysisLng - lngDelta).toFixed(5);
@@ -211,6 +217,7 @@ function TerrainTab({ mapCenter, mapZoom, activeLayers, onAddMarkers, onFlyTo, o
 
 Središče analize: ${analysisLat.toFixed(5)}°N, ${analysisLng.toFixed(5)}°E | Zoom: ${mapZoom} | Aktivni sloji: ${activeNames.join(", ") || "ni aktivnih"}
 BOUNDING BOX (vse koordinate MORAJO biti znotraj): minLat=${minLat}, maxLat=${maxLat}, minLng=${minLng}, maxLng=${maxLng}
+Območje analize: ${km}×${km} km
 
 Natančno analiziraj to slovensko lokacijo. Uporabi internetni kontekst za resnične geografske podatke. VSE koordinate v JSON morajo biti med minLat-maxLat in minLng-maxLng.`;
 
@@ -318,6 +325,26 @@ Natančno analiziraj to slovensko lokacijo. Uporabi internetni kontekst za resni
                 </button>
               </div>
             )}
+          </div>
+
+          {/* Area size selector */}
+          <div className="mb-3">
+            <p className="text-[10px] font-bold uppercase tracking-widest opacity-50 mb-2 text-left" style={{ color: theme.panelText }}>Območje analize</p>
+            <div className="grid grid-cols-4 gap-1">
+              {AREA_OPTIONS.map(opt => (
+                <button
+                  key={opt.label}
+                  onClick={() => setSelectedArea(opt)}
+                  className="py-1.5 rounded-lg text-[11px] font-semibold transition-all"
+                  style={selectedArea.label === opt.label
+                    ? { backgroundColor: theme.buttonActiveBg, color: theme.buttonActiveText }
+                    : { backgroundColor: `${theme.panelText}12`, color: theme.panelText, opacity: 0.6 }
+                  }
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           <button onClick={analyze}
