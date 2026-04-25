@@ -3,7 +3,7 @@ import {
   Layers, Locate, LoaderCircle, Ruler, Pentagon, MapPin, Trash2,
   MousePointer2, Navigation, Route, Sparkles, TrendingUp, X,
   Map, Settings, Eye, EyeOff, Save, FolderOpen,
-  Loader2, Check, GripVertical, Palette
+  Loader2, Check, GripVertical, Palette, Brain
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { motion, AnimatePresence } from "framer-motion";
@@ -19,9 +19,8 @@ const BUTTON_DEFS = [
   { id: "gps",             icon: Navigation,    label: "GPS Track",           color: "blue" },
   { id: "mytracks",        icon: Map,           label: "My GPS Tracks",       color: "teal" },
   { id: "nav",             icon: Route,         label: "Route Planner",       color: "emerald" },
-  { id: "askmap",          icon: Sparkles,      label: "Ask the Map (AI)",    color: "emerald" },
+  { id: "ai",              icon: Brain,         label: "AI Asistent (Premium)", color: "amber" },
   { id: "trackanalyzer",   icon: TrendingUp,    label: "Track Analyzer (AI)", color: "blue" },
-  { id: "terrainai",       icon: Sparkles,      label: "Terrain AI (Premium)", color: "amber" },
 ];
 
 const RULER_TOOLS = [
@@ -76,9 +75,8 @@ export default function DesktopToolbar({
   showMyTracks, onShowMyTracks,
   onLocate,
   isNavOpen, onNavToggle,
-  isAskMapOpen, onAskMapToggle,
+  isAIOpen, onAIToggle,
   isTrackAnalyzerOpen, onTrackAnalyzerToggle,
-  isTerrainAIOpen, onTerrainAIToggle,
   drawings, gpsTrack, onLoadDrawings,
 }) {
   const [pos, setPos] = useState(loadPos);
@@ -178,9 +176,8 @@ export default function DesktopToolbar({
     if (id === "gps")           return isGpsTracking;
     if (id === "mytracks")      return showMyTracks;
     if (id === "nav")           return isNavOpen;
-    if (id === "askmap")        return isAskMapOpen;
+    if (id === "ai")            return isAIOpen;
     if (id === "trackanalyzer") return isTrackAnalyzerOpen;
-    if (id === "terrainai")     return isTerrainAIOpen;
     if (id === "ruler")         return rulerOpen || ["distance","area","marker"].includes(activeTool);
     if (id === "save")          return savedOk;
     return false;
@@ -192,9 +189,8 @@ export default function DesktopToolbar({
     if (id === "gps")           { if (!isGpsTracking) base44.analytics.track({ eventName: "gps_tracking_started" }); return onGpsToggle(); }
     if (id === "mytracks")      return onShowMyTracks();
     if (id === "nav")           { if (!isNavOpen) base44.analytics.track({ eventName: "route_planner_opened" }); return onNavToggle(); }
-    if (id === "askmap")        { if (!isAskMapOpen) base44.analytics.track({ eventName: "ask_map_opened" }); return onAskMapToggle(); }
+    if (id === "ai")            { if (!isAIOpen) base44.analytics.track({ eventName: "ai_panel_opened" }); return onAIToggle(); }
     if (id === "trackanalyzer") { if (!isTrackAnalyzerOpen) base44.analytics.track({ eventName: "track_analyzer_opened" }); return onTrackAnalyzerToggle(); }
-    if (id === "terrainai")     { if (!isTerrainAIOpen) base44.analytics.track({ eventName: "terrain_ai_opened" }); return onTerrainAIToggle(); }
     if (id === "ruler")         return setRulerOpen(p => !p);
     if (id === "save")          return handleSave();
     if (id === "load")          return handleLoad();

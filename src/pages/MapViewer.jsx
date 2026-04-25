@@ -9,11 +9,10 @@ import NavigationPanel from "@/components/map/NavigationPanel";
 import OfflineManager from "@/components/map/OfflineManager";
 import { OVERLAY_CATEGORIES } from "@/components/map/layerConfig";
 import { useIsMobile } from "@/hooks/use-mobile";
-import AskMapPanel from "@/components/map/AskMapPanel";
+import AIPanel from "@/components/map/AIPanel";
 import TrackAnalyzer from "@/components/map/TrackAnalyzer";
 import LocationSummarizer from "@/components/map/LocationSummarizer";
 import DesktopToolbar from "@/components/map/DesktopToolbar";
-import TerrainAI from "@/components/map/TerrainAI";
 import { useUserSettings } from "@/hooks/useUserSettings";
 import { base44 } from "@/api/base44Client";
 
@@ -32,7 +31,7 @@ export default function MapViewer() {
   const [isGpsTracking, setIsGpsTracking] = useState(false);
   const [showMyTracks, setShowMyTracks] = useState(false);
   const [locateTrigger, setLocateTrigger] = useState(0);
-  const [isTerrainAIOpen, setIsTerrainAIOpen] = useState(false);
+  const [isAIOpen, setIsAIOpen] = useState(false);
 
   // Check premium status — admins always get access
   const [currentUser, setCurrentUser] = useState(null);
@@ -142,7 +141,6 @@ export default function MapViewer() {
   const [routePolyline, setRoutePolyline] = useState(null);
   const [isNavOpen, setIsNavOpen] = useState(false);
   const [isOfflineOpen, setIsOfflineOpen] = useState(false);
-  const [isAskMapOpen, setIsAskMapOpen] = useState(false);
   const [isTrackAnalyzerOpen, setIsTrackAnalyzerOpen] = useState(false);
   const [locationSummary, setLocationSummary] = useState(null); // { latlng: [lat, lng] }
   const [mapCenter, setMapCenter] = useState([46.1512, 14.9955]);
@@ -220,15 +218,21 @@ export default function MapViewer() {
             </div>
           )}
 
-          {/* AI Panels — desktop */}
-          {isAskMapOpen && (
-            <div className="absolute right-20 bottom-72 z-[960]">
-              <AskMapPanel
-                onClose={() => setIsAskMapOpen(false)}
+          {/* AI Panel — desktop */}
+          {isAIOpen && (
+            <div className="absolute right-20 bottom-8 z-[960]">
+              <AIPanel
+                onClose={() => setIsAIOpen(false)}
                 activeLayers={activeLayers}
                 onToggleLayer={handleToggleLayer}
                 mapCenter={mapCenter}
                 mapZoom={mapZoom}
+                isPremium={isPremium}
+                onAddMarkers={(markers) => {
+                  const newMarkers = markers.map(m => ({ lat: m.lat, lng: m.lng, label: m.label }));
+                  setDrawings(prev => ({ ...prev, markers: [...prev.markers, ...newMarkers] }));
+                  if (markers[0]) setFlyToLocation({ lat: markers[0].lat, lng: markers[0].lng, zoom: 15 });
+                }}
               />
             </div>
           )}
@@ -237,17 +241,6 @@ export default function MapViewer() {
               <TrackAnalyzer
                 gpsTrack={gpsTrack}
                 onClose={() => setIsTrackAnalyzerOpen(false)}
-              />
-            </div>
-          )}
-          {isTerrainAIOpen && (
-            <div className="absolute right-20 bottom-8 z-[960]">
-              <TerrainAI
-                mapCenter={mapCenter}
-                mapZoom={mapZoom}
-                activeLayers={activeLayers}
-                isPremium={isPremium}
-                onClose={() => setIsTerrainAIOpen(false)}
               />
             </div>
           )}
@@ -277,12 +270,10 @@ export default function MapViewer() {
             onLocate={handleLocate}
             isNavOpen={isNavOpen}
             onNavToggle={() => setIsNavOpen(p => !p)}
-            isAskMapOpen={isAskMapOpen}
-            onAskMapToggle={() => setIsAskMapOpen(p => !p)}
+            isAIOpen={isAIOpen}
+            onAIToggle={() => setIsAIOpen(p => !p)}
             isTrackAnalyzerOpen={isTrackAnalyzerOpen}
             onTrackAnalyzerToggle={() => setIsTrackAnalyzerOpen(p => !p)}
-            isTerrainAIOpen={isTerrainAIOpen}
-            onTerrainAIToggle={() => setIsTerrainAIOpen(p => !p)}
             drawings={drawings}
             gpsTrack={gpsTrack}
             onLoadDrawings={handleLoadDrawings}
