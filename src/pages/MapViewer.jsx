@@ -244,10 +244,14 @@ export default function MapViewer() {
                 onShowRoute={(coords) => setAiRoutePolyline(coords)}
                 onFlyTo={(loc) => setFlyToLocation(loc)}
                 onAddMarkers={(markers) => {
-                  const newMarkers = markers.filter(m => m.lat && m.lng).map(m => ({ lat: m.lat, lng: m.lng, label: m.label }));
+                  const newMarkers = markers.filter(m => m.lat && m.lng).map(m => ({ lat: m.lat, lng: m.lng, label: m.label, isAi: true }));
                   if (newMarkers.length > 0) {
                     setDrawings(prev => ({ ...prev, markers: [...prev.markers, ...newMarkers] }));
                   }
+                }}
+                onRemoveAiMarkers={() => {
+                  setDrawings(prev => ({ ...prev, markers: prev.markers.filter(m => !m.isAi) }));
+                  setAiRoutePolyline(null);
                 }}
               />
             </div>
@@ -316,10 +320,14 @@ export default function MapViewer() {
             onShowRoute={(coords) => setAiRoutePolyline(coords)}
             onFlyTo={(loc) => setFlyToLocation(loc)}
             onAddMarkers={(markers) => {
-              const newMarkers = markers.filter(m => m.lat && m.lng).map(m => ({ lat: m.lat, lng: m.lng, label: m.label }));
+              const newMarkers = markers.filter(m => m.lat && m.lng).map(m => ({ lat: m.lat, lng: m.lng, label: m.label, isAi: true }));
               if (newMarkers.length > 0) {
                 setDrawings(prev => ({ ...prev, markers: [...prev.markers, ...newMarkers] }));
               }
+            }}
+            onRemoveAiMarkers={() => {
+              setDrawings(prev => ({ ...prev, markers: prev.markers.filter(m => !m.isAi) }));
+              setAiRoutePolyline(null);
             }}
           />
         </div>

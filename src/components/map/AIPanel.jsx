@@ -179,16 +179,30 @@ const AREA_OPTIONS = [
   { label: "5×5 km", km: 5, latDelta: 0.0225, lngDelta: 0.036  },
 ];
 
-function TerrainTab({ mapCenter, mapZoom, activeLayers, onAddMarkers, onFlyTo, onShowRoute, theme, onRequestPin, pinnedLocation }) {
+function TerrainTab({ mapCenter, mapZoom, activeLayers, onAddMarkers, onRemoveAiMarkers, onFlyTo, onShowRoute, theme, onRequestPin, pinnedLocation }) {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [markers, setMarkers] = useState([]);
   const [activeRouteIdx, setActiveRouteIdx] = useState(null);
   const [selectedArea, setSelectedArea] = useState(AREA_OPTIONS[2]); // default 4×4
-  // Freeze the analysis coordinates when analysis starts — don't follow live mapCenter
   const [frozenCoords, setFrozenCoords] = useState(null);
+  const [pinnedPlaceName, setPinnedPlaceName] = useState(null);
 
-  // For display before analysis: live coords; after analysis: frozen
+  // Reverse geocode when pinnedLocation changes
+  useEffect(() => {
+    if (!pinnedLocation) { setPinnedPlaceName(null); return; }
+    const [lat, lng] = pinnedLocation;
+    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=sl`)
+      .then(r => r.json())
+      .then(data => {
+        const a = data.address || {};
+        const place = a.village || a.town || a.city || a.hamlet || a.suburb || "";
+        const municipality = a.municipality || a.county || "";
+        setPinnedPlaceName([place, municipality].filter(Boolean).join(", ") || data.display_name?.split(",")[0] || "");
+      })
+      .catch(() => setPinnedPlaceName(null));
+  }, [pinnedLocation]);
+
   const displayLat = frozenCoords ? frozenCoords[0] : (pinnedLocation ? pinnedLocation[0] : mapCenter?.[0]);
   const displayLng = frozenCoords ? frozenCoords[1] : (pinnedLocation ? pinnedLocation[1] : mapCenter?.[1]);
 
@@ -200,6 +214,20 @@ function TerrainTab({ mapCenter, mapZoom, activeLayers, onAddMarkers, onFlyTo, o
     setResult(null);
     setMarkers([]);
     setActiveRouteIdx(null);
+    if (onRemoveAiMarkers) onRemoveAiMarkers();
+    if (onShowRoute) onShowRoute(null);
+
+    // Reverse geocode first to get real place name
+    let placeName = "";
+    try {
+      const geo = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${analysisLat}&lon=${analysisLng}&format=json&accept-language=sl`);
+      const geoData = await geo.json();
+      const a = geoData.address || {};
+      const village = a.village || a.town || a.city || a.hamlet || "";
+      const municipality = a.municipality || a.county || "";
+      placeName = [village, municipality].filter(Boolean).join(", ") || geoData.display_name?.split(",").slice(0,2).join(",") || "";
+    } catch {}
+
     const activeNames = Object.keys(activeLayers).map(id => {
       for (const cat of OVERLAY_CATEGORIES) {
         const l = cat.layers.find(l => l.id === id);
@@ -215,11 +243,12 @@ function TerrainTab({ mapCenter, mapZoom, activeLayers, onAddMarkers, onFlyTo, o
 
     const prompt = `${TERRAIN_SYSTEM}
 
-Središče analize: ${analysisLat.toFixed(5)}°N, ${analysisLng.toFixed(5)}°E | Zoom: ${mapZoom} | Aktivni sloji: ${activeNames.join(", ") || "ni aktivnih"}
-BOUNDING BOX (vse koordinate MORAJO biti znotraj): minLat=${minLat}, maxLat=${maxLat}, minLng=${minLng}, maxLng=${maxLng}
-Območje analize: ${km}×${km} km
+LOKACIJA: ${placeName ? `"${placeName}"` : "neznana"} | Koordinate: ${analysisLat.toFixed(5)}°N, ${analysisLng.toFixed(5)}°E
+BOUNDING BOX — VSE koordinate v JSON MORAJO biti ZNOTRAJ tega območja (ne zunaj!):
+  minLat=${minLat}, maxLat=${maxLat}, minLng=${minLng}, maxLng=${maxLng}
+Območje analize: ${km}×${km} km | Aktivni sloji: ${activeNames.join(", ") || "ni aktivnih"}
 
-Natančno analiziraj to slovensko lokacijo. Uporabi internetni kontekst za resnične geografske podatke. VSE koordinate v JSON morajo biti med minLat-maxLat in minLng-maxLng.`;
+ANALIZIRAJ TOČNO TO LOKACIJO: ${placeName || `${analysisLat.toFixed(4)}°N ${analysisLng.toFixed(4)}°E`}. Ne analiziraj drugega kraja. Vse koordinate v JSON MORAJO biti med zgornjimi mejami.`;
 
     const res = await base44.integrations.Core.InvokeLLM({
       prompt, add_context_from_internet: true, model: "gemini_3_flash"
@@ -230,14 +259,21 @@ Natančno analiziraj to slovensko lokacijo. Uporabi internetni kontekst za resni
     let cleanText = text.replace(/<map_markers>.*?<\/map_markers>/s, "").trim();
     let parsedMarkers = [];
     if (markerMatch) {
-      try { parsedMarkers = JSON.parse(markerMatch[1]); } catch {}
+      try {
+        const raw = JSON.parse(markerMatch[1]);
+        // Filter out markers outside bounding box
+        parsedMarkers = raw.filter(m => {
+          if (m.type === "route") return true; // keep routes
+          if (!m.lat || !m.lng) return false;
+          return m.lat >= parseFloat(minLat) && m.lat <= parseFloat(maxLat) &&
+                 m.lng >= parseFloat(minLng) && m.lng <= parseFloat(maxLng);
+        });
+      } catch {}
     }
     setMarkers(parsedMarkers);
     setResult(cleanText);
     setLoading(false);
   };
-
-  const [placedMarkers, setPlacedMarkers] = useState(new Set());
 
   const handleItemClick = (marker, idx) => {
     if (marker.type === "route" && marker.coords?.length > 0) {
@@ -247,19 +283,23 @@ Natančno analiziraj to slovensko lokacijo. Uporabi internetni kontekst za resni
       } else {
         setActiveRouteIdx(idx);
         if (onShowRoute) onShowRoute(marker.coords);
-        // Fly to start of route only
         if (onFlyTo && marker.coords[0]) {
           onFlyTo({ lat: marker.coords[0][0], lng: marker.coords[0][1], zoom: 14 });
         }
       }
     } else if (marker.lat && marker.lng) {
-      // Place marker only once, then just fly
-      if (!placedMarkers.has(idx)) {
-        if (onAddMarkers) onAddMarkers([{ lat: marker.lat, lng: marker.lng, label: marker.label }]);
-        setPlacedMarkers(prev => new Set([...prev, idx]));
-      }
+      if (onAddMarkers) onAddMarkers([{ lat: marker.lat, lng: marker.lng, label: marker.label }], true /* isAi */);
       if (onFlyTo) onFlyTo({ lat: marker.lat, lng: marker.lng, zoom: 16 });
     }
+  };
+
+  const handleReset = () => {
+    setResult(null);
+    setMarkers([]);
+    setActiveRouteIdx(null);
+    setFrozenCoords(null);
+    if (onShowRoute) onShowRoute(null);
+    if (onRemoveAiMarkers) onRemoveAiMarkers();
   };
 
   const typeColor = { structure: "text-orange-400", poi: "text-emerald-400", route: "text-blue-400", landmark: "text-amber-400" };
@@ -294,6 +334,9 @@ Natančno analiziraj to slovensko lokacijo. Uporabi internetni kontekst za resni
                 <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                 <div className="flex-1">
                   <p className="text-xs font-semibold text-emerald-400">Označena točka</p>
+                  {pinnedPlaceName && (
+                    <p className="text-[11px] font-medium mb-0.5" style={{ color: theme.panelText }}>{pinnedPlaceName}</p>
+                  )}
                   <p className="text-[10px] font-mono opacity-60" style={{ color: theme.panelText }}>
                     {pinnedLocation[0].toFixed(5)}, {pinnedLocation[1].toFixed(5)}
                   </p>
@@ -359,7 +402,7 @@ Natančno analiziraj to slovensko lokacijo. Uporabi internetni kontekst za resni
           <Loader2 className="w-7 h-7 text-emerald-400 animate-spin" />
           <p className="text-sm opacity-60" style={{ color: theme.panelText }}>AI analizira teren...</p>
           <p className="text-xs opacity-40 font-mono" style={{ color: theme.panelText }}>
-            {displayLat?.toFixed(4)}, {displayLng?.toFixed(4)} · 4,2km × 4,2km
+            {displayLat?.toFixed(4)}, {displayLng?.toFixed(4)} · {selectedArea.label}
           </p>
         </div>
       )}
@@ -459,10 +502,10 @@ Natančno analiziraj to slovensko lokacijo. Uporabi internetni kontekst za resni
             </ReactMarkdown>
           </div>
 
-          <button onClick={() => { setResult(null); setMarkers([]); setActiveRouteIdx(null); setFrozenCoords(null); if (onShowRoute) onShowRoute(null); }}
+          <button onClick={handleReset}
             className="w-full py-2 text-xs font-medium rounded-xl transition mt-2 opacity-50 hover:opacity-80"
             style={{ border: `1px solid ${theme.panelText}33`, color: theme.panelText }}>
-            Nova analiza
+            Nova analiza (počisti točke)
           </button>
         </div>
       )}
@@ -484,6 +527,7 @@ export default function AIPanel({
   mapZoom,
   isPremium,
   onAddMarkers,
+  onRemoveAiMarkers,
   onFlyTo,
   onShowRoute,
   onRequestPin,
@@ -560,6 +604,7 @@ export default function AIPanel({
                 mapZoom={mapZoom}
                 activeLayers={activeLayers}
                 onAddMarkers={onAddMarkers}
+                onRemoveAiMarkers={onRemoveAiMarkers}
                 onFlyTo={onFlyTo}
                 onShowRoute={onShowRoute}
                 theme={theme}
