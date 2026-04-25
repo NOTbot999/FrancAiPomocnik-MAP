@@ -218,7 +218,7 @@ export default function DesktopToolbar({
         </div>
 
         {/* Cluster pill */}
-        <div className="flex flex-col items-center gap-1 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-200/60 p-1.5" style={{ backgroundColor: theme.toolbarBg + "f5" }}>
+        <div className="flex flex-col items-center gap-2 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-200/60 p-2" style={{ backgroundColor: theme.toolbarBg + "f5" }}>
           <TooltipProvider delayDuration={400}>
             {visibleButtons.map((btn) => {
               let Icon = btn.id === "locate" && locating ? LoaderCircle
@@ -239,8 +239,8 @@ export default function DesktopToolbar({
                         ? { backgroundColor: theme.buttonActiveBg, color: theme.buttonActiveText, borderColor: theme.buttonActiveBg }
                         : { backgroundColor: theme.toolbarBg, color: theme.toolbarText, borderColor: "#e2e8f0" }
                       }
-                      className={`relative w-9 h-9 rounded-xl flex items-center justify-center border shadow-sm transition-all duration-150
-                        ${disabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}
+                      className={`relative w-10 h-10 rounded-xl flex items-center justify-center border shadow-md hover:shadow-lg transition-all duration-150
+                        ${disabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer hover:scale-105"}
                       `}
                     >
                       <Icon className={`w-4 h-4 flex-shrink-0 ${btn.id === "locate" && locating ? "animate-spin" : ""} ${(btn.id === "save" && saving) || (btn.id === "load" && loadingDraw) ? "animate-spin" : ""}`} />
@@ -260,13 +260,13 @@ export default function DesktopToolbar({
           </TooltipProvider>
 
           {/* Divider + Settings + Theme buttons */}
-          <div className="w-6 h-px bg-slate-200 my-0.5" />
+          <div className="w-6 h-px bg-slate-200 my-1" />
           <TooltipProvider delayDuration={400}>
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
                   onClick={() => { setShowTheme(p => !p); setShowSettings(false); }}
-                  className={`w-9 h-9 rounded-xl flex items-center justify-center border shadow-sm transition-all duration-150
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center border shadow-md hover:shadow-lg transition-all duration-150 hover:scale-105
                     ${showTheme
                       ? "bg-emerald-500 text-white border-transparent"
                       : "bg-white text-slate-400 border-slate-200/60 hover:bg-slate-50 hover:text-slate-700"
@@ -284,7 +284,7 @@ export default function DesktopToolbar({
               <TooltipTrigger asChild>
                 <button
                   onClick={() => { setShowSettings(p => !p); setShowTheme(false); }}
-                  className={`w-9 h-9 rounded-xl flex items-center justify-center border shadow-sm transition-all duration-150
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center border shadow-md hover:shadow-lg transition-all duration-150 hover:scale-105
                     ${showSettings
                       ? "bg-slate-800 text-white border-transparent"
                       : "bg-white text-slate-400 border-slate-200/60 hover:bg-slate-50 hover:text-slate-700"

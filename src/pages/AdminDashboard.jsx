@@ -18,6 +18,7 @@ export default function AdminDashboard() {
   };
 
   const [guestSessions, setGuestSessions] = useState([]);
+  const [trackStats, setTrackStats] = useState([]);
 
   const loadGuestSessions = async () => {
     try {
@@ -29,8 +30,44 @@ export default function AdminDashboard() {
     }
   };
 
+  const loadTrackStats = async () => {
+    try {
+      const sessions = await base44.asServiceRole.entities.GuestSession.list('', 500);
+      const tracksByMonth = {};
+      
+      sessions.forEach(session => {
+        if (session.tracks && Array.isArray(session.tracks)) {
+          session.tracks.forEach(track => {
+            const date = new Date(track.saved_at || session.created_date);
+            const monthKey = date.toLocaleDateString('sl-SI', { year: 'numeric', month: 'short' });
+            if (!tracksByMonth[monthKey]) tracksByMonth[monthKey] = 0;
+            tracksByMonth[monthKey] += (track.distance_meters || 0) / 1000;
+          });
+        }
+      });
+
+      const monthOrder = [];
+      for (let i = 11; i >= 0; i--) {
+        const d = new Date();
+        d.setMonth(d.getMonth() - i);
+        monthOrder.push(d.toLocaleDateString('sl-SI', { year: 'numeric', month: 'short' }));
+      }
+
+      const stats = monthOrder.map(month => ({
+        month,
+        distance: (tracksByMonth[month] || 0).toFixed(1)
+      }));
+
+      setTrackStats(stats);
+    } catch (error) {
+      console.error('Failed to load track stats:', error);
+      setTrackStats([]);
+    }
+  };
+
   useEffect(() => {
     loadGuestSessions();
+    loadTrackStats();
   }, []);
 
   useEffect(() => { load(); }, []);
@@ -181,6 +218,17 @@ export default function AdminDashboard() {
                       <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
                       <Tooltip />
                       <Bar dataKey="count" fill="#10b981" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+                  <h3 className="text-sm font-semibold text-slate-700 mb-4">Skupna razdalja poti (po mesecih)</h3>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <BarChart data={trackStats}>
+                      <XAxis dataKey="month" tick={{ fontSize: 10 }} />
+                      <YAxis tick={{ fontSize: 10 }} label={{ value: 'km', angle: -90, position: 'insideLeft' }} />
+                      <Tooltip formatter={(value) => `${value} km`} />
+                      <Bar dataKey="distance" fill="#3b82f6" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
