@@ -85,6 +85,13 @@ export default function UnifiedAnalysisPanel({
   });
   const [visibleMarkers, setVisibleMarkers] = useState({});
   const [activeRouteIdx, setActiveRouteIdx] = useState(null);
+  const [savedLocation, setSavedLocation] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("ai_analysis_location"));
+    } catch {
+      return null;
+    }
+  });
 
   useEffect(() => {
     if (!pinnedLocation) { setPinnedPlaceName(null); return; }
@@ -107,6 +114,8 @@ export default function UnifiedAnalysisPanel({
     const analysisLat = pinnedLocation ? pinnedLocation[0] : mapCenter?.[0];
     const analysisLng = pinnedLocation ? pinnedLocation[1] : mapCenter?.[1];
     
+    setSavedLocation({ lat: analysisLat, lng: analysisLng, area: selectedArea.label });
+    localStorage.setItem("ai_analysis_location", JSON.stringify({ lat: analysisLat, lng: analysisLng, area: selectedArea.label }));
     setFrozenCoords([analysisLat, analysisLng]);
     setAnalysisLoading(true);
     setAnalysisResult(null);
@@ -220,6 +229,20 @@ Območje analize: ${km}×${km} km`;
     if (onRemoveAiMarkers) onRemoveAiMarkers();
   };
 
+  const restoreLocation = () => {
+    if (savedLocation) {
+      setFrozenCoords([savedLocation.lat, savedLocation.lng]);
+      const areaOpt = AREA_OPTIONS.find(a => a.label === savedLocation.area);
+      if (areaOpt) setSelectedArea(areaOpt);
+    }
+  };
+
+  useEffect(() => {
+    if (savedLocation && !hasResults && !isLoading) {
+      restoreLocation();
+    }
+  }, []);
+
   const isLoading = analysisLoading;
   const hasResults = analysisResult && (analysisResult.terrain || analysisResult.urbex);
 
@@ -330,12 +353,19 @@ Območje analize: ${km}×${km} km`;
 
       {hasResults && !isLoading && (
         <div className="space-y-3">
-          <div className="rounded-xl px-3 py-2" style={{ backgroundColor: `${theme.panelText}10`, border: `1px solid ${theme.panelText}18` }}>
-            <div className="flex items-center gap-2 text-[10px] opacity-60" style={{ color: theme.panelText }}>
-              <MapPin className="w-3 h-3 shrink-0" />
-              <span className="font-mono">{displayLat?.toFixed(5)}, {displayLng?.toFixed(5)}</span>
-              <span className="opacity-60">· {selectedArea.label}</span>
+          <div className="flex items-center justify-between gap-2">
+            <div className="rounded-xl px-3 py-2 flex-1" style={{ backgroundColor: `${theme.panelText}10`, border: `1px solid ${theme.panelText}18` }}>
+              <div className="flex items-center gap-2 text-[10px] opacity-60" style={{ color: theme.panelText }}>
+                <MapPin className="w-3 h-3 shrink-0" />
+                <span className="font-mono">{displayLat?.toFixed(5)}, {displayLng?.toFixed(5)}</span>
+                <span className="opacity-60">· {selectedArea.label}</span>
+              </div>
             </div>
+            <button onClick={handleReset}
+              className="px-3 py-2 text-[10px] font-medium rounded-xl transition opacity-60 hover:opacity-100"
+              style={{ border: `1px solid ${theme.panelText}33`, color: theme.panelText }}>
+              Počisti
+            </button>
           </div>
 
           {/* Terrain results */}
