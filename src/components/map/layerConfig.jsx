@@ -182,49 +182,7 @@ export const OVERLAY_CATEGORIES = [
     ]
   },
 
-  // ─── ARSO – WATER ─────────────────────────────────────────────
-  {
-    id: "arso_water",
-    name: "ARSO – Water & Floods",
-    icon: "Droplets",
-    description: "Flood hazard, water bodies, hydrology",
-    layers: [
-      {
-        id: "arso_vvo",
-        name: "Water Protection Zones (VVO)",
-        type: "wms",
-        url: ARSO_WMS,
-        layers: "ARSO:VVO",
-        format: "image/png",
-        transparent: true,
-        version: "1.1.1",
-        opacity: 0.55,
-        description: "Drinking water source protection areas"
-      }
-    ]
-  },
 
-  // ─── ARSO – ENVIRONMENT ───────────────────────────────────────
-  {
-    id: "arso_env",
-    name: "ARSO – Environment & Geology",
-    icon: "CloudSun",
-    description: "Geology, seismic hazard, soil, noise",
-    layers: [
-      {
-        id: "arso_potres_nevarnost",
-        name: "Seismic Hazard 2021",
-        type: "wms",
-        url: ARSO_WMS,
-        layers: "ARSO:POTRS_NEVAR_KRT_2021",
-        format: "image/png",
-        transparent: true,
-        version: "1.1.1",
-        opacity: 0.55,
-        description: "Earthquake peak ground acceleration hazard map 2021"
-      }
-    ]
-  },
 
   // ─── RABA – LAND USE ──────────────────────────────────────────
   {
