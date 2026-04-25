@@ -190,7 +190,7 @@ export default function AIPanel({
     >
       {/* Header */}
       <div className="flex items-center gap-2.5 px-4 py-3 shrink-0" style={{ borderBottom: `1px solid ${theme.panelText}18` }}>
-        <span className="text-sm font-semibold flex-1" style={{ color: theme.panelText }}>Franc Asistent</span>
+        <span className="text-sm font-semibold flex-1" style={{ color: theme.panelText }}>Asistent Franc</span>
         {isPremium && (
           <span className="text-[9px] bg-amber-500/20 text-amber-400 font-bold px-1.5 py-0.5 rounded-full">PREMIUM</span>
         )}

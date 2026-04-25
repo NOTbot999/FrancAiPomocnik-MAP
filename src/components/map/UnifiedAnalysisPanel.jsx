@@ -17,45 +17,38 @@ const AREA_OPTIONS = [
 ];
 
 const TERRAIN_SYSTEM = `Si strokovni GIS analitik za Slovenijo. VEDNO odgovarjaj v SLOVENŠČINI.
-Analiziraj območje in predstavi SAMO konkretne, fizične objekte in poti — NE splošne terenske značilnosti.
+Analiziraj območje in predstavi Terenske značilnosti kot Umetne strukture, Naravne znamenitosti, Točke interesa in Predlagane poti.
 
-KRITIČNO — KOORDINATE: Vse lat/lng koordinate v JSON bloku MORAJO biti znotraj bounding boxa. Vsak objekt na točni lokaciji — ne izmišljaj!
+Napiši besedilo v jasni knjižni slovenščini brez tehnične notacije:
+- Umestne strukture: zgradbe, cerkve, mostovi, jeze, tovarne, koče, postaje
+- Naravne znamenitosti: jezera, izviri, slapovi, vrhovi, kraški objekti
+- Točke interesa: razgledišča, zavetišča, parkirišča, memorialni objekti
+- Poti: gorske in pešpoti s približnim potekom
 
-VKLJUČI V JSON:
-1) Konkretne STRUKTURE — zgradbe, cerkve, mostovi, jeze, tovarne, koče, postaje
-2) Naravne ZNAMENITOSTI — jezera, izviri, slapovi, vrhovi, izraziti kraški objekti
-3) TOČKE INTERESA — razgledišča, zavetišča, parkirišča, memorialni objekti
-4) POTI — konkretne, prehodne gorske/pešpoti s trasami
+Za vsak opis navedi natančno lokacijo s koordinatami (lat/lng znotraj bounding boxa) in podrobna obvestila o tem, kaj je to, kjer je, in zakaj je vredno obiska.
 
-Format:
-- Objekti: {"lat":LAT,"lng":LNG,"label":"Ime","type":"structure|landmark|poi","description":"opis"}
-- Poti: {"label":"Ime","type":"route","description":"opis","coords":[[lat,lng],[lat,lng],...]}
+V KONCU odgovora DODAJ:
+<map_markers>[
+{"lat":LAT,"lng":LNG,"label":"Imena mesta/objekta","type":"structure|landmark|poi","description":"Kaj je to"},
+{"lat":LAT,"lng":LNG,"label":"Imena poti","type":"route","description":"Kje vodi in kako dolga je","coords":[[lat,lng],[lat,lng],...]}
+]</map_markers>`;
 
-Na KONCU OBVEZNO:
-<map_markers>[...samo JSON objekti...]</map_markers>
+const URBEX_SYSTEM = `Si strokovni GIS analitik za iskanje neznanih in opuščenih objektov v Sloveniji. VEDNO odgovarjaj v SLOVENŠČINI.
 
-NIKAR NE dodajaj splošnih opisov terena, gozdov, poljščin ali razpršenih lokalnih značilnosti. SAMO konkretne, prepoznavne, na karti vidne objekte in poti.`;
+Tvoja naloga: poišči opuščene in neznane strukture — bunkerje, opuščene zgradbe, vojaške objekte, stare ruševine, arheološka gradišča, zapuščene industrijske objekte in podobno.
 
-const URBEX_SYSTEM = `Si strokovni GIS analitik za iskanje NEZNANIH OBJEKTOV in človeških posegov v naravo v Sloveniji. VEDNO odgovarjaj v SLOVENŠČINI.
+Napiši besedilo v jasni knjižni slovenščini. Za vsak найдений objekt navedи:
+- Kaj je to (bunker, ruševina, stara stavba, arheološko gradišče, itd)
+- Kje se nahaja s točnimi koordinatami
+- Zakaj je zanimiv in kakšna je verjetnost, da je prava najdba
+- Kako je videti na terenu in kaj nakazuje njegov obstoj
 
-Tvoja naloga: poišči SAMO resne, sumljive STRUKTURE — bunkerje, opuščene zgradbe, vojaške objekte, ruševine, kamnolome — ki NISO na standardnih kartah.
+Najprej predstavi ugotovitve v jasnem besedilu, nato na koncu:
 
-IŠČEŠ SAMO KONKRETNE OBJEKTE:
-- Opuščene/ruševine zgradbe, bunkerji, zaklonišča
-- Vojaški objekti, kasarne
-- Stare tovarne, mlini, ruševine
-- Kamnolomi, gramoznice, odlagališča
-- Arheološka gradišča, gomile (vidne na terenu)
-- Industrijske ruševine
-- Zapuščene jeze, mostovi
-
-NE DODAJAJ: splošne terenske opis, poljščine, vrtove, divje rastline, prazne travnike — samo konkretne STRUKTURE in OBJEKTE.
-
-Za vsak objekta:
-{"lat":LAT,"lng":LNG,"label":"Ime","type":"structure|landmark","description":"tip objekta + zakaj sumljiv + verjetnost (visoka/srednja)"}
-
-Na KONCU OBVEZNO:
-<map_markers>[...samo JSON objekti...]</map_markers>`;
+<map_markers>[
+{"lat":LAT,"lng":LNG,"label":"Naziv objekta","type":"structure|landmark","description":"Vrsta objekta in zakaj je zanimiv"},
+{"lat":LAT,"lng":LNG,"label":"Naziv objekta","type":"structure","description":"Vrsta objekta in zakaj je zanimiv"}
+]</map_markers>`;
 
 export default function UnifiedAnalysisPanel({
   mapCenter,
