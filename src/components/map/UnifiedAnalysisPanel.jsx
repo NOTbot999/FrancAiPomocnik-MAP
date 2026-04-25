@@ -73,38 +73,28 @@ export default function UnifiedAnalysisPanel({
   onRequestPin,
   pinnedLocation,
 }) {
-  const [showTerrain, setShowTerrain] = useState(true);
-  const [showUrbex, setShowUrbex] = useState(false);
   const [selectedArea, setSelectedArea] = useState(AREA_OPTIONS[2]);
   const [pinnedPlaceName, setPinnedPlaceName] = useState(null);
   const [frozenCoords, setFrozenCoords] = useState(null);
 
-  // Terrain state
-  const [terrainResult, setTerrainResult] = useState(() => localStorage.getItem("ai_terrain_result") || null);
-  const [terrainLoading, setTerrainLoading] = useState(false);
-  const [terrainMarkers, setTerrainMarkers] = useState(() => {
+  // Combined analysis state
+  const [analysisResult, setAnalysisResult] = useState(() => {
+    const terrain = localStorage.getItem("ai_terrain_result");
+    const urbex = localStorage.getItem("ai_urbex_result");
+    return terrain || urbex ? { terrain, urbex } : null;
+  });
+  const [analysisLoading, setAnalysisLoading] = useState(false);
+  const [analysisMarkers, setAnalysisMarkers] = useState(() => {
     try {
-      const saved = localStorage.getItem("ai_terrain_markers");
-      return saved ? JSON.parse(saved) : [];
+      const terrain = JSON.parse(localStorage.getItem("ai_terrain_markers") || "[]");
+      const urbex = JSON.parse(localStorage.getItem("ai_urbex_markers") || "[]");
+      return { terrain, urbex };
     } catch {
-      return [];
+      return { terrain: [], urbex: [] };
     }
   });
-  const [terrainVisibleMarkers, setTerrainVisibleMarkers] = useState({});
-  const [terrainActiveRouteIdx, setTerrainActiveRouteIdx] = useState(null);
-
-  // Urbex state
-  const [urbexResult, setUrbexResult] = useState(() => localStorage.getItem("ai_urbex_result") || null);
-  const [urbexLoading, setUrbexLoading] = useState(false);
-  const [urbexMarkers, setUrbexMarkers] = useState(() => {
-    try {
-      const saved = localStorage.getItem("ai_urbex_markers");
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
-  const [urbexVisibleMarkers, setUrbexVisibleMarkers] = useState({});
+  const [visibleMarkers, setVisibleMarkers] = useState({});
+  const [activeRouteIdx, setActiveRouteIdx] = useState(null);
 
   useEffect(() => {
     if (!pinnedLocation) { setPinnedPlaceName(null); return; }
@@ -128,21 +118,11 @@ export default function UnifiedAnalysisPanel({
     const analysisLng = pinnedLocation ? pinnedLocation[1] : mapCenter?.[1];
     
     setFrozenCoords([analysisLat, analysisLng]);
-    
-    if (showTerrain) {
-      setTerrainLoading(true);
-      setTerrainResult(null);
-      setTerrainMarkers([]);
-      setTerrainActiveRouteIdx(null);
-      setTerrainVisibleMarkers({});
-    }
-    
-    if (showUrbex) {
-      setUrbexLoading(true);
-      setUrbexResult(null);
-      setUrbexMarkers([]);
-      setUrbexVisibleMarkers({});
-    }
+    setAnalysisLoading(true);
+    setAnalysisResult(null);
+    setAnalysisMarkers({ terrain: [], urbex: [] });
+    setActiveRouteIdx(null);
+    setVisibleMarkers({});
     
     if (onRemoveAiMarkers) onRemoveAiMarkers();
     if (onShowRoute) onShowRoute(null);
@@ -161,8 +141,7 @@ export default function UnifiedAnalysisPanel({
     const minLng = (analysisLng - lngDelta).toFixed(5);
     const maxLng = (analysisLng + lngDelta).toFixed(5);
 
-    // Run both analyses if both are enabled
-    const runAnalysis = async (systemPrompt, isUrbex) => {
+    const runAnalysis = async (systemPrompt, analysisType) => {
       const fullPrompt = `${systemPrompt}
 
 LOKACIJA: ${placeName ? `"${placeName}"` : "neznana"} | Koordinate: ${analysisLat.toFixed(5)}°N, ${analysisLng.toFixed(5)}°E
@@ -190,90 +169,69 @@ Območje analize: ${km}×${km} km`;
         } catch {}
       }
 
-      if (isUrbex) {
-        setUrbexMarkers(parsedMarkers);
-        setUrbexResult(cleanText);
-        localStorage.setItem("ai_urbex_markers", JSON.stringify(parsedMarkers));
-        localStorage.setItem("ai_urbex_result", cleanText);
-        setUrbexLoading(false);
-      } else {
-        setTerrainMarkers(parsedMarkers);
-        setTerrainResult(cleanText);
-        localStorage.setItem("ai_terrain_markers", JSON.stringify(parsedMarkers));
-        localStorage.setItem("ai_terrain_result", cleanText);
-        setTerrainLoading(false);
-      }
+      return { markers: parsedMarkers, text: cleanText };
     };
 
-    if (showTerrain) await runAnalysis(TERRAIN_SYSTEM, false);
-    if (showUrbex) await runAnalysis(URBEX_SYSTEM, true);
+    // Run both analyses
+    const [terrainData, urbexData] = await Promise.all([
+      runAnalysis(TERRAIN_SYSTEM, "terrain"),
+      runAnalysis(URBEX_SYSTEM, "urbex")
+    ]);
+
+    setAnalysisMarkers({ terrain: terrainData.markers, urbex: urbexData.markers });
+    setAnalysisResult({ terrain: terrainData.text, urbex: urbexData.text });
+    
+    localStorage.setItem("ai_terrain_markers", JSON.stringify(terrainData.markers));
+    localStorage.setItem("ai_terrain_result", terrainData.text);
+    localStorage.setItem("ai_urbex_markers", JSON.stringify(urbexData.markers));
+    localStorage.setItem("ai_urbex_result", urbexData.text);
+    
+    setAnalysisLoading(false);
   };
 
-  const handleMarkerClick = (marker, idx) => {
+  const handleMarkerClick = (marker, idx, analysisType) => {
     if (marker.type === "route" && marker.coords?.length > 0) {
-      if (terrainActiveRouteIdx === idx) {
-        setTerrainActiveRouteIdx(null);
+      if (activeRouteIdx === idx) {
+        setActiveRouteIdx(null);
         if (onShowRoute) onShowRoute(null);
       } else {
-        setTerrainActiveRouteIdx(idx);
+        setActiveRouteIdx(idx);
         if (onShowRoute) onShowRoute(marker.coords);
         if (onFlyTo && marker.coords[0]) {
           onFlyTo({ lat: marker.coords[0][0], lng: marker.coords[0][1], zoom: 14 });
         }
       }
     } else if (marker.lat && marker.lng) {
-      const key = `${marker.lat}-${marker.lng}`;
-      const isTerrainMarker = terrainMarkers.some(m => m.lat === marker.lat && m.lng === marker.lng);
-      
-      if (isTerrainMarker) {
-        setTerrainVisibleMarkers(prev => {
-          const next = { ...prev, [key]: !prev[key] };
-          if (next[key]) {
-            if (onAddMarkers) onAddMarkers([{ lat: marker.lat, lng: marker.lng, label: marker.label }], true);
-            if (onFlyTo) onFlyTo({ lat: marker.lat, lng: marker.lng, zoom: 16 });
-          } else {
-            if (onRemoveAiMarkers) onRemoveAiMarkers();
-          }
-          return next;
-        });
-      } else {
-        setUrbexVisibleMarkers(prev => {
-          const next = { ...prev, [key]: !prev[key] };
-          if (next[key]) {
-            if (onAddMarkers) onAddMarkers([{ lat: marker.lat, lng: marker.lng, label: marker.label }], true);
-            if (onFlyTo) onFlyTo({ lat: marker.lat, lng: marker.lng, zoom: 16 });
-          } else {
-            if (onRemoveAiMarkers) onRemoveAiMarkers();
-          }
-          return next;
-        });
-      }
+      const key = `${analysisType}-${marker.lat}-${marker.lng}`;
+      setVisibleMarkers(prev => {
+        const next = { ...prev, [key]: !prev[key] };
+        if (next[key]) {
+          if (onAddMarkers) onAddMarkers([{ lat: marker.lat, lng: marker.lng, label: marker.label }], true);
+          if (onFlyTo) onFlyTo({ lat: marker.lat, lng: marker.lng, zoom: 16 });
+        } else {
+          if (onRemoveAiMarkers) onRemoveAiMarkers();
+        }
+        return next;
+      });
     }
   };
 
   const handleReset = () => {
-    if (showTerrain) {
-      setTerrainResult(null);
-      setTerrainMarkers([]);
-      setTerrainVisibleMarkers({});
-      setTerrainActiveRouteIdx(null);
-      localStorage.removeItem("ai_terrain_result");
-      localStorage.removeItem("ai_terrain_markers");
-    }
-    if (showUrbex) {
-      setUrbexResult(null);
-      setUrbexMarkers([]);
-      setUrbexVisibleMarkers({});
-      localStorage.removeItem("ai_urbex_result");
-      localStorage.removeItem("ai_urbex_markers");
-    }
+    setAnalysisResult(null);
+    setAnalysisMarkers({ terrain: [], urbex: [] });
+    setVisibleMarkers({});
+    setActiveRouteIdx(null);
+    localStorage.removeItem("ai_terrain_result");
+    localStorage.removeItem("ai_terrain_markers");
+    localStorage.removeItem("ai_urbex_result");
+    localStorage.removeItem("ai_urbex_markers");
     setFrozenCoords(null);
     if (onShowRoute) onShowRoute(null);
     if (onRemoveAiMarkers) onRemoveAiMarkers();
   };
 
-  const isLoading = terrainLoading || urbexLoading;
-  const hasResults = terrainResult || urbexResult;
+  const isLoading = analysisLoading;
+  const hasResults = analysisResult && (analysisResult.terrain || analysisResult.urbex);
 
   const typeColor = { structure: "text-orange-400", poi: "text-emerald-400", route: "text-blue-400", landmark: "text-amber-400" };
   const typeIcon = { structure: "🏗️", poi: "📍", route: "🛤️", landmark: "🗺️" };
@@ -287,30 +245,6 @@ Območje analize: ${km}×${km} km`;
 
   return (
     <div className="space-y-3">
-      {/* Toggle buttons for Terrain and Urbex */}
-      <div className="flex gap-2">
-        <button
-          onClick={() => setShowTerrain(!showTerrain)}
-          className="flex-1 py-2 px-3 rounded-lg text-xs font-semibold transition-all"
-          style={showTerrain
-            ? { backgroundColor: theme.buttonActiveBg, color: theme.buttonActiveText, boxShadow: `0 2px 8px ${theme.buttonActiveBg}40` }
-            : { backgroundColor: `${theme.panelText}06`, color: theme.panelText, opacity: 0.4 }
-          }
-        >
-          🛰️ Teren
-        </button>
-        <button
-          onClick={() => setShowUrbex(!showUrbex)}
-          className="flex-1 py-2 px-3 rounded-lg text-xs font-semibold transition-all"
-          style={showUrbex
-            ? { backgroundColor: theme.buttonActiveBg, color: theme.buttonActiveText, boxShadow: `0 2px 8px ${theme.buttonActiveBg}40` }
-            : { backgroundColor: `${theme.panelText}06`, color: theme.panelText, opacity: 0.4 }
-          }
-        >
-          🔍 Iskanje
-        </button>
-      </div>
-
       {/* Main content */}
       {!hasResults && !isLoading && (
         <div className="text-center py-2 space-y-3">
@@ -381,11 +315,13 @@ Območje analize: ${km}×${km} km`;
             </div>
           </div>
 
+          <p className="text-[10px] opacity-70" style={{ color: theme.panelText }}>AI bo analizirala teren in iskala neznane objekte hkrati.</p>
+
           <button onClick={analyze}
             className="w-full py-2.5 font-semibold rounded-xl text-white transition shadow"
             style={{ background: "linear-gradient(to right, #f59e0b, #10b981)" }}
           >
-            🔍 Analiziraj
+            🔍 Analiziraj območje
           </button>
         </div>
       )}
@@ -394,7 +330,7 @@ Območje analize: ${km}×${km} km`;
         <div className="flex flex-col items-center justify-center py-8 gap-3">
           <Loader2 className="w-7 h-7 animate-spin text-emerald-400" />
           <p className="text-sm opacity-60" style={{ color: theme.panelText }}>
-            {showTerrain && showUrbex ? "AI analizira..." : (showTerrain ? "Analiza terena..." : "Iskanje objektov...")}
+            AI analizira teren in iskanje objektov...
           </p>
           <p className="text-xs opacity-40 font-mono" style={{ color: theme.panelText }}>
             {displayLat?.toFixed(4)}, {displayLng?.toFixed(4)} · {selectedArea.label}
@@ -413,11 +349,11 @@ Območje analize: ${km}×${km} km`;
           </div>
 
           {/* Terrain results */}
-          {showTerrain && terrainResult && (
+          {analysisResult?.terrain && (
             <div className="space-y-2 pb-3 border-b" style={{ borderColor: `${theme.panelText}18` }}>
               <p className="text-[11px] font-bold uppercase tracking-widest text-amber-400">🛰️ Analiza terena</p>
-              {terrainMarkers.length > 0 && groups.map(group => {
-                const items = terrainMarkers.map((m, i) => ({ ...m, _idx: i })).filter(m => m.type === group.key);
+              {analysisMarkers.terrain.length > 0 && groups.map(group => {
+                const items = analysisMarkers.terrain.map((m, i) => ({ ...m, _idx: i })).filter(m => m.type === group.key);
                 if (items.length === 0) return null;
                 return (
                   <div key={group.key}>
@@ -426,14 +362,14 @@ Območje analize: ${km}×${km} km`;
                     </p>
                     <div className="space-y-1">
                       {items.map((m) => {
-                        const key = `${m.lat}-${m.lng}`;
-                        const isVisible = terrainVisibleMarkers[key];
+                        const key = `terrain-${m.lat}-${m.lng}`;
+                        const isVisible = visibleMarkers[key];
                         return (
                           <motion.button
                             key={m._idx}
                             whileHover={{ x: 2 }}
                             whileTap={{ scale: 0.97 }}
-                            onClick={() => handleMarkerClick(m, m._idx)}
+                            onClick={() => handleMarkerClick(m, m._idx, "terrain")}
                             className="w-full flex items-start gap-2.5 px-3 py-2 rounded-xl text-left transition-all"
                             style={{
                               border: `1px solid ${isVisible ? `${theme.buttonActiveBg}80` : theme.panelText + "18"}`,
@@ -478,25 +414,25 @@ Območje analize: ${km}×${km} km`;
                     strong: ({ children }) => <strong className="font-semibold opacity-100" style={{ color: theme.panelText }}>{children}</strong>,
                   }}
                 >
-                  {terrainResult}
+                  {analysisResult.terrain}
                 </ReactMarkdown>
               </div>
             </div>
           )}
 
           {/* Urbex results */}
-          {showUrbex && urbexResult && (
+          {analysisResult?.urbex && (
             <div className="space-y-2">
               <p className="text-[11px] font-bold uppercase tracking-widest text-red-400">🔍 Iskanje objektov</p>
-              {urbexMarkers.length > 0 && urbexMarkers.map((m, i) => {
-                const key = `${m.lat}-${m.lng}`;
-                const isVisible = urbexVisibleMarkers[key];
+              {analysisMarkers.urbex.length > 0 && analysisMarkers.urbex.map((m, i) => {
+                const key = `urbex-${m.lat}-${m.lng}`;
+                const isVisible = visibleMarkers[key];
                 return (
                   <motion.button
                     key={i}
                     whileHover={{ x: 2 }}
                     whileTap={{ scale: 0.97 }}
-                    onClick={() => handleMarkerClick(m, i)}
+                    onClick={() => handleMarkerClick(m, i, "urbex")}
                     className="w-full flex items-start gap-2.5 px-3 py-2 rounded-xl text-left transition-all"
                     style={{
                       border: `1px solid ${isVisible ? "rgba(239,68,68,0.5)" : theme.panelText + "18"}`,
@@ -529,7 +465,7 @@ Območje analize: ${km}×${km} km`;
                     strong: ({ children }) => <strong className="font-semibold opacity-100" style={{ color: theme.panelText }}>{children}</strong>,
                   }}
                 >
-                  {urbexResult}
+                  {analysisResult.urbex}
                 </ReactMarkdown>
               </div>
             </div>
