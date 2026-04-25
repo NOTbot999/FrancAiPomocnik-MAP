@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from "react";
-import { Layers, X, Building2, Droplets, Trees, CloudSun, MapPin, Wheat, Mountain, History, Landmark, ExternalLink, ChevronDown, Map, GripVertical } from "lucide-react";
+import { Layers, X, Building2, Droplets, Trees, CloudSun, MapPin, Wheat, Mountain, History, Landmark, ExternalLink, ChevronDown, Map, GripVertical, BookOpen } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { Slider } from "@/components/ui/slider";
 import { motion, AnimatePresence } from "framer-motion";
@@ -7,6 +7,7 @@ import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { OVERLAY_CATEGORIES, BASE_LAYERS } from "./layerConfig";
 import LayerCategory from "./LayerCategory";
 import { loadTheme } from "@/components/map/ThemeCustomizer";
+import LayerLegend from "./LayerLegend";
 import { scopedGet, scopedSet } from "@/lib/userPrefs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -337,95 +338,161 @@ export default function LayerPanel({
   }, []);
 
   const theme = loadTheme();
+  const [showLegend, setShowLegend] = useState(false);
   const panelProps = { activeBaseLayers, onToggleBaseLayer, onBaseOpacityChange, activeLayers, onToggleLayer: trackedToggleLayer, onOpacityChange, favorites, onToggleFavorite: handleToggleFavorite, categoryOrder, onCategoryDragEnd: handleCategoryDragEnd, baseLayerOrder, onBaseLayerDragEnd: handleBaseLayerDragEnd };
+
+  const panelBg = theme.panelBg || "#0f172a";
+  const panelText = theme.panelText || "#e2e8f0";
+  const accentColor = theme.accentColor || "#10b981";
 
   if (isMobile) {
     return (
       <AnimatePresence>
-        {isOpen &&
-        <>
+        {isOpen && (
+          <>
             <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose} className="bg-transparent text-[#c41212] rounded-[14px] absolute inset-0 z-[899]" />
-
-          
-            {/* Bottom sheet — ~37.5vh (50% shorter than before) */}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={onClose}
+              className="absolute inset-0 z-[899]"
+              style={{ background: "rgba(0,0,0,0.3)", backdropFilter: "blur(2px)" }}
+            />
             <motion.div
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-            transition={{ type: "spring", damping: 30, stiffness: 320 }}
-            className="absolute bottom-0 left-0 right-0 z-[900] flex flex-col bg-slate-900/97 backdrop-blur-xl rounded-t-2xl border-t border-slate-700/50"
-            style={{ height: "43.1vh" }}>
-            
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 32, stiffness: 340 }}
+              className="absolute bottom-0 left-0 right-0 z-[900] flex flex-col rounded-t-3xl border-t border-white/10 shadow-2xl"
+              style={{ height: "43.1vh", backgroundColor: panelBg + "fa", backdropFilter: "blur(24px)", color: panelText }}
+            >
               <div className="flex justify-center pt-3 pb-1 shrink-0">
-                <div className="w-10 h-1 rounded-full bg-slate-600" />
+                <div className="w-10 h-1 rounded-full" style={{ backgroundColor: accentColor + "60" }} />
               </div>
-              <div className="flex items-center justify-between px-5 py-2 border-b border-slate-700/50 shrink-0">
+              <div className="flex items-center justify-between px-5 py-2.5 border-b border-white/8 shrink-0">
                 <div className="flex items-center gap-2.5">
-                  <Layers className="w-5 h-5" style={{ color: theme.accentColor }} />
-                  <h2 className="text-base font-semibold tracking-tight" style={{ color: theme.panelText }}>Layers</h2>
+                  <div className="w-7 h-7 rounded-xl flex items-center justify-center" style={{ backgroundColor: accentColor + "20" }}>
+                    <Layers className="w-4 h-4" style={{ color: accentColor }} />
+                  </div>
+                  <h2 className="text-sm font-semibold tracking-tight" style={{ color: panelText }}>Sloji</h2>
                 </div>
-                <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-700/50 opacity-60 hover:opacity-100 transition-colors" style={{ color: theme.panelText }}>
-                  <X className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setShowLegend(p => !p)}
+                    className="p-1.5 rounded-xl transition-all"
+                    style={showLegend ? { backgroundColor: accentColor, color: "#fff" } : { color: panelText, opacity: 0.6 }}
+                    title="Legenda"
+                  >
+                    <BookOpen className="w-3.5 h-3.5" />
+                  </button>
+                  <button onClick={onClose} className="p-1.5 rounded-xl transition-colors hover:bg-white/10" style={{ color: panelText, opacity: 0.6 }}>
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
               <ScrollArea className="flex-1 min-h-0">
                 <PanelContent {...panelProps} />
               </ScrollArea>
             </motion.div>
           </>
-        }
-      </AnimatePresence>);
-
+        )}
+      </AnimatePresence>
+    );
   }
 
   // Desktop: left slide-in
   return (
-    <AnimatePresence>
-      {isOpen &&
-      <motion.div
-        initial={{ x: -320, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-        exit={{ x: -320, opacity: 0 }}
-        transition={{ type: "spring", damping: 28, stiffness: 300 }}
-        className="absolute top-0 left-0 bottom-0 w-80 z-[900] flex flex-col backdrop-blur-xl border-r border-slate-700/50"
-        style={{ backgroundColor: theme.panelBg, color: theme.panelText }}>
-        
-          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-700/50">
-            <div className="flex items-center gap-2.5">
-              <Layers className="w-5 h-5" style={{ color: theme.accentColor }} />
-              <h2 className="text-base font-semibold tracking-tight" style={{ color: theme.panelText }}>Layers</h2>
+    <>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ x: -320, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: -320, opacity: 0 }}
+            transition={{ type: "spring", damping: 30, stiffness: 320 }}
+            className="absolute top-0 left-0 bottom-0 w-80 z-[900] flex flex-col border-r border-white/8 shadow-2xl"
+            style={{ backgroundColor: panelBg + "f8", backdropFilter: "blur(24px)", color: panelText }}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3.5 border-b border-white/8">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ backgroundColor: accentColor + "22" }}>
+                  <Layers className="w-4.5 h-4.5" style={{ color: accentColor }} />
+                </div>
+                <div>
+                  <h2 className="text-sm font-bold tracking-tight leading-none" style={{ color: panelText }}>Sloji karte</h2>
+                  <p className="text-[10px] mt-0.5" style={{ color: panelText, opacity: 0.4 }}>Slovenia Map Viewer</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setShowLegend(p => !p)}
+                  className="p-1.5 rounded-xl transition-all text-xs font-medium flex items-center gap-1"
+                  style={showLegend
+                    ? { backgroundColor: accentColor, color: "#fff" }
+                    : { backgroundColor: "rgba(255,255,255,0.06)", color: panelText, opacity: 0.7 }
+                  }
+                  title="Legenda"
+                >
+                  <BookOpen className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={onClose}
+                  className="p-1.5 rounded-xl hover:bg-white/10 transition-colors"
+                  style={{ color: panelText, opacity: 0.6 }}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </div>
-            <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-700/50 opacity-60 hover:opacity-100 transition-colors" style={{ color: theme.panelText }}>
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-          <ScrollArea className="flex-1">
-            <PanelContent {...panelProps} />
-          </ScrollArea>
-          <div className="px-4 py-3 border-t border-slate-700/50 space-y-1.5">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">External Tools</p>
-            {[
-          { label: "KatasterJam – Caves", url: "https://www.katasterjam.si" },
-          { label: "ARSO Atlas Okolja", url: "https://gis.arso.gov.si/atlasokolja/profile.aspx?id=Atlas_Okolja_AXL@Arso&culture=en-US" },
-          { label: "Old Maps Online", url: "https://www.oldmapsonline.org/en/Slovenia" },
-          { label: "e-Prostor Javni Vpogled", url: "https://ipi.eprostor.gov.si/jv/" }].
-          map((link) =>
-          <a key={link.url} href={link.url} target="_blank" rel="noopener noreferrer"
-          className="flex items-center gap-2 text-[11px] text-slate-400 hover:text-emerald-400 transition-colors py-0.5">
-                <ExternalLink className="w-3 h-3 shrink-0" />
-                {link.label}
-              </a>
-          )}
-          </div>
-          <div className="px-4 py-2 border-t border-slate-700/50">
-            <p className="text-[10px] text-slate-600 text-center">Data: ARSO · GURS · e-Prostor · OSM</p>
-          </div>
-        </motion.div>
-      }
-    </AnimatePresence>);
 
+            <ScrollArea className="flex-1">
+              <PanelContent {...panelProps} />
+            </ScrollArea>
+
+            {/* Footer */}
+            <div className="px-4 py-3 border-t border-white/8 space-y-1">
+              <p className="text-[9px] font-bold uppercase tracking-widest mb-2" style={{ color: panelText, opacity: 0.35 }}>Zunanje povezave</p>
+              {[
+                { label: "KatasterJam – Jame", url: "https://www.katasterjam.si" },
+                { label: "ARSO Atlas Okolja", url: "https://gis.arso.gov.si/atlasokolja/profile.aspx?id=Atlas_Okolja_AXL@Arso&culture=en-US" },
+                { label: "Old Maps Online", url: "https://www.oldmapsonline.org/en/Slovenia" },
+                { label: "e-Prostor Javni Vpogled", url: "https://ipi.eprostor.gov.si/jv/" }
+              ].map((link) => (
+                <a key={link.url} href={link.url} target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-[11px] py-0.5 transition-colors hover:opacity-100"
+                  style={{ color: panelText, opacity: 0.45 }}
+                  onMouseEnter={e => e.currentTarget.style.color = accentColor}
+                  onMouseLeave={e => { e.currentTarget.style.color = panelText; e.currentTarget.style.opacity = 0.45; }}
+                >
+                  <ExternalLink className="w-3 h-3 shrink-0" />
+                  {link.label}
+                </a>
+              ))}
+            </div>
+            <div className="px-4 py-2 border-t border-white/5">
+              <p className="text-[9px] text-center" style={{ color: panelText, opacity: 0.25 }}>Podatki: ARSO · GURS · e-Prostor · OSM</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Legend panel — floats next to the layer panel */}
+      <AnimatePresence>
+        {isOpen && showLegend && (
+          <motion.div
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -10 }}
+            transition={{ type: "spring", damping: 28, stiffness: 320 }}
+            className="absolute top-16 z-[901]"
+            style={{ left: 332 }}
+          >
+            <LayerLegend isOpen={showLegend} onClose={() => setShowLegend(false)} theme={theme} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  );
 }
