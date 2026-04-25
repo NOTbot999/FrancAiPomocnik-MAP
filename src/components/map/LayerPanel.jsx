@@ -127,6 +127,79 @@ function BaseMapCategory({ activeBaseLayers, onToggleBaseLayer, onBaseOpacityCha
   );
 }
 
+function ActiveLayersCategory({ activeLayers, allCategories, onToggleLayer, onOpacityChange, activeBaseLayers, onToggleBaseLayer, onBaseOpacityChange }) {
+  const [isOpen, setIsOpen] = useState(true);
+
+  // Collect all active layer objects (overlay + base maps)
+  const activeLayersList = [];
+  for (const cat of allCategories) {
+    for (const layer of cat.layers) {
+      if (activeLayers[layer.id]) {
+        activeLayersList.push({ ...layer, _type: "overlay", _categoryName: cat.name, _opacity: activeLayers[layer.id]?.opacity ?? layer.opacity });
+      }
+    }
+  }
+  for (const layer of BASE_LAYERS) {
+    if (activeBaseLayers && activeBaseLayers[layer.id]) {
+      activeLayersList.push({ ...layer, _type: "base", _categoryName: "Base Map", _opacity: activeBaseLayers[layer.id]?.opacity ?? 1 });
+    }
+  }
+  if (activeLayersList.length === 0) return null;
+
+  return (
+    <div className="border-b border-slate-700/50">
+      <button onClick={() => setIsOpen(p => !p)} className="w-full flex items-center gap-2.5 px-4 py-3 hover:bg-slate-700/30 transition-colors">
+        <span className="text-base leading-none shrink-0">👁️</span>
+        <span className="text-sm font-medium text-slate-200 flex-1 text-left">Aktivne karte</span>
+        <span className="text-[10px] font-bold bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded-full">
+          {activeLayersList.length}
+        </span>
+        <ChevronDown className={`w-3.5 h-3.5 text-slate-500 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
+            <div className="px-3 pb-3 space-y-1.5">
+              {activeLayersList.map((layer) => {
+                const isBase = layer._type === "base";
+                return (
+                  <div key={layer.id} className="group">
+                    <div className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg bg-slate-700/50">
+                      <div className="w-10 h-7 rounded overflow-hidden shrink-0 border border-emerald-500/60">
+                        {layer.thumbnail
+                          ? <img src={layer.thumbnail} alt={layer.name} className="w-full h-full object-cover" loading="lazy" />
+                          : <div className="w-full h-full flex items-center justify-center text-[9px] font-bold bg-emerald-500/20 text-emerald-400">{layer.name.charAt(0)}</div>
+                        }
+                      </div>
+                      <span className="text-slate-200 text-xs leading-tight flex-1">{layer.name}</span>
+                      <span className="text-[9px] text-slate-500">{layer._categoryName}</span>
+                      <button
+                        onClick={() => isBase ? onToggleBaseLayer(layer.id, layer.opacity ?? 1) : onToggleLayer(layer.id)}
+                        className="shrink-0 px-2 py-0.5 rounded text-[10px] font-bold bg-slate-600 text-slate-300 hover:bg-slate-500 transition-all"
+                      >
+                        OFF
+                      </button>
+                    </div>
+                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} className="px-3 pb-1 pt-0.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-slate-500 w-8">{Math.round(layer._opacity * 100)}%</span>
+                        <Slider
+                          value={[Math.round(layer._opacity * 100)]}
+                          onValueChange={([v]) => isBase ? onBaseOpacityChange(layer.id, v / 100) : onOpacityChange(layer.id, v / 100)}
+                          max={100} min={0} step={5} className="flex-1" />
+                      </div>
+                    </motion.div>
+                  </div>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 function FavoritesCategory({ favoriteLayerIds, allCategories, activeLayers, onToggleLayer, onOpacityChange, onToggleFavorite, activeBaseLayers, onToggleBaseLayer, onBaseOpacityChange }) {
   const [isOpen, setIsOpen] = useState(true);
   if (favoriteLayerIds.length === 0) return null;
@@ -214,6 +287,17 @@ function PanelContent({ activeBaseLayers, onToggleBaseLayer, onBaseOpacityChange
   return (
     <div className="pt-2 pb-4">
       <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1 px-4">Layers</p>
+
+      {/* Active Layers group — above Favorites */}
+      <ActiveLayersCategory
+        activeLayers={activeLayers}
+        allCategories={OVERLAY_CATEGORIES}
+        onToggleLayer={onToggleLayer}
+        onOpacityChange={onOpacityChange}
+        activeBaseLayers={activeBaseLayers}
+        onToggleBaseLayer={onToggleBaseLayer}
+        onBaseOpacityChange={onBaseOpacityChange}
+      />
 
       {/* Favorites group — above Base Map */}
       <FavoritesCategory
