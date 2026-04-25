@@ -11,24 +11,24 @@ import { base44 } from "@/api/base44Client";
 import ThemeCustomizer, { loadTheme, saveTheme, DEFAULT_THEME } from "@/components/map/ThemeCustomizer";
 
 const BUTTON_DEFS = [
-  { id: "layers",          icon: Layers,        label: "Toggle Layers",       color: "emerald" },
-  { id: "locate",          icon: Locate,        label: "My Location",         color: "sky" },
-  { id: "ruler",           icon: Ruler,         label: "Drawing Tools",       color: "violet" },
-  { id: "save",            icon: Save,          label: "Save Drawings",       color: "emerald" },
-  { id: "load",            icon: FolderOpen,    label: "Load Drawings",       color: "amber" },
-  { id: "gps",             icon: Navigation,    label: "GPS Track",           color: "blue" },
-  { id: "mytracks",        icon: Map,           label: "My GPS Tracks",       color: "teal" },
-  { id: "nav",             icon: Route,         label: "Route Planner",       color: "emerald" },
+  { id: "layers",          icon: Layers,        label: "Sloji",                color: "emerald" },
+  { id: "locate",          icon: Locate,        label: "Moja lokacija",        color: "sky" },
+  { id: "ruler",           icon: Ruler,         label: "Orodja za risanje",    color: "violet" },
+  { id: "save",            icon: Save,          label: "Shrani risbe",         color: "emerald" },
+  { id: "load",            icon: FolderOpen,    label: "Naloži risbe",         color: "amber" },
+  { id: "gps",             icon: Navigation,    label: "GPS sled",             color: "blue" },
+  { id: "mytracks",        icon: Map,           label: "Moje GPS sledi",       color: "teal" },
+  { id: "nav",             icon: Route,         label: "Načrtovanje poti",     color: "emerald" },
   { id: "ai",              icon: Brain,         label: "AI Asistent (Premium)", color: "amber" },
-  { id: "trackanalyzer",   icon: TrendingUp,    label: "Track Analyzer (AI)", color: "blue" },
+  { id: "trackanalyzer",   icon: TrendingUp,    label: "Analiza sledi (AI)",   color: "blue" },
 ];
 
 const RULER_TOOLS = [
-  { id: "pointer",  icon: MousePointer2, label: "Select" },
-  { id: "distance", icon: Ruler,         label: "Measure Distance" },
-  { id: "area",     icon: Pentagon,      label: "Measure Area" },
-  { id: "marker",   icon: MapPin,        label: "Place Marker" },
-  { id: "clear",    icon: Trash2,        label: "Clear All" },
+  { id: "pointer",  icon: MousePointer2, label: "Izberi" },
+  { id: "distance", icon: Ruler,         label: "Meri razdaljo" },
+  { id: "area",     icon: Pentagon,      label: "Meri površino" },
+  { id: "marker",   icon: MapPin,        label: "Postavi oznako" },
+  { id: "clear",    icon: Trash2,        label: "Počisti vse" },
 ];
 
 const STORAGE_KEY = "desktopToolbarPos";
@@ -160,7 +160,7 @@ export default function DesktopToolbar({
     setLoadingDraw(true);
     const records = await base44.entities.MapDrawing.list("-created_date", 20);
     setLoadingDraw(false);
-    if (records.length === 0) { alert("No saved drawings found."); return; }
+    if (records.length === 0) { alert("Ni shranjenih risb."); return; }
     const merged = { markers: [], lines: [], polygons: [], gps_tracks: [] };
     records.forEach(r => {
       if (r.markers) merged.markers.push(...r.markers);
@@ -277,7 +277,7 @@ export default function DesktopToolbar({
                 </button>
               </TooltipTrigger>
               <TooltipContent side="left" className="z-[9999]" sideOffset={6}>
-                <p className="text-xs font-medium">Customize Colors</p>
+                <p className="text-xs font-medium">Prilagodi barve</p>
               </TooltipContent>
             </Tooltip>
             <Tooltip>
@@ -295,7 +295,7 @@ export default function DesktopToolbar({
                 </button>
               </TooltipTrigger>
               <TooltipContent side="left" className="z-[9999]" sideOffset={6}>
-                <p className="text-xs font-medium">Customize Toolbar</p>
+                <p className="text-xs font-medium">Prilagodi orodna vrstico</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -318,7 +318,7 @@ export default function DesktopToolbar({
             }}
             className="flex flex-col gap-1 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/60 p-2"
           >
-            <p className="text-[10px] font-semibold uppercase px-2 pt-1 pb-0.5 opacity-50" style={{ color: theme.menuText }}>Drawing Tools</p>
+            <p className="text-[10px] font-semibold uppercase px-2 pt-1 pb-0.5 opacity-50" style={{ color: theme.menuText }}>Orodja za risanje</p>
             <TooltipProvider delayDuration={300}>
               {RULER_TOOLS.map(tool => {
                 const Icon = tool.icon;
@@ -390,12 +390,12 @@ export default function DesktopToolbar({
             className="backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/60 p-4 w-52 max-h-[80vh] overflow-y-auto"
           >
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm font-semibold" style={{ color: theme.menuText }}>Toolbar Buttons</span>
+              <span className="text-sm font-semibold" style={{ color: theme.menuText }}>Gumbi orodne vrstice</span>
               <button onClick={() => setShowSettings(false)} style={{ color: theme.menuText }} className="opacity-60 hover:opacity-100">
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <p className="text-[10px] mb-3 opacity-50" style={{ color: theme.menuText }}>Drag the grip to move the toolbar. Toggle visibility below.</p>
+            <p className="text-[10px] mb-3 opacity-50" style={{ color: theme.menuText }}>Povleci ročico za premik vrstice. Spodaj preklopi vidnost.</p>
             <div className="space-y-1">
               {BUTTON_DEFS.map(btn => {
                 const Icon = btn.icon;
@@ -428,7 +428,7 @@ export default function DesktopToolbar({
             style={{ color: theme.menuText, borderColor: theme.menuText + "22" }}
               className="mt-3 w-full text-xs py-1 border-t pt-2 opacity-50 hover:opacity-80 transition"
             >
-              Reset toolbar
+              Ponastavi vrstico
             </button>
           </motion.div>
         )}

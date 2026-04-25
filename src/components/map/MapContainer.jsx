@@ -235,6 +235,20 @@ function RightClickHandler({ onLocationSummary }) {
   return null;
 }
 
+function PinPickHandler({ onPinPicked }) {
+  const map = useMap();
+  useEffect(() => {
+    map.getContainer().style.cursor = "crosshair";
+    return () => { map.getContainer().style.cursor = ""; };
+  }, [map]);
+  useMapEvents({
+    click(e) {
+      onPinPicked(e.latlng);
+    }
+  });
+  return null;
+}
+
 export default function MapContainerComponent({
   activeBaseLayers,
   activeLayers,
@@ -252,6 +266,8 @@ export default function MapContainerComponent({
   onOfflineClose,
   onLocationSummary,
   onMapMove,
+  isPinPicking,
+  onPinPicked,
 }) {
   const allLayers = getAllLayersFlat();
   const activeBaseLayerEntries = activeBaseLayers
@@ -357,6 +373,7 @@ export default function MapContainerComponent({
       <FlyToLocation location={flyToLocation} />
       <CoordsDisplay onMapMove={onMapMove} />
       <RightClickHandler onLocationSummary={onLocationSummary} />
+      {isPinPicking && onPinPicked && <PinPickHandler onPinPicked={onPinPicked} />}
       <DrawingHandler
         activeTool={activeTool}
         onMeasurement={onMeasurement}

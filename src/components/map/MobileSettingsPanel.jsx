@@ -1,20 +1,21 @@
 import React, { useState, useCallback } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { GripVertical, Search, Locate, Navigation, Route, Ruler, X, Link2, ChevronDown, ChevronUp, Layers, Plus, WifiOff, Palette } from "lucide-react";
+import { GripVertical, Search, Locate, Navigation, Route, Ruler, X, Link2, ChevronDown, ChevronUp, Layers, Plus, WifiOff, Palette, Brain } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import MyTracks from "./MyTracks";
 import DeviceLink from "./DeviceLink";
 import ThemeCustomizer, { loadTheme } from "@/components/map/ThemeCustomizer";
 
 const DEFAULT_BUTTONS = [
-  { id: "layers",  label: "Layers",      icon: Layers },
-  { id: "zoom",    label: "Zoom",        icon: Plus },
-  { id: "search",  label: "Search",      icon: Search },
-  { id: "locate",  label: "My Location", icon: Locate },
-  { id: "gps",     label: "GPS Track",   icon: Navigation },
-  { id: "ruler",   label: "Ruler",       icon: Ruler },
-  { id: "nav",     label: "Navigation",  icon: Route },
-  { id: "offline", label: "Offline Maps", icon: WifiOff },
+  { id: "layers",  label: "Sloji",          icon: Layers },
+  { id: "zoom",    label: "Zoom",           icon: Plus },
+  { id: "search",  label: "Iskanje",        icon: Search },
+  { id: "locate",  label: "Moja lokacija",  icon: Locate },
+  { id: "gps",     label: "GPS sled",       icon: Navigation },
+  { id: "ruler",   label: "Merilo",         icon: Ruler },
+  { id: "nav",     label: "Navigacija",     icon: Route },
+  { id: "offline", label: "Offline karte",  icon: WifiOff },
+  { id: "ai",      label: "AI Asistent",    icon: Brain },
 ];
 
 function loadPrefs() {
@@ -96,7 +97,7 @@ export default function MobileSettingsPanel({ onClose, prefs, setPrefs, gpsTrack
     >
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
-        <span className="text-sm font-semibold text-slate-700">Map Controls</span>
+        <span className="text-sm font-semibold text-slate-700">Nastavitve karte</span>
         <button onClick={onClose} className="p-1 rounded-lg hover:bg-slate-200 text-slate-400">
           <X className="w-4 h-4" />
         </button>
@@ -104,8 +105,8 @@ export default function MobileSettingsPanel({ onClose, prefs, setPrefs, gpsTrack
 
       {/* Toolbar buttons section */}
       <div className="px-4 pt-3 pb-1">
-        <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">On-screen buttons</p>
-        <p className="text-[10px] text-slate-400 mb-2">Drag to reorder · tap toggle to show on screen</p>
+        <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Gumbi na zaslonu</p>
+        <p className="text-[10px] text-slate-400 mb-2">Povleci za vrstni red · preklopi za prikaz na zaslonu</p>
       </div>
       <DragDropContext onDragEnd={handleDragEnd}>
         <Droppable droppableId="buttons">
@@ -159,7 +160,7 @@ export default function MobileSettingsPanel({ onClose, prefs, setPrefs, gpsTrack
       {/* Button size slider */}
       <div className="px-4 pb-2">
         <div className="flex items-center justify-between mb-2">
-          <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Button Size</p>
+          <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Velikost gumbov</p>
           <span className="text-[10px] font-bold text-emerald-600">{Math.round((prefs.buttonScale ?? 1.0) * 100)}%</span>
         </div>
         <Slider
@@ -183,7 +184,7 @@ export default function MobileSettingsPanel({ onClose, prefs, setPrefs, gpsTrack
       {/* Scale Bar section */}
       <div className="px-4 pb-2">
         <div className="flex items-center justify-between mb-2">
-          <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Scale Bar</p>
+          <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Merilo</p>
           <button
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => { e.stopPropagation(); setPrefs({ ...prefs, scaleBarVisible: !prefs.scaleBarVisible }); }}
@@ -195,7 +196,7 @@ export default function MobileSettingsPanel({ onClose, prefs, setPrefs, gpsTrack
         {prefs.scaleBarVisible !== false && (
           <>
             <div className="flex items-center justify-between mb-1">
-              <p className="text-[10px] text-slate-400">Scale Bar Size</p>
+              <p className="text-[10px] text-slate-400">Velikost merila</p>
               <span className="text-[10px] font-bold text-emerald-600">{Math.round((prefs.scaleBarScale ?? 1.0) * 100)}%</span>
             </div>
             <Slider
@@ -225,7 +226,7 @@ export default function MobileSettingsPanel({ onClose, prefs, setPrefs, gpsTrack
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-slate-50 hover:bg-white transition-all text-slate-700"
         >
           <Route className="w-4 h-4 text-emerald-500" />
-          <span className="flex-1 text-xs font-medium text-left">My GPS Tracks</span>
+          <span className="flex-1 text-xs font-medium text-left">Moje GPS sledi</span>
           {showTracks ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
         </button>
         {showTracks && (
@@ -269,7 +270,7 @@ export default function MobileSettingsPanel({ onClose, prefs, setPrefs, gpsTrack
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-slate-50 hover:bg-white transition-all text-slate-700"
         >
           <Link2 className="w-4 h-4 text-emerald-500" />
-          <span className="flex-1 text-xs font-medium text-left">Link Devices</span>
+          <span className="flex-1 text-xs font-medium text-left">Poveži naprave</span>
           {showDeviceLink ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
         </button>
         {showDeviceLink && (

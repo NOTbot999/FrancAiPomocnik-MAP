@@ -3,7 +3,7 @@
  * Premium-only (admins always have access).
  */
 import React, { useState, useRef, useEffect } from "react";
-import { X, Send, Sparkles, Loader2, Bot, User, MapPin, Star, Lock } from "lucide-react";
+import { X, Send, Sparkles, Loader2, Bot, User, MapPin, Star, Lock, Crosshair, CheckCircle2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { base44 } from "@/api/base44Client";
 import { OVERLAY_CATEGORIES, BASE_LAYERS } from "./layerConfig";
@@ -12,27 +12,27 @@ import ReactMarkdown from "react-markdown";
 
 // ─── Layer summary for Ask the Map ───────────────────────────────────────────
 const LAYER_SUMMARY = [
-  ...BASE_LAYERS.map(l => `Base: ${l.name}`),
+  ...BASE_LAYERS.map(l => `Osnovna karta: ${l.name}`),
   ...OVERLAY_CATEGORIES.flatMap(cat =>
     cat.layers.map(l => `${cat.name} > ${l.name} [id:${l.id}]: ${l.description || ""}`)
   )
 ].join("\n");
 
-const ASK_SYSTEM = `You are an AI assistant for Slovenia GIS Explorer.
-Available layers:\n${LAYER_SUMMARY}
-Help users activate layers, answer Slovenia geography questions, explain data.
-When recommending layers include: <activate_layers>["id1","id2"]</activate_layers>
-Keep responses concise.`;
+const ASK_SYSTEM = `Si AI asistent za GIS Explorer Slovenije. VEDNO odgovarjaj v SLOVENŠČINI.
+Razpoložljivi sloji:\n${LAYER_SUMMARY}
+Pomagaj uporabnikom aktivirati sloje, odgovori na vprašanja o geografiji Slovenije, razloži podatke.
+Ko priporočaš sloje, vključi: <activate_layers>["id1","id2"]</activate_layers>
+Odgovori naj bodo kratki in praktični.`;
 
-const TERRAIN_SYSTEM = `You are an expert GIS analyst for Slovenia.
-Analyze the given coordinates. For each notable finding (structure, landmark, POI, route):
-Include a JSON block at the END of your response with clickable markers:
-<map_markers>[{"lat":46.05,"lng":14.5,"label":"Label","type":"structure|poi|route|landmark","layer":"layer_id_or_null"}]</map_markers>
-Sections: 1) Man-made structures, 2) Terrain highlights, 3) Points of interest (with coords), 4) Suggested routes (with start coords).
-Be specific with real Slovenian place names.`;
+const TERRAIN_SYSTEM = `Si strokovni GIS analitik za Slovenijo. VEDNO odgovarjaj v SLOVENŠČINI.
+Analiziraj podane koordinate. Za vsako pomembno ugotovitev (objekt, znamenitost, POI, pot):
+Na KONCU odgovora vključi JSON blok s klikabilnimi markerji:
+<map_markers>[{"lat":46.05,"lng":14.5,"label":"Oznaka","type":"structure|poi|route|landmark","layer":"layer_id_ali_null"}]</map_markers>
+Razdelki: 1) Umetne strukture, 2) Terenske značilnosti, 3) Točke interesa (s koordinatami), 4) Predlagane poti (z začetnimi koordinatami).
+Bodi natančen in uporabljaj resnična slovenska krajevna imena.`;
 
 // ─── Premium Lock screen ──────────────────────────────────────────────────────
-function PremiumLock({ onClose, theme }) {
+function PremiumLock({ theme }) {
   return (
     <div className="flex flex-col items-center justify-center h-full gap-4 px-6 py-8 text-center">
       <div className="w-14 h-14 rounded-2xl bg-amber-500/15 flex items-center justify-center">
@@ -74,10 +74,10 @@ function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme }) {
     setInput("");
     setMessages(prev => [...prev, { role: "user", content: userMsg }]);
     setLoading(true);
-    const context = `Map: center=[${mapCenter?.[0]?.toFixed(4)}, ${mapCenter?.[1]?.toFixed(4)}], zoom=${mapZoom}, active: ${activeLayerNames.join(", ") || "none"}.`;
-    const history = messages.map(m => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`).join("\n");
+    const context = `Karta: središče=[${mapCenter?.[0]?.toFixed(4)}, ${mapCenter?.[1]?.toFixed(4)}], zoom=${mapZoom}, aktivni sloji: ${activeLayerNames.join(", ") || "ni aktivnih"}.`;
+    const history = messages.map(m => `${m.role === "user" ? "Uporabnik" : "Asistent"}: ${m.content}`).join("\n");
     const res = await base44.integrations.Core.InvokeLLM({
-      prompt: `${ASK_SYSTEM}\n\n${context}\n\nHistory:\n${history}\n\nUser: ${userMsg}\nAssistant:`,
+      prompt: `${ASK_SYSTEM}\n\n${context}\n\nZgodovina:\n${history}\n\nUporabnik: ${userMsg}\nAsistent:`,
       add_context_from_internet: true, model: "gemini_3_flash"
     });
     const text = typeof res === "string" ? res : res?.content || JSON.stringify(res);
@@ -159,16 +159,19 @@ function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme }) {
 }
 
 // ─── Terrain AI tab ───────────────────────────────────────────────────────────
-function TerrainTab({ mapCenter, mapZoom, activeLayers, onAddMarkers, theme }) {
+function TerrainTab({ mapCenter, mapZoom, activeLayers, onAddMarkers, theme, onRequestPin, pinnedLocation }) {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [markers, setMarkers] = useState([]);
+
+  // The location to analyze: pinned point if set, otherwise map center
+  const analysisLat = pinnedLocation ? pinnedLocation[0] : mapCenter?.[0];
+  const analysisLng = pinnedLocation ? pinnedLocation[1] : mapCenter?.[1];
 
   const analyze = async () => {
     setLoading(true);
     setResult(null);
     setMarkers([]);
-    const [lat, lng] = mapCenter;
     const activeNames = Object.keys(activeLayers).map(id => {
       for (const cat of OVERLAY_CATEGORIES) {
         const l = cat.layers.find(l => l.id === id);
@@ -178,16 +181,15 @@ function TerrainTab({ mapCenter, mapZoom, activeLayers, onAddMarkers, theme }) {
     });
     const prompt = `${TERRAIN_SYSTEM}
 
-Coordinates: ${lat.toFixed(5)}, ${lng.toFixed(5)} | Zoom: ${mapZoom} | Active layers: ${activeNames.join(", ") || "none"}
+Koordinate: ${analysisLat.toFixed(5)}, ${analysisLng.toFixed(5)} | Zoom: ${mapZoom} | Aktivni sloji: ${activeNames.join(", ") || "ni aktivnih"}
 
-Analyze this Slovenian location thoroughly. Use internet context for real data.`;
+Natančno analiziraj to slovensko lokacijo. Uporabi internetni kontekst za resnične podatke.`;
 
     const res = await base44.integrations.Core.InvokeLLM({
       prompt, add_context_from_internet: true, model: "gemini_3_flash"
     });
     const text = typeof res === "string" ? res : res?.content || JSON.stringify(res);
 
-    // Parse markers
     const markerMatch = text.match(/<map_markers>(.*?)<\/map_markers>/s);
     let cleanText = text.replace(/<map_markers>.*?<\/map_markers>/s, "").trim();
     let parsedMarkers = [];
@@ -209,7 +211,7 @@ Analyze this Slovenian location thoroughly. Use internet context for real data.`
   return (
     <div className="flex-1 overflow-y-auto px-4 py-3 min-h-0">
       {!result && !loading && (
-        <div className="text-center py-6">
+        <div className="text-center py-4">
           <div className="w-12 h-12 bg-amber-500/15 rounded-2xl flex items-center justify-center mx-auto mb-3">
             <Sparkles className="w-6 h-6 text-amber-400" />
           </div>
@@ -217,6 +219,48 @@ Analyze this Slovenian location thoroughly. Use internet context for real data.`
           <p className="text-xs opacity-50 mb-4" style={{ color: theme.panelText }}>
             Zazna objekte, primerja sloje, predlaga poti in točke interesa.
           </p>
+
+          {/* Pinpoint section */}
+          <div className="mb-4 rounded-xl p-3 text-left" style={{ backgroundColor: `${theme.panelText}10`, border: `1px solid ${theme.panelText}20` }}>
+            <p className="text-[10px] font-bold uppercase tracking-widest opacity-50 mb-2" style={{ color: theme.panelText }}>Lokacija analize</p>
+            {pinnedLocation ? (
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <div className="flex-1">
+                  <p className="text-xs font-semibold text-emerald-400">Označena točka</p>
+                  <p className="text-[10px] font-mono opacity-60" style={{ color: theme.panelText }}>
+                    {pinnedLocation[0].toFixed(5)}, {pinnedLocation[1].toFixed(5)}
+                  </p>
+                </div>
+                <button
+                  onClick={() => onRequestPin(null)}
+                  className="text-[10px] opacity-50 hover:opacity-80 transition-opacity"
+                  style={{ color: theme.panelText }}
+                >Počisti</button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4 opacity-50 shrink-0" style={{ color: theme.panelText }} />
+                  <div className="flex-1">
+                    <p className="text-xs opacity-70" style={{ color: theme.panelText }}>Središče karte</p>
+                    <p className="text-[10px] font-mono opacity-50" style={{ color: theme.panelText }}>
+                      {mapCenter?.[0]?.toFixed(5)}, {mapCenter?.[1]?.toFixed(5)}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => onRequestPin && onRequestPin("pick")}
+                  className="w-full flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-medium transition-all"
+                  style={{ backgroundColor: `${theme.accentColor || "#10b981"}20`, color: theme.accentColor || "#10b981", border: `1px solid ${theme.accentColor || "#10b981"}40` }}
+                >
+                  <Crosshair className="w-3.5 h-3.5" />
+                  Označi točko na karti
+                </button>
+              </div>
+            )}
+          </div>
+
           <button onClick={analyze}
             className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-emerald-500 text-white text-sm font-semibold rounded-xl hover:opacity-90 transition shadow">
             Analiziraj lokacijo
@@ -228,11 +272,21 @@ Analyze this Slovenian location thoroughly. Use internet context for real data.`
         <div className="flex flex-col items-center justify-center py-10 gap-3">
           <Loader2 className="w-7 h-7 text-emerald-400 animate-spin" />
           <p className="text-sm opacity-60" style={{ color: theme.panelText }}>AI analizira teren...</p>
+          <p className="text-xs opacity-40 font-mono" style={{ color: theme.panelText }}>
+            {analysisLat?.toFixed(4)}, {analysisLng?.toFixed(4)}
+          </p>
         </div>
       )}
 
       {result && !loading && (
         <div className="space-y-3">
+          {/* Analyzed coords */}
+          <div className="flex items-center gap-2 text-[10px] opacity-50" style={{ color: theme.panelText }}>
+            <MapPin className="w-3 h-3" />
+            <span className="font-mono">{analysisLat?.toFixed(5)}, {analysisLng?.toFixed(5)}</span>
+            {pinnedLocation && <span className="text-emerald-400 opacity-100">• označena točka</span>}
+          </div>
+
           {/* Clickable markers */}
           {markers.length > 0 && (
             <div>
@@ -284,10 +338,10 @@ Analyze this Slovenian location thoroughly. Use internet context for real data.`
             </ReactMarkdown>
           </div>
 
-          <button onClick={analyze}
+          <button onClick={() => { setResult(null); setMarkers([]); }}
             className="w-full py-2 text-xs font-medium rounded-xl transition mt-2 opacity-50 hover:opacity-80"
             style={{ border: `1px solid ${theme.panelText}33`, color: theme.panelText }}>
-            Ponovi analizo
+            Nova analiza
           </button>
         </div>
       )}
@@ -297,8 +351,8 @@ Analyze this Slovenian location thoroughly. Use internet context for real data.`
 
 // ─── Main AIPanel ─────────────────────────────────────────────────────────────
 const TABS = [
-  { id: "ask", label: "Ask the Map", emoji: "💬" },
-  { id: "terrain", label: "Terrain AI", emoji: "🛰️" },
+  { id: "ask", label: "Vprašaj karto", emoji: "💬" },
+  { id: "terrain", label: "Teren AI", emoji: "🛰️" },
 ];
 
 export default function AIPanel({
@@ -309,6 +363,8 @@ export default function AIPanel({
   mapZoom,
   isPremium,
   onAddMarkers,
+  onRequestPin,
+  pinnedLocation,
 }) {
   const theme = loadTheme();
   const [tab, setTab] = useState("ask");
@@ -319,7 +375,7 @@ export default function AIPanel({
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: 10, scale: 0.97 }}
       className="flex flex-col rounded-2xl shadow-2xl border overflow-hidden"
-      style={{ width: 360, height: 500, backgroundColor: theme.panelBg, color: theme.panelText, borderColor: `${theme.panelText}22` }}
+      style={{ width: 360, height: 520, backgroundColor: theme.panelBg, color: theme.panelText, borderColor: `${theme.panelText}22` }}
     >
       {/* Header */}
       <div className="flex items-center gap-2.5 px-4 py-3 shrink-0" style={{ borderBottom: `1px solid ${theme.panelText}18` }}>
@@ -355,7 +411,7 @@ export default function AIPanel({
 
       {/* Content */}
       {!isPremium ? (
-        <PremiumLock onClose={onClose} theme={theme} />
+        <PremiumLock theme={theme} />
       ) : (
         <AnimatePresence mode="wait">
           <motion.div
@@ -382,6 +438,8 @@ export default function AIPanel({
                 activeLayers={activeLayers}
                 onAddMarkers={onAddMarkers}
                 theme={theme}
+                onRequestPin={onRequestPin}
+                pinnedLocation={pinnedLocation}
               />
             )}
           </motion.div>

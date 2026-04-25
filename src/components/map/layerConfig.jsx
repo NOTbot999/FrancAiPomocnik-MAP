@@ -1,10 +1,5 @@
-// Layer configuration for Slovenia Map Viewer
-// All URLs verified against actual service capabilities
-
-// Layer configuration - all URLs and layer names verified from GetCapabilities / Layer Preview
-// ARSO GeoServer: https://gis.arso.gov.si/geoserver/ARSO/wms (namespace ARSO:)
-// GURS DTS WMS:   https://ipi.eprostor.gov.si/wms-si-gurs-dts/ows (namespace SI.GURS.*)
-// Both support EPSG:3857
+// Konfiguracija slojev za GIS Explorer Slovenije
+// Vsi URL-ji preverjeni glede na dejansko zmogljivost storitev
 
 const ARSO_WMS   = "https://gis.arso.gov.si/geoserver/ARSO/wms";
 const GURS_WMS   = "https://ipi.eprostor.gov.si/wms-si-gurs-dts/ows";
@@ -29,7 +24,7 @@ export const BASE_LAYERS = [
   },
   {
     id: "satellite",
-    name: "Satellite",
+    name: "Satelit",
     type: "tile",
     url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
     attribution: "&copy; Esri, Maxar",
@@ -45,7 +40,7 @@ export const BASE_LAYERS = [
   },
   {
     id: "esri_topo",
-    name: "ESRI World Topo",
+    name: "ESRI Topo karta",
     type: "tile",
     url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
     attribution: "&copy; Esri",
@@ -53,7 +48,7 @@ export const BASE_LAYERS = [
   },
   {
     id: "dark",
-    name: "Dark",
+    name: "Temna",
     type: "tile",
     url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
     attribution: "&copy; CartoDB",
@@ -61,7 +56,7 @@ export const BASE_LAYERS = [
   },
   {
     id: "lidar_hillshade",
-    name: "LIDAR Hillshade",
+    name: "LIDAR Senčenje",
     type: "arcgis_export",
     arcgisUrl: "https://gis.arso.gov.si/arcgis/rest/services/Lidar_hillshade_D96TM/MapServer/export",
     attribution: "&copy; ARSO LIDAR",
@@ -75,11 +70,11 @@ export const OVERLAY_CATEGORIES = [
     id: "gurs",
     name: "Kataster / GURS",
     icon: "Building2",
-    description: "Land registry & cadastral data from GURS/e-Prostor",
+    description: "Zemljiški kataster in katastrski podatki GURS/e-Prostor",
     layers: [
       {
         id: "gurs_orthophoto",
-        name: "Orthophoto DOF050 (50cm)",
+        name: "Ortofoto DOF050 (50 cm)",
         type: "wms",
         url: GURS_WMS,
         layers: "SI.GURS.ZPDZ:DOF050",
@@ -87,11 +82,11 @@ export const OVERLAY_CATEGORIES = [
         transparent: false,
         version: "1.1.1",
         opacity: 1.0,
-        description: "50cm resolution aerial orthophoto of Slovenia"
+        description: "Aeroposnetki ortofoto 50 cm ločljivosti za Slovenijo"
       },
       {
         id: "gurs_orthophoto_025",
-        name: "Orthophoto DOF025 (25cm)",
+        name: "Ortofoto DOF025 (25 cm)",
         type: "wms",
         url: GURS_WMS,
         layers: "SI.GURS.ZPDZ:DOF025",
@@ -99,19 +94,19 @@ export const OVERLAY_CATEGORIES = [
         transparent: false,
         version: "1.1.1",
         opacity: 1.0,
-        description: "25cm high-res aerial orthophoto (visible at z≥12)"
+        description: "Visokoločljivi ortofoto 25 cm (vidno pri zoom ≥ 12)"
       },
       {
         id: "gurs_lidar",
-        name: "LIDAR Hillshade (ARSO, 1m)",
+        name: "LIDAR Senčenje (ARSO, 1 m)",
         type: "arcgis_export",
         url: "https://gis.arso.gov.si/arcgis/rest/services/Lidar_hillshade_D96TM/MapServer/export",
         opacity: 0.85,
-        description: "Ultra-detailed 1m resolution LIDAR hillshade from ARSO national airborne survey"
+        description: "Ultrapodrobno 1 m LIDAR senčenje iz državnega aerolaserskega snemanja ARSO"
       },
       {
         id: "gurs_dtk25",
-        name: "Basic Topo Maps 1:5k–1:10k (TTN5/TTN10)",
+        name: "Osnovna topografska karta 1:5k–1:10k (TTN5/TTN10)",
         type: "wms",
         url: "https://ipi.eprostor.gov.si/wms-si-gurs-dts/wms",
         layers: "SI.GURS.DK:TTN5_TTN10",
@@ -120,11 +115,11 @@ export const OVERLAY_CATEGORIES = [
         version: "1.1.1",
         opacity: 1.0,
         tileSize: 256,
-        description: "Combined TTN5 and TTN10 basic topographic maps 1:5,000–1:10,000 (zoom 13+)"
+        description: "Kombinirana TTN5 in TTN10 osnovna topografska karta 1:5.000–1:10.000 (zoom 13+)"
       },
       {
         id: "gurs_dtk50",
-        name: "Topographic Map 1:50,000 (DTK50)",
+        name: "Topografska karta 1:50.000 (DTK50)",
         type: "wms",
         url: "https://ipi.eprostor.gov.si/wms-si-gurs-dts/wms",
         layers: "SI.GURS.DK:DTK50",
@@ -133,7 +128,7 @@ export const OVERLAY_CATEGORIES = [
         version: "1.1.1",
         opacity: 1.0,
         tileSize: 256,
-        description: "Official Slovenian topographic map 1:50,000"
+        description: "Uradna slovenska topografska karta 1:50.000"
       }
     ]
   },
@@ -141,13 +136,13 @@ export const OVERLAY_CATEGORIES = [
   // ─── KATASTERJAM ──────────────────────────────────────────────
   {
     id: "katasterjam",
-    name: "KatasterJam – Caves",
+    name: "KatasterJam – Jame",
     icon: "Landmark",
-    description: "Cave data from ARSO/IZRK via eKataster",
+    description: "Podatki o jamah iz ARSO/IZRK prek eKataster",
     layers: [
       {
         id: "arso_jame_epo",
-        name: "Cave Locations (EPO_PNT)",
+        name: "Lokacije jam (EPO_PNT)",
         type: "wms",
         url: ARSO_WMS,
         layers: "ARSO:EPO_PNT",
@@ -155,11 +150,11 @@ export const OVERLAY_CATEGORIES = [
         transparent: true,
         version: "1.1.1",
         opacity: 0.8,
-        description: "Ecologically important cave points from ARSO registry (source for KatasterJam)"
+        description: "Ekološko pomembne jamske točke iz registra ARSO (vir za KatasterJam)"
       },
       {
         id: "arso_epo_plg",
-        name: "Karst & Cave Areas (EPO_PLG)",
+        name: "Kraška in jamska območja (EPO_PLG)",
         type: "wms",
         url: ARSO_WMS,
         layers: "ARSO:EPO_PLG",
@@ -167,11 +162,11 @@ export const OVERLAY_CATEGORIES = [
         transparent: true,
         version: "1.1.1",
         opacity: 0.5,
-        description: "Ecologically important areas including karst zones"
+        description: "Ekološko pomembna območja vključno s kraškimi conami"
       },
       {
         id: "arso_naravne_vrednote",
-        name: "Natural Heritage Values (NV_PLG)",
+        name: "Naravne vrednote (NV_PLG)",
         type: "wms",
         url: ARSO_WMS,
         layers: "ARSO:NV_PLG",
@@ -179,71 +174,69 @@ export const OVERLAY_CATEGORIES = [
         transparent: true,
         version: "1.1.1",
         opacity: 0.5,
-        description: "Natural heritage values register (includes caves)"
+        description: "Register naravnih vrednot (vključuje jame)"
       }
     ]
   },
 
-
-
-  // ─── RABA – LAND USE ──────────────────────────────────────────
+  // ─── RABA – RABA TAL ──────────────────────────────────────────
   {
     id: "landuse",
-    name: "Land Use (RABA/MKGP)",
+    name: "Raba tal (RABA/MKGP)",
     icon: "Wheat",
-    description: "Agricultural and forest land use from MKGP",
+    description: "Kmetijska in gozdna raba tal iz MKGP",
     layers: [
       {
         id: "raba_farmland",
-        name: "Farmland Use RABA-KGZ",
+        name: "Raba kmetijskih zemljišč RABA-KGZ",
         type: "tile",
         url: "https://wms.openstreetmap.de/tms/RABA/{z}/{x}/{y}.png",
         opacity: 0.65,
-        description: "Agricultural land use from Ministry of Agriculture"
+        description: "Raba kmetijskih zemljišč iz Ministrstva za kmetijstvo"
       }
     ]
   },
 
-  // ─── WEATHER ─────────────────────────────────────────────────
+  // ─── VREME ─────────────────────────────────────────────────
   {
     id: "weather",
-    name: "Weather (OpenWeatherMap)",
+    name: "Vreme (OpenWeatherMap)",
     icon: "CloudSun",
-    description: "Live weather overlays from OpenWeatherMap",
+    description: "Živi vremenski sloji iz OpenWeatherMap",
     layers: [
       {
         id: "owm_clouds",
-        name: "Cloud Cover",
+        name: "Oblačnost",
         type: "tile",
         url: "https://tile.openweathermap.org/map/clouds_new/{z}/{x}/{y}.png?appid=9de243494c0b295cca9337e1e96b00e2",
         opacity: 0.6,
-        description: "Cloud cover layer from OpenWeatherMap"
+        description: "Sloj oblačnosti iz OpenWeatherMap"
       },
       {
         id: "owm_wind",
-        name: "Wind Speed",
+        name: "Hitrost vetra",
         type: "tile",
         url: "https://tile.openweathermap.org/map/wind_new/{z}/{x}/{y}.png?appid=9de243494c0b295cca9337e1e96b00e2",
         opacity: 0.7,
-        description: "Wind speed layer from OpenWeatherMap"
+        description: "Sloj hitrosti vetra iz OpenWeatherMap"
       },
       {
         id: "owm_temp",
-        name: "Temperature",
+        name: "Temperatura",
         type: "tile",
         url: "https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=9de243494c0b295cca9337e1e96b00e2",
         opacity: 0.6,
-        description: "Temperature layer from OpenWeatherMap"
+        description: "Temperaturni sloj iz OpenWeatherMap"
       }
     ]
   },
 
-  // — POTI / ROUTES ————————————————————————
+  // — POTI ————————————————————————
   {
     id: "poti",
     name: "Poti 🚴 🥾 🚂",
     icon: "Map",
-    description: "Cycling routes, hiking trails, railways and roads",
+    description: "Kolesarske poti, pohodniške steze, železnice in ceste",
     layers: [
       {
         id: "cycling_routes",
@@ -252,7 +245,7 @@ export const OVERLAY_CATEGORIES = [
         url: "https://tile.waymarkedtrails.org/cycling/{z}/{x}/{y}.png",
         transparent: true,
         opacity: 0.9,
-        description: "Waymarked cycling routes overlay"
+        description: "Označene kolesarske poti"
       },
       {
         id: "hiking_routes",
@@ -261,7 +254,7 @@ export const OVERLAY_CATEGORIES = [
         url: "https://tile.waymarkedtrails.org/hiking/{z}/{x}/{y}.png",
         transparent: true,
         opacity: 0.9,
-        description: "Waymarked hiking trails overlay"
+        description: "Označene pohodniške steze"
       },
       {
         id: "railway_lines",
@@ -270,7 +263,7 @@ export const OVERLAY_CATEGORIES = [
         url: "https://tiles.openrailwaymap.org/standard/{z}/{x}/{y}.png",
         transparent: true,
         opacity: 0.9,
-        description: "OpenRailwayMap railway lines"
+        description: "Železniške proge OpenRailwayMap"
       },
       {
         id: "opencyclemap",
@@ -279,7 +272,7 @@ export const OVERLAY_CATEGORIES = [
         url: "https://tile.thunderforest.com/cycle/{z}/{x}/{y}.png?apikey=pk.eyJ1IjoiIiwiYSI6IiJ9",
         transparent: true,
         opacity: 0.8,
-        description: "OpenCycleMap roads and cycling infrastructure"
+        description: "OpenCycleMap ceste in kolesarska infrastruktura"
       }
     ]
   }

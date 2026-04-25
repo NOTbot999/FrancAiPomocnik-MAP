@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Layers, Locate, LoaderCircle, Plus, Minus, Ruler, Search, Pentagon, MapPin, Trash2, MousePointer2, Navigation, Settings, Route, WifiOff } from "lucide-react";
+import { Layers, Locate, LoaderCircle, Plus, Minus, Ruler, Search, Pentagon, MapPin, Trash2, MousePointer2, Navigation, Settings, Route, WifiOff, Brain } from "lucide-react";
 import { useMap } from "react-leaflet";
 import { createPortal } from "react-dom";
 import SearchBar from "./SearchBar";
@@ -22,7 +22,7 @@ function MobileTopBarInner({
   onLocate, activeTool, onToolChange, onClear,
   onLocationSelect, isGpsTracking, onGpsToggle,
   onShowTracks, gpsTrack, onLoadTrack,
-  onRouteResult,
+  onRouteResult, isAIOpen, onAIToggle,
 }) {
   const map = useMap();
   const container = map.getContainer();
@@ -87,6 +87,11 @@ function MobileTopBarInner({
     if (id === "nav") return (
       <button key="nav" onClick={() => setShowNav(p => !p)} style={showNav ? btnActiveStyle : btnStyle} className={btnBase}>
         <Route style={iconStyle} />
+      </button>
+    );
+    if (id === "ai") return (
+      <button key="ai" onClick={onAIToggle} style={isAIOpen ? btnActiveStyle : btnStyle} className={btnBase}>
+        <Brain style={iconStyle} />
       </button>
     );
     return null;

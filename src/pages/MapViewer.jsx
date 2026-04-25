@@ -32,6 +32,8 @@ export default function MapViewer() {
   const [showMyTracks, setShowMyTracks] = useState(false);
   const [locateTrigger, setLocateTrigger] = useState(0);
   const [isAIOpen, setIsAIOpen] = useState(false);
+  const [pinnedLocation, setPinnedLocation] = useState(null);
+  const [isPinPicking, setIsPinPicking] = useState(false);
 
   // Check premium status — admins always get access
   const [currentUser, setCurrentUser] = useState(null);
@@ -190,7 +192,11 @@ export default function MapViewer() {
           gpsTrack,
           onLoadTrack: handleLoadTrack,
           onRouteResult: handleRouteResult,
+          isAIOpen,
+          onAIToggle: () => setIsAIOpen(p => !p),
         } : null}
+        isPinPicking={isPinPicking}
+        onPinPicked={(latlng) => { setPinnedLocation([latlng.lat, latlng.lng]); setIsPinPicking(false); }}
         locateTrigger={locateTrigger}
         gpsTracking={{
           isTracking: isGpsTracking,
@@ -228,6 +234,11 @@ export default function MapViewer() {
                 mapCenter={mapCenter}
                 mapZoom={mapZoom}
                 isPremium={isPremium}
+                pinnedLocation={pinnedLocation}
+                onRequestPin={(mode) => {
+                  if (mode === null) { setPinnedLocation(null); return; }
+                  setIsPinPicking(true);
+                }}
                 onAddMarkers={(markers) => {
                   const newMarkers = markers.map(m => ({ lat: m.lat, lng: m.lng, label: m.label }));
                   setDrawings(prev => ({ ...prev, markers: [...prev.markers, ...newMarkers] }));
@@ -279,6 +290,41 @@ export default function MapViewer() {
             onLoadDrawings={handleLoadDrawings}
           />
         </>
+      )}
+
+      {/* AI Panel — mobile */}
+      {isMobile && isAIOpen && (
+        <div className="absolute bottom-0 left-0 right-0 z-[960] flex justify-center pb-4 px-3">
+          <AIPanel
+            onClose={() => setIsAIOpen(false)}
+            activeLayers={activeLayers}
+            onToggleLayer={handleToggleLayer}
+            mapCenter={mapCenter}
+            mapZoom={mapZoom}
+            isPremium={isPremium}
+            pinnedLocation={pinnedLocation}
+            onRequestPin={(mode) => {
+              if (mode === null) { setPinnedLocation(null); return; }
+              setIsPinPicking(true);
+              setIsAIOpen(false);
+            }}
+            onAddMarkers={(markers) => {
+              const newMarkers = markers.map(m => ({ lat: m.lat, lng: m.lng, label: m.label }));
+              setDrawings(prev => ({ ...prev, markers: [...prev.markers, ...newMarkers] }));
+              if (markers[0]) setFlyToLocation({ lat: markers[0].lat, lng: markers[0].lng, zoom: 15 });
+            }}
+          />
+        </div>
+      )}
+
+      {/* Pin picking overlay */}
+      {isPinPicking && (
+        <div className="absolute inset-0 z-[970] pointer-events-none flex items-center justify-center">
+          <div className="absolute top-20 left-1/2 -translate-x-1/2 bg-slate-900/90 text-white text-xs px-4 py-2 rounded-xl shadow-xl pointer-events-auto">
+            Klikni na karto za izbiro točke analize
+            <button onClick={() => setIsPinPicking(false)} className="ml-3 text-slate-400 hover:text-white">✕</button>
+          </div>
+        </div>
       )}
 
       {/* My Tracks panel (mobile) */}
