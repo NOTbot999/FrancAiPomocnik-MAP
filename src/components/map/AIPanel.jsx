@@ -43,11 +43,7 @@ function PremiumLock({ theme }) {
 }
 
 // ─── Ask Franc tab ────────────────────────────────────────────────────────────
-function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme }) {
-  const [messages, setMessages] = useState([{
-    role: "assistant",
-    content: "Živjo! Sem Franc, tvoj GIS asistent za Slovenijo. Vprašajte me o slojih, geografiji ali podatkih."
-  }]);
+function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme, messages, setMessages, onResetChat }) {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef(null);
@@ -96,6 +92,14 @@ function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme }) {
 
   return (
     <>
+      <div className="flex items-center justify-between px-4 py-2 border-b shrink-0" style={{ borderColor: `${theme.panelText}18` }}>
+        <span className="text-[10px] font-bold uppercase tracking-widest opacity-50" style={{ color: theme.panelText }}>Pogovor</span>
+        <button onClick={onResetChat}
+          className="text-[10px] font-medium opacity-50 hover:opacity-100 transition-opacity px-2 py-1 rounded-lg hover:bg-white/10"
+          style={{ color: theme.panelText }}>
+          Počisti
+        </button>
+      </div>
       <div className="flex-1 overflow-y-auto p-3 space-y-3 min-h-0">
         {messages.map((msg, i) => (
           <div key={i} className={`flex gap-2 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
@@ -155,6 +159,7 @@ const TABS = [
 ];
 
 const AI_PANEL_STORAGE_KEY = "ai_panel_tab";
+const FRANC_CHAT_STORAGE_KEY = "franc_chat_messages";
 
 export default function AIPanel({
   onClose,
@@ -175,6 +180,34 @@ export default function AIPanel({
     const saved = localStorage.getItem(AI_PANEL_STORAGE_KEY);
     return saved && TABS.some(t => t.id === saved) ? saved : "ask";
   });
+
+  const [messages, setMessages] = useState(() => {
+    try {
+      const saved = localStorage.getItem(FRANC_CHAT_STORAGE_KEY);
+      return saved ? JSON.parse(saved) : [{
+        role: "assistant",
+        content: "Živjo! Sem Franc, tvoj GIS asistent za Slovenijo. Vprašajte me o slojih, geografiji ali podatkih."
+      }];
+    } catch {
+      return [{
+        role: "assistant",
+        content: "Živjo! Sem Franc, tvoj GIS asistent za Slovenijo. Vprašajte me o slojih, geografiji ali podatkih."
+      }];
+    }
+  });
+
+  const handleResetChat = () => {
+    const defaultMessages = [{
+      role: "assistant",
+      content: "Živjo! Sem Franc, tvoj GIS asistent za Slovenijo. Vprašajte me o slojih, geografiji ali podatkih."
+    }];
+    setMessages(defaultMessages);
+    localStorage.setItem(FRANC_CHAT_STORAGE_KEY, JSON.stringify(defaultMessages));
+  };
+
+  useEffect(() => {
+    localStorage.setItem(FRANC_CHAT_STORAGE_KEY, JSON.stringify(messages));
+  }, [messages]);
 
   useEffect(() => {
     localStorage.setItem(AI_PANEL_STORAGE_KEY, tab);
@@ -237,6 +270,9 @@ export default function AIPanel({
                 mapCenter={mapCenter}
                 mapZoom={mapZoom}
                 theme={theme}
+                messages={messages}
+                setMessages={setMessages}
+                onResetChat={handleResetChat}
               />
             )}
             {tab === "analysis" && (
