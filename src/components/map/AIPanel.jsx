@@ -175,12 +175,17 @@ function TerrainTab({ mapCenter, mapZoom, activeLayers, onAddMarkers, onFlyTo, o
   const [loading, setLoading] = useState(false);
   const [markers, setMarkers] = useState([]);
   const [activeRouteIdx, setActiveRouteIdx] = useState(null);
+  // Freeze the analysis coordinates when analysis starts — don't follow live mapCenter
+  const [frozenCoords, setFrozenCoords] = useState(null);
 
-  // The location to analyze: pinned point if set, otherwise map center
-  const analysisLat = pinnedLocation ? pinnedLocation[0] : mapCenter?.[0];
-  const analysisLng = pinnedLocation ? pinnedLocation[1] : mapCenter?.[1];
+  // For display before analysis: live coords; after analysis: frozen
+  const displayLat = frozenCoords ? frozenCoords[0] : (pinnedLocation ? pinnedLocation[0] : mapCenter?.[0]);
+  const displayLng = frozenCoords ? frozenCoords[1] : (pinnedLocation ? pinnedLocation[1] : mapCenter?.[1]);
 
   const analyze = async () => {
+    const analysisLat = pinnedLocation ? pinnedLocation[0] : mapCenter?.[0];
+    const analysisLng = pinnedLocation ? pinnedLocation[1] : mapCenter?.[1];
+    setFrozenCoords([analysisLat, analysisLng]);
     setLoading(true);
     setResult(null);
     setMarkers([]);
@@ -316,7 +321,7 @@ Natančno analiziraj to slovensko lokacijo in okolico 4,2 km × 4,2 km. Uporabi 
           <Loader2 className="w-7 h-7 text-emerald-400 animate-spin" />
           <p className="text-sm opacity-60" style={{ color: theme.panelText }}>AI analizira teren...</p>
           <p className="text-xs opacity-40 font-mono" style={{ color: theme.panelText }}>
-            {analysisLat?.toFixed(4)}, {analysisLng?.toFixed(4)} · 4,2km × 4,2km
+            {displayLat?.toFixed(4)}, {displayLng?.toFixed(4)} · 4,2km × 4,2km
           </p>
         </div>
       )}
@@ -339,7 +344,7 @@ Natančno analiziraj to slovensko lokacijo in okolico 4,2 km × 4,2 km. Uporabi 
             )}
             <div className="flex items-center gap-2 text-[10px] opacity-60" style={{ color: theme.panelText }}>
               <MapPin className="w-3 h-3 shrink-0" />
-              <span className="font-mono">{analysisLat?.toFixed(5)}, {analysisLng?.toFixed(5)}</span>
+              <span className="font-mono">{displayLat?.toFixed(5)}, {displayLng?.toFixed(5)}</span>
               <span className="opacity-60">· 4,2km²</span>
             </div>
           </div>
@@ -416,7 +421,7 @@ Natančno analiziraj to slovensko lokacijo in okolico 4,2 km × 4,2 km. Uporabi 
             </ReactMarkdown>
           </div>
 
-          <button onClick={() => { setResult(null); setMarkers([]); setActiveRouteIdx(null); if (onShowRoute) onShowRoute(null); }}
+          <button onClick={() => { setResult(null); setMarkers([]); setActiveRouteIdx(null); setFrozenCoords(null); if (onShowRoute) onShowRoute(null); }}
             className="w-full py-2 text-xs font-medium rounded-xl transition mt-2 opacity-50 hover:opacity-80"
             style={{ border: `1px solid ${theme.panelText}33`, color: theme.panelText }}>
             Nova analiza
