@@ -185,20 +185,22 @@ function getAllLayersFlat() {
 }
 
 // ArcGIS MapServer export as a Leaflet TileLayer (dynamic tiles via /export endpoint)
-function ArcGISExportLayer({ url, opacity, layerIds }) {
-  const map = useMap();
-  const layerRef = useRef(null);
+function ArcGISExportLayer({ url, opacity, layerIds, maxZoom }) {
+   const map = useMap();
+   const layerRef = useRef(null);
 
-  useEffect(() => {
-    // ArcGIS MapServer export: dynamic tiles via /export endpoint with bbox injection
-    const arcLayer = L.tileLayer(
-      url + "?bbox={bbox-epsg-3857}&bboxSR=3857&imageSR=3857&size=256,256&f=image&format=png&transparent=true&" + (layerIds ? `layers=${layerIds}` : ""),
-      {
-        tileSize: 256,
-        opacity,
-        bounds: [[45.4, 13.3], [46.9, 16.7]],
-      }
-    );
+   useEffect(() => {
+     // ArcGIS MapServer export: dynamic tiles via /export endpoint with bbox injection
+     const arcLayer = L.tileLayer(
+       url + "?bbox={bbox-epsg-3857}&bboxSR=3857&imageSR=3857&size=256,256&f=image&format=png&transparent=true&" + (layerIds ? `layers=${layerIds}` : ""),
+       {
+         tileSize: 256,
+         opacity,
+         maxZoom: maxZoom || 22,
+         maxNativeZoom: 19,
+         bounds: [[45.4, 13.3], [46.9, 16.7]],
+       }
+     );
 
     // Override getTileUrl to inject proper bbox
     arcLayer.getTileUrl = function (coords) {
@@ -296,7 +298,7 @@ export default function MapContainerComponent({
         if (bl.type === 'arcgis_export') {
           return <ArcGISExportLayer key={bl.id} url={bl.arcgisUrl} opacity={opacity} />;
         }
-        return <TileLayer key={bl.id} url={bl.url} opacity={opacity} attribution={bl.attribution || ""} maxZoom={22} maxNativeZoom={19} />;
+        return <TileLayer key={bl.id} url={bl.url} opacity={opacity} attribution={bl.attribution || ""} maxZoom={22} maxNativeZoom={bl.maxNativeZoom || 19} />;
       })}
 
       {/* Active overlay layers */}
@@ -307,31 +309,32 @@ export default function MapContainerComponent({
         const opacity = config.opacity ?? layer.opacity ?? 0.7;
 
         // Standard tile layer
-        if (layer.type === "tile") {
-          return (
-            <TileLayer
-              key={layerId}
-              url={layer.url}
-              opacity={opacity}
-              tileSize={256}
-              maxZoom={layer.maxZoom || 19}
-              maxNativeZoom={layer.maxZoom || 19}
-              attribution={layer.attribution || ""}
-            />
-          );
-        }
+         if (layer.type === "tile") {
+           return (
+             <TileLayer
+               key={layerId}
+               url={layer.url}
+               opacity={opacity}
+               tileSize={256}
+               maxZoom={22}
+               maxNativeZoom={layer.maxNativeZoom || layer.maxZoom || 19}
+               attribution={layer.attribution || ""}
+             />
+           );
+         }
 
         // ArcGIS MapServer export dynamic tiles
-        if (layer.type === "arcgis_export") {
-          return (
-            <ArcGISExportLayer
-              key={layerId}
-              url={layer.url}
-              opacity={opacity}
-              layerIds={layer.layerIds}
-            />
-          );
-        }
+         if (layer.type === "arcgis_export") {
+           return (
+             <ArcGISExportLayer
+               key={layerId}
+               url={layer.url}
+               opacity={opacity}
+               layerIds={layer.layerIds}
+               maxZoom={22}
+             />
+           );
+         }
 
         // All WMS layers (standard + katasterjam_caves uses wmsUrl fallback)
         const wmsUrl = layer.wmsUrl || layer.url;
