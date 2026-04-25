@@ -111,21 +111,21 @@ export const OVERLAY_CATEGORIES = [
       },
       {
         id: "gurs_dtk25",
-        name: "Topographic Map 1:25,000 (DTK25)",
+        name: "Basic Topo Maps 1:5k–1:10k (TTN5/TTN10)",
         type: "wms",
-        url: "https://storitve.eprostor.gov.si/ows-bin/ows",
-        layers: "SI.GURS.DK:DTK25",
+        url: "https://ipi.eprostor.gov.si/wms-si-gurs-dts/wms",
+        layers: "SI.GURS.DK:TTN5_TTN10",
         format: "image/png",
         transparent: false,
         version: "1.1.1",
         opacity: 1.0,
-        description: "Official Slovenian topographic map 1:25,000 (detailed)"
+        description: "Combined TTN5 and TTN10 basic topographic maps 1:5,000–1:10,000"
       },
       {
         id: "gurs_dtk50",
         name: "Topographic Map 1:50,000 (DTK50)",
         type: "wms",
-        url: "https://storitve.eprostor.gov.si/ows-bin/ows",
+        url: "https://ipi.eprostor.gov.si/wms-si-gurs-dts/wms",
         layers: "SI.GURS.DK:DTK50",
         format: "image/png",
         transparent: false,
