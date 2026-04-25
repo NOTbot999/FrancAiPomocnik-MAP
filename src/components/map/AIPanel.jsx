@@ -149,7 +149,7 @@ function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme }) {
         {messages.map((msg, i) => (
           <div key={i} className={`flex gap-2 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
             {msg.role === "assistant" && (
-              <img src="https://media.base44.com/images/public/69ad3ce309822f8e71f66838/75ef0a326_EZU3mXIlM90xjxOrcrhU--0--SNgLs.jpg" alt="Franc" className="rounded-full object-cover shrink-0 mt-0.5" style={{ width: "28px", height: "28px" }} />
+              <img src="https://media.base44.com/images/public/69ad3ce309822f8e71f66838/75ef0a326_EZU3mXIlM90xjxOrcrhU--0--SNgLs.jpg" alt="Franc" className="rounded-full object-cover shrink-0 mt-0.5" style={{ width: "36px", height: "36px" }} />
             )}
             <div className="max-w-[85%] rounded-xl px-3 py-2 text-xs leading-relaxed"
               style={msg.role === "user"
@@ -171,7 +171,7 @@ function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme }) {
         ))}
         {loading && (
           <div className="flex gap-2">
-            <img src="https://media.base44.com/images/public/69ad3ce309822f8e71f66838/75ef0a326_EZU3mXIlM90xjxOrcrhU--0--SNgLs.jpg" alt="Franc" className="rounded-full object-cover shrink-0" style={{ width: "28px", height: "28px" }} />
+            <img src="https://media.base44.com/images/public/69ad3ce309822f8e71f66838/75ef0a326_EZU3mXIlM90xjxOrcrhU--0--SNgLs.jpg" alt="Franc" className="rounded-full object-cover shrink-0" style={{ width: "36px", height: "36px" }} />
             <div className="rounded-xl px-3 py-2" style={{ backgroundColor: theme.menuBg + "33" }}>
               <Loader2 className="w-3.5 h-3.5 text-emerald-400 animate-spin" />
             </div>
