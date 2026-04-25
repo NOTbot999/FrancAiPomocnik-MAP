@@ -115,11 +115,12 @@ export const OVERLAY_CATEGORIES = [
         type: "wms",
         url: "https://ipi.eprostor.gov.si/wms-si-gurs-dts/wms",
         layers: "SI.GURS.DK:TTN5_TTN10",
-        format: "image/png",
+        format: "image/jpeg",
         transparent: false,
         version: "1.1.1",
         opacity: 1.0,
-        description: "Combined TTN5 and TTN10 basic topographic maps 1:5,000–1:10,000"
+        tileSize: 256,
+        description: "Combined TTN5 and TTN10 basic topographic maps 1:5,000–1:10,000 (zoom 13+)"
       },
       {
         id: "gurs_dtk50",
@@ -127,10 +128,11 @@ export const OVERLAY_CATEGORIES = [
         type: "wms",
         url: "https://ipi.eprostor.gov.si/wms-si-gurs-dts/wms",
         layers: "SI.GURS.DK:DTK50",
-        format: "image/png",
+        format: "image/jpeg",
         transparent: false,
         version: "1.1.1",
         opacity: 1.0,
+        tileSize: 256,
         description: "Official Slovenian topographic map 1:50,000"
       }
     ]

@@ -329,7 +329,7 @@ export default function MapContainerComponent({
               version={layer.version || "1.1.1"}
               opacity={opacity}
               crs={L.CRS.EPSG3857}
-              tileSize={512}
+              tileSize={layer.tileSize || 512}
               detectRetina={false}
             />
           );
