@@ -141,6 +141,7 @@ export default function MapViewer() {
   }, []);
 
   const [routePolyline, setRoutePolyline] = useState(null);
+  const [aiRoutePolyline, setAiRoutePolyline] = useState(null);
   const [isNavOpen, setIsNavOpen] = useState(false);
   const [isOfflineOpen, setIsOfflineOpen] = useState(false);
   const [isTrackAnalyzerOpen, setIsTrackAnalyzerOpen] = useState(false);
@@ -172,6 +173,7 @@ export default function MapViewer() {
         drawings={drawings}
         setDrawings={setDrawings}
         routePolyline={routePolyline}
+        aiRoutePolyline={aiRoutePolyline}
         offlineOpen={isOfflineOpen}
         onOfflineClose={() => setIsOfflineOpen(false)}
         showZoomControls={!isMobile}
@@ -239,10 +241,13 @@ export default function MapViewer() {
                   if (mode === null) { setPinnedLocation(null); return; }
                   setIsPinPicking(true);
                 }}
+                onShowRoute={(coords) => setAiRoutePolyline(coords)}
                 onAddMarkers={(markers) => {
-                  const newMarkers = markers.map(m => ({ lat: m.lat, lng: m.lng, label: m.label }));
-                  setDrawings(prev => ({ ...prev, markers: [...prev.markers, ...newMarkers] }));
-                  if (markers[0]) setFlyToLocation({ lat: markers[0].lat, lng: markers[0].lng, zoom: 15 });
+                  const newMarkers = markers.filter(m => m.lat && m.lng).map(m => ({ lat: m.lat, lng: m.lng, label: m.label }));
+                  if (newMarkers.length > 0) {
+                    setDrawings(prev => ({ ...prev, markers: [...prev.markers, ...newMarkers] }));
+                    setFlyToLocation({ lat: newMarkers[0].lat, lng: newMarkers[0].lng, zoom: 15 });
+                  }
                 }}
               />
             </div>
@@ -308,10 +313,13 @@ export default function MapViewer() {
               setIsPinPicking(true);
               setIsAIOpen(false);
             }}
+            onShowRoute={(coords) => setAiRoutePolyline(coords)}
             onAddMarkers={(markers) => {
-              const newMarkers = markers.map(m => ({ lat: m.lat, lng: m.lng, label: m.label }));
-              setDrawings(prev => ({ ...prev, markers: [...prev.markers, ...newMarkers] }));
-              if (markers[0]) setFlyToLocation({ lat: markers[0].lat, lng: markers[0].lng, zoom: 15 });
+              const newMarkers = markers.filter(m => m.lat && m.lng).map(m => ({ lat: m.lat, lng: m.lng, label: m.label }));
+              if (newMarkers.length > 0) {
+                setDrawings(prev => ({ ...prev, markers: [...prev.markers, ...newMarkers] }));
+                setFlyToLocation({ lat: newMarkers[0].lat, lng: newMarkers[0].lng, zoom: 15 });
+              }
             }}
           />
         </div>

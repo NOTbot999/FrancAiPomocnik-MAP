@@ -25,11 +25,22 @@ Ko priporočaš sloje, vključi: <activate_layers>["id1","id2"]</activate_layers
 Odgovori naj bodo kratki in praktični.`;
 
 const TERRAIN_SYSTEM = `Si strokovni GIS analitik za Slovenijo. VEDNO odgovarjaj v SLOVENŠČINI.
-Analiziraj podane koordinate. Za vsako pomembno ugotovitev (objekt, znamenitost, POI, pot):
-Na KONCU odgovora vključi JSON blok s klikabilnimi markerji:
-<map_markers>[{"lat":46.05,"lng":14.5,"label":"Oznaka","type":"structure|poi|route|landmark","layer":"layer_id_ali_null"}]</map_markers>
-Razdelki: 1) Umetne strukture, 2) Terenske značilnosti, 3) Točke interesa (s koordinatami), 4) Predlagane poti (z začetnimi koordinatami).
-Bodi natančen in uporabljaj resnična slovenska krajevna imena.`;
+Analiziraj območje 4,2 km × 4,2 km okoli podanih koordinat. Vsak predmet, pot ali POI MORA biti označen v JSON bloku na KONCU odgovora.
+
+Razdelki:
+1) Umetne strukture — zgradbe, ceste, infrastruktura, mostu, jezovi itd.
+2) Terenske značilnosti — reliefne oblike, gozdovi, vode, vzpetine itd.
+3) Točke interesa (POI) — razgledišča, koče, zanimivosti, kulturna dediščina itd.
+4) Predlagane poti — konkretne ture s pribl. trasami (vsaka pot ima coords: niz koordinatnih parov)
+
+Za vsako ugotovitev vključi klikajoč vnos v JSON blok:
+- Navadni objekti/POI: {"lat":46.05,"lng":14.5,"label":"Ime","type":"structure|poi|landmark","description":"kratek opis"}
+- Predlagane POTI: {"label":"Ime poti","type":"route","description":"opis","coords":[[lat,lng],[lat,lng],...]}
+
+Na KONCU odgovora OBVEZNO:
+<map_markers>[...seznam vseh objektov in poti...]</map_markers>
+
+Bodi natančen — uporabi resnične koordinate iz poznavanja terena. Vsak razdelek mora imeti vsaj 2-3 vnose v JSON.`;
 
 // ─── Premium Lock screen ──────────────────────────────────────────────────────
 function PremiumLock({ theme }) {
@@ -159,10 +170,11 @@ function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme }) {
 }
 
 // ─── Terrain AI tab ───────────────────────────────────────────────────────────
-function TerrainTab({ mapCenter, mapZoom, activeLayers, onAddMarkers, theme, onRequestPin, pinnedLocation }) {
+function TerrainTab({ mapCenter, mapZoom, activeLayers, onAddMarkers, onShowRoute, theme, onRequestPin, pinnedLocation }) {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [markers, setMarkers] = useState([]);
+  const [activeRouteIdx, setActiveRouteIdx] = useState(null);
 
   // The location to analyze: pinned point if set, otherwise map center
   const analysisLat = pinnedLocation ? pinnedLocation[0] : mapCenter?.[0];
@@ -172,6 +184,7 @@ function TerrainTab({ mapCenter, mapZoom, activeLayers, onAddMarkers, theme, onR
     setLoading(true);
     setResult(null);
     setMarkers([]);
+    setActiveRouteIdx(null);
     const activeNames = Object.keys(activeLayers).map(id => {
       for (const cat of OVERLAY_CATEGORIES) {
         const l = cat.layers.find(l => l.id === id);
@@ -181,9 +194,9 @@ function TerrainTab({ mapCenter, mapZoom, activeLayers, onAddMarkers, theme, onR
     });
     const prompt = `${TERRAIN_SYSTEM}
 
-Koordinate: ${analysisLat.toFixed(5)}, ${analysisLng.toFixed(5)} | Zoom: ${mapZoom} | Aktivni sloji: ${activeNames.join(", ") || "ni aktivnih"}
+Središče analize: ${analysisLat.toFixed(5)}°N, ${analysisLng.toFixed(5)}°E | Zoom: ${mapZoom} | Aktivni sloji: ${activeNames.join(", ") || "ni aktivnih"}
 
-Natančno analiziraj to slovensko lokacijo. Uporabi internetni kontekst za resnične podatke.`;
+Natančno analiziraj to slovensko lokacijo in okolico 4,2 km × 4,2 km. Uporabi internetni kontekst za resnične geografske podatke.`;
 
     const res = await base44.integrations.Core.InvokeLLM({
       prompt, add_context_from_internet: true, model: "gemini_3_flash"
@@ -201,12 +214,36 @@ Natančno analiziraj to slovensko lokacijo. Uporabi internetni kontekst za resni
     setLoading(false);
   };
 
-  const handleMarkerClick = (marker) => {
-    if (onAddMarkers) onAddMarkers([marker]);
+  const handleItemClick = (marker, idx) => {
+    if (marker.type === "route" && marker.coords?.length > 0) {
+      // Toggle route display
+      if (activeRouteIdx === idx) {
+        setActiveRouteIdx(null);
+        if (onShowRoute) onShowRoute(null);
+      } else {
+        setActiveRouteIdx(idx);
+        if (onShowRoute) onShowRoute(marker.coords);
+        // Fly to start of route
+        if (onAddMarkers && marker.coords[0]) {
+          onAddMarkers([{ lat: marker.coords[0][0], lng: marker.coords[0][1], label: marker.label, _nofly: false }]);
+        }
+      }
+    } else if (marker.lat && marker.lng) {
+      if (onAddMarkers) onAddMarkers([marker]);
+    }
   };
 
   const typeColor = { structure: "text-orange-400", poi: "text-emerald-400", route: "text-blue-400", landmark: "text-amber-400" };
   const typeIcon = { structure: "🏗️", poi: "📍", route: "🛤️", landmark: "🗺️" };
+  const typeBg = { structure: "rgba(251,146,60,0.12)", poi: "rgba(16,185,129,0.12)", route: "rgba(59,130,246,0.12)", landmark: "rgba(245,158,11,0.12)" };
+
+  // Group markers by type for display
+  const groups = [
+    { key: "structure", label: "Umetne strukture" },
+    { key: "landmark", label: "Terenske značilnosti" },
+    { key: "poi", label: "Točke interesa" },
+    { key: "route", label: "Predlagane poti" },
+  ];
 
   return (
     <div className="flex-1 overflow-y-auto px-4 py-3 min-h-0">
@@ -217,7 +254,7 @@ Natančno analiziraj to slovensko lokacijo. Uporabi internetni kontekst za resni
           </div>
           <p className="text-sm font-semibold mb-1" style={{ color: theme.panelText }}>AI analiza terena</p>
           <p className="text-xs opacity-50 mb-4" style={{ color: theme.panelText }}>
-            Zazna objekte, primerja sloje, predlaga poti in točke interesa.
+            Zazna objekte, primerja sloje, predlaga poti in točke interesa v območju 4,2 × 4,2 km.
           </p>
 
           {/* Pinpoint section */}
@@ -273,7 +310,7 @@ Natančno analiziraj to slovensko lokacijo. Uporabi internetni kontekst za resni
           <Loader2 className="w-7 h-7 text-emerald-400 animate-spin" />
           <p className="text-sm opacity-60" style={{ color: theme.panelText }}>AI analizira teren...</p>
           <p className="text-xs opacity-40 font-mono" style={{ color: theme.panelText }}>
-            {analysisLat?.toFixed(4)}, {analysisLng?.toFixed(4)}
+            {analysisLat?.toFixed(4)}, {analysisLng?.toFixed(4)} · 4,2km × 4,2km
           </p>
         </div>
       )}
@@ -285,42 +322,64 @@ Natančno analiziraj to slovensko lokacijo. Uporabi internetni kontekst za resni
             <MapPin className="w-3 h-3" />
             <span className="font-mono">{analysisLat?.toFixed(5)}, {analysisLng?.toFixed(5)}</span>
             {pinnedLocation && <span className="text-emerald-400 opacity-100">• označena točka</span>}
+            <span className="opacity-60">· 4,2km × 4,2km</span>
           </div>
 
-          {/* Clickable markers */}
-          {markers.length > 0 && (
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest opacity-40 mb-2" style={{ color: theme.panelText }}>
-                Klikni za oznako na karti
-              </p>
-              <div className="space-y-1">
-                {markers.map((m, i) => (
-                  <motion.button
-                    key={i}
-                    whileHover={{ x: 3 }}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={() => handleMarkerClick(m)}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left transition-all hover:bg-white/10"
-                    style={{ border: `1px solid ${theme.panelText}18` }}
-                  >
-                    <span className="text-base leading-none">{typeIcon[m.type] || "📍"}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold truncate" style={{ color: theme.panelText }}>{m.label}</p>
-                      <p className={`text-[10px] ${typeColor[m.type] || "text-slate-400"}`}>
-                        {m.lat?.toFixed(4)}, {m.lng?.toFixed(4)}
-                        {m.layer ? ` · ${m.layer}` : ""}
-                      </p>
-                    </div>
-                    <MapPin className="w-3.5 h-3.5 shrink-0 opacity-40" style={{ color: theme.panelText }} />
-                  </motion.button>
-                ))}
+          {/* Grouped clickable markers */}
+          {markers.length > 0 && groups.map(group => {
+            const items = markers.map((m, i) => ({ ...m, _idx: i })).filter(m => m.type === group.key);
+            if (items.length === 0) return null;
+            return (
+              <div key={group.key}>
+                <p className="text-[10px] font-bold uppercase tracking-widest opacity-40 mb-1.5 flex items-center gap-1.5" style={{ color: theme.panelText }}>
+                  <span>{typeIcon[group.key]}</span> {group.label}
+                </p>
+                <div className="space-y-1">
+                  {items.map((m) => {
+                    const isActiveRoute = m.type === "route" && activeRouteIdx === m._idx;
+                    return (
+                      <motion.button
+                        key={m._idx}
+                        whileHover={{ x: 2 }}
+                        whileTap={{ scale: 0.97 }}
+                        onClick={() => handleItemClick(m, m._idx)}
+                        className="w-full flex items-start gap-2.5 px-3 py-2 rounded-xl text-left transition-all"
+                        style={{
+                          border: `1px solid ${isActiveRoute ? "rgba(59,130,246,0.5)" : theme.panelText + "18"}`,
+                          backgroundColor: isActiveRoute ? "rgba(59,130,246,0.15)" : typeBg[m.type] || "transparent",
+                        }}
+                      >
+                        <span className="text-sm leading-none mt-0.5 shrink-0">{typeIcon[m.type] || "📍"}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-semibold" style={{ color: theme.panelText }}>{m.label}</p>
+                          {m.description && (
+                            <p className="text-[10px] opacity-60 leading-snug mt-0.5" style={{ color: theme.panelText }}>{m.description}</p>
+                          )}
+                          {m.type === "route" && m.coords?.length > 0 ? (
+                            <p className={`text-[10px] mt-0.5 font-medium ${isActiveRoute ? "text-blue-400" : typeColor[m.type]}`}>
+                              {isActiveRoute ? "✓ Prikazano na karti" : `🛤️ ${m.coords.length} točk — klikni za prikaz`}
+                            </p>
+                          ) : m.lat && m.lng ? (
+                            <p className={`text-[10px] mt-0.5 ${typeColor[m.type] || "text-slate-400"}`}>
+                              {m.lat.toFixed(4)}, {m.lng.toFixed(4)} · klikni za oznako
+                            </p>
+                          ) : null}
+                        </div>
+                        {m.type === "route"
+                          ? <span className="text-blue-400 text-[10px] shrink-0 mt-0.5">{isActiveRoute ? "✓" : "→"}</span>
+                          : <MapPin className="w-3 h-3 shrink-0 opacity-30 mt-0.5" style={{ color: theme.panelText }} />
+                        }
+                      </motion.button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })}
 
           {/* Analysis text */}
-          <div className="text-[11px] flex items-center gap-1 opacity-50 mb-1" style={{ color: theme.panelText }}>
-            <Star className="w-3 h-3 text-amber-400 opacity-100" /> Analiza zaključena
+          <div className="text-[11px] flex items-center gap-1 opacity-50 mt-2 mb-1" style={{ color: theme.panelText }}>
+            <Star className="w-3 h-3 text-amber-400 opacity-100" /> Celotna analiza
           </div>
           <div className="prose prose-xs max-w-none">
             <ReactMarkdown
@@ -338,7 +397,7 @@ Natančno analiziraj to slovensko lokacijo. Uporabi internetni kontekst za resni
             </ReactMarkdown>
           </div>
 
-          <button onClick={() => { setResult(null); setMarkers([]); }}
+          <button onClick={() => { setResult(null); setMarkers([]); setActiveRouteIdx(null); if (onShowRoute) onShowRoute(null); }}
             className="w-full py-2 text-xs font-medium rounded-xl transition mt-2 opacity-50 hover:opacity-80"
             style={{ border: `1px solid ${theme.panelText}33`, color: theme.panelText }}>
             Nova analiza
@@ -363,6 +422,7 @@ export default function AIPanel({
   mapZoom,
   isPremium,
   onAddMarkers,
+  onShowRoute,
   onRequestPin,
   pinnedLocation,
 }) {
@@ -437,6 +497,7 @@ export default function AIPanel({
                 mapZoom={mapZoom}
                 activeLayers={activeLayers}
                 onAddMarkers={onAddMarkers}
+                onShowRoute={onShowRoute}
                 theme={theme}
                 onRequestPin={onRequestPin}
                 pinnedLocation={pinnedLocation}

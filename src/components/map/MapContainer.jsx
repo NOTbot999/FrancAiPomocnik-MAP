@@ -268,6 +268,7 @@ export default function MapContainerComponent({
   onMapMove,
   isPinPicking,
   onPinPicked,
+  aiRoutePolyline,
 }) {
   const allLayers = getAllLayersFlat();
   const activeBaseLayerEntries = activeBaseLayers
@@ -369,6 +370,9 @@ export default function MapContainerComponent({
       )}
       {routePolyline && routePolyline.length > 0 && (
         <Polyline positions={routePolyline} color="#2563eb" weight={5} opacity={0.85} />
+      )}
+      {aiRoutePolyline && aiRoutePolyline.length > 1 && (
+        <Polyline positions={aiRoutePolyline} color="#f59e0b" weight={4} opacity={0.9} dashArray="8,5" />
       )}
       <FlyToLocation location={flyToLocation} />
       <CoordsDisplay onMapMove={onMapMove} />
