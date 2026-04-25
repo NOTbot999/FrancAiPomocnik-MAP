@@ -25,13 +25,15 @@ Ko priporočaš sloje, vključi: <activate_layers>["id1","id2"]</activate_layers
 Odgovori naj bodo kratki in praktični.`;
 
 const TERRAIN_SYSTEM = `Si strokovni GIS analitik za Slovenijo. VEDNO odgovarjaj v SLOVENŠČINI.
-Analiziraj območje 4,2 km × 4,2 km okoli podanih koordinat. Vsak predmet, pot ali POI MORA biti označen v JSON bloku na KONCU odgovora.
+Analiziraj območje 4,2 km × 4,2 km okoli podanih koordinat.
+
+KRITIČNO — KOORDINATE: Vse lat/lng koordinate v JSON bloku MORAJO biti znotraj podanega bounding boxa (minLat, maxLat, minLng, maxLng). Koordinate izven tega območja so NAPAKA. Vsak objekt mora biti pozicioniran na svoji dejanski geografski lokaciji znotraj območja — ne izmišljaj si koordinat, uporabi resnično poznavanje terena.
 
 Razdelki:
-1) Umetne strukture — zgradbe, ceste, infrastruktura, mostu, jezovi itd.
+1) Umetne strukture — zgradbe, ceste, infrastruktura, mostovi, jezovi itd.
 2) Terenske značilnosti — reliefne oblike, gozdovi, vode, vzpetine itd.
 3) Točke interesa (POI) — razgledišča, koče, zanimivosti, kulturna dediščina itd.
-4) Predlagane poti — konkretne ture s pribl. trasami (vsaka pot ima coords: niz koordinatnih parov)
+4) Predlagane poti — konkretne ture s pribl. trasami (vsaka pot ima coords: niz koordinatnih parov, VSI znotraj bounding boxa)
 
 Za vsako ugotovitev vključi klikajoč vnos v JSON blok:
 - Navadni objekti/POI: {"lat":46.05,"lng":14.5,"label":"Ime","type":"structure|poi|landmark","description":"kratek opis"}
@@ -40,7 +42,7 @@ Za vsako ugotovitev vključi klikajoč vnos v JSON blok:
 Na KONCU odgovora OBVEZNO:
 <map_markers>[...seznam vseh objektov in poti...]</map_markers>
 
-Bodi natančen — uporabi resnične koordinate iz poznavanja terena. Vsak razdelek mora imeti vsaj 2-3 vnose v JSON.`;
+Vsak razdelek mora imeti vsaj 2-3 vnose v JSON. Koordinate morajo biti NATANČNE in znotraj bounding boxa.`;
 
 // ─── Premium Lock screen ──────────────────────────────────────────────────────
 function PremiumLock({ theme }) {
@@ -197,11 +199,20 @@ function TerrainTab({ mapCenter, mapZoom, activeLayers, onAddMarkers, onFlyTo, o
       }
       return id;
     });
+    // Calculate bounding box ~2.1km in each direction
+    const latDelta = 0.019; // ~2.1km latitude
+    const lngDelta = 0.030; // ~2.1km longitude at Slovenia's latitude
+    const minLat = (analysisLat - latDelta).toFixed(5);
+    const maxLat = (analysisLat + latDelta).toFixed(5);
+    const minLng = (analysisLng - lngDelta).toFixed(5);
+    const maxLng = (analysisLng + lngDelta).toFixed(5);
+
     const prompt = `${TERRAIN_SYSTEM}
 
 Središče analize: ${analysisLat.toFixed(5)}°N, ${analysisLng.toFixed(5)}°E | Zoom: ${mapZoom} | Aktivni sloji: ${activeNames.join(", ") || "ni aktivnih"}
+BOUNDING BOX (vse koordinate MORAJO biti znotraj): minLat=${minLat}, maxLat=${maxLat}, minLng=${minLng}, maxLng=${maxLng}
 
-Natančno analiziraj to slovensko lokacijo in okolico 4,2 km × 4,2 km. Uporabi internetni kontekst za resnične geografske podatke.`;
+Natančno analiziraj to slovensko lokacijo. Uporabi internetni kontekst za resnične geografske podatke. VSE koordinate v JSON morajo biti med minLat-maxLat in minLng-maxLng.`;
 
     const res = await base44.integrations.Core.InvokeLLM({
       prompt, add_context_from_internet: true, model: "gemini_3_flash"
