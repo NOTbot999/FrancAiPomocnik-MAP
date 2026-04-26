@@ -56,11 +56,27 @@ export const BASE_LAYERS = [
   },
   {
     id: "lidar_hillshade",
-    name: "LIDAR Senčenje",
+    name: "LIDAR Senčenje (1 m)",
     type: "arcgis_export",
     arcgisUrl: "https://gis.arso.gov.si/arcgis/rest/services/Lidar_hillshade_D96TM/MapServer/export",
     attribution: "&copy; ARSO LIDAR",
     thumbnail: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=80&h=60&fit=crop"
+  },
+  {
+    id: "arso_dof_2022",
+    name: "Ortofoto 2022–2024 (ARSO)",
+    type: "arcgis_export",
+    arcgisUrl: "https://gis.arso.gov.si/arcgis/rest/services/DOF_D96TM_2022_2023_2024/MapServer/export",
+    attribution: "&copy; ARSO/GURS DOF 2022–2024",
+    thumbnail: "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=80&h=60&fit=crop"
+  },
+  {
+    id: "arso_topo_nova",
+    name: "ARSO Topografska karta",
+    type: "arcgis_export",
+    arcgisUrl: "https://gis.arso.gov.si/arcgis/rest/services/Topografske_karte_ARSO_nova/MapServer/export",
+    attribution: "&copy; ARSO Topografska karta",
+    thumbnail: "https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=80&h=60&fit=crop"
   }
 ];
 
@@ -129,6 +145,22 @@ export const OVERLAY_CATEGORIES = [
         opacity: 1.0,
         tileSize: 256,
         description: "Uradna slovenska topografska karta 1:50.000"
+      },
+      {
+        id: "arso_topo_overlay",
+        name: "ARSO Topografska karta (nova)",
+        type: "arcgis_export",
+        url: "https://gis.arso.gov.si/arcgis/rest/services/Topografske_karte_ARSO_nova/MapServer/export",
+        opacity: 0.9,
+        description: "Nova ARSO topografska karta z OSM, GURS in PZS podatki — detajlna in ažurna"
+      },
+      {
+        id: "arso_lidar_fishnet",
+        name: "LIDAR pokritost (mreža blokov)",
+        type: "arcgis_export",
+        url: "https://gis.arso.gov.si/arcgis/rest/services/Lidar_fishnet_D96/MapServer/export",
+        opacity: 0.6,
+        description: "Mreža LIDAR blokov — prikazuje, katera območja so bila snemana z aerolaserjem"
       }
     ]
   },
@@ -337,6 +369,80 @@ export const OVERLAY_CATEGORIES = [
         transparent: true,
         opacity: 0.8,
         description: "OpenCycleMap ceste in kolesarska infrastruktura"
+      }
+    ]
+  },
+
+  // ─── ZGODOVINSKI ORTOFOTO ARSO ────────────────────────────────
+  {
+    id: "zgodovinski_dof",
+    name: "📸 Zgodovinski ortofoto (ARSO)",
+    icon: "History",
+    description: "Primerjava ortofoto posnetkov skozi leta — odlično za iskanje starih objektov in sprememb v prostoru",
+    layers: [
+      {
+        id: "dof_2022_2024",
+        name: "Ortofoto 2022–2024 (najnovejši)",
+        type: "arcgis_export",
+        url: "https://gis.arso.gov.si/arcgis/rest/services/DOF_D96TM_2022_2023_2024/MapServer/export",
+        opacity: 1.0,
+        description: "Najnovejši ARSO ortofoto aeroposnetki 2022–2024, ločljivost 25 cm"
+      },
+      {
+        id: "dof_2018_2021",
+        name: "Ortofoto 2018–2021",
+        type: "arcgis_export",
+        url: "https://gis.arso.gov.si/arcgis/rest/services/DOF_D96TM_2018_2021/MapServer/export",
+        opacity: 1.0,
+        description: "ARSO ortofoto 2018–2021"
+      },
+      {
+        id: "dof_2016",
+        name: "Ortofoto 2016",
+        type: "arcgis_export",
+        url: "https://gis.arso.gov.si/arcgis/rest/services/DOF_D96TM_2016/MapServer/export",
+        opacity: 1.0,
+        description: "ARSO ortofoto 2016 — primerjaj z novejšimi za spremembe"
+      },
+      {
+        id: "dof_2009_2011",
+        name: "Ortofoto 2009–2011",
+        type: "arcgis_export",
+        url: "https://gis.arso.gov.si/arcgis/rest/services/DOF_D96TM_2009_2011/MapServer/export",
+        opacity: 1.0,
+        description: "ARSO ortofoto 2009–2011"
+      },
+      {
+        id: "dof_2006",
+        name: "Ortofoto 2006",
+        type: "arcgis_export",
+        url: "https://gis.arso.gov.si/arcgis/rest/services/DOF_D96TM_2006/MapServer/export",
+        opacity: 1.0,
+        description: "ARSO ortofoto 2006"
+      },
+      {
+        id: "dof_2001_2005",
+        name: "Ortofoto 2001–2005",
+        type: "arcgis_export",
+        url: "https://gis.arso.gov.si/arcgis/rest/services/DOF_D96TM_2001_2005/MapServer/export",
+        opacity: 1.0,
+        description: "ARSO ortofoto 2001–2005 — pred moderno urbanizacijo"
+      },
+      {
+        id: "dof_1990_1994",
+        name: "Ortofoto 1990–1994 (najstarejši)",
+        type: "arcgis_export",
+        url: "https://gis.arso.gov.si/arcgis/rest/services/DOF_D96TM_1990_1994/MapServer/export",
+        opacity: 1.0,
+        description: "Najstarejši ARSO ortofoto 1990–1994 — razkriva stara stanja prostora"
+      },
+      {
+        id: "arso_dmr",
+        name: "DMR – Digitalni model reliefa (1 m)",
+        type: "arcgis_export",
+        url: "https://gis.arso.gov.si/arcgis/rest/services/Slovenija_DMR_D96TM/ImageServer/exportImage",
+        opacity: 0.8,
+        description: "Surovi 1 m digitalni model reliefa iz LIDAR snemanja — absolutne višine terena"
       }
     ]
   },
