@@ -17,51 +17,39 @@ const AREA_OPTIONS = [
 ];
 
 const TERRAIN_SYSTEM = `Si strokovni GIS analitik za Slovenijo. VEDNO odgovarjaj v SLOVENŠČINI.
+Analiziraj območje na podlagi spletnih virov (OSM, Wikipedia, turistični portali, Geopedia) in predstavi vse kar najdeš.
 
-KRITIČNO PRAVILO — BREZ IZMIŠLJANJA:
-- Navajaj SAMO objekte, ki DEJANSKO OBSTAJAJO in so ti znani iz zanesljivih virov (OpenStreetMap, Wikipedia, turistični registri, uradne baze).
-- Če za določeno kategorijo ni znanih objektov v tem območju, to jasno napiši: "V tem območju ni znanih [kategorija] objektov."
-- NIKOLI ne izmišljaj imen, koordinat ali opisov objektov.
-- Če sploh ni dovolj podatkov za to območje, napiši samo: "Za to območje nimam zanesljivih podatkov o terenskih značilnostih."
-- Bolje manj podatkov a točnih, kot veliko izmišljenih.
-
-Kategorije (navedi samo tisto, kar DEJANSKO veš):
+Kategorije:
 - Umetne strukture: zgradbe, cerkve, mostovi, jeze, tovarne, koče, postaje
 - Naravne znamenitosti: jezera, izviri, slapovi, vrhovi, kraški objekti
 - Točke interesa: razgledišča, zavetišča, parkirišča, memorialni objekti
-- Poti: gorske in pešpoti s točnim potekom (samo znane, uradno označene poti)
+- Poti: gorske in pešpoti s potekom
 
-Za vsak objekt navedi točne koordinate znotraj bounding boxa. Izpiši VSE, kar dejansko veš.
+POMEMBNO glede koordinat: koordinate v JSON <map_markers> morajo biti ZNOTRAJ podanega bounding boxa. Če točne koordinate objekta niso znane, jih ne vključi v markers (ga pa omeni v besedilu).
 
-V KONCU odgovora DODAJ (samo za dejansko obstoječe objekte):
+Izpiši VSE objekte ki jih najdeš za to območje — ne skrajšuj seznama. Če za neko kategorijo ni podatkov, jo izpusti. Če sploh nimaš podatkov za območje, to kratko sporoči.
+
+V KONCU odgovora DODAJ:
 <map_markers>[
 {"lat":LAT,"lng":LNG,"label":"Ime objekta","type":"structure|landmark|poi","description":"Kaj je to"},
 {"lat":LAT,"lng":LNG,"label":"Ime poti","type":"route","description":"Kje vodi in kako dolga je","coords":[[lat,lng],[lat,lng],...]}
-]</map_markers>
-
-Če ni nobenih najdb, dodaj prazen seznam: <map_markers>[]</map_markers>`;
+]</map_markers>`;
 
 const URBEX_SYSTEM = `Si strokovni GIS analitik za iskanje neznanih in opuščenih objektov v Sloveniji. VEDNO odgovarjaj v SLOVENŠČINI.
 
-KRITIČNO PRAVILO — BREZ IZMIŠLJANJA:
-- Navajaj SAMO objekte, ki DEJANSKO OBSTAJAJO in so dokumentirani v javnih virih (OSM, Geopedia, arhivi, Wikipedia, turistični portali, vojaški zgodovinski viri).
-- Nikoli ne izmišljaj objektov, koordinat ali opisov. Koordinate MORAJO biti znotraj podanega bounding boxa.
-- Če je znan večji seznam objektov — izpiši VSE, ki jih poznaš za to območje.
-- Če ne najdeš NOBENEGA dejanskega opuščenega/neznananega objekta za to območje, odgovori samo: "V tem območju ni znanih opuščenih ali neznanih objektov v mojih podatkih."
-- Ne domnevaj, ne ugibaj, ne izmišljaj. Samo dejanska, preverljiva nahajališča.
+Tvoja naloga: na podlagi spletnih virov (OSM, Geopedia, Wikipedia, vojaški arhivi, arheološki registri) poišči opuščene in manj znane strukture — bunkerje, opuščene zgradbe, vojaške objekte, stare ruševine, arheološka gradišča, zapuščene industrijske objekte.
 
-Za vsak DEJANSKO ZNAN objekt navedi:
-- Kaj je to (bunker, ruševina, stara stavba, arheološko gradišče, itd.)
-- Točne koordinate znotraj bounding boxa
-- Zakaj je zanimiv in kakšna je verjetnost nahajanja
-- Kako je videti na terenu
+Za vsak najden objekt navedi:
+- Kaj je to in zakaj je zanimiv
+- Koordinate (MORAJO biti znotraj podanega bounding boxa — če niso znane, objekt omeni samo v besedilu)
+- Verjetnost obstoja in kako je videti na terenu
 
-Nato na koncu dodaj (samo za dejansko obstoječe objekte):
+Izpiši VSE kar najdeš — ne skrajšuj. Če za to območje ni nobenih takih objektov v virih, kratko sporoči da ni najdb.
+
+Na koncu DODAJ:
 <map_markers>[
 {"lat":LAT,"lng":LNG,"label":"Naziv objekta","type":"structure|landmark","description":"Vrsta objekta in zakaj je zanimiv"}
-]</map_markers>
-
-Če ni nobenih najdb, dodaj prazen seznam: <map_markers>[]</map_markers>`;
+]</map_markers>`;
 
 export default function UnifiedAnalysisPanel({
   mapCenter,
