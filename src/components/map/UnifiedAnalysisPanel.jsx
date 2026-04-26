@@ -88,15 +88,26 @@ NE dodajaj objektov ki niso na spodnjem seznamu. NE izmišljaj imen ali lokacij.
 OSM podatki:
 ${osmText}`;
 
-const URBEX_AI_PROMPT = (osmText, placeName, lat, lng, km) =>
-`Si GIS analitik za iskanje neznanih objektov v Sloveniji. VEDNO odgovarjaj v SLOVENŠČINI.
-Spodaj so DEJANSKI podatki iz OpenStreetMap za območje ${km}×${km} km okoli "${placeName || `${lat.toFixed(4)}, ${lng.toFixed(4)}`}".
-Fokusiraj se na: ruševine, opuščene objekte, vojaške/zgodovinske, archaeological_site, bunkerje, castle, tower, memorial.
-Za vsak tak objekt kratko razloži zakaj je zanimiv za urbex/iskanje.
-NE dodajaj objektov ki niso na spodnjem seznamu. Če ni nobenih takih objektov, kratko sporoči.
+const URBEX_AI_PROMPT = (osmText, placeName, lat, lng, km, arcanumUrl, lidarUrl, satelliteUrl) =>
+`Si GIS analitik za iskanje neznanih in opuščenih objektov v Sloveniji. VEDNO odgovarjaj v SLOVENŠČINI.
 
-OSM podatki:
-${osmText}`;
+Območje: "${placeName || `${lat.toFixed(4)}, ${lng.toFixed(4)}`}", ${km}×${km} km
+
+Tvoja naloga je primerjalna analiza treh virov za to območje:
+
+1. **LIDAR senčenje (ARSO)** — razkrije reliefne anomalije: jarke, nasipe, temelje zgradb, utrjene poti, gomile, ki niso vidni na navadni karti. Tile URL: ${lidarUrl}
+2. **Satelitska karta (Esri)** — pokaže aktualno stanje: vegetacijo, prosvetlitve, ruševine, asfalt, strehi. Tile URL: ${satelliteUrl}
+3. **Arcanum Maps (zgodovinska karta ~1910)** — primerja staro stanje s sedanjim. Objekti ki so bili na karti 1910 a niso več na OSM = potencialne ruševine/bunkerji/opuščeni objekti. Tile URL: ${arcanumUrl}
+4. **OpenStreetMap Overpass podatki** (dejanski, spodaj):
+${osmText}
+
+Navodila:
+- Poišči objekte ki so na Arcanum/LIDAR ampak NE na OSM (torej niso v spodnjih Overpass podatkih).
+- Poišči reliefne anomalije ki bi nakazovale umetne strukture (jarki, nasipi, gomile, temelji).
+- Za vsak tak potencialni objekt navedi: tip anomalije, zakaj je sumljiv, kateri vir ga kaže.
+- Objekte iz OSM ki so relevantni (ruševine, military, archaeological) kratko omeni ločeno.
+- NE izmišljaj imen ali koordinat. Opisuj anomalije splošno po območju.
+- Zaključi z oceno: kakšno je območje za urbex/iskanje objektov (nizek/srednji/visok potencial) in zakaj.`;
 
 export default function UnifiedAnalysisPanel({
   mapCenter,
@@ -197,11 +208,24 @@ export default function UnifiedAnalysisPanel({
     const urbexMarkers = allMarkers.filter(m => m.type === "structure");
     const terrainMarkers = allMarkers;
 
-    // Step 3: AI describes only what OSM actually found
+    // Step 3: Build tile URLs for visual comparison sources
     const osmText = overpassToText(osmElements);
+    // Pick a representative tile zoom level based on area size
+    const tileZoom = km <= 1 ? 17 : km <= 5 ? 15 : km <= 10 ? 13 : 11;
+    // lat/lng to tile coords
+    const tileX = Math.floor((analysisLng + 180) / 360 * Math.pow(2, tileZoom));
+    const tileY = Math.floor((1 - Math.log(Math.tan(analysisLat * Math.PI / 180) + 1 / Math.cos(analysisLat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, tileZoom));
+    const arcanumUrl = `https://maps.arcanum.com/en/map/europe-1910s/${tileZoom}/${tileX}/${tileY}.png`;
+    const lidarUrl = `https://gis.arso.gov.si/arcgis/rest/services/Lidar_hillshade_D96TM/MapServer/export?bbox=${minLng},${minLat},${maxLng},${maxLat}&bboxSR=4326&imageSR=3857&size=512,512&f=image&format=jpg`;
+    const satelliteUrl = `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=${minLng},${minLat},${maxLng},${maxLat}&bboxSR=4326&imageSR=3857&size=512,512&f=image&format=jpg`;
+
     const [terrainRes, urbexRes] = await Promise.all([
       base44.integrations.Core.InvokeLLM({ prompt: TERRAIN_AI_PROMPT(osmText, placeName, analysisLat, analysisLng, km) }),
-      base44.integrations.Core.InvokeLLM({ prompt: URBEX_AI_PROMPT(osmText, placeName, analysisLat, analysisLng, km) }),
+      base44.integrations.Core.InvokeLLM({
+        prompt: URBEX_AI_PROMPT(osmText, placeName, analysisLat, analysisLng, km, arcanumUrl, lidarUrl, satelliteUrl),
+        file_urls: [lidarUrl, satelliteUrl],
+        model: "claude_sonnet_4_6",
+      }),
     ]);
     const terrainText = typeof terrainRes === "string" ? terrainRes : terrainRes?.content || "";
     const urbexText = typeof urbexRes === "string" ? urbexRes : urbexRes?.content || "";
@@ -355,7 +379,7 @@ export default function UnifiedAnalysisPanel({
             </div>
           </div>
 
-          <p className="text-[10px] opacity-70" style={{ color: theme.panelText }}>AI bo analizirala teren in iskala neznane objekte hkrati.</p>
+          <p className="text-[10px] opacity-70" style={{ color: theme.panelText }}>Primerja LIDAR, satelit, Arcanum (1910) in OSM za iskanje neznanih objektov.</p>
 
           <button onClick={analyze}
             className="w-full py-2.5 font-semibold rounded-xl text-white transition shadow"
@@ -370,7 +394,7 @@ export default function UnifiedAnalysisPanel({
         <div className="flex flex-col items-center justify-center py-8 gap-3">
           <Loader2 className="w-7 h-7 animate-spin text-emerald-400" />
           <p className="text-sm opacity-60" style={{ color: theme.panelText }}>
-            AI analizira teren in iskanje objektov...
+            Primerjava LIDAR · Satelit · Arcanum · OSM...
           </p>
           <p className="text-xs opacity-40 font-mono" style={{ color: theme.panelText }}>
             {displayLat?.toFixed(4)}, {displayLng?.toFixed(4)} · {selectedArea.label}
