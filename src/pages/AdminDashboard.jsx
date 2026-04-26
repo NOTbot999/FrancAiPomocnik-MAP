@@ -279,13 +279,19 @@ export default function AdminDashboard() {
                         <td className="px-4 py-3 font-medium text-slate-800">{a.username}</td>
                         <td className="px-4 py-3 text-slate-500">{a.email || '—'}</td>
                         <td className="px-4 py-3">
-                          {a.is_premium ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-yellow-100 text-yellow-700 text-xs font-semibold rounded-full">
-                              <Star className="w-3 h-3" /> Premium
-                            </span>
-                          ) : (
-                            <span className="text-slate-400 text-xs">—</span>
-                          )}
+                          <button
+                            onClick={() => togglePremium(a)}
+                            disabled={!!togglingPremium[a.id]}
+                            title={a.is_premium ? "Odstrani premium" : "Dodeli premium"}
+                            className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold transition ${
+                              a.is_premium
+                                ? "bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
+                                : "bg-slate-100 text-slate-400 hover:bg-yellow-50 hover:text-yellow-600"
+                            } ${togglingPremium[a.id] ? "opacity-50 cursor-wait" : "cursor-pointer"}`}
+                          >
+                            <Star className="w-3 h-3" />
+                            {a.is_premium ? "Premium" : "Brez"}
+                          </button>
                         </td>
                         <td className="px-4 py-3">
                           <span className="flex items-center gap-1 text-slate-600">
