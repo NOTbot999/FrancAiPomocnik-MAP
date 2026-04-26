@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from "react";
-import { Layers, X, Building2, Droplets, Trees, CloudSun, MapPin, Wheat, Mountain, History, Landmark, ExternalLink, ChevronDown, Map, GripVertical, BookOpen } from "lucide-react";
+import { Layers, X, Building2, Droplets, Trees, CloudSun, MapPin, Wheat, Mountain, History, Landmark, Search, ExternalLink, ChevronDown, Map, GripVertical, BookOpen } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { Slider } from "@/components/ui/slider";
 import { motion, AnimatePresence } from "framer-motion";
@@ -13,7 +13,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const ICON_MAP = {
-  Building2, Droplets, Trees, CloudSun, MapPin, Wheat, Mountain, History, Landmark
+  Building2, Droplets, Trees, CloudSun, MapPin, Wheat, Mountain, History, Landmark, Search
 };
 
 const CATEGORY_THUMBNAILS = {
@@ -328,7 +328,8 @@ function PanelContent({ activeBaseLayers, onToggleBaseLayer, onBaseOpacityChange
         <Droppable droppableId="categories">
           {(provided) => (
             <div ref={provided.innerRef} {...provided.droppableProps}>
-              {categoryOrder.map((catId, index) => {
+              {/* Merge categoryOrder with any new categories not yet in the saved order */}
+      {[...categoryOrder, ...OVERLAY_CATEGORIES.map(c => c.id).filter(id => !categoryOrder.includes(id))].map((catId, index) => {
                 const category = OVERLAY_CATEGORIES.find(c => c.id === catId);
                 if (!category) return null;
                 return (
@@ -384,7 +385,11 @@ export default function LayerPanel({
 }) {
   const isMobile = useIsMobile();
   const [favorites, setFavorites] = useState(() => scopedGet("layerFavorites") || []);
-  const [categoryOrder, setCategoryOrder] = useState(() => OVERLAY_CATEGORIES.map(c => c.id));
+  const [categoryOrder, setCategoryOrder] = useState(() => {
+    // Always include all current categories, adding any new ones at the end
+    const saved = OVERLAY_CATEGORIES.map(c => c.id);
+    return saved;
+  });
   const [baseLayerOrder, setBaseLayerOrder] = useState(() => BASE_LAYERS.map(l => l.id));
 
   const handleToggleFavorite = useCallback((layerId) => {

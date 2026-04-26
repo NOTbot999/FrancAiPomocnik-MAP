@@ -63,14 +63,6 @@ export const BASE_LAYERS = [
     thumbnail: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=80&h=60&fit=crop"
   },
   {
-    id: "arso_dof_2022",
-    name: "Ortofoto 2022–2024 (ARSO)",
-    type: "arcgis_export",
-    arcgisUrl: "https://gis.arso.gov.si/arcgis/rest/services/DOF_D96TM_2022_2023_2024/MapServer/export",
-    attribution: "&copy; ARSO/GURS DOF 2022–2024",
-    thumbnail: "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=80&h=60&fit=crop"
-  },
-  {
     id: "arso_topo_nova",
     name: "ARSO Topografska karta",
     type: "arcgis_export",
@@ -381,12 +373,12 @@ export const OVERLAY_CATEGORIES = [
     description: "Primerjava ortofoto posnetkov skozi leta — odlično za iskanje starih objektov in sprememb v prostoru",
     layers: [
       {
-        id: "dof_2022_2024",
-        name: "Ortofoto 2022–2024 (najnovejši)",
+        id: "dof_2019",
+        name: "Ortofoto 2019",
         type: "arcgis_export",
-        url: "https://gis.arso.gov.si/arcgis/rest/services/DOF_D96TM_2022_2023_2024/MapServer/export",
+        url: "https://gis.arso.gov.si/arcgis/rest/services/DOF_D96TM_2019/MapServer/export",
         opacity: 1.0,
-        description: "Najnovejši ARSO ortofoto aeroposnetki 2022–2024, ločljivost 25 cm"
+        description: "ARSO ortofoto 2019, ločljivost 25 cm"
       },
       {
         id: "dof_2018_2021",
@@ -437,12 +429,12 @@ export const OVERLAY_CATEGORIES = [
         description: "Najstarejši ARSO ortofoto 1990–1994 — razkriva stara stanja prostora"
       },
       {
-        id: "arso_dmr",
-        name: "DMR – Digitalni model reliefa (1 m)",
+        id: "dof_2014_2015",
+        name: "Ortofoto 2014–2015",
         type: "arcgis_export",
-        url: "https://gis.arso.gov.si/arcgis/rest/services/Slovenija_DMR_D96TM/ImageServer/exportImage",
-        opacity: 0.8,
-        description: "Surovi 1 m digitalni model reliefa iz LIDAR snemanja — absolutne višine terena"
+        url: "https://gis.arso.gov.si/arcgis/rest/services/DOF_D96TM_2014_2015/MapServer/export",
+        opacity: 1.0,
+        description: "ARSO ortofoto 2014–2015"
       }
     ]
   },
