@@ -185,33 +185,39 @@ function getAllLayersFlat() {
 }
 
 // ArcGIS MapServer export as a Leaflet TileLayer (dynamic tiles via /export endpoint)
-function ArcGISExportLayer({ url, opacity, layerIds, maxZoom }) {
+// bboxSR=4326 works best with ARSO D96TM cached services; bboxSR=3857 for dynamic services like LIDAR
+function ArcGISExportLayer({ url, opacity, layerIds, maxZoom, bboxSR, transparent, format }) {
    const map = useMap();
    const layerRef = useRef(null);
+   const useSR = bboxSR || 3857;
+   const useFormat = format || (transparent ? "png32" : "jpg");
+   const useTransparent = transparent !== false;
 
    useEffect(() => {
-     // ArcGIS MapServer export: dynamic tiles via /export endpoint with bbox injection
-     const arcLayer = L.tileLayer(
-       url + "?bbox={bbox-epsg-3857}&bboxSR=3857&imageSR=3857&size=256,256&f=image&format=png&transparent=true&" + (layerIds ? `layers=${layerIds}` : ""),
-       {
-         tileSize: 256,
-         opacity,
-         maxZoom: maxZoom || 22,
-         maxNativeZoom: 19,
-         bounds: [[45.4, 13.3], [46.9, 16.7]],
-       }
-     );
+     const arcLayer = L.tileLayer("about:blank", {
+       tileSize: 256,
+       opacity,
+       maxZoom: maxZoom || 22,
+       maxNativeZoom: 19,
+       bounds: [[45.3, 13.3], [46.9, 16.8]],
+     });
 
-    // Override getTileUrl to inject proper bbox
     arcLayer.getTileUrl = function (coords) {
       const tileBounds = this._tileCoordsToBounds(coords);
-      const sw = map.options.crs.project(tileBounds.getSouthWest());
-      const ne = map.options.crs.project(tileBounds.getNorthEast());
-      const bbox = `${sw.x},${sw.y},${ne.x},${ne.y}`;
       const size = this.getTileSize();
+      let bbox;
+      if (useSR === 4326) {
+        const sw = tileBounds.getSouthWest();
+        const ne = tileBounds.getNorthEast();
+        bbox = `${sw.lng},${sw.lat},${ne.lng},${ne.lat}`;
+      } else {
+        const sw = map.options.crs.project(tileBounds.getSouthWest());
+        const ne = map.options.crs.project(tileBounds.getNorthEast());
+        bbox = `${sw.x},${sw.y},${ne.x},${ne.y}`;
+      }
       return (
         url +
-        `?bbox=${bbox}&bboxSR=3857&imageSR=3857&size=${size.x},${size.y}&f=image&format=png32&transparent=true` +
+        `?bbox=${bbox}&bboxSR=${useSR}&imageSR=3857&size=${size.x},${size.y}&f=image&format=${useFormat}&transparent=${useTransparent}` +
         (layerIds ? `&layers=${layerIds}` : "")
       );
     };
@@ -219,7 +225,7 @@ function ArcGISExportLayer({ url, opacity, layerIds, maxZoom }) {
     arcLayer.addTo(map);
     layerRef.current = arcLayer;
     return () => { arcLayer.remove(); };
-  }, [url, opacity, layerIds, map]);
+  }, [url, opacity, layerIds, map, useSR, useFormat, useTransparent]);
 
   // Update opacity
   useEffect(() => {
@@ -296,7 +302,7 @@ export default function MapContainerComponent({
         if (!bl) return null;
         const opacity = config?.opacity ?? 1;
         if (bl.type === 'arcgis_export') {
-          return <ArcGISExportLayer key={bl.id} url={bl.arcgisUrl} opacity={opacity} />;
+          return <ArcGISExportLayer key={bl.id} url={bl.arcgisUrl} opacity={opacity} bboxSR={bl.bboxSR} transparent={bl.transparent} format={bl.format} />;
         }
         return <TileLayer key={bl.id} url={bl.url} opacity={opacity} attribution={bl.attribution || ""} maxZoom={22} maxNativeZoom={bl.maxNativeZoom || 19} />;
       })}
@@ -332,6 +338,9 @@ export default function MapContainerComponent({
                opacity={opacity}
                layerIds={layer.layerIds}
                maxZoom={22}
+               bboxSR={layer.bboxSR}
+               transparent={layer.transparent}
+               format={layer.format}
              />
            );
          }

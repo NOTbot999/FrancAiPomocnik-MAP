@@ -378,6 +378,9 @@ export const OVERLAY_CATEGORIES = [
         type: "arcgis_export",
         url: "https://gis.arso.gov.si/arcgis/rest/services/DOF_D96TM_2019/MapServer/export",
         opacity: 1.0,
+        bboxSR: 4326,
+        transparent: false,
+        format: "jpg",
         description: "ARSO ortofoto 2019, ločljivost 25 cm"
       },
       {
@@ -386,6 +389,9 @@ export const OVERLAY_CATEGORIES = [
         type: "arcgis_export",
         url: "https://gis.arso.gov.si/arcgis/rest/services/DOF_D96TM_2018_2021/MapServer/export",
         opacity: 1.0,
+        bboxSR: 4326,
+        transparent: false,
+        format: "jpg",
         description: "ARSO ortofoto 2018–2021"
       },
       {
@@ -394,6 +400,9 @@ export const OVERLAY_CATEGORIES = [
         type: "arcgis_export",
         url: "https://gis.arso.gov.si/arcgis/rest/services/DOF_D96TM_2016/MapServer/export",
         opacity: 1.0,
+        bboxSR: 4326,
+        transparent: false,
+        format: "jpg",
         description: "ARSO ortofoto 2016 — primerjaj z novejšimi za spremembe"
       },
       {
@@ -402,6 +411,9 @@ export const OVERLAY_CATEGORIES = [
         type: "arcgis_export",
         url: "https://gis.arso.gov.si/arcgis/rest/services/DOF_D96TM_2009_2011/MapServer/export",
         opacity: 1.0,
+        bboxSR: 4326,
+        transparent: false,
+        format: "jpg",
         description: "ARSO ortofoto 2009–2011"
       },
       {
@@ -410,6 +422,9 @@ export const OVERLAY_CATEGORIES = [
         type: "arcgis_export",
         url: "https://gis.arso.gov.si/arcgis/rest/services/DOF_D96TM_2006/MapServer/export",
         opacity: 1.0,
+        bboxSR: 4326,
+        transparent: false,
+        format: "jpg",
         description: "ARSO ortofoto 2006"
       },
       {
@@ -418,6 +433,9 @@ export const OVERLAY_CATEGORIES = [
         type: "arcgis_export",
         url: "https://gis.arso.gov.si/arcgis/rest/services/DOF_D96TM_2001_2005/MapServer/export",
         opacity: 1.0,
+        bboxSR: 4326,
+        transparent: false,
+        format: "jpg",
         description: "ARSO ortofoto 2001–2005 — pred moderno urbanizacijo"
       },
       {
@@ -426,6 +444,9 @@ export const OVERLAY_CATEGORIES = [
         type: "arcgis_export",
         url: "https://gis.arso.gov.si/arcgis/rest/services/DOF_D96TM_1990_1994/MapServer/export",
         opacity: 1.0,
+        bboxSR: 4326,
+        transparent: false,
+        format: "jpg",
         description: "Najstarejši ARSO ortofoto 1990–1994 — razkriva stara stanja prostora"
       },
       {
@@ -434,6 +455,9 @@ export const OVERLAY_CATEGORIES = [
         type: "arcgis_export",
         url: "https://gis.arso.gov.si/arcgis/rest/services/DOF_D96TM_2014_2015/MapServer/export",
         opacity: 1.0,
+        bboxSR: 4326,
+        transparent: false,
+        format: "jpg",
         description: "ARSO ortofoto 2014–2015"
       }
     ]
