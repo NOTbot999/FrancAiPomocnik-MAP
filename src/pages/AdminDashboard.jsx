@@ -127,11 +127,7 @@ export default function AdminDashboard() {
   const togglePremium = async (account) => {
     setTogglingPremium(prev => ({ ...prev, [account.id]: true }));
     const newValue = !account.is_premium;
-    await base44.entities.UserAccount.update(account.id, {
-      is_premium: newValue,
-      premium_since: newValue ? new Date().toISOString() : null,
-      premium_until: newValue ? null : null
-    });
+    await base44.functions.invoke('setPremium', { accountId: account.id, isPremium: newValue });
     setAccounts(prev => prev.map(a => a.id === account.id ? { ...a, is_premium: newValue } : a));
     setTogglingPremium(prev => ({ ...prev, [account.id]: false }));
   };

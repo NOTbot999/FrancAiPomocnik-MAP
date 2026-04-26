@@ -35,22 +35,18 @@ export default function MapViewer() {
   const [pinnedLocation, setPinnedLocation] = useState(null);
   const [isPinPicking, setIsPinPicking] = useState(false);
 
-  // Check premium status — read from UserAccount entity (where is_premium is stored)
+  // Check premium status — read from UserAccount entity via backend (service role)
   const [isPremium, setIsPremium] = useState(false);
   useEffect(() => {
     const checkPremium = async () => {
       try {
-        // Check localStorage-based role (admin always gets access)
         const role = localStorage.getItem("userRole");
         if (role === "admin") { setIsPremium(true); return; }
 
-        // Fetch the UserAccount record for the logged-in user
-        const email = localStorage.getItem("userEmail");
-        if (!email) return;
-        const accounts = await base44.entities.UserAccount.filter({ email });
-        if (accounts && accounts.length > 0 && accounts[0].is_premium === true) {
-          setIsPremium(true);
-        }
+        const username = localStorage.getItem("userUsername");
+        if (!username) return;
+        const res = await base44.functions.invoke('getMyPremiumStatus', { username });
+        if (res.data?.is_premium === true) setIsPremium(true);
       } catch {}
     };
     checkPremium();
