@@ -16,40 +16,87 @@ const AREA_OPTIONS = [
   { label: "50×50 km", km: 50, latDelta: 0.225, lngDelta: 0.36 },
 ];
 
-const TERRAIN_SYSTEM = `Si strokovni GIS analitik za Slovenijo. VEDNO odgovarjaj v SLOVENŠČINI.
-Analiziraj območje na podlagi spletnih virov (OSM, Wikipedia, turistični portali, Geopedia) in predstavi vse kar najdeš.
+// Overpass API query — fetch real OSM objects in bbox
+async function fetchOverpassData(minLat, minLng, maxLat, maxLng) {
+  const bbox = `${minLat},${minLng},${maxLat},${maxLng}`;
+  const query = `[out:json][timeout:25];
+(
+  node["historic"](${bbox});
+  node["tourism"](${bbox});
+  node["amenity"~"place_of_worship|shelter|restaurant|parking"](${bbox});
+  node["natural"~"peak|spring|waterfall|cave_entrance|water"](${bbox});
+  node["man_made"~"bunker|tower|chimney|water_tower|bridge"](${bbox});
+  node["military"](${bbox});
+  node["abandoned"](${bbox});
+  node["ruins"](${bbox});
+  way["historic"](${bbox});
+  way["tourism"](${bbox});
+  way["natural"~"peak|spring|waterfall|cave_entrance|water"](${bbox});
+  way["military"](${bbox});
+  way["ruins"](${bbox});
+  way["abandoned"](${bbox});
+  relation["hiking"](${bbox});
+  relation["route"~"hiking|bicycle|foot"](${bbox});
+);
+out center tags 200;`;
+  const res = await fetch("https://overpass-api.de/api/interpreter", {
+    method: "POST",
+    body: "data=" + encodeURIComponent(query),
+  });
+  const data = await res.json();
+  return data.elements || [];
+}
 
-Kategorije:
-- Umetne strukture: zgradbe, cerkve, mostovi, jeze, tovarne, koče, postaje
-- Naravne znamenitosti: jezera, izviri, slapovi, vrhovi, kraški objekti
-- Točke interesa: razgledišča, zavetišča, parkirišča, memorialni objekti
-- Poti: gorske in pešpoti s potekom
+function overpassToText(elements) {
+  if (!elements.length) return "Ni podatkov v OpenStreetMap za to območje.";
+  return elements.map(el => {
+    const t = el.tags || {};
+    const lat = el.lat || el.center?.lat;
+    const lng = el.lon || el.center?.lon;
+    const name = t.name || t["name:sl"] || t["name:en"] || "";
+    const type = t.historic || t.tourism || t.amenity || t.natural || t.man_made || t.military || t.ruins || t.abandoned || el.type || "";
+    return `- ${name || "(brez imena)"} [${type}] lat=${lat?.toFixed(5)} lng=${lng?.toFixed(5)}${t.description ? " — " + t.description : ""}${t.note ? " (" + t.note + ")" : ""}`;
+  }).join("\n");
+}
 
-POMEMBNO glede koordinat: koordinate v JSON <map_markers> morajo biti ZNOTRAJ podanega bounding boxa. Če točne koordinate objekta niso znane, jih ne vključi v markers (ga pa omeni v besedilu).
+function overpassToMarkers(elements, minLat, maxLat, minLng, maxLng) {
+  return elements
+    .map(el => {
+      const t = el.tags || {};
+      const lat = el.lat || el.center?.lat;
+      const lng = el.lon || el.center?.lon;
+      if (!lat || !lng) return null;
+      if (lat < minLat || lat > maxLat || lng < minLng || lng > maxLng) return null;
+      const name = t.name || t["name:sl"] || t["name:en"] || t.historic || t.tourism || t.amenity || t.natural || t.man_made || t.military || "(objekt)";
+      const typeTag = t.historic || t.tourism || t.amenity || t.natural || t.man_made || t.military || "";
+      let markerType = "poi";
+      if (["peak","spring","waterfall","cave_entrance","water","wood"].includes(typeTag)) markerType = "landmark";
+      if (["ruins","archaeological_site","castle","bunker","fort","memorial","monument","battlefield"].includes(typeTag)) markerType = "structure";
+      if (["military","bunker"].includes(typeTag) || t.military || t.ruins || t.abandoned) markerType = "structure";
+      const desc = t.description || t["description:sl"] || t.note || typeTag;
+      return { lat, lng, label: name, type: markerType, description: desc };
+    })
+    .filter(Boolean);
+}
 
-Izpiši VSE objekte ki jih najdeš za to območje — ne skrajšuj seznama. Če za neko kategorijo ni podatkov, jo izpusti. Če sploh nimaš podatkov za območje, to kratko sporoči.
+const TERRAIN_AI_PROMPT = (osmText, placeName, lat, lng, km) =>
+`Si GIS asistent za Slovenijo. VEDNO odgovarjaj v SLOVENŠČINI.
+Spodaj so DEJANSKI podatki iz OpenStreetMap za območje ${km}×${km} km okoli "${placeName || `${lat.toFixed(4)}, ${lng.toFixed(4)}`}".
+Opiši jih v lepem slovenskem besedilu — kaj je zanimivega, zakaj je vredno obiska, kratki opisi.
+NE dodajaj objektov ki niso na spodnjem seznamu. NE izmišljaj imen ali lokacij.
 
-V KONCU odgovora DODAJ:
-<map_markers>[
-{"lat":LAT,"lng":LNG,"label":"Ime objekta","type":"structure|landmark|poi","description":"Kaj je to"},
-{"lat":LAT,"lng":LNG,"label":"Ime poti","type":"route","description":"Kje vodi in kako dolga je","coords":[[lat,lng],[lat,lng],...]}
-]</map_markers>`;
+OSM podatki:
+${osmText}`;
 
-const URBEX_SYSTEM = `Si strokovni GIS analitik za iskanje neznanih in opuščenih objektov v Sloveniji. VEDNO odgovarjaj v SLOVENŠČINI.
+const URBEX_AI_PROMPT = (osmText, placeName, lat, lng, km) =>
+`Si GIS analitik za iskanje neznanih objektov v Sloveniji. VEDNO odgovarjaj v SLOVENŠČINI.
+Spodaj so DEJANSKI podatki iz OpenStreetMap za območje ${km}×${km} km okoli "${placeName || `${lat.toFixed(4)}, ${lng.toFixed(4)}`}".
+Fokusiraj se na: ruševine, opuščene objekte, vojaške/zgodovinske, archaeological_site, bunkerje, castle, tower, memorial.
+Za vsak tak objekt kratko razloži zakaj je zanimiv za urbex/iskanje.
+NE dodajaj objektov ki niso na spodnjem seznamu. Če ni nobenih takih objektov, kratko sporoči.
 
-Tvoja naloga: na podlagi spletnih virov (OSM, Geopedia, Wikipedia, vojaški arhivi, arheološki registri) poišči opuščene in manj znane strukture — bunkerje, opuščene zgradbe, vojaške objekte, stare ruševine, arheološka gradišča, zapuščene industrijske objekte.
-
-Za vsak najden objekt navedi:
-- Kaj je to in zakaj je zanimiv
-- Koordinate (MORAJO biti znotraj podanega bounding boxa — če niso znane, objekt omeni samo v besedilu)
-- Verjetnost obstoja in kako je videti na terenu
-
-Izpiši VSE kar najdeš — ne skrajšuj. Če za to območje ni nobenih takih objektov v virih, kratko sporoči da ni najdb.
-
-Na koncu DODAJ:
-<map_markers>[
-{"lat":LAT,"lng":LNG,"label":"Naziv objekta","type":"structure|landmark","description":"Vrsta objekta in zakaj je zanimiv"}
-]</map_markers>`;
+OSM podatki:
+${osmText}`;
 
 export default function UnifiedAnalysisPanel({
   mapCenter,
@@ -123,69 +170,48 @@ export default function UnifiedAnalysisPanel({
     setAnalysisMarkers({ terrain: [], urbex: [] });
     setActiveRouteIdx(null);
     setVisibleMarkers({});
-    
     if (onRemoveAiMarkers) onRemoveAiMarkers();
     if (onShowRoute) onShowRoute(null);
 
+    const { latDelta, lngDelta, km } = selectedArea;
+    const minLat = analysisLat - latDelta;
+    const maxLat = analysisLat + latDelta;
+    const minLng = analysisLng - lngDelta;
+    const maxLng = analysisLng + lngDelta;
+
+    // Step 1: reverse geocode + Overpass in parallel
     let placeName = "";
+    let osmElements = [];
     try {
-      const geo = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${analysisLat}&lon=${analysisLng}&format=json&accept-language=sl`);
-      const geoData = await geo.json();
-      const a = geoData.address || {};
-      placeName = [a.village || a.town || a.city || a.hamlet || "", a.municipality || a.county || ""].filter(Boolean).join(", ") || geoData.display_name?.split(",").slice(0,2).join(",") || "";
+      const [geoRes, osmData] = await Promise.all([
+        fetch(`https://nominatim.openstreetmap.org/reverse?lat=${analysisLat}&lon=${analysisLng}&format=json&accept-language=sl`).then(r => r.json()),
+        fetchOverpassData(minLat, minLng, maxLat, maxLng)
+      ]);
+      const a = geoRes.address || {};
+      placeName = [a.village || a.town || a.city || a.hamlet || "", a.municipality || a.county || ""].filter(Boolean).join(", ") || geoRes.display_name?.split(",")[0] || "";
+      osmElements = osmData;
     } catch {}
 
-    const { latDelta, lngDelta, km } = selectedArea;
-    const minLat = (analysisLat - latDelta).toFixed(5);
-    const maxLat = (analysisLat + latDelta).toFixed(5);
-    const minLng = (analysisLng - lngDelta).toFixed(5);
-    const maxLng = (analysisLng + lngDelta).toFixed(5);
+    // Step 2: build real markers directly from OSM
+    const allMarkers = overpassToMarkers(osmElements, minLat, maxLat, minLng, maxLng);
+    const urbexMarkers = allMarkers.filter(m => m.type === "structure");
+    const terrainMarkers = allMarkers;
 
-    const runAnalysis = async (systemPrompt, analysisType) => {
-      const fullPrompt = `${systemPrompt}
-
-LOKACIJA: ${placeName ? `"${placeName}"` : "neznana"} | Koordinate: ${analysisLat.toFixed(5)}°N, ${analysisLng.toFixed(5)}°E
-BOUNDING BOX — VSE koordinate v JSON MORAJO biti ZNOTRAJ:
-  minLat=${minLat}, maxLat=${maxLat}, minLng=${minLng}, maxLng=${maxLng}
-Območje analize: ${km}×${km} km`;
-
-      const res = await base44.integrations.Core.InvokeLLM({
-        prompt: fullPrompt, add_context_from_internet: true, model: "gemini_3_flash"
-      });
-      const text = typeof res === "string" ? res : res?.content || JSON.stringify(res);
-
-      const markerMatch = text.match(/<map_markers>(.*?)<\/map_markers>/s);
-      let cleanText = text.replace(/<map_markers>.*?<\/map_markers>/s, "").trim();
-      let parsedMarkers = [];
-      if (markerMatch) {
-        try {
-          const raw = JSON.parse(markerMatch[1]);
-          parsedMarkers = raw.filter(m => {
-            if (m.type === "route") return true;
-            if (!m.lat || !m.lng) return false;
-            return m.lat >= parseFloat(minLat) && m.lat <= parseFloat(maxLat) &&
-                   m.lng >= parseFloat(minLng) && m.lng <= parseFloat(maxLng);
-          });
-        } catch {}
-      }
-
-      return { markers: parsedMarkers, text: cleanText };
-    };
-
-    // Run both analyses
-    const [terrainData, urbexData] = await Promise.all([
-      runAnalysis(TERRAIN_SYSTEM, "terrain"),
-      runAnalysis(URBEX_SYSTEM, "urbex")
+    // Step 3: AI describes only what OSM actually found
+    const osmText = overpassToText(osmElements);
+    const [terrainRes, urbexRes] = await Promise.all([
+      base44.integrations.Core.InvokeLLM({ prompt: TERRAIN_AI_PROMPT(osmText, placeName, analysisLat, analysisLng, km) }),
+      base44.integrations.Core.InvokeLLM({ prompt: URBEX_AI_PROMPT(osmText, placeName, analysisLat, analysisLng, km) }),
     ]);
+    const terrainText = typeof terrainRes === "string" ? terrainRes : terrainRes?.content || "";
+    const urbexText = typeof urbexRes === "string" ? urbexRes : urbexRes?.content || "";
 
-    setAnalysisMarkers({ terrain: terrainData.markers, urbex: urbexData.markers });
-    setAnalysisResult({ terrain: terrainData.text, urbex: urbexData.text });
-    
-    localStorage.setItem("ai_terrain_markers", JSON.stringify(terrainData.markers));
-    localStorage.setItem("ai_terrain_result", terrainData.text);
-    localStorage.setItem("ai_urbex_markers", JSON.stringify(urbexData.markers));
-    localStorage.setItem("ai_urbex_result", urbexData.text);
-    
+    setAnalysisMarkers({ terrain: terrainMarkers, urbex: urbexMarkers });
+    setAnalysisResult({ terrain: terrainText, urbex: urbexText });
+    localStorage.setItem("ai_terrain_markers", JSON.stringify(terrainMarkers));
+    localStorage.setItem("ai_terrain_result", terrainText);
+    localStorage.setItem("ai_urbex_markers", JSON.stringify(urbexMarkers));
+    localStorage.setItem("ai_urbex_result", urbexText);
     setAnalysisLoading(false);
   };
 
@@ -245,7 +271,7 @@ Območje analize: ${km}×${km} km`;
   }, []);
 
   const isLoading = analysisLoading;
-  const hasResults = analysisResult && (analysisResult.terrain || analysisResult.urbex);
+  const hasResults = !!(analysisResult && (analysisResult.terrain || analysisResult.urbex));
 
   const typeColor = { structure: "text-orange-400", poi: "text-emerald-400", route: "text-blue-400", landmark: "text-amber-400" };
   const typeIcon = { structure: "🏗️", poi: "📍", route: "🛤️", landmark: "🗺️" };
