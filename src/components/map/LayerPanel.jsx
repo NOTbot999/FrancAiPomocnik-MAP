@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from "react";
-import { Layers, X, ExternalLink, ChevronDown, BookOpen } from "lucide-react";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import { Layers, X, ExternalLink, ChevronDown, BookOpen, GripVertical } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { Slider } from "@/components/ui/slider";
 import { motion, AnimatePresence } from "framer-motion";
@@ -43,19 +44,39 @@ function BaseMapGrid({ activeBaseLayers, onSelectBaseLayer }) {
 
 const MAX_OVERLAY_LAYERS = 6;
 
-function ActiveLayersCategory({ activeLayers, allCategories, onToggleLayer, onOpacityChange }) {
+function ActiveLayersCategory({ activeLayers, allCategories, onToggleLayer, onOpacityChange, layerOrder, onLayerReorder }) {
   const [isOpen, setIsOpen] = useState(true);
 
-  // Only overlay layers (base is always-on radio, not shown here)
-  const activeLayersList = [];
+  // Build lookup
+  const layerMeta = {};
   for (const cat of allCategories) {
     for (const layer of cat.layers) {
-      if (activeLayers[layer.id]) {
-        activeLayersList.push({ ...layer, _categoryName: cat.name, _opacity: activeLayers[layer.id]?.opacity ?? layer.opacity });
-      }
+      layerMeta[layer.id] = { ...layer, _categoryName: cat.name };
     }
   }
+
+  // Build ordered active list: use layerOrder (reversed so top layer shown first), fall back to Object.keys
+  const orderedIds = layerOrder && layerOrder.length > 0
+    ? [...layerOrder].reverse().filter(id => activeLayers[id])
+    : Object.keys(activeLayers).reverse();
+
+  const activeLayersList = orderedIds.map(id => ({
+    ...layerMeta[id],
+    id,
+    _opacity: activeLayers[id]?.opacity ?? layerMeta[id]?.opacity ?? 0.7
+  })).filter(l => l.name);
+
   if (activeLayersList.length === 0) return null;
+
+  const handleDragEnd = (result) => {
+    if (!result.destination || !onLayerReorder) return;
+    // List is shown reversed (top first), so we need to reverse back for actual order
+    const reversedIds = [...orderedIds];
+    const [moved] = reversedIds.splice(result.source.index, 1);
+    reversedIds.splice(result.destination.index, 0, moved);
+    // Convert back to bottom→top order
+    onLayerReorder([...reversedIds].reverse());
+  };
 
   return (
     <div className="border-b border-slate-700/50">
@@ -67,40 +88,55 @@ function ActiveLayersCategory({ activeLayers, allCategories, onToggleLayer, onOp
         </span>
         <ChevronDown className={`w-3.5 h-3.5 text-slate-500 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
-            <div className="px-3 pb-3 space-y-1.5">
-              {activeLayersList.map((layer) => (
-                <div key={layer.id} className="group">
-                  <div className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg bg-slate-700/50">
-                    <div className="w-10 h-7 rounded overflow-hidden shrink-0 border border-emerald-500/60">
-                      {layer.thumbnail
-                        ? <img src={layer.thumbnail} alt={layer.name} className="w-full h-full object-cover" loading="lazy" />
-                        : <div className="w-full h-full flex items-center justify-center text-[9px] font-bold bg-emerald-500/20 text-emerald-400">{layer.name.charAt(0)}</div>
-                      }
-                    </div>
-                    <span className="text-slate-200 text-xs leading-tight flex-1">{layer.name}</span>
-                    <span className="text-[9px] text-slate-500">{layer._categoryName}</span>
-                    <button
-                      onClick={() => onToggleLayer(layer.id)}
-                      className="shrink-0 px-2 py-0.5 rounded text-[10px] font-bold bg-slate-600 text-slate-300 hover:bg-slate-500 transition-all"
-                    >
-                      OFF
-                    </button>
-                  </div>
-                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} className="px-3 pb-1 pt-0.5">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] text-slate-500 w-8">{Math.round(layer._opacity * 100)}%</span>
-                      <Slider value={[Math.round(layer._opacity * 100)]} onValueChange={([v]) => onOpacityChange(layer.id, v / 100)} max={100} min={0} step={5} className="flex-1" />
-                    </div>
-                  </motion.div>
+      {isOpen && (
+        <div className="px-3 pb-3">
+          <p className="text-[9px] text-slate-500 px-1 mb-1.5">Povleci za spremembo vrstnega reda (vrh = nad vsem)</p>
+          <DragDropContext onDragEnd={handleDragEnd}>
+            <Droppable droppableId="active-layers">
+              {(provided) => (
+                <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-1.5">
+                  {activeLayersList.map((layer, index) => (
+                    <Draggable key={layer.id} draggableId={layer.id} index={index}>
+                      {(drag, snapshot) => (
+                        <div
+                          ref={drag.innerRef}
+                          {...drag.draggableProps}
+                          className={`rounded-lg transition-colors ${snapshot.isDragging ? 'bg-slate-600/80 shadow-lg' : 'bg-slate-700/50'}`}
+                        >
+                          <div className="flex items-center gap-2 px-2 py-1.5">
+                            <div {...drag.dragHandleProps} className="shrink-0 cursor-grab active:cursor-grabbing p-0.5">
+                              <GripVertical className="w-3.5 h-3.5 text-slate-500" />
+                            </div>
+                            <div className="w-9 h-6 rounded overflow-hidden shrink-0 border border-emerald-500/60">
+                              {layer.thumbnail
+                                ? <img src={layer.thumbnail} alt={layer.name} className="w-full h-full object-cover" loading="lazy" />
+                                : <div className="w-full h-full flex items-center justify-center text-[9px] font-bold bg-emerald-500/20 text-emerald-400">{layer.name?.charAt(0)}</div>
+                              }
+                            </div>
+                            <span className="text-slate-200 text-xs leading-tight flex-1 min-w-0 truncate">{layer.name}</span>
+                            <span className="text-[9px] text-slate-500 shrink-0">{layer._categoryName}</span>
+                            <button
+                              onClick={() => onToggleLayer(layer.id)}
+                              className="shrink-0 px-2 py-0.5 rounded text-[10px] font-bold bg-slate-600 text-slate-300 hover:bg-slate-500 transition-all"
+                            >
+                              OFF
+                            </button>
+                          </div>
+                          <div className="flex items-center gap-2 px-3 pb-1.5 pt-0.5">
+                            <span className="text-[10px] text-slate-500 w-8">{Math.round(layer._opacity * 100)}%</span>
+                            <Slider value={[Math.round(layer._opacity * 100)]} onValueChange={([v]) => onOpacityChange(layer.id, v / 100)} max={100} min={0} step={5} className="flex-1" />
+                          </div>
+                        </div>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
                 </div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              )}
+            </Droppable>
+          </DragDropContext>
+        </div>
+      )}
     </div>
   );
 }
@@ -179,7 +215,7 @@ function FavoritesCategory({ favoriteLayerIds, allCategories, activeLayers, onTo
   );
 }
 
-function PanelContent({ activeBaseLayers, onSelectBaseLayer, activeLayers, onToggleLayer, onOpacityChange, favorites, onToggleFavorite }) {
+function PanelContent({ activeBaseLayers, onSelectBaseLayer, activeLayers, onToggleLayer, onOpacityChange, favorites, onToggleFavorite, layerOrder, onLayerReorder }) {
   const activeLayerCount = Object.keys(activeLayers).length;
 
   return (
@@ -190,12 +226,14 @@ function PanelContent({ activeBaseLayers, onSelectBaseLayer, activeLayers, onTog
         onSelectBaseLayer={onSelectBaseLayer}
       />
 
-      {/* Active overlay layers */}
+      {/* Active overlay layers with drag & drop reorder */}
       <ActiveLayersCategory
         activeLayers={activeLayers}
         allCategories={OVERLAY_CATEGORIES}
         onToggleLayer={onToggleLayer}
         onOpacityChange={onOpacityChange}
+        layerOrder={layerOrder}
+        onLayerReorder={onLayerReorder}
       />
 
       {/* Overlay limit indicator — always visible */}
@@ -248,7 +286,9 @@ export default function LayerPanel({
   onBaseOpacityChange,
   activeLayers,
   onToggleLayer,
-  onOpacityChange
+  onOpacityChange,
+  layerOrder,
+  onLayerReorder,
 }) {
   const isMobile = useIsMobile();
   const [favorites, setFavorites] = useState(() => scopedGet("layerFavorites") || []);
@@ -285,7 +325,7 @@ export default function LayerPanel({
 
   const theme = loadTheme();
   const [showLegend, setShowLegend] = useState(false);
-  const panelProps = { activeBaseLayers, onSelectBaseLayer: handleSelectBaseLayer, activeLayers, onToggleLayer: trackedToggleLayer, onOpacityChange, favorites, onToggleFavorite: handleToggleFavorite };
+  const panelProps = { activeBaseLayers, onSelectBaseLayer: handleSelectBaseLayer, activeLayers, onToggleLayer: trackedToggleLayer, onOpacityChange, favorites, onToggleFavorite: handleToggleFavorite, layerOrder, onLayerReorder };
 
   const panelBg = theme.panelBg || "#0f172a";
   const panelText = theme.panelText || "#e2e8f0";

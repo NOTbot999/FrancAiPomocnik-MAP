@@ -23,6 +23,7 @@ export default function MapViewer() {
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [activeBaseLayers, setActiveBaseLayers] = useState({ osm: { opacity: 1 } });
   const [activeLayers, setActiveLayers] = useState({});
+  const [layerOrder, setLayerOrder] = useState([]); // ordered array of layerIds (bottom→top)
   const [flyToLocation, setFlyToLocation] = useState(null);
   const [activeTool, setActiveTool] = useState("pointer");
   const [measurements, setMeasurements] = useState(null);
@@ -60,6 +61,7 @@ export default function MapViewer() {
     }
     if (settings.active_layers) {
       setActiveLayers(settings.active_layers);
+      setLayerOrder(Object.keys(settings.active_layers));
     }
   }, [isLoaded]);
 
@@ -73,6 +75,7 @@ export default function MapViewer() {
       if (prev[layerId]) {
         next = { ...prev };
         delete next[layerId];
+        setLayerOrder(o => o.filter(id => id !== layerId));
       } else {
         let defaultOpacity = 0.7;
         for (const cat of OVERLAY_CATEGORIES) {
@@ -80,6 +83,7 @@ export default function MapViewer() {
           if (found) { defaultOpacity = found.opacity; break; }
         }
         next = { ...prev, [layerId]: { opacity: defaultOpacity } };
+        setLayerOrder(o => [...o.filter(id => id !== layerId), layerId]);
       }
       updateSettings({ active_layers: next });
       return next;
@@ -161,6 +165,10 @@ export default function MapViewer() {
     setRoutePolyline(data ? data.polyline : null);
   }, []);
 
+  const handleLayerReorder = useCallback((newOrder) => {
+    setLayerOrder(newOrder);
+  }, []);
+
   const activeLayerCount = Object.keys(activeLayers).length;
   const isMobile = useIsMobile();
 
@@ -175,6 +183,7 @@ export default function MapViewer() {
       <MapContainerComponent
         activeBaseLayers={activeBaseLayers}
         activeLayers={activeLayers}
+        layerOrder={layerOrder}
         flyToLocation={flyToLocation}
         activeTool={activeTool}
         onMeasurement={setMeasurements}
@@ -372,6 +381,8 @@ export default function MapViewer() {
         activeLayers={activeLayers}
         onToggleLayer={handleToggleLayer}
         onOpacityChange={handleOpacityChange}
+        layerOrder={layerOrder}
+        onLayerReorder={handleLayerReorder}
       />
 
       {/* Navigation Panel — available on both mobile and desktop */}

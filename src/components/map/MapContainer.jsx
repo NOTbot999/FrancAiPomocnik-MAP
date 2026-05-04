@@ -261,6 +261,7 @@ function PinPickHandler({ onPinPicked }) {
 export default function MapContainerComponent({
   activeBaseLayers,
   activeLayers,
+  layerOrder,
   flyToLocation,
   activeTool,
   onMeasurement,
@@ -307,8 +308,9 @@ export default function MapContainerComponent({
         return <TileLayer key={bl.id} url={bl.url} opacity={opacity} attribution={bl.attribution || ""} maxZoom={22} maxNativeZoom={bl.maxNativeZoom || 19} />;
       })}
 
-      {/* Active overlay layers */}
-      {Object.entries(activeLayers).map(([layerId, config]) => {
+      {/* Active overlay layers — rendered in layerOrder (bottom→top) */}
+      {(layerOrder && layerOrder.length > 0 ? layerOrder : Object.keys(activeLayers)).map((layerId) => {
+        const config = activeLayers[layerId];
         if (!config) return null;
         const layer = allLayers[layerId];
         if (!layer) return null;

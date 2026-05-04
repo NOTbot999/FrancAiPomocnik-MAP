@@ -165,17 +165,17 @@ export const OVERLAY_CATEGORIES = [
         thumbnail: "https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=80&h=60&fit=crop",
         description: "Nova ARSO topografska karta z OSM, GURS in PZS podatki"
       },
-      // Raba tal
-      {
-        id: "raba_farmland",
-        name: "Raba kmetijskih zemljišč",
-        type: "tile",
-        url: "https://wms.openstreetmap.de/tms/RABA/{z}/{x}/{y}.png",
-        opacity: 0.65,
-        thumbnail: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=80&h=60&fit=crop",
-        description: "Raba kmetijskih zemljišč iz MKGP"
-      },
-      // Poti
+    ]
+  },
+
+  // ── INFRASTRUKTURA ───────────────────────────────────────────
+  {
+    id: "infrastruktura",
+    name: "Infrastruktura & Poti",
+    icon: "Route",
+    thumbnail: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=80&h=60&fit=crop",
+    description: "Kolesarske poti, pohodniške steze, železnica, daljnovodi, vodovod",
+    layers: [
       {
         id: "cycling_routes",
         name: "Kolesarske poti",
@@ -206,7 +206,6 @@ export const OVERLAY_CATEGORIES = [
         thumbnail: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=80&h=60&fit=crop",
         description: "Železniške proge OpenRailwayMap"
       },
-      // Infrastruktura
       {
         id: "humanitarian_osm",
         name: "HOT OSM (Detajli)",
@@ -248,6 +247,16 @@ export const OVERLAY_CATEGORIES = [
     thumbnail: "https://images.unsplash.com/photo-1448375240586-882707db888b?w=80&h=60&fit=crop",
     description: "Jame, naravne vrednote, vreme, ekološka območja",
     layers: [
+      // Raba tal (premesteno iz Karte & Kataster)
+      {
+        id: "raba_farmland",
+        name: "Raba kmetijskih zemljišč",
+        type: "tile",
+        url: "https://wms.openstreetmap.de/tms/RABA/{z}/{x}/{y}.png",
+        opacity: 0.65,
+        thumbnail: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=80&h=60&fit=crop",
+        description: "Raba kmetijskih zemljišč iz MKGP"
+      },
       // Jame
       {
         id: "arso_jame_epo",
