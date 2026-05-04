@@ -5,7 +5,7 @@ import { Slider } from "@/components/ui/slider";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { base44 } from "@/api/base44Client";
 
-export default function LayerCategory({ category, activeLayers, onToggleLayer, onOpacityChange, iconComponent, thumbnail, favorites = [], onToggleFavorite }) {
+export default function LayerCategory({ category, activeLayers, onToggleLayer, onOpacityChange, iconComponent, thumbnail, favorites = [], onToggleFavorite, activeLayerCount = 0, maxLayers = 5 }) {
   const Icon = iconComponent;
   const [isOpen, setIsOpen] = useState(false);
 
@@ -65,11 +65,12 @@ export default function LayerCategory({ category, activeLayers, onToggleLayer, o
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.03, duration: 0.18 }}
                   >
-                    <div
+                    {(()=>{ const atLimit = !isActive && activeLayerCount >= maxLayers; return (
+                  <div
                       className={`flex items-center gap-2 px-2 py-1.5 rounded-xl transition-all duration-200 ${
                         isActive
                           ? 'bg-emerald-500/10 ring-1 ring-emerald-500/25'
-                          : 'hover:bg-white/5'
+                          : atLimit ? 'opacity-40' : 'hover:bg-white/5'
                       }`}
                     >
                       {/* Color indicator / thumbnail */}
@@ -120,21 +121,19 @@ export default function LayerCategory({ category, activeLayers, onToggleLayer, o
                       <motion.button
                         whileTap={{ scale: 0.92 }}
                         onClick={() => {
+                          if (!isActive && activeLayerCount >= maxLayers) return;
                           onToggleLayer(layer.id);
-                          base44.analytics.track({
-                            eventName: "layer_toggled",
-                            properties: { layer_id: layer.id, layer_name: layer.name, category_id: category.id, action: isActive ? "off" : "on" }
-                          });
                         }}
+                        disabled={!isActive && activeLayerCount >= maxLayers}
                         className={`shrink-0 px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all duration-200 ${
                           isActive
                             ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/30'
-                            : 'bg-white/8 text-slate-400 hover:bg-white/12'
+                            : activeLayerCount >= maxLayers ? 'bg-white/4 text-slate-600 cursor-not-allowed' : 'bg-white/8 text-slate-400 hover:bg-white/12'
                         }`}
                       >
                         {isActive ? 'ON' : 'OFF'}
                       </motion.button>
-                    </div>
+                    </div>); })()}
 
                     {/* Opacity slider */}
                     <AnimatePresence>

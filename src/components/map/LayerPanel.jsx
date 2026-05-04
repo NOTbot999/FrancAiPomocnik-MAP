@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from "react";
-import { Layers, X, Building2, Droplets, Trees, CloudSun, MapPin, Wheat, Mountain, History, Landmark, Search, ExternalLink, ChevronDown, Map, GripVertical, BookOpen } from "lucide-react";
+import { Layers, X, Building2, Droplets, Trees, CloudSun, MapPin, Wheat, Mountain, History, Landmark, Search, ExternalLink, ChevronDown, GripVertical, BookOpen } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { Slider } from "@/components/ui/slider";
 import { motion, AnimatePresence } from "framer-motion";
@@ -27,121 +27,48 @@ const CATEGORY_THUMBNAILS = {
   admin: "https://images.unsplash.com/photo-1527489377706-5bf97e608852?w=80&h=60&fit=crop"
 };
 
-// Base Map as a collapsible category with drag-to-reorder and favorites
-function BaseMapCategory({ activeBaseLayers, onToggleBaseLayer, onBaseOpacityChange, favorites, onToggleFavorite, baseLayerOrder, onBaseLayerDragEnd }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const activeIds = activeBaseLayers ? Object.keys(activeBaseLayers) : [];
-  const firstActive = BASE_LAYERS.find((l) => activeIds.includes(l.id));
-  const orderedLayers = baseLayerOrder.map(id => BASE_LAYERS.find(l => l.id === id)).filter(Boolean);
+// Base Map grid — always 1 active (radio style), no slider, 2×4 grid at the top
+function BaseMapGrid({ activeBaseLayers, onSelectBaseLayer }) {
+  const activeId = activeBaseLayers ? Object.keys(activeBaseLayers)[0] : "osm";
 
   return (
-    <div className="border-b border-slate-700/50">
-      <button
-        onClick={() => setIsOpen(!isOpen)} className="px-4 py-3 w-full flex items-center gap-2.5 hover:bg-slate-700/30 transition-colors">
-        {firstActive?.thumbnail ?
-          <div className="w-8 h-6 rounded overflow-hidden shrink-0">
-            <img src={firstActive.thumbnail} alt="" className="w-full h-full object-cover" loading="lazy" />
-          </div> :
-          <Map className="w-4 h-4 text-emerald-400 shrink-0" />}
-        <span className="text-slate-200 text-sm font-medium text-left flex-1">Base Map</span>
-        {activeIds.length > 0 &&
-          <span className="text-[10px] font-bold bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded-full mr-1">{activeIds.length}</span>
-        }
-        <ChevronDown className={`w-3.5 h-3.5 text-slate-500 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
-      </button>
-      <AnimatePresence>
-        {isOpen &&
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden">
-            <DragDropContext onDragEnd={onBaseLayerDragEnd}>
-              <Droppable droppableId="basemaps">
-                {(provided) => (
-                  <div ref={provided.innerRef} {...provided.droppableProps} className="px-3 pb-3 space-y-1.5">
-                    {orderedLayers.map((layer, index) => {
-                      const isActive = activeIds.includes(layer.id);
-                      const isFav = favorites.includes(layer.id);
-                      return (
-                        <Draggable key={layer.id} draggableId={layer.id} index={index}>
-                          {(prov, snapshot) => (
-                            <div
-                              ref={prov.innerRef}
-                              {...prov.draggableProps}
-                              className={snapshot.isDragging ? 'opacity-90' : ''}
-                            >
-                              <div className={`flex items-center gap-2.5 px-2 py-1.5 rounded-lg transition-colors ${isActive ? 'bg-slate-700/50' : 'hover:bg-slate-700/30'}`}>
-                                {/* Drag handle */}
-                                <div {...prov.dragHandleProps} className="cursor-grab active:cursor-grabbing shrink-0">
-                                  <GripVertical className="w-3.5 h-3.5 text-slate-600" />
-                                </div>
-                                <div className={`w-10 h-7 rounded overflow-hidden shrink-0 border ${isActive ? 'border-emerald-500/60' : 'border-slate-600/40'}`}>
-                                  <img src={layer.thumbnail} alt={layer.name} className="w-full h-full object-cover" loading="lazy" />
-                                </div>
-                                <span className="text-slate-200 text-xs text-left leading-tight flex-1">{layer.name}</span>
-                                {/* Favorite toggle */}
-                                <button
-                                  onClick={() => onToggleFavorite(layer.id)}
-                                  className="shrink-0 text-base leading-none hover:scale-125 transition-transform"
-                                  title="Add to Favorites"
-                                >
-                                  {isFav ? "❤️" : "🤍"}
-                                </button>
-                                <button
-                                  onClick={() => onToggleBaseLayer(layer.id, layer.opacity ?? 1)}
-                                  className={`shrink-0 px-2 py-0.5 rounded text-[10px] font-bold transition-all ${isActive ? 'bg-emerald-500 text-white' : 'bg-slate-700 text-slate-400 hover:bg-slate-600'}`}
-                                >
-                                  {isActive ? 'ON' : 'OFF'}
-                                </button>
-                              </div>
-                              {isActive &&
-                                <div className="px-3 pb-1 pt-0.5">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-[10px] text-slate-500 w-8">
-                                      {Math.round((activeBaseLayers[layer.id]?.opacity ?? 1) * 100)}%
-                                    </span>
-                                    <Slider
-                                      value={[Math.round((activeBaseLayers[layer.id]?.opacity ?? 1) * 100)]}
-                                      onValueChange={([v]) => onBaseOpacityChange(layer.id, v / 100)}
-                                      max={100} min={0} step={5}
-                                      className="flex-1" />
-                                  </div>
-                                </div>
-                              }
-                            </div>
-                          )}
-                        </Draggable>
-                      );
-                    })}
-                    {provided.placeholder}
-                  </div>
-                )}
-              </Droppable>
-            </DragDropContext>
-          </motion.div>
-        }
-      </AnimatePresence>
+    <div className="px-3 pb-3 pt-2 border-b border-slate-700/50">
+      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Osnovna karta</p>
+      <div className="grid grid-cols-4 gap-1.5">
+        {BASE_LAYERS.map((layer) => {
+          const isActive = layer.id === activeId;
+          return (
+            <button
+              key={layer.id}
+              onClick={() => onSelectBaseLayer(layer.id)}
+              className={`flex flex-col items-center gap-1 rounded-xl p-1.5 transition-all ${isActive ? 'ring-2 ring-emerald-400 bg-slate-700/60' : 'hover:bg-slate-700/30'}`}
+            >
+              <div className={`w-full aspect-video rounded-lg overflow-hidden border ${isActive ? 'border-emerald-400/60' : 'border-slate-600/30'}`}>
+                <img src={layer.thumbnail} alt={layer.name} className="w-full h-full object-cover" loading="lazy" />
+              </div>
+              <span className={`text-[9px] leading-tight text-center w-full truncate ${isActive ? 'text-emerald-400 font-bold' : 'text-slate-400'}`}>
+                {layer.name}
+              </span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
 
-function ActiveLayersCategory({ activeLayers, allCategories, onToggleLayer, onOpacityChange, activeBaseLayers, onToggleBaseLayer, onBaseOpacityChange }) {
+const MAX_OVERLAY_LAYERS = 5;
+
+function ActiveLayersCategory({ activeLayers, allCategories, onToggleLayer, onOpacityChange }) {
   const [isOpen, setIsOpen] = useState(true);
 
-  // Collect all active layer objects (overlay + base maps)
+  // Only overlay layers (base is always-on radio, not shown here)
   const activeLayersList = [];
   for (const cat of allCategories) {
     for (const layer of cat.layers) {
       if (activeLayers[layer.id]) {
-        activeLayersList.push({ ...layer, _type: "overlay", _categoryName: cat.name, _opacity: activeLayers[layer.id]?.opacity ?? layer.opacity });
+        activeLayersList.push({ ...layer, _categoryName: cat.name, _opacity: activeLayers[layer.id]?.opacity ?? layer.opacity });
       }
-    }
-  }
-  for (const layer of BASE_LAYERS) {
-    if (activeBaseLayers && activeBaseLayers[layer.id]) {
-      activeLayersList.push({ ...layer, _type: "base", _categoryName: "Base Map", _opacity: activeBaseLayers[layer.id]?.opacity ?? 1 });
     }
   }
   if (activeLayersList.length === 0) return null;
@@ -160,38 +87,32 @@ function ActiveLayersCategory({ activeLayers, allCategories, onToggleLayer, onOp
         {isOpen && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
             <div className="px-3 pb-3 space-y-1.5">
-              {activeLayersList.map((layer) => {
-                const isBase = layer._type === "base";
-                return (
-                  <div key={layer.id} className="group">
-                    <div className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg bg-slate-700/50">
-                      <div className="w-10 h-7 rounded overflow-hidden shrink-0 border border-emerald-500/60">
-                        {layer.thumbnail
-                          ? <img src={layer.thumbnail} alt={layer.name} className="w-full h-full object-cover" loading="lazy" />
-                          : <div className="w-full h-full flex items-center justify-center text-[9px] font-bold bg-emerald-500/20 text-emerald-400">{layer.name.charAt(0)}</div>
-                        }
-                      </div>
-                      <span className="text-slate-200 text-xs leading-tight flex-1">{layer.name}</span>
-                      <span className="text-[9px] text-slate-500">{layer._categoryName}</span>
-                      <button
-                        onClick={() => isBase ? onToggleBaseLayer(layer.id, layer.opacity ?? 1) : onToggleLayer(layer.id)}
-                        className="shrink-0 px-2 py-0.5 rounded text-[10px] font-bold bg-slate-600 text-slate-300 hover:bg-slate-500 transition-all"
-                      >
-                        OFF
-                      </button>
+              {activeLayersList.map((layer) => (
+                <div key={layer.id} className="group">
+                  <div className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg bg-slate-700/50">
+                    <div className="w-10 h-7 rounded overflow-hidden shrink-0 border border-emerald-500/60">
+                      {layer.thumbnail
+                        ? <img src={layer.thumbnail} alt={layer.name} className="w-full h-full object-cover" loading="lazy" />
+                        : <div className="w-full h-full flex items-center justify-center text-[9px] font-bold bg-emerald-500/20 text-emerald-400">{layer.name.charAt(0)}</div>
+                      }
                     </div>
-                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} className="px-3 pb-1 pt-0.5">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] text-slate-500 w-8">{Math.round(layer._opacity * 100)}%</span>
-                        <Slider
-                          value={[Math.round(layer._opacity * 100)]}
-                          onValueChange={([v]) => isBase ? onBaseOpacityChange(layer.id, v / 100) : onOpacityChange(layer.id, v / 100)}
-                          max={100} min={0} step={5} className="flex-1" />
-                      </div>
-                    </motion.div>
+                    <span className="text-slate-200 text-xs leading-tight flex-1">{layer.name}</span>
+                    <span className="text-[9px] text-slate-500">{layer._categoryName}</span>
+                    <button
+                      onClick={() => onToggleLayer(layer.id)}
+                      className="shrink-0 px-2 py-0.5 rounded text-[10px] font-bold bg-slate-600 text-slate-300 hover:bg-slate-500 transition-all"
+                    >
+                      OFF
+                    </button>
                   </div>
-                );
-              })}
+                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} className="px-3 pb-1 pt-0.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-slate-500 w-8">{Math.round(layer._opacity * 100)}%</span>
+                      <Slider value={[Math.round(layer._opacity * 100)]} onValueChange={([v]) => onOpacityChange(layer.id, v / 100)} max={100} min={0} step={5} className="flex-1" />
+                    </div>
+                  </motion.div>
+                </div>
+              ))}
             </div>
           </motion.div>
         )}
@@ -200,22 +121,17 @@ function ActiveLayersCategory({ activeLayers, allCategories, onToggleLayer, onOp
   );
 }
 
-function FavoritesCategory({ favoriteLayerIds, allCategories, activeLayers, onToggleLayer, onOpacityChange, onToggleFavorite, activeBaseLayers, onToggleBaseLayer, onBaseOpacityChange }) {
+function FavoritesCategory({ favoriteLayerIds, allCategories, activeLayers, onToggleLayer, onOpacityChange, onToggleFavorite, activeLayerCount }) {
   const [isOpen, setIsOpen] = useState(true);
   if (favoriteLayerIds.length === 0) return null;
 
-  // Collect all favorite layer objects (overlay + base maps)
+  // Only overlay favorites
   const favLayers = [];
   for (const cat of allCategories) {
     for (const layer of cat.layers) {
       if (favoriteLayerIds.includes(layer.id)) {
-        favLayers.push({ ...layer, _type: "overlay", _categoryName: cat.name });
+        favLayers.push({ ...layer, _categoryName: cat.name });
       }
-    }
-  }
-  for (const layer of BASE_LAYERS) {
-    if (favoriteLayerIds.includes(layer.id)) {
-      favLayers.push({ ...layer, _type: "base", _categoryName: "Base Map" });
     }
   }
   if (favLayers.length === 0) return null;
@@ -237,11 +153,9 @@ function FavoritesCategory({ favoriteLayerIds, allCategories, activeLayers, onTo
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
             <div className="px-3 pb-3 space-y-1.5">
               {favLayers.map((layer) => {
-                const isBase = layer._type === "base";
-                const isActive = isBase ? !!(activeBaseLayers && activeBaseLayers[layer.id]) : !!(activeLayers[layer.id]);
-                const currentOpacity = isBase
-                  ? (activeBaseLayers?.[layer.id]?.opacity ?? 1)
-                  : (activeLayers[layer.id]?.opacity ?? layer.opacity);
+                const isActive = !!(activeLayers[layer.id]);
+                const currentOpacity = activeLayers[layer.id]?.opacity ?? layer.opacity;
+                const atLimit = !isActive && activeLayerCount >= MAX_OVERLAY_LAYERS;
                 return (
                   <div key={layer.id} className="group">
                     <div className={`flex items-center gap-2.5 px-2 py-1.5 rounded-lg transition-colors ${isActive ? 'bg-slate-700/50' : 'hover:bg-slate-700/30'}`}>
@@ -255,8 +169,9 @@ function FavoritesCategory({ favoriteLayerIds, allCategories, activeLayers, onTo
                       <span className="text-[9px] text-slate-500">{layer._categoryName}</span>
                       <button onClick={() => onToggleFavorite(layer.id)} className="shrink-0 text-base leading-none hover:scale-125 transition-transform">❤️</button>
                       <button
-                        onClick={() => isBase ? onToggleBaseLayer(layer.id, layer.opacity ?? 1) : onToggleLayer(layer.id)}
-                        className={`shrink-0 px-2 py-0.5 rounded text-[10px] font-bold transition-all ${isActive ? 'bg-emerald-500 text-white' : 'bg-slate-700 text-slate-400 hover:bg-slate-600'}`}
+                        onClick={() => !atLimit && onToggleLayer(layer.id)}
+                        disabled={atLimit}
+                        className={`shrink-0 px-2 py-0.5 rounded text-[10px] font-bold transition-all ${isActive ? 'bg-emerald-500 text-white' : atLimit ? 'bg-slate-800 text-slate-600 cursor-not-allowed' : 'bg-slate-700 text-slate-400 hover:bg-slate-600'}`}
                       >
                         {isActive ? 'ON' : 'OFF'}
                       </button>
@@ -265,10 +180,7 @@ function FavoritesCategory({ favoriteLayerIds, allCategories, activeLayers, onTo
                       <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} className="px-3 pb-1 pt-0.5">
                         <div className="flex items-center gap-2">
                           <span className="text-[10px] text-slate-500 w-8">{Math.round(currentOpacity * 100)}%</span>
-                          <Slider
-                            value={[Math.round(currentOpacity * 100)]}
-                            onValueChange={([v]) => isBase ? onBaseOpacityChange(layer.id, v / 100) : onOpacityChange(layer.id, v / 100)}
-                            max={100} min={0} step={5} className="flex-1" />
+                          <Slider value={[Math.round(currentOpacity * 100)]} onValueChange={([v]) => onOpacityChange(layer.id, v / 100)} max={100} min={0} step={5} className="flex-1" />
                         </div>
                       </motion.div>
                     )}
@@ -283,23 +195,41 @@ function FavoritesCategory({ favoriteLayerIds, allCategories, activeLayers, onTo
   );
 }
 
-function PanelContent({ activeBaseLayers, onToggleBaseLayer, onBaseOpacityChange, activeLayers, onToggleLayer, onOpacityChange, favorites, onToggleFavorite, categoryOrder, onCategoryDragEnd, baseLayerOrder, onBaseLayerDragEnd }) {
+function PanelContent({ activeBaseLayers, onSelectBaseLayer, activeLayers, onToggleLayer, onOpacityChange, favorites, onToggleFavorite, categoryOrder, onCategoryDragEnd }) {
+  const activeLayerCount = Object.keys(activeLayers).length;
+
   return (
     <div className="pt-2 pb-4">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1 px-4">Layers</p>
+      {/* Base Map grid — always at top, radio select */}
+      <BaseMapGrid
+        activeBaseLayers={activeBaseLayers}
+        onSelectBaseLayer={onSelectBaseLayer}
+      />
 
-      {/* Active Layers group — above Favorites */}
+      {/* Active overlay layers */}
       <ActiveLayersCategory
         activeLayers={activeLayers}
         allCategories={OVERLAY_CATEGORIES}
         onToggleLayer={onToggleLayer}
         onOpacityChange={onOpacityChange}
-        activeBaseLayers={activeBaseLayers}
-        onToggleBaseLayer={onToggleBaseLayer}
-        onBaseOpacityChange={onBaseOpacityChange}
       />
 
-      {/* Favorites group — above Base Map */}
+      {/* Overlay limit indicator */}
+      {activeLayerCount > 0 && (
+        <div className="px-4 py-1.5">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[9px] text-slate-500 uppercase tracking-widest">Prekrivni sloji</span>
+            <span className={`text-[9px] font-bold ${activeLayerCount >= MAX_OVERLAY_LAYERS ? 'text-amber-400' : 'text-emerald-400'}`}>
+              {activeLayerCount}/{MAX_OVERLAY_LAYERS}
+            </span>
+          </div>
+          <div className="h-0.5 rounded-full bg-slate-700 overflow-hidden">
+            <div className="h-full rounded-full transition-all" style={{ width: `${(activeLayerCount / MAX_OVERLAY_LAYERS) * 100}%`, backgroundColor: activeLayerCount >= MAX_OVERLAY_LAYERS ? '#f59e0b' : '#10b981' }} />
+          </div>
+        </div>
+      )}
+
+      {/* Favorites */}
       <FavoritesCategory
         favoriteLayerIds={favorites}
         allCategories={OVERLAY_CATEGORIES}
@@ -307,20 +237,7 @@ function PanelContent({ activeBaseLayers, onToggleBaseLayer, onBaseOpacityChange
         onToggleLayer={onToggleLayer}
         onOpacityChange={onOpacityChange}
         onToggleFavorite={(id) => onToggleFavorite(id)}
-        activeBaseLayers={activeBaseLayers}
-        onToggleBaseLayer={onToggleBaseLayer}
-        onBaseOpacityChange={onBaseOpacityChange}
-      />
-
-      {/* Base map */}
-      <BaseMapCategory
-        activeBaseLayers={activeBaseLayers}
-        onToggleBaseLayer={onToggleBaseLayer}
-        onBaseOpacityChange={onBaseOpacityChange}
-        favorites={favorites}
-        onToggleFavorite={onToggleFavorite}
-        baseLayerOrder={baseLayerOrder}
-        onBaseLayerDragEnd={onBaseLayerDragEnd}
+        activeLayerCount={activeLayerCount}
       />
 
       {/* Reorderable data overlay categories */}
@@ -328,8 +245,7 @@ function PanelContent({ activeBaseLayers, onToggleBaseLayer, onBaseOpacityChange
         <Droppable droppableId="categories">
           {(provided) => (
             <div ref={provided.innerRef} {...provided.droppableProps}>
-              {/* Merge categoryOrder with any new categories not yet in the saved order */}
-      {[...categoryOrder, ...OVERLAY_CATEGORIES.map(c => c.id).filter(id => !categoryOrder.includes(id))].map((catId, index) => {
+              {[...categoryOrder, ...OVERLAY_CATEGORIES.map(c => c.id).filter(id => !categoryOrder.includes(id))].map((catId, index) => {
                 const category = OVERLAY_CATEGORIES.find(c => c.id === catId);
                 if (!category) return null;
                 return (
@@ -340,7 +256,6 @@ function PanelContent({ activeBaseLayers, onToggleBaseLayer, onBaseOpacityChange
                         {...prov.draggableProps}
                         className={`relative ${snapshot.isDragging ? 'opacity-90 shadow-xl z-50' : ''}`}
                       >
-                        {/* Drag handle — visible strip on the left */}
                         <div
                           {...prov.dragHandleProps}
                           className="absolute left-0 top-0 bottom-0 w-6 flex items-center justify-center cursor-grab active:cursor-grabbing z-10 hover:bg-slate-700/40 transition-colors"
@@ -357,6 +272,8 @@ function PanelContent({ activeBaseLayers, onToggleBaseLayer, onBaseOpacityChange
                             thumbnail={CATEGORY_THUMBNAILS[category.id]}
                             favorites={favorites}
                             onToggleFavorite={(layerId, layerName, catId, catName) => onToggleFavorite(layerId, layerName, catId, catName)}
+                            activeLayerCount={activeLayerCount}
+                            maxLayers={MAX_OVERLAY_LAYERS}
                           />
                         </div>
                       </div>
@@ -385,12 +302,21 @@ export default function LayerPanel({
 }) {
   const isMobile = useIsMobile();
   const [favorites, setFavorites] = useState(() => scopedGet("layerFavorites") || []);
-  const [categoryOrder, setCategoryOrder] = useState(() => {
-    // Always include all current categories, adding any new ones at the end
-    const saved = OVERLAY_CATEGORIES.map(c => c.id);
-    return saved;
-  });
-  const [baseLayerOrder, setBaseLayerOrder] = useState(() => BASE_LAYERS.map(l => l.id));
+  const [categoryOrder, setCategoryOrder] = useState(() => OVERLAY_CATEGORIES.map(c => c.id));
+
+  // Radio-style: select exactly 1 base layer
+  const handleSelectBaseLayer = useCallback((layerId) => {
+    // Always keep exactly this one active at opacity 1
+    const next = { [layerId]: { opacity: 1 } };
+    // Use the existing onToggleBaseLayer mechanism: turn off all others, turn on selected
+    // We'll call the parent's setter directly via a synthetic approach
+    // Since we only have onToggleBaseLayer, we build the new state here and call onBaseOpacityChange trick
+    // Instead, call parent-passed handlers to sync state
+    const currentIds = activeBaseLayers ? Object.keys(activeBaseLayers) : [];
+    currentIds.filter(id => id !== layerId).forEach(id => onToggleBaseLayer(id)); // turn off others
+    if (!currentIds.includes(layerId)) onToggleBaseLayer(layerId, 1); // turn on selected
+    else if (currentIds.length === 1) return; // already the only one active, do nothing
+  }, [activeBaseLayers, onToggleBaseLayer]);
 
   const handleToggleFavorite = useCallback((layerId) => {
     setFavorites(prev => {
@@ -401,7 +327,9 @@ export default function LayerPanel({
   }, []);
 
   const trackedToggleLayer = useCallback((layerId) => {
+    const activeCount = Object.keys(activeLayers).length;
     const willBeActive = !activeLayers[layerId];
+    if (willBeActive && activeCount >= MAX_OVERLAY_LAYERS) return; // enforce limit
     if (willBeActive) base44.analytics.track({ eventName: "layer_toggled", properties: { layer_id: layerId } });
     onToggleLayer(layerId);
   }, [activeLayers, onToggleLayer]);
@@ -416,19 +344,9 @@ export default function LayerPanel({
     });
   }, []);
 
-  const handleBaseLayerDragEnd = useCallback((result) => {
-    if (!result.destination) return;
-    setBaseLayerOrder(prev => {
-      const next = [...prev];
-      const [moved] = next.splice(result.source.index, 1);
-      next.splice(result.destination.index, 0, moved);
-      return next;
-    });
-  }, []);
-
   const theme = loadTheme();
   const [showLegend, setShowLegend] = useState(false);
-  const panelProps = { activeBaseLayers, onToggleBaseLayer, onBaseOpacityChange, activeLayers, onToggleLayer: trackedToggleLayer, onOpacityChange, favorites, onToggleFavorite: handleToggleFavorite, categoryOrder, onCategoryDragEnd: handleCategoryDragEnd, baseLayerOrder, onBaseLayerDragEnd: handleBaseLayerDragEnd };
+  const panelProps = { activeBaseLayers, onSelectBaseLayer: handleSelectBaseLayer, activeLayers, onToggleLayer: trackedToggleLayer, onOpacityChange, favorites, onToggleFavorite: handleToggleFavorite, categoryOrder, onCategoryDragEnd: handleCategoryDragEnd };
 
   const panelBg = theme.panelBg || "#0f172a";
   const panelText = theme.panelText || "#e2e8f0";
