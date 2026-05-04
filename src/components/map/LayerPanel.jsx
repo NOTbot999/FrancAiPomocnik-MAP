@@ -1,9 +1,8 @@
 import React, { useState, useCallback } from "react";
-import { Layers, X, Building2, Droplets, Trees, CloudSun, MapPin, Wheat, Mountain, History, Landmark, Search, ExternalLink, ChevronDown, GripVertical, BookOpen } from "lucide-react";
+import { Layers, X, ExternalLink, ChevronDown, BookOpen } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { Slider } from "@/components/ui/slider";
 import { motion, AnimatePresence } from "framer-motion";
-import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { OVERLAY_CATEGORIES, BASE_LAYERS } from "./layerConfig";
 import LayerCategory from "./LayerCategory";
 import { loadTheme } from "@/components/map/ThemeCustomizer";
@@ -11,21 +10,6 @@ import LayerLegend from "./LayerLegend";
 import { scopedGet, scopedSet } from "@/lib/userPrefs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
-
-const ICON_MAP = {
-  Building2, Droplets, Trees, CloudSun, MapPin, Wheat, Mountain, History, Landmark, Search
-};
-
-const CATEGORY_THUMBNAILS = {
-  gurs: "https://images.unsplash.com/photo-1524661135-423995f22d0b?w=80&h=60&fit=crop",
-  katasterjam: "https://images.unsplash.com/photo-1551632811-561732d1e306?w=80&h=60&fit=crop",
-  arso_water: "https://images.unsplash.com/photo-1559825481-12a05cc00344?w=80&h=60&fit=crop",
-  arso_nature: "https://images.unsplash.com/photo-1448375240586-882707db888b?w=80&h=60&fit=crop",
-  arso_env: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=80&h=60&fit=crop",
-  landuse: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=80&h=60&fit=crop",
-  historical: "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=80&h=60&fit=crop",
-  admin: "https://images.unsplash.com/photo-1527489377706-5bf97e608852?w=80&h=60&fit=crop"
-};
 
 // Base Map grid — always 1 active (radio style), no slider, 2×4 grid at the top
 function BaseMapGrid({ activeBaseLayers, onSelectBaseLayer }) {
@@ -57,7 +41,7 @@ function BaseMapGrid({ activeBaseLayers, onSelectBaseLayer }) {
   );
 }
 
-const MAX_OVERLAY_LAYERS = 5;
+const MAX_OVERLAY_LAYERS = 6;
 
 function ActiveLayersCategory({ activeLayers, allCategories, onToggleLayer, onOpacityChange }) {
   const [isOpen, setIsOpen] = useState(true);
@@ -195,7 +179,7 @@ function FavoritesCategory({ favoriteLayerIds, allCategories, activeLayers, onTo
   );
 }
 
-function PanelContent({ activeBaseLayers, onSelectBaseLayer, activeLayers, onToggleLayer, onOpacityChange, favorites, onToggleFavorite, categoryOrder, onCategoryDragEnd }) {
+function PanelContent({ activeBaseLayers, onSelectBaseLayer, activeLayers, onToggleLayer, onOpacityChange, favorites, onToggleFavorite }) {
   const activeLayerCount = Object.keys(activeLayers).length;
 
   return (
@@ -214,20 +198,18 @@ function PanelContent({ activeBaseLayers, onSelectBaseLayer, activeLayers, onTog
         onOpacityChange={onOpacityChange}
       />
 
-      {/* Overlay limit indicator */}
-      {activeLayerCount > 0 && (
-        <div className="px-4 py-1.5">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-[9px] text-slate-500 uppercase tracking-widest">Prekrivni sloji</span>
-            <span className={`text-[9px] font-bold ${activeLayerCount >= MAX_OVERLAY_LAYERS ? 'text-amber-400' : 'text-emerald-400'}`}>
-              {activeLayerCount}/{MAX_OVERLAY_LAYERS}
-            </span>
-          </div>
-          <div className="h-0.5 rounded-full bg-slate-700 overflow-hidden">
-            <div className="h-full rounded-full transition-all" style={{ width: `${(activeLayerCount / MAX_OVERLAY_LAYERS) * 100}%`, backgroundColor: activeLayerCount >= MAX_OVERLAY_LAYERS ? '#f59e0b' : '#10b981' }} />
-          </div>
+      {/* Overlay limit indicator — always visible */}
+      <div className="px-4 py-1.5">
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-[9px] text-slate-500 uppercase tracking-widest">Prekrivni sloji</span>
+          <span className={`text-[9px] font-bold ${activeLayerCount >= MAX_OVERLAY_LAYERS ? 'text-amber-400' : 'text-emerald-400'}`}>
+            {activeLayerCount}/{MAX_OVERLAY_LAYERS}
+          </span>
         </div>
-      )}
+        <div className="h-0.5 rounded-full bg-slate-700 overflow-hidden">
+          <div className="h-full rounded-full transition-all" style={{ width: `${Math.min((activeLayerCount / MAX_OVERLAY_LAYERS) * 100, 100)}%`, backgroundColor: activeLayerCount >= MAX_OVERLAY_LAYERS ? '#f59e0b' : '#10b981' }} />
+        </div>
+      </div>
 
       {/* Favorites */}
       <FavoritesCategory
@@ -240,52 +222,20 @@ function PanelContent({ activeBaseLayers, onSelectBaseLayer, activeLayers, onTog
         activeLayerCount={activeLayerCount}
       />
 
-      {/* Reorderable data overlay categories */}
-      <DragDropContext onDragEnd={onCategoryDragEnd}>
-        <Droppable droppableId="categories">
-          {(provided) => (
-            <div ref={provided.innerRef} {...provided.droppableProps}>
-              {[...categoryOrder, ...OVERLAY_CATEGORIES.map(c => c.id).filter(id => !categoryOrder.includes(id))].map((catId, index) => {
-                const category = OVERLAY_CATEGORIES.find(c => c.id === catId);
-                if (!category) return null;
-                return (
-                  <Draggable key={catId} draggableId={catId} index={index}>
-                    {(prov, snapshot) => (
-                      <div
-                        ref={prov.innerRef}
-                        {...prov.draggableProps}
-                        className={`relative ${snapshot.isDragging ? 'opacity-90 shadow-xl z-50' : ''}`}
-                      >
-                        <div
-                          {...prov.dragHandleProps}
-                          className="absolute left-0 top-0 bottom-0 w-6 flex items-center justify-center cursor-grab active:cursor-grabbing z-10 hover:bg-slate-700/40 transition-colors"
-                        >
-                          <GripVertical className="w-3.5 h-3.5 text-slate-600" />
-                        </div>
-                        <div className="pl-6">
-                          <LayerCategory
-                            category={category}
-                            activeLayers={activeLayers}
-                            onToggleLayer={onToggleLayer}
-                            onOpacityChange={onOpacityChange}
-                            iconComponent={ICON_MAP[category.icon]}
-                            thumbnail={CATEGORY_THUMBNAILS[category.id]}
-                            favorites={favorites}
-                            onToggleFavorite={(layerId, layerName, catId, catName) => onToggleFavorite(layerId, layerName, catId, catName)}
-                            activeLayerCount={activeLayerCount}
-                            maxLayers={MAX_OVERLAY_LAYERS}
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </Draggable>
-                );
-              })}
-              {provided.placeholder}
-            </div>
-          )}
-        </Droppable>
-      </DragDropContext>
+      {/* Overlay categories — plain list, no drag */}
+      {OVERLAY_CATEGORIES.map((category) => (
+        <LayerCategory
+          key={category.id}
+          category={category}
+          activeLayers={activeLayers}
+          onToggleLayer={onToggleLayer}
+          onOpacityChange={onOpacityChange}
+          favorites={favorites}
+          onToggleFavorite={(layerId, layerName, catId, catName) => onToggleFavorite(layerId, layerName, catId, catName)}
+          activeLayerCount={activeLayerCount}
+          maxLayers={MAX_OVERLAY_LAYERS}
+        />
+      ))}
     </div>
   );
 }
@@ -302,7 +252,6 @@ export default function LayerPanel({
 }) {
   const isMobile = useIsMobile();
   const [favorites, setFavorites] = useState(() => scopedGet("layerFavorites") || []);
-  const [categoryOrder, setCategoryOrder] = useState(() => OVERLAY_CATEGORIES.map(c => c.id));
 
   // Radio-style: select exactly 1 base layer
   const handleSelectBaseLayer = useCallback((layerId) => {
@@ -334,19 +283,9 @@ export default function LayerPanel({
     onToggleLayer(layerId);
   }, [activeLayers, onToggleLayer]);
 
-  const handleCategoryDragEnd = useCallback((result) => {
-    if (!result.destination) return;
-    setCategoryOrder(prev => {
-      const next = [...prev];
-      const [moved] = next.splice(result.source.index, 1);
-      next.splice(result.destination.index, 0, moved);
-      return next;
-    });
-  }, []);
-
   const theme = loadTheme();
   const [showLegend, setShowLegend] = useState(false);
-  const panelProps = { activeBaseLayers, onSelectBaseLayer: handleSelectBaseLayer, activeLayers, onToggleLayer: trackedToggleLayer, onOpacityChange, favorites, onToggleFavorite: handleToggleFavorite, categoryOrder, onCategoryDragEnd: handleCategoryDragEnd };
+  const panelProps = { activeBaseLayers, onSelectBaseLayer: handleSelectBaseLayer, activeLayers, onToggleLayer: trackedToggleLayer, onOpacityChange, favorites, onToggleFavorite: handleToggleFavorite };
 
   const panelBg = theme.panelBg || "#0f172a";
   const panelText = theme.panelText || "#e2e8f0";

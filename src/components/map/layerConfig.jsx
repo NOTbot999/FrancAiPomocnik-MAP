@@ -1,5 +1,4 @@
 // Konfiguracija slojev za GIS Explorer Slovenije
-// Vsi URL-ji preverjeni glede na dejansko zmogljivost storitev
 
 const ARSO_WMS   = "https://gis.arso.gov.si/geoserver/ARSO/wms";
 const GURS_WMS   = "https://ipi.eprostor.gov.si/wms-si-gurs-dts/ows";
@@ -11,7 +10,7 @@ export const BASE_LAYERS = [
     name: "OpenStreetMap",
     type: "tile",
     url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    attribution: '&copy; OpenStreetMap',
     thumbnail: "https://images.unsplash.com/photo-1524661135-423995f22d0b?w=80&h=60&fit=crop"
   },
   {
@@ -19,7 +18,7 @@ export const BASE_LAYERS = [
     name: "Carto Voyager",
     type: "tile",
     url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
+    attribution: '&copy; OpenStreetMap &copy; CARTO',
     thumbnail: "https://images.unsplash.com/photo-1524661135-423995f22d0b?w=80&h=60&fit=crop"
   },
   {
@@ -40,7 +39,7 @@ export const BASE_LAYERS = [
   },
   {
     id: "esri_topo",
-    name: "ESRI Topo karta",
+    name: "ESRI Topo",
     type: "tile",
     url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
     attribution: "&copy; Esri",
@@ -56,7 +55,7 @@ export const BASE_LAYERS = [
   },
   {
     id: "lidar_hillshade",
-    name: "LIDAR Senčenje (1 m)",
+    name: "LIDAR Senčenje",
     type: "arcgis_export",
     arcgisUrl: "https://gis.arso.gov.si/arcgis/rest/services/Lidar_hillshade_D96TM/MapServer/export",
     attribution: "&copy; ARSO LIDAR",
@@ -64,22 +63,25 @@ export const BASE_LAYERS = [
   },
   {
     id: "arso_topo_nova",
-    name: "ARSO Topografska karta",
+    name: "ARSO Topo",
     type: "arcgis_export",
     arcgisUrl: "https://gis.arso.gov.si/arcgis/rest/services/Topografske_karte_ARSO_nova/MapServer/export",
-    attribution: "&copy; ARSO Topografska karta",
+    attribution: "&copy; ARSO",
     thumbnail: "https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=80&h=60&fit=crop"
   }
 ];
 
+// 3 skupne kategorije namesto 8
 export const OVERLAY_CATEGORIES = [
-  // ─── GURS / KATASTER ──────────────────────────────────────────
+  // ── KARTE & KATASTER ─────────────────────────────────────────
   {
-    id: "gurs",
-    name: "Kataster / GURS",
-    icon: "Building2",
-    description: "Zemljiški kataster in katastrski podatki GURS/e-Prostor",
+    id: "karte",
+    name: "Karte & Kataster",
+    icon: "Map",
+    thumbnail: "https://images.unsplash.com/photo-1524661135-423995f22d0b?w=80&h=60&fit=crop",
+    description: "Topografske karte, kataster, ortofoto, LIDAR in raba tal",
     layers: [
+      // Ortofoto
       {
         id: "gurs_orthophoto",
         name: "Ortofoto DOF050 (50 cm)",
@@ -90,6 +92,7 @@ export const OVERLAY_CATEGORIES = [
         transparent: false,
         version: "1.1.1",
         opacity: 1.0,
+        thumbnail: "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=80&h=60&fit=crop",
         description: "Aeroposnetki ortofoto 50 cm ločljivosti za Slovenijo"
       },
       {
@@ -102,19 +105,32 @@ export const OVERLAY_CATEGORIES = [
         transparent: false,
         version: "1.1.1",
         opacity: 1.0,
+        thumbnail: "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=80&h=60&fit=crop",
         description: "Visokoločljivi ortofoto 25 cm (vidno pri zoom ≥ 12)"
       },
+      // LIDAR
       {
         id: "gurs_lidar",
-        name: "LIDAR Senčenje (ARSO, 1 m)",
+        name: "LIDAR Senčenje (1 m)",
         type: "arcgis_export",
         url: "https://gis.arso.gov.si/arcgis/rest/services/Lidar_hillshade_D96TM/MapServer/export",
         opacity: 0.85,
-        description: "Ultrapodrobno 1 m LIDAR senčenje iz državnega aerolaserskega snemanja ARSO"
+        thumbnail: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=80&h=60&fit=crop",
+        description: "1 m LIDAR senčenje iz državnega aerolaserskega snemanja ARSO"
       },
       {
+        id: "arso_lidar_fishnet",
+        name: "LIDAR pokritost (mreža)",
+        type: "arcgis_export",
+        url: "https://gis.arso.gov.si/arcgis/rest/services/Lidar_fishnet_D96/MapServer/export",
+        opacity: 0.6,
+        thumbnail: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=80&h=60&fit=crop",
+        description: "Mreža LIDAR blokov — katera območja so bila snemana"
+      },
+      // Topografske karte
+      {
         id: "gurs_dtk25",
-        name: "Osnovna topografska karta 1:5k–1:10k (TTN5/TTN10)",
+        name: "TTN5/TTN10 (1:5k–1:10k)",
         type: "wms",
         url: "https://ipi.eprostor.gov.si/wms-si-gurs-dts/wms",
         layers: "SI.GURS.DK:TTN5_TTN10",
@@ -123,11 +139,12 @@ export const OVERLAY_CATEGORIES = [
         version: "1.1.1",
         opacity: 1.0,
         tileSize: 256,
-        description: "Kombinirana TTN5 in TTN10 osnovna topografska karta 1:5.000–1:10.000 (zoom 13+)"
+        thumbnail: "https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=80&h=60&fit=crop",
+        description: "Osnovna topografska karta 1:5.000–1:10.000 (zoom 13+)"
       },
       {
         id: "gurs_dtk50",
-        name: "Topografska karta 1:50.000 (DTK50)",
+        name: "DTK50 (1:50.000)",
         type: "wms",
         url: "https://ipi.eprostor.gov.si/wms-si-gurs-dts/wms",
         layers: "SI.GURS.DK:DTK50",
@@ -136,34 +153,102 @@ export const OVERLAY_CATEGORIES = [
         version: "1.1.1",
         opacity: 1.0,
         tileSize: 256,
+        thumbnail: "https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=80&h=60&fit=crop",
         description: "Uradna slovenska topografska karta 1:50.000"
       },
       {
         id: "arso_topo_overlay",
-        name: "ARSO Topografska karta (nova)",
+        name: "ARSO Topografska karta",
         type: "arcgis_export",
         url: "https://gis.arso.gov.si/arcgis/rest/services/Topografske_karte_ARSO_nova/MapServer/export",
         opacity: 0.9,
-        description: "Nova ARSO topografska karta z OSM, GURS in PZS podatki — detajlna in ažurna"
+        thumbnail: "https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=80&h=60&fit=crop",
+        description: "Nova ARSO topografska karta z OSM, GURS in PZS podatki"
+      },
+      // Raba tal
+      {
+        id: "raba_farmland",
+        name: "Raba kmetijskih zemljišč",
+        type: "tile",
+        url: "https://wms.openstreetmap.de/tms/RABA/{z}/{x}/{y}.png",
+        opacity: 0.65,
+        thumbnail: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=80&h=60&fit=crop",
+        description: "Raba kmetijskih zemljišč iz MKGP"
+      },
+      // Poti
+      {
+        id: "cycling_routes",
+        name: "Kolesarske poti",
+        type: "tile",
+        url: "https://tile.waymarkedtrails.org/cycling/{z}/{x}/{y}.png",
+        transparent: true,
+        opacity: 0.9,
+        thumbnail: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=80&h=60&fit=crop",
+        description: "Označene kolesarske poti"
       },
       {
-        id: "arso_lidar_fishnet",
-        name: "LIDAR pokritost (mreža blokov)",
-        type: "arcgis_export",
-        url: "https://gis.arso.gov.si/arcgis/rest/services/Lidar_fishnet_D96/MapServer/export",
-        opacity: 0.6,
-        description: "Mreža LIDAR blokov — prikazuje, katera območja so bila snemana z aerolaserjem"
+        id: "hiking_routes",
+        name: "Pohodniške poti",
+        type: "tile",
+        url: "https://tile.waymarkedtrails.org/hiking/{z}/{x}/{y}.png",
+        transparent: true,
+        opacity: 0.9,
+        thumbnail: "https://images.unsplash.com/photo-1551632811-561732d1e306?w=80&h=60&fit=crop",
+        description: "Označene pohodniške steze"
+      },
+      {
+        id: "railway_lines",
+        name: "Železnica",
+        type: "tile",
+        url: "https://tiles.openrailwaymap.org/standard/{z}/{x}/{y}.png",
+        transparent: true,
+        opacity: 0.9,
+        thumbnail: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=80&h=60&fit=crop",
+        description: "Železniške proge OpenRailwayMap"
+      },
+      // Infrastruktura
+      {
+        id: "humanitarian_osm",
+        name: "HOT OSM (Detajli)",
+        type: "tile",
+        url: "https://tile-{s}.openstreetmap.fr/hot/{z}/{x}/{y}.png",
+        opacity: 0.85,
+        transparent: true,
+        thumbnail: "https://images.unsplash.com/photo-1527489377706-5bf97e608852?w=80&h=60&fit=crop",
+        description: "Humanitarna OSM — gasilni domovi, avtobusne postaje, pipe, razni objekti"
+      },
+      {
+        id: "openinframap_power",
+        name: "Daljnovodi",
+        type: "tile",
+        url: "https://tiles.openinframap.org/power/{z}/{x}/{y}.png",
+        transparent: true,
+        opacity: 0.9,
+        thumbnail: "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=80&h=60&fit=crop",
+        description: "Električni daljnovodi in transformatorji"
+      },
+      {
+        id: "openinframap_water",
+        name: "Vodovod & Kanalizacija",
+        type: "tile",
+        url: "https://tiles.openinframap.org/water/{z}/{x}/{y}.png",
+        transparent: true,
+        opacity: 0.8,
+        thumbnail: "https://images.unsplash.com/photo-1559825481-12a05cc00344?w=80&h=60&fit=crop",
+        description: "Vodovod, kanalizacijske linije in pipe"
       }
     ]
   },
 
-  // ─── KATASTERJAM ──────────────────────────────────────────────
+  // ── NARAVA & OKOLJE ──────────────────────────────────────────
   {
-    id: "katasterjam",
-    name: "KatasterJam – Jame",
-    icon: "Landmark",
-    description: "Podatki o jamah iz ARSO/IZRK prek eKataster",
+    id: "narava",
+    name: "Narava & Okolje",
+    icon: "Trees",
+    thumbnail: "https://images.unsplash.com/photo-1448375240586-882707db888b?w=80&h=60&fit=crop",
+    description: "Jame, naravne vrednote, vreme, ekološka območja",
     layers: [
+      // Jame
       {
         id: "arso_jame_epo",
         name: "Lokacije jam (EPO_PNT)",
@@ -174,11 +259,12 @@ export const OVERLAY_CATEGORIES = [
         transparent: true,
         version: "1.1.1",
         opacity: 0.8,
-        description: "Ekološko pomembne jamske točke iz registra ARSO (vir za KatasterJam)"
+        thumbnail: "https://images.unsplash.com/photo-1519904981063-b0cf448d479e?w=80&h=60&fit=crop",
+        description: "Ekološko pomembne jamske točke iz registra ARSO"
       },
       {
         id: "arso_epo_plg",
-        name: "Kraška in jamska območja (EPO_PLG)",
+        name: "Kraška območja (EPO_PLG)",
         type: "wms",
         url: ARSO_WMS,
         layers: "ARSO:EPO_PLG",
@@ -186,6 +272,7 @@ export const OVERLAY_CATEGORIES = [
         transparent: true,
         version: "1.1.1",
         opacity: 0.5,
+        thumbnail: "https://images.unsplash.com/photo-1519904981063-b0cf448d479e?w=80&h=60&fit=crop",
         description: "Ekološko pomembna območja vključno s kraškimi conami"
       },
       {
@@ -198,42 +285,17 @@ export const OVERLAY_CATEGORIES = [
         transparent: true,
         version: "1.1.1",
         opacity: 0.5,
+        thumbnail: "https://images.unsplash.com/photo-1448375240586-882707db888b?w=80&h=60&fit=crop",
         description: "Register naravnih vrednot (vključuje jame)"
-      }
-    ]
-  },
-
-  // ─── RABA – RABA TAL ──────────────────────────────────────────
-  {
-    id: "landuse",
-    name: "Raba tal (RABA/MKGP)",
-    icon: "Wheat",
-    description: "Kmetijska in gozdna raba tal iz MKGP",
-    layers: [
-      {
-        id: "raba_farmland",
-        name: "Raba kmetijskih zemljišč RABA-KGZ",
-        type: "tile",
-        url: "https://wms.openstreetmap.de/tms/RABA/{z}/{x}/{y}.png",
-        opacity: 0.65,
-        description: "Raba kmetijskih zemljišč iz Ministrstva za kmetijstvo"
-      }
-    ]
-  },
-
-  // ─── VREME ─────────────────────────────────────────────────
-  {
-    id: "weather",
-    name: "Vreme (OpenWeatherMap)",
-    icon: "CloudSun",
-    description: "Živi vremenski sloji iz OpenWeatherMap",
-    layers: [
+      },
+      // Vreme
       {
         id: "owm_clouds",
         name: "Oblačnost",
         type: "tile",
         url: "https://tile.openweathermap.org/map/clouds_new/{z}/{x}/{y}.png?appid=9de243494c0b295cca9337e1e96b00e2",
         opacity: 0.6,
+        thumbnail: "https://images.unsplash.com/photo-1419833173245-f59e1b93f9ee?w=80&h=60&fit=crop",
         description: "Sloj oblačnosti iz OpenWeatherMap"
       },
       {
@@ -242,6 +304,7 @@ export const OVERLAY_CATEGORIES = [
         type: "tile",
         url: "https://tile.openweathermap.org/map/wind_new/{z}/{x}/{y}.png?appid=9de243494c0b295cca9337e1e96b00e2",
         opacity: 0.7,
+        thumbnail: "https://images.unsplash.com/photo-1527482937786-6608f6e14c15?w=80&h=60&fit=crop",
         description: "Sloj hitrosti vetra iz OpenWeatherMap"
       },
       {
@@ -250,127 +313,19 @@ export const OVERLAY_CATEGORIES = [
         type: "tile",
         url: "https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=9de243494c0b295cca9337e1e96b00e2",
         opacity: 0.6,
+        thumbnail: "https://images.unsplash.com/photo-1561484930-974b10b12338?w=80&h=60&fit=crop",
         description: "Temperaturni sloj iz OpenWeatherMap"
       }
     ]
   },
 
-  // ─── INFRASTRUKTURA IN ZNAČILNOSTI ────────────────────────────
+  // ── ZGODOVINSKI & URBEX ──────────────────────────────────────
   {
-    id: "infrastructure",
-    name: "Infrastruktura & Značilnosti",
-    icon: "Wrench",
-    description: "Ceste, reke, jezera, imena, daljnovodi, gasilni domovi, avtobusne postaje, križev, gradovi, pipe",
-    layers: [
-      {
-        id: "osm_infrastructure",
-        name: "OpenStreetMap (Ceste, Reke, Jezera)",
-        type: "tile",
-        url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-        opacity: 0.95,
-        description: "Osnovna OSM karta s cestami, rekami, jezeri in osnovno infrastrukturo"
-      },
-      {
-        id: "humanitarian_osm",
-        name: "HOT OSM (Detajli, Označbe)",
-        type: "tile",
-        url: "https://tile-{s}.openstreetmap.fr/hot/{z}/{x}/{y}.png",
-        opacity: 0.85,
-        transparent: true,
-        description: "Humanitarna OSM karta — izpostavi gasilne domove, avtobusne postaje, križev, pipe, razne objekte"
-      },
-      {
-        id: "openinframap_power",
-        name: "Daljnovodi (OpenInfraMap)",
-        type: "tile",
-        url: "https://tiles.openinframap.org/power/{z}/{x}/{y}.png",
-        transparent: true,
-        opacity: 0.9,
-        description: "Električni daljnovodi in transformatorji"
-      },
-      {
-        id: "openinframap_water",
-        name: "Vodovod & Kanalizacija",
-        type: "tile",
-        url: "https://tiles.openinframap.org/water/{z}/{x}/{y}.png",
-        transparent: true,
-        opacity: 0.8,
-        description: "Vodovod, kanalizacijske linije in pipe"
-      },
-      {
-        id: "openinframap_telecoms",
-        name: "Telekomunikacije",
-        type: "tile",
-        url: "https://tiles.openinframap.org/telecoms/{z}/{x}/{y}.png",
-        transparent: true,
-        opacity: 0.8,
-        description: "Telekomunikacijska infrastruktura"
-      },
-      {
-        id: "stamen_terrain",
-        name: "Stamen Terrain (Topografija, Imena)",
-        type: "tile",
-        url: "https://stamen-tiles.a.ssl.fastly.net/terrain/{z}/{x}/{y}.png",
-        attribution: "&copy; Stamen Design",
-        opacity: 0.7,
-        description: "Toner z elevacijo in navi imeni mest ter geografskim oznakami"
-      }
-    ]
-  },
-
-  // — POTI ————————————————————————
-  {
-    id: "poti",
-    name: "Poti 🚴 🥾 🚂",
-    icon: "Map",
-    description: "Kolesarske poti, pohodniške steze, železnice in ceste",
-    layers: [
-      {
-        id: "cycling_routes",
-        name: "Kolesarske poti",
-        type: "tile",
-        url: "https://tile.waymarkedtrails.org/cycling/{z}/{x}/{y}.png",
-        transparent: true,
-        opacity: 0.9,
-        description: "Označene kolesarske poti"
-      },
-      {
-        id: "hiking_routes",
-        name: "Pohodniške poti",
-        type: "tile",
-        url: "https://tile.waymarkedtrails.org/hiking/{z}/{x}/{y}.png",
-        transparent: true,
-        opacity: 0.9,
-        description: "Označene pohodniške steze"
-      },
-      {
-        id: "railway_lines",
-        name: "Železnica",
-        type: "tile",
-        url: "https://tiles.openrailwaymap.org/standard/{z}/{x}/{y}.png",
-        transparent: true,
-        opacity: 0.9,
-        description: "Železniške proge OpenRailwayMap"
-      },
-      {
-        id: "opencyclemap",
-        name: "Ceste & Kolesarske (OCM)",
-        type: "tile",
-        url: "https://tile.thunderforest.com/cycle/{z}/{x}/{y}.png?apikey=pk.eyJ1IjoiIiwiYSI6IiJ9",
-        transparent: true,
-        opacity: 0.8,
-        description: "OpenCycleMap ceste in kolesarska infrastruktura"
-      }
-    ]
-  },
-
-  // ─── ZGODOVINSKI ORTOFOTO ARSO ────────────────────────────────
-  {
-    id: "zgodovinski_dof",
-    name: "📸 Zgodovinski ortofoto (ARSO)",
+    id: "zgodovinski",
+    name: "Zgodovinski & Urbex",
     icon: "History",
-    description: "Primerjava ortofoto posnetkov skozi leta — odlično za iskanje starih objektov in sprememb v prostoru",
+    thumbnail: "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=80&h=60&fit=crop",
+    description: "Zgodovinski ortofoto ARSO, primerjava let, iskanje opuščenih objektov",
     layers: [
       {
         id: "dof_2019",
@@ -381,6 +336,7 @@ export const OVERLAY_CATEGORIES = [
         bboxSR: 4326,
         transparent: false,
         format: "jpg",
+        thumbnail: "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=80&h=60&fit=crop",
         description: "ARSO ortofoto 2019, ločljivost 25 cm"
       },
       {
@@ -392,6 +348,7 @@ export const OVERLAY_CATEGORIES = [
         bboxSR: 4326,
         transparent: false,
         format: "jpg",
+        thumbnail: "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=80&h=60&fit=crop",
         description: "ARSO ortofoto 2018–2021"
       },
       {
@@ -403,7 +360,20 @@ export const OVERLAY_CATEGORIES = [
         bboxSR: 4326,
         transparent: false,
         format: "jpg",
-        description: "ARSO ortofoto 2016 — primerjaj z novejšimi za spremembe"
+        thumbnail: "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=80&h=60&fit=crop",
+        description: "ARSO ortofoto 2016"
+      },
+      {
+        id: "dof_2014_2015",
+        name: "Ortofoto 2014–2015",
+        type: "arcgis_export",
+        url: "https://gis.arso.gov.si/arcgis/rest/services/DOF_D96TM_2014_2015/MapServer/export",
+        opacity: 1.0,
+        bboxSR: 4326,
+        transparent: false,
+        format: "jpg",
+        thumbnail: "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=80&h=60&fit=crop",
+        description: "ARSO ortofoto 2014–2015"
       },
       {
         id: "dof_2009_2011",
@@ -414,6 +384,7 @@ export const OVERLAY_CATEGORIES = [
         bboxSR: 4326,
         transparent: false,
         format: "jpg",
+        thumbnail: "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=80&h=60&fit=crop",
         description: "ARSO ortofoto 2009–2011"
       },
       {
@@ -425,6 +396,7 @@ export const OVERLAY_CATEGORIES = [
         bboxSR: 4326,
         transparent: false,
         format: "jpg",
+        thumbnail: "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=80&h=60&fit=crop",
         description: "ARSO ortofoto 2006"
       },
       {
@@ -436,6 +408,7 @@ export const OVERLAY_CATEGORIES = [
         bboxSR: 4326,
         transparent: false,
         format: "jpg",
+        thumbnail: "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=80&h=60&fit=crop",
         description: "ARSO ortofoto 2001–2005 — pred moderno urbanizacijo"
       },
       {
@@ -447,45 +420,27 @@ export const OVERLAY_CATEGORIES = [
         bboxSR: 4326,
         transparent: false,
         format: "jpg",
-        description: "Najstarejši ARSO ortofoto 1990–1994 — razkriva stara stanja prostora"
+        thumbnail: "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=80&h=60&fit=crop",
+        description: "Najstarejši ARSO ortofoto 1990–1994"
       },
-      {
-        id: "dof_2014_2015",
-        name: "Ortofoto 2014–2015",
-        type: "arcgis_export",
-        url: "https://gis.arso.gov.si/arcgis/rest/services/DOF_D96TM_2014_2015/MapServer/export",
-        opacity: 1.0,
-        bboxSR: 4326,
-        transparent: false,
-        format: "jpg",
-        description: "ARSO ortofoto 2014–2015"
-      }
-    ]
-  },
-
-  // ─── ISKANJE NEZNANIH OBJEKTOV ────────────────────────────────
-  {
-    id: "urbex",
-    name: "🔍 Iskanje objektov / Urbex",
-    icon: "Search",
-    description: "Sloji za iskanje neznanih objektov, človeških posegov v naravo in opuščenih struktur",
-    layers: [
+      // Urbex sloji
       {
         id: "stamen_toner",
         name: "Toner (visok kontrast)",
         type: "tile",
         url: "https://stamen-tiles.a.ssl.fastly.net/toner/{z}/{x}/{y}.png",
         opacity: 0.85,
-        description: "Visokokontrastna B/W karta — izpostavi ceste, zgradbe, poti ki niso na navadni karti"
+        thumbnail: "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=80&h=60&fit=crop",
+        description: "Visokokontrastna B/W karta — izpostavi ceste in zgradbe ki niso na navadni karti"
       },
       {
-        id: "osm_buildings",
-        name: "OSM Zgradbe (overpass)",
-        type: "tile",
-        url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-        opacity: 0.5,
-        transparent: true,
-        description: "OpenStreetMap osnova — primerjaj z satelitom za neoznačene zgradbe"
+        id: "lidar_overlay",
+        name: "LIDAR overlay (iskanje)",
+        type: "arcgis_export",
+        url: "https://gis.arso.gov.si/arcgis/rest/services/Lidar_hillshade_D96TM/MapServer/export",
+        opacity: 0.7,
+        thumbnail: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=80&h=60&fit=crop",
+        description: "LIDAR kot overlay — jarki, nasipi, temelji zgradb"
       },
       {
         id: "openinframap",
@@ -494,33 +449,8 @@ export const OVERLAY_CATEGORIES = [
         url: "https://tiles.openinframap.org/power/{z}/{x}/{y}.png",
         opacity: 0.8,
         transparent: true,
-        description: "Električna infrastruktura — daljnovodi, transformatorji, ki so lahko pri neznanih objektih"
-      },
-      {
-        id: "lidar_overlay",
-        name: "LIDAR senčenje (prekrivni sloj)",
-        type: "arcgis_export",
-        url: "https://gis.arso.gov.si/arcgis/rest/services/Lidar_hillshade_D96TM/MapServer/export",
-        opacity: 0.7,
-        description: "LIDAR kot overlay — razkrije reliefne anomalije, jarke, nasipe, temelje zgradb"
-      },
-      {
-        id: "wayback_2006",
-        name: "Esri Worldview satelit (primerjava)",
-        type: "tile",
-        url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-        opacity: 0.9,
-        transparent: false,
-        description: "Visokoločljiv satelit Esri — primerjaj z OSM za neoznačene zgradbe in posege"
-      },
-      {
-        id: "humanitarian",
-        name: "Humanitarna karta (HOT OSM)",
-        type: "tile",
-        url: "https://tile-{s}.openstreetmap.fr/hot/{z}/{x}/{y}.png",
-        opacity: 0.85,
-        transparent: true,
-        description: "HOT OSM — izpostavi vse umetne strukture, poti in zgradbe vključno z manjšimi"
+        thumbnail: "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=80&h=60&fit=crop",
+        description: "Električna infrastruktura — daljnovodi, transformatorji"
       }
     ]
   }
