@@ -59,10 +59,8 @@ export default function MapViewer() {
     if (settings.active_base_layers && Object.keys(settings.active_base_layers).length > 0) {
       setActiveBaseLayers(settings.active_base_layers);
     }
-    if (settings.active_layers) {
-      setActiveLayers(settings.active_layers);
-      setLayerOrder(Object.keys(settings.active_layers));
-    }
+    // Note: active overlay layers are intentionally NOT restored on load
+    // so the counter always starts at 0/6
   }, [isLoaded]);
 
   const handleLocate = useCallback((loc) => {
