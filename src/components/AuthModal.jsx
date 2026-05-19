@@ -24,18 +24,23 @@ export default function AuthModal({ onClose, onSuccess }) {
     if (!identifier || !password) { setError('Vnesite podatke za prijavo'); return; }
     setLoading(true);
     try {
-      const res = await base44.functions.invoke('loginUser', { login: identifier, password });
-      if (res.data.success) {
-        localStorage.setItem('userAccountId', res.data.accountId);
-        localStorage.setItem('userUsername', res.data.username);
-        localStorage.setItem('userEmail', res.data.email || '');
-        localStorage.setItem('userRole', res.data.role || 'user');
-        localStorage.setItem('userIsPremium', res.data.is_premium ? 'true' : 'false');
-        onSuccess?.(res.data);
-        if (res.data.role === 'admin') window.location.href = '/admin';
+      // Find by username or email
+      const byUsername = await base44.entities.UserAccount.filter({ username: identifier });
+      const byEmail = identifier.includes('@') ? await base44.entities.UserAccount.filter({ email: identifier }) : [];
+      const account = (byUsername.length > 0 ? byUsername : byEmail)[0];
+      if (!account) { setError('Uporabnik ne obstaja'); setLoading(false); return; }
+      if (account.password !== password && account.password_hash !== password) {
+        setError('Napačno geslo'); setLoading(false); return;
       }
+      localStorage.setItem('userAccountId', account.id);
+      localStorage.setItem('userUsername', account.username);
+      localStorage.setItem('userEmail', account.email || '');
+      localStorage.setItem('userRole', account.role || 'user');
+      localStorage.setItem('userIsPremium', account.is_premium ? 'true' : 'false');
+      onSuccess?.(account);
+      if (account.role === 'admin') window.location.href = '/admin';
     } catch (err) {
-      setError(err.response?.data?.error || 'Napačno geslo ali uporabniško ime');
+      setError('Prijava ni uspela');
     } finally { setLoading(false); }
   };
 
@@ -47,15 +52,15 @@ export default function AuthModal({ onClose, onSuccess }) {
     if (password !== confirmPassword) { setError('Gesli se ne ujemata'); return; }
     setLoading(true);
     try {
-      const res = await base44.functions.invoke('registerUser', { username, password, email: email || null });
-      if (res.data.success) {
-        setSuccess('Račun ustvarjen! Prijavite se.');
-        switchMode(true);
-        setIdentifier(username);
-        setUsername(''); setEmail(''); setPassword(''); setConfirmPassword('');
-      }
+      const existing = await base44.entities.UserAccount.filter({ username });
+      if (existing.length > 0) { setError('Uporabniško ime že obstaja'); setLoading(false); return; }
+      await base44.entities.UserAccount.create({ username, password, email: email || undefined, role: 'user', is_premium: false });
+      setSuccess('Račun ustvarjen! Prijavite se.');
+      switchMode(true);
+      setIdentifier(username);
+      setUsername(''); setEmail(''); setPassword(''); setConfirmPassword('');
     } catch (err) {
-      setError(err.response?.data?.error || 'Registracija ni uspela. Morda ime že obstaja.');
+      setError('Registracija ni uspela');
     } finally { setLoading(false); }
   };
 
