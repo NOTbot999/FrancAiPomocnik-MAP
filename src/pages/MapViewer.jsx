@@ -203,6 +203,7 @@ export default function MapViewer() {
           onToolChange: setActiveTool,
           onClear: handleClearDrawings,
           onLocationSelect: setFlyToLocation,
+          mapCenter,
           isGpsTracking,
           onGpsToggle: handleGpsToggle,
           onShowTracks: () => setShowMyTracks(p => !p),
@@ -228,7 +229,7 @@ export default function MapViewer() {
         <>
           {/* Search bar — centered top */}
           <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[950] w-full max-w-md px-4">
-            <SearchBar onLocationSelect={(loc) => handleLocate(loc)} />
+            <SearchBar onLocationSelect={(loc) => handleLocate(loc)} mapCenter={mapCenter} />
           </div>
 
           {/* My Tracks panel */}

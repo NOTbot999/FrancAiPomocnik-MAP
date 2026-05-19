@@ -23,7 +23,7 @@ function MobileTopBarInner({
   onLocationSelect, isGpsTracking, onGpsToggle,
   onShowTracks, gpsTrack, onLoadTrack,
   onRouteResult, isAIOpen, onAIToggle,
-  measurements,
+  measurements, mapCenter,
 }) {
   const map = useMap();
   const container = map.getContainer();
@@ -110,6 +110,7 @@ function MobileTopBarInner({
         <div style={{ pointerEvents: "auto" }} className="absolute top-3 left-3 right-14 z-[960]">
           <SearchBar
             onLocationSelect={(loc) => { onLocationSelect(loc); }}
+            mapCenter={mapCenter}
             autoFocus={false}
           />
         </div>
@@ -164,6 +165,7 @@ function MobileTopBarInner({
           >
             <SearchBar
               onLocationSelect={(loc) => { onLocationSelect(loc); setShowSearch(false); }}
+              mapCenter={mapCenter}
               autoFocus
             />
           </motion.div>
