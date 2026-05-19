@@ -96,14 +96,30 @@ export default function MapViewer() {
     });
   }, [updateSettings]);
 
-  const handleToggleBaseLayer = useCallback((layerId, defaultOpacity = 1) => {
+  const handleToggleBaseLayer = useCallback((layerId, defaultOpacity = 1, action = null) => {
     setActiveBaseLayers(prev => {
       let next;
-      if (prev[layerId]) {
+      if (action === "remove_all" || layerId === null) {
+        // Izklopi vse
+        next = {};
+      } else if (action === "remove") {
         next = { ...prev };
         delete next[layerId];
+      } else if (action === "add_overlay") {
+        next = { ...prev, [layerId]: { opacity: defaultOpacity ?? 0.5 } };
+      } else if (action === "set_primary") {
+        // Premakni ta layer na začetek objekta (bo postal primary)
+        const rest = { ...prev };
+        delete rest[layerId];
+        next = { [layerId]: prev[layerId] || { opacity: 1 }, ...rest };
       } else {
-        next = { ...prev, [layerId]: { opacity: defaultOpacity } };
+        // Legacy toggle
+        if (prev[layerId]) {
+          next = { ...prev };
+          delete next[layerId];
+        } else {
+          next = { ...prev, [layerId]: { opacity: defaultOpacity } };
+        }
       }
       updateSettings({ active_base_layers: next });
       return next;

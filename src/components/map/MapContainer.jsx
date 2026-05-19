@@ -416,9 +416,9 @@ export default function MapContainerComponent({
   onRemoveCustomLayer,
 }) {
   const allLayers = getAllLayersFlat();
-  const activeBaseLayerEntries = activeBaseLayers
+  const activeBaseLayerEntries = activeBaseLayers && Object.keys(activeBaseLayers).length > 0
     ? Object.entries(activeBaseLayers)
-    : [['osm', { opacity: 1 }]];
+    : [];
 
   return (
     <LeafletMapContainer
