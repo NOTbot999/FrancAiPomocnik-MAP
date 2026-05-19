@@ -171,8 +171,10 @@ export default function MapViewer() {
   const isMobile = useIsMobile();
 
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [currentUser, setCurrentUser] = useState(() => localStorage.getItem('userUsername'));
   useEffect(() => {
     const loggedIn = localStorage.getItem('userUsername');
+    setCurrentUser(loggedIn);
     if (!loggedIn) setShowAuthModal(true);
   }, []);
 
@@ -227,8 +229,8 @@ export default function MapViewer() {
       {/* ── DESKTOP ONLY ── */}
       {!isMobile && (
         <>
-          {/* Search bar — centered top */}
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[950] w-full max-w-md px-4">
+          {/* Search bar — centered top, account for user badge on left */}
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[950] w-full max-w-md px-4" style={{ paddingLeft: currentUser ? "0px" : "4px" }}>
             <SearchBar onLocationSelect={(loc) => handleLocate(loc)} mapCenter={mapCenter} />
           </div>
 
@@ -394,10 +396,46 @@ export default function MapViewer() {
       />
 
 
+      {/* User badge — top left on desktop */}
+      {!isMobile && currentUser && (
+        <div className="absolute top-4 left-4 z-[940] flex items-center gap-2">
+          <div className="flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-xl px-3 py-1.5 shadow-md border border-slate-200/60">
+            <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
+              <span className="text-[9px] font-bold text-white">{currentUser.charAt(0).toUpperCase()}</span>
+            </div>
+            <span className="text-xs font-medium text-slate-700">{currentUser}</span>
+            {isPremium && <span className="text-[9px] bg-amber-100 text-amber-600 font-bold px-1.5 py-0.5 rounded-full">PRO</span>}
+            <button
+              onClick={() => {
+                localStorage.clear();
+                window.location.href = '/auth';
+              }}
+              className="text-[10px] text-slate-400 hover:text-red-500 transition ml-1"
+              title="Odjava"
+            >✕</button>
+          </div>
+        </div>
+      )}
+
+      {!isMobile && !currentUser && (
+        <div className="absolute top-4 left-4 z-[940]">
+          <button
+            onClick={() => setShowAuthModal(true)}
+            className="flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-xl px-3 py-1.5 shadow-md border border-slate-200/60 text-xs font-medium text-slate-700 hover:bg-white transition"
+          >
+            🔑 Prijava
+          </button>
+        </div>
+      )}
+
       {showAuthModal && (
         <AuthModal
           onClose={() => setShowAuthModal(false)}
-          onSuccess={() => setShowAuthModal(false)}
+          onSuccess={(data) => {
+            setCurrentUser(data?.username || localStorage.getItem('userUsername'));
+            setShowAuthModal(false);
+            if (data?.is_premium) setIsPremium(true);
+          }}
         />
       )}
     </div>

@@ -3,7 +3,7 @@
  * Premium-only (admins always have access).
  */
 import React, { useState, useRef, useEffect } from "react";
-import { X, Send, Sparkles, Loader2, Bot, User, MapPin, Star, Lock, Crosshair, CheckCircle2 } from "lucide-react";
+import { X, Send, Loader2, User, Lock, RotateCcw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { base44 } from "@/api/base44Client";
 import { OVERLAY_CATEGORIES, BASE_LAYERS } from "./layerConfig";
@@ -103,46 +103,78 @@ function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme, messag
     setLoading(false);
   };
 
+  const quickQuestions = [
+    "Kateri sloji so primerni za iskanje jam?",
+    "Prikaži mi LIDAR senčenje",
+    "Kako berem topografsko karto?",
+    "Kje najdem stare ortofoto posnetke?",
+  ];
+
   return (
     <>
       <div className="flex items-center justify-between px-4 py-2 border-b shrink-0" style={{ borderColor: `${theme.panelText}18` }}>
-        <span className="text-[10px] font-bold uppercase tracking-widest opacity-50" style={{ color: theme.panelText }}>Pogovor</span>
+        <span className="text-[10px] font-bold uppercase tracking-widest opacity-50" style={{ color: theme.panelText }}>Pogovor s Francem</span>
         <button onClick={onResetChat}
-          className="text-[10px] font-medium opacity-50 hover:opacity-100 transition-opacity px-2 py-1 rounded-lg hover:bg-white/10"
+          className="flex items-center gap-1 text-[10px] font-medium opacity-50 hover:opacity-100 transition-opacity px-2 py-1 rounded-lg hover:bg-white/10"
           style={{ color: theme.panelText }}>
-          Počisti
+          <RotateCcw className="w-3 h-3" /> Počisti
         </button>
       </div>
       <div className="flex-1 overflow-y-auto p-3 space-y-3 min-h-0">
         {messages.map((msg, i) => (
           <div key={i} className={`flex gap-2 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
             {msg.role === "assistant" && (
-              <img src="https://media.base44.com/images/public/69ad3ce309822f8e71f66838/75ef0a326_EZU3mXIlM90xjxOrcrhU--0--SNgLs.jpg" alt="Franc" className="rounded-full object-cover shrink-0 mt-0.5" style={{ width: "36px", height: "36px" }} />
+              <img src="https://media.base44.com/images/public/69ad3ce309822f8e71f66838/75ef0a326_EZU3mXIlM90xjxOrcrhU--0--SNgLs.jpg" alt="Franc" className="rounded-full object-cover shrink-0 mt-0.5 shadow-md ring-2 ring-emerald-500/30" style={{ width: "32px", height: "32px" }} />
             )}
-            <div className="max-w-[85%] rounded-xl px-3 py-2 text-xs leading-relaxed"
+            <div className="max-w-[85%] rounded-2xl px-3 py-2 text-xs leading-relaxed"
               style={msg.role === "user"
-                ? { backgroundColor: theme.buttonActiveBg, color: theme.buttonActiveText }
-                : { backgroundColor: theme.menuBg + "33", color: theme.panelText, border: `1px solid ${theme.panelText}22` }
+                ? { backgroundColor: theme.buttonActiveBg, color: theme.buttonActiveText, borderRadius: "18px 18px 4px 18px" }
+                : { backgroundColor: theme.menuBg + "44", color: theme.panelText, border: `1px solid ${theme.panelText}18`, borderRadius: "4px 18px 18px 18px" }
               }>
-              {msg.content.split(/\*([^*]+)\*/).map((part, j) =>
-                j % 2 === 1
-                  ? <em key={j} className="not-italic font-semibold text-emerald-400">{part}</em>
-                  : part
-              )}
+              <ReactMarkdown
+                className="prose prose-xs max-w-none"
+                components={{
+                  p: ({ children }) => <p className="my-0.5 leading-relaxed">{children}</p>,
+                  strong: ({ children }) => <strong className="font-semibold text-emerald-400">{children}</strong>,
+                  ul: ({ children }) => <ul className="my-1 ml-3 list-disc space-y-0.5">{children}</ul>,
+                  li: ({ children }) => <li>{children}</li>,
+                  code: ({ children }) => <code className="bg-black/20 px-1 rounded text-[10px]">{children}</code>,
+                }}
+              >
+                {msg.content}
+              </ReactMarkdown>
             </div>
             {msg.role === "user" && (
-              <div className="w-6 h-6 rounded-full bg-slate-700 flex items-center justify-center shrink-0 mt-0.5">
-                <User className="w-3.5 h-3.5 text-slate-400" />
+              <div className="w-7 h-7 rounded-full bg-slate-700 flex items-center justify-center shrink-0 mt-0.5 ring-2 ring-slate-600/50">
+                <User className="w-3.5 h-3.5 text-slate-300" />
               </div>
             )}
           </div>
         ))}
         {loading && (
-          <div className="flex gap-2">
-            <img src="https://media.base44.com/images/public/69ad3ce309822f8e71f66838/75ef0a326_EZU3mXIlM90xjxOrcrhU--0--SNgLs.jpg" alt="Franc" className="rounded-full object-cover shrink-0" style={{ width: "36px", height: "36px" }} />
-            <div className="rounded-xl px-3 py-2" style={{ backgroundColor: theme.menuBg + "33" }}>
-              <Loader2 className="w-3.5 h-3.5 text-emerald-400 animate-spin" />
+          <div className="flex gap-2 items-end">
+            <img src="https://media.base44.com/images/public/69ad3ce309822f8e71f66838/75ef0a326_EZU3mXIlM90xjxOrcrhU--0--SNgLs.jpg" alt="Franc" className="rounded-full object-cover shrink-0 shadow-md" style={{ width: "32px", height: "32px" }} />
+            <div className="rounded-2xl px-4 py-3 flex items-center gap-1" style={{ backgroundColor: theme.menuBg + "44", borderRadius: "4px 18px 18px 18px" }}>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: "0ms" }} />
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: "300ms" }} />
             </div>
+          </div>
+        )}
+        {/* Quick questions — only shown when no user messages yet */}
+        {messages.length <= 1 && !loading && (
+          <div className="space-y-1.5 pt-1">
+            <p className="text-[10px] opacity-40 px-1" style={{ color: theme.panelText }}>Hitri predlogi:</p>
+            {quickQuestions.map((q, i) => (
+              <button
+                key={i}
+                onClick={() => { setInput(q); }}
+                className="w-full text-left text-[11px] px-3 py-2 rounded-xl transition-all hover:opacity-80"
+                style={{ backgroundColor: theme.menuBg + "33", color: theme.panelText, border: `1px solid ${theme.panelText}15` }}
+              >
+                {q}
+              </button>
+            ))}
           </div>
         )}
         <div ref={bottomRef} />
@@ -151,13 +183,13 @@ function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme, messag
         <input
           value={input}
           onChange={e => setInput(e.target.value)}
-          onKeyDown={e => e.key === "Enter" && send()}
+          onKeyDown={e => e.key === "Enter" && !e.shiftKey && send()}
           placeholder="Vprašajte o slojih, krajih, podatkih..."
-          className="flex-1 text-xs rounded-xl px-3 py-2 outline-none"
+          className="flex-1 text-xs rounded-xl px-3 py-2 outline-none transition-all"
           style={{ backgroundColor: theme.menuBg + "44", color: theme.panelText, border: `1px solid ${theme.panelText}33` }}
         />
         <button onClick={send} disabled={!input.trim() || loading}
-          className="p-2 rounded-xl bg-emerald-500 text-white disabled:opacity-40 hover:bg-emerald-400 transition-colors">
+          className="p-2 rounded-xl bg-emerald-500 text-white disabled:opacity-40 hover:bg-emerald-400 active:scale-95 transition-all">
           <Send className="w-3.5 h-3.5" />
         </button>
       </div>
@@ -238,11 +270,15 @@ export default function AIPanel({
     >
       {/* Header */}
       <div className="flex items-center gap-2.5 px-4 py-3 shrink-0" style={{ borderBottom: `1px solid ${theme.panelText}18` }}>
-        <span className="text-sm font-semibold flex-1" style={{ color: theme.panelText }}>Asistent Franc</span>
+        <img src="https://media.base44.com/images/public/69ad3ce309822f8e71f66838/75ef0a326_EZU3mXIlM90xjxOrcrhU--0--SNgLs.jpg" alt="Franc" className="w-8 h-8 rounded-full object-cover ring-2 ring-emerald-500/40 shrink-0" />
+        <div className="flex-1 min-w-0">
+          <span className="text-sm font-bold block leading-tight" style={{ color: theme.panelText }}>Asistent Franc</span>
+          <span className="text-[10px] opacity-50 leading-none" style={{ color: theme.panelText }}>GIS AI za Slovenijo</span>
+        </div>
         {isPremium && (
-          <span className="text-[9px] bg-amber-500/20 text-amber-400 font-bold px-1.5 py-0.5 rounded-full">PREMIUM</span>
+          <span className="text-[9px] bg-amber-500/20 text-amber-400 font-bold px-1.5 py-0.5 rounded-full shrink-0">PREMIUM</span>
         )}
-        <button onClick={onClose} className="opacity-50 hover:opacity-100 transition-opacity" style={{ color: theme.panelText }}>
+        <button onClick={onClose} className="opacity-50 hover:opacity-100 transition-opacity p-1 rounded-lg hover:bg-white/10 shrink-0" style={{ color: theme.panelText }}>
           <X className="w-4 h-4" />
         </button>
       </div>
