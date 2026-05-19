@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Layers, X, ExternalLink, ChevronDown, BookOpen, GripVertical } from "lucide-react";
 import { base44 } from "@/api/base44Client";
@@ -331,6 +331,21 @@ export default function LayerPanel({
   const panelText = theme.panelText || "#e2e8f0";
   const accentColor = theme.accentColor || "#10b981";
 
+  const [panelExpanded, setPanelExpanded] = useState(false);
+  const dragStartY = useRef(null);
+
+  const handleDragHandlePointerDown = (e) => {
+    dragStartY.current = e.clientY ?? e.touches?.[0]?.clientY;
+  };
+  const handleDragHandlePointerUp = (e) => {
+    if (dragStartY.current === null) return;
+    const endY = e.clientY ?? e.changedTouches?.[0]?.clientY;
+    const diff = dragStartY.current - endY;
+    if (diff > 30) setPanelExpanded(true);
+    if (diff < -30) setPanelExpanded(false);
+    dragStartY.current = null;
+  };
+
   if (isMobile) {
     return (
       <AnimatePresence>
@@ -347,14 +362,22 @@ export default function LayerPanel({
             />
             <motion.div
               initial={{ y: "100%" }}
-              animate={{ y: 0 }}
+              animate={{ y: 0, height: panelExpanded ? "82vh" : "44vh" }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 32, stiffness: 340 }}
               className="absolute bottom-0 left-0 right-0 z-[900] flex flex-col rounded-t-3xl border-t border-white/10 shadow-2xl"
-              style={{ height: "43.1vh", backgroundColor: panelBg + "fa", backdropFilter: "blur(24px)", color: panelText }}
+              style={{ backgroundColor: panelBg + "fa", backdropFilter: "blur(24px)", color: panelText }}
             >
-              <div className="flex justify-center pt-3 pb-1 shrink-0">
-                <div className="w-10 h-1 rounded-full" style={{ backgroundColor: accentColor + "60" }} />
+              {/* Drag handle — touch/pointer events for swipe */}
+              <div
+                className="flex justify-center pt-3 pb-1 shrink-0 cursor-grab active:cursor-grabbing touch-none"
+                onPointerDown={handleDragHandlePointerDown}
+                onPointerUp={handleDragHandlePointerUp}
+                onTouchStart={e => { dragStartY.current = e.touches[0].clientY; }}
+                onTouchEnd={e => { const diff = dragStartY.current - e.changedTouches[0].clientY; if (diff > 30) setPanelExpanded(true); if (diff < -30) setPanelExpanded(false); dragStartY.current = null; }}
+                onClick={() => setPanelExpanded(p => !p)}
+              >
+                <div className="w-10 h-1 rounded-full" style={{ backgroundColor: accentColor + "80" }} />
               </div>
               <div className="flex items-center justify-between px-5 py-2.5 border-b border-white/8 shrink-0">
                 <div className="flex items-center gap-2.5">

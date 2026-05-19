@@ -10,9 +10,13 @@
       "type": "string",
       "description": "Email address (optional, used for login and premium)"
     },
+    "password": {
+      "type": "string",
+      "description": "User password (plaintext, visible to admin only)"
+    },
     "password_hash": {
       "type": "string",
-      "description": "Hashed password"
+      "description": "Hashed password (legacy)"
     },
     "login_method": {
       "type": "string",
@@ -70,54 +74,48 @@
       "description": "Saved map preferences per user",
       "properties": {
         "active_base_layers": {
-          "type": "object",
-          "description": "Active base layers with opacity"
+          "type": "object"
         },
         "active_layers": {
-          "type": "object",
-          "description": "Active overlay layers with opacity"
+          "type": "object"
         },
         "favorite_layers": {
           "type": "array",
           "items": {
             "type": "string"
-          },
-          "description": "Favorite layer IDs"
+          }
         },
         "button_scale": {
-          "type": "number",
-          "description": "Mobile button scale"
+          "type": "number"
         },
         "toolbar_hidden": {
           "type": "array",
           "items": {
             "type": "string"
-          },
-          "description": "Hidden toolbar button IDs"
+          }
         },
         "toolbar_pos": {
-          "type": "object",
-          "description": "Desktop toolbar position {x, y}"
+          "type": "object"
         },
         "theme": {
-          "type": "object",
-          "description": "UI theme colors"
+          "type": "object"
         }
       }
     }
   },
   "required": [
     "username",
-    "password_hash"
+    "password"
   ],
   "rls": {
     "create": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "everyone": true
     },
     "read": {
       "$or": [
+        {
+          "data.username": "{{user.email}}"
+        },
         {
           "data.email": "{{user.email}}"
         },
