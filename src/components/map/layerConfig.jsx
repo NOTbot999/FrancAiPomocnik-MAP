@@ -35,6 +35,8 @@ export const BASE_LAYERS = [
     type: "tile",
     url: "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
     attribution: "&copy; OpenTopoMap",
+    maxNativeZoom: 17,
+    maxZoom: 21,
     thumbnail: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=80&h=60&fit=crop"
   },
   {
