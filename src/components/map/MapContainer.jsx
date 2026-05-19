@@ -317,7 +317,7 @@ function getAllLayersFlat() {
 
 // ArcGIS MapServer export as a Leaflet TileLayer (dynamic tiles via /export endpoint)
 // bboxSR=4326 works best with ARSO D96TM cached services; bboxSR=3857 for dynamic services like LIDAR
-function ArcGISExportLayer({ url, opacity, layerIds, maxZoom, bboxSR, transparent, format, sharp }) {
+function ArcGISExportLayer({ url, opacity, layerIds, maxZoom, bboxSR, transparent, format }) {
    const map = useMap();
    const layerRef = useRef(null);
    const useSR = bboxSR || 3857;
@@ -332,19 +332,6 @@ function ArcGISExportLayer({ url, opacity, layerIds, maxZoom, bboxSR, transparen
        maxNativeZoom: 19,
        bounds: [[45.3, 13.3], [46.9, 16.8]],
      });
-
-     if (sharp) {
-       arcLayer.createTile = function(coords, done) {
-         const img = document.createElement("img");
-         img.style.imageRendering = "pixelated";
-         img.style.filter = "contrast(1.35) brightness(1.08) sharpen(1)";
-         img.onload = () => done(null, img);
-         img.onerror = (e) => done(e, img);
-         img.src = arcLayer.getTileUrl(coords);
-         img.crossOrigin = "anonymous";
-         return img;
-       };
-     }
 
     arcLayer.getTileUrl = function (coords) {
       const tileBounds = this._tileCoordsToBounds(coords);
@@ -449,8 +436,7 @@ export default function MapContainerComponent({
         if (!bl) return null;
         const opacity = config?.opacity ?? 1;
         if (bl.type === 'arcgis_export') {
-          const isLidar = bl.id?.includes('lidar') || bl.arcgisUrl?.toLowerCase().includes('lidar');
-          return <ArcGISExportLayer key={bl.id} url={bl.arcgisUrl} opacity={opacity} bboxSR={bl.bboxSR} transparent={bl.transparent} format={bl.format} sharp={isLidar} />;
+          return <ArcGISExportLayer key={bl.id} url={bl.arcgisUrl} opacity={opacity} bboxSR={bl.bboxSR} transparent={bl.transparent} format={bl.format} />;
         }
         return <TileLayer key={bl.id} url={bl.url} opacity={opacity} attribution={bl.attribution || ""} maxZoom={22} maxNativeZoom={bl.maxNativeZoom || 19} />;
       })}
@@ -480,7 +466,6 @@ export default function MapContainerComponent({
 
         // ArcGIS MapServer export dynamic tiles
          if (layer.type === "arcgis_export") {
-           const isLidar = layerId?.includes('lidar') || layer.url?.toLowerCase().includes('lidar');
            return (
              <ArcGISExportLayer
                key={layerId}
@@ -491,7 +476,6 @@ export default function MapContainerComponent({
                bboxSR={layer.bboxSR}
                transparent={layer.transparent}
                format={layer.format}
-               sharp={isLidar}
              />
            );
          }

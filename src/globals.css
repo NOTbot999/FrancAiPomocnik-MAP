@@ -88,14 +88,6 @@
   visibility: hidden !important;
 }
 
-/* LIDAR sharp rendering — prevent browser blur on zoom */
-.leaflet-tile-pane img[src*="Lidar"],
-.leaflet-tile-pane img[src*="lidar"] {
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
-  filter: contrast(1.25) brightness(1.05);
-}
-
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
