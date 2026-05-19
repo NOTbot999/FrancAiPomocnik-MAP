@@ -12,32 +12,69 @@ import { scopedGet, scopedSet } from "@/lib/userPrefs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-// Base Map grid — always 1 active (radio style), no slider, 2×4 grid at the top
-function BaseMapGrid({ activeBaseLayers, onSelectBaseLayer }) {
-  const activeId = activeBaseLayers ? Object.keys(activeBaseLayers)[0] : "osm";
+// Base Map grid — primary (radio) + optional overlay layers with opacity
+function BaseMapGrid({ activeBaseLayers, onSelectBaseLayer, onBaseOpacityChange }) {
+  const layerEntries = activeBaseLayers ? Object.entries(activeBaseLayers) : [["osm", { opacity: 1 }]];
+  const primaryId = layerEntries[0]?.[0] ?? "osm";
+  // All active ids
+  const activeIds = layerEntries.map(([id]) => id);
+
+  const handleClick = (layerId) => {
+    if (layerId === primaryId) return; // already primary, do nothing
+    // If already an overlay, remove it (toggle off)
+    if (activeIds.includes(layerId) && layerId !== primaryId) {
+      onSelectBaseLayer(layerId, "remove");
+    } else if (!activeIds.includes(layerId)) {
+      // Add as overlay
+      onSelectBaseLayer(layerId, "add_overlay");
+    }
+  };
 
   return (
     <div className="px-3 pb-3 pt-2 border-b border-slate-700/50">
       <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Osnovna karta</p>
       <div className="grid grid-cols-4 gap-1.5">
         {BASE_LAYERS.map((layer) => {
-          const isActive = layer.id === activeId;
+          const isPrimary = layer.id === primaryId;
+          const isOverlay = activeIds.includes(layer.id) && !isPrimary;
+          const isActive = isPrimary || isOverlay;
           return (
             <button
               key={layer.id}
-              onClick={() => onSelectBaseLayer(layer.id)}
-              className={`flex flex-col items-center gap-1 rounded-xl p-1.5 transition-all ${isActive ? 'ring-2 ring-emerald-400 bg-slate-700/60' : 'hover:bg-slate-700/30'}`}
+              onClick={() => isPrimary ? onSelectBaseLayer(layer.id) : handleClick(layer.id)}
+              className={`flex flex-col items-center gap-1 rounded-xl p-1.5 transition-all ${isPrimary ? 'ring-2 ring-emerald-400 bg-slate-700/60' : isOverlay ? 'ring-2 ring-amber-400 bg-slate-700/50' : 'hover:bg-slate-700/30'}`}
             >
-              <div className={`w-full aspect-video rounded-lg overflow-hidden border ${isActive ? 'border-emerald-400/60' : 'border-slate-600/30'}`}>
+              <div className={`w-full aspect-video rounded-lg overflow-hidden border ${isPrimary ? 'border-emerald-400/60' : isOverlay ? 'border-amber-400/60' : 'border-slate-600/30'}`}>
                 <img src={layer.thumbnail} alt={layer.name} className="w-full h-full object-cover" loading="lazy" />
               </div>
-              <span className={`text-[9px] leading-tight text-center w-full truncate ${isActive ? 'text-emerald-400 font-bold' : 'text-slate-400'}`}>
+              <span className={`text-[9px] leading-tight text-center w-full truncate ${isPrimary ? 'text-emerald-400 font-bold' : isOverlay ? 'text-amber-400 font-semibold' : 'text-slate-400'}`}>
                 {layer.name}
               </span>
             </button>
           );
         })}
       </div>
+      {/* Opacity sliders for overlay base layers */}
+      {layerEntries.filter(([id]) => id !== primaryId).map(([id, cfg]) => {
+        const layer = BASE_LAYERS.find(l => l.id === id);
+        if (!layer) return null;
+        const opacity = cfg?.opacity ?? 0.7;
+        return (
+          <div key={id} className="mt-2 flex items-center gap-2 px-1">
+            <div className="w-8 h-5 rounded overflow-hidden shrink-0 border border-amber-400/40">
+              <img src={layer.thumbnail} alt={layer.name} className="w-full h-full object-cover" />
+            </div>
+            <span className="text-[10px] text-amber-400 flex-1 truncate">{layer.name}</span>
+            <span className="text-[10px] text-slate-500 w-8 text-right">{Math.round(opacity * 100)}%</span>
+            <Slider
+              value={[Math.round(opacity * 100)]}
+              onValueChange={([v]) => onBaseOpacityChange && onBaseOpacityChange(id, v / 100)}
+              max={100} min={0} step={5}
+              className="w-20"
+            />
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -215,7 +252,7 @@ function FavoritesCategory({ favoriteLayerIds, allCategories, activeLayers, onTo
   );
 }
 
-function PanelContent({ activeBaseLayers, onSelectBaseLayer, activeLayers, onToggleLayer, onOpacityChange, favorites, onToggleFavorite, layerOrder, onLayerReorder }) {
+function PanelContent({ activeBaseLayers, onSelectBaseLayer, onBaseOpacityChange, activeLayers, onToggleLayer, onOpacityChange, favorites, onToggleFavorite, layerOrder, onLayerReorder }) {
   const activeLayerCount = Object.keys(activeLayers).length;
 
   return (
@@ -224,6 +261,7 @@ function PanelContent({ activeBaseLayers, onSelectBaseLayer, activeLayers, onTog
       <BaseMapGrid
         activeBaseLayers={activeBaseLayers}
         onSelectBaseLayer={onSelectBaseLayer}
+        onBaseOpacityChange={onBaseOpacityChange}
       />
 
       {/* Active overlay layers with drag & drop reorder */}
@@ -293,18 +331,21 @@ export default function LayerPanel({
   const isMobile = useIsMobile();
   const [favorites, setFavorites] = useState(() => scopedGet("layerFavorites") || []);
 
-  // Radio-style: select exactly 1 base layer
-  const handleSelectBaseLayer = useCallback((layerId) => {
-    // Always keep exactly this one active at opacity 1
-    const next = { [layerId]: { opacity: 1 } };
-    // Use the existing onToggleBaseLayer mechanism: turn off all others, turn on selected
-    // We'll call the parent's setter directly via a synthetic approach
-    // Since we only have onToggleBaseLayer, we build the new state here and call onBaseOpacityChange trick
-    // Instead, call parent-passed handlers to sync state
+  // Base layer selection: radio for primary, or add/remove as overlay
+  const handleSelectBaseLayer = useCallback((layerId, action) => {
     const currentIds = activeBaseLayers ? Object.keys(activeBaseLayers) : [];
-    currentIds.filter(id => id !== layerId).forEach(id => onToggleBaseLayer(id)); // turn off others
-    if (!currentIds.includes(layerId)) onToggleBaseLayer(layerId, 1); // turn on selected
-    else if (currentIds.length === 1) return; // already the only one active, do nothing
+    if (action === "add_overlay") {
+      // Add as additional overlay at 0.5 opacity
+      onToggleBaseLayer(layerId, 0.5);
+    } else if (action === "remove") {
+      // Remove overlay
+      onToggleBaseLayer(layerId);
+    } else {
+      // Radio-style primary selection: turn off all others, turn on selected
+      currentIds.filter(id => id !== layerId).forEach(id => onToggleBaseLayer(id));
+      if (!currentIds.includes(layerId)) onToggleBaseLayer(layerId, 1);
+      else if (currentIds.length === 1) return;
+    }
   }, [activeBaseLayers, onToggleBaseLayer]);
 
   const handleToggleFavorite = useCallback((layerId) => {
@@ -325,7 +366,7 @@ export default function LayerPanel({
 
   const theme = loadTheme();
   const [showLegend, setShowLegend] = useState(false);
-  const panelProps = { activeBaseLayers, onSelectBaseLayer: handleSelectBaseLayer, activeLayers, onToggleLayer: trackedToggleLayer, onOpacityChange, favorites, onToggleFavorite: handleToggleFavorite, layerOrder, onLayerReorder };
+  const panelProps = { activeBaseLayers, onSelectBaseLayer: handleSelectBaseLayer, onBaseOpacityChange, activeLayers, onToggleLayer: trackedToggleLayer, onOpacityChange, favorites, onToggleFavorite: handleToggleFavorite, layerOrder, onLayerReorder };
 
   const panelBg = theme.panelBg || "#0f172a";
   const panelText = theme.panelText || "#e2e8f0";
