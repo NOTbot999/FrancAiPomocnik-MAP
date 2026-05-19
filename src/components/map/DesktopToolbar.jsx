@@ -1,9 +1,9 @@
 import React, { useState, useRef, useCallback } from "react";
 import {
-  Layers, Locate, LoaderCircle, Ruler, Pentagon, MapPin, Trash2,
-  MousePointer2, Navigation, Route, Sparkles, TrendingUp, X,
+  Layers, Locate, LoaderCircle, Ruler, MapPin, Trash2,
+  MousePointer2, Navigation, Route, X,
   Map, Settings, Eye, EyeOff, Save, FolderOpen,
-  Loader2, Check, GripVertical, Palette, Brain
+  Loader2, Check, GripVertical, Palette, Brain, TrendingUp
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { motion, AnimatePresence } from "framer-motion";
@@ -27,7 +27,6 @@ const BUTTON_DEFS = [
 const RULER_TOOLS = [
   { id: "pointer",  icon: MousePointer2, label: "Izberi" },
   { id: "distance", icon: Ruler,         label: "Meri razdaljo" },
-  { id: "area",     icon: Pentagon,      label: "Meri površino" },
   { id: "marker",   icon: MapPin,        label: "Postavi oznako" },
   { id: "clear",    icon: Trash2,        label: "Počisti vse" },
 ];
@@ -144,14 +143,18 @@ export default function DesktopToolbar({
     const hasAnything = drawings && (drawings.markers?.length || drawings.lines?.length || drawings.polygons?.length || gpsTrack?.length);
     if (!hasAnything) return;
     setSaving(true);
+    const username = localStorage.getItem("userUsername") || "gost";
+    // Normalize drawings — lines/polygons may be {points, label} objects or raw arrays
+    const normLines = (drawings.lines || []).map(l => l.points || l);
+    const normPolygons = (drawings.polygons || []).map(p => p.points || p);
     await base44.entities.MapDrawing.create({
-      name: `Drawing ${new Date().toLocaleString()}`,
+      name: `${username} — ${new Date().toLocaleString("sl-SI")}`,
       markers: drawings.markers,
-      lines: drawings.lines,
-      polygons: drawings.polygons,
+      lines: normLines,
+      polygons: normPolygons,
       gps_tracks: gpsTrack?.length > 0 ? [gpsTrack] : [],
     });
-    base44.analytics.track({ eventName: "drawing_saved", properties: { markers: drawings.markers?.length || 0, lines: drawings.lines?.length || 0, polygons: drawings.polygons?.length || 0, gps_points: gpsTrack?.length || 0 } });
+    base44.analytics.track({ eventName: "drawing_saved", properties: { markers: drawings.markers?.length || 0, lines: normLines.length, polygons: normPolygons.length, gps_points: gpsTrack?.length || 0 } });
     setSaving(false);
     setSavedOk(true);
     setTimeout(() => setSavedOk(false), 2000);
@@ -359,6 +362,7 @@ export default function DesktopToolbar({
           <MeasurementDisplay
             type={measurements.type}
             valueMeters={measurements.meters}
+            areaSqm={measurements.areaSqm}
             points={measurements.points}
             style="desktop"
           />

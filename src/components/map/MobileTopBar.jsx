@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Layers, Locate, LoaderCircle, Plus, Minus, Ruler, Search, Pentagon, MapPin, Trash2, MousePointer2, Navigation, Settings, Route, WifiOff, Brain } from "lucide-react";
+import { Layers, Locate, LoaderCircle, Plus, Minus, Ruler, MapPin, Trash2, MousePointer2, Navigation, Settings, Route, WifiOff, Brain } from "lucide-react";
 import { useMap } from "react-leaflet";
 import { createPortal } from "react-dom";
 import SearchBar from "./SearchBar";
@@ -11,11 +11,10 @@ import { loadTheme } from "@/components/map/ThemeCustomizer";
 import MeasurementDisplay from "@/components/map/MeasurementDisplay";
 
 const TOOLS = [
-  { id: "pointer", icon: MousePointer2, label: "Select" },
-  { id: "distance", icon: Ruler, label: "Distance" },
-  { id: "area", icon: Pentagon, label: "Area" },
-  { id: "marker", icon: MapPin, label: "Marker" },
-  { id: "clear", icon: Trash2, label: "Clear" },
+  { id: "pointer", icon: MousePointer2, label: "Izberi" },
+  { id: "distance", icon: Ruler, label: "Meri razdaljo" },
+  { id: "marker", icon: MapPin, label: "Postavi oznako" },
+  { id: "clear", icon: Trash2, label: "Počisti vse" },
 ];
 
 function MobileTopBarInner({
@@ -243,6 +242,7 @@ function MobileTopBarInner({
                 <MeasurementDisplay
                   type={measurements.type}
                   valueMeters={measurements.meters}
+                  areaSqm={measurements.areaSqm}
                   points={measurements.points}
                   style="mobile"
                 />

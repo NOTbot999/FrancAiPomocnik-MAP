@@ -85,16 +85,20 @@ function ElevationSparkline({ profile }) {
   );
 }
 
-export default function MeasurementDisplay({ type, valueMeters, points, style = "desktop" }) {
-  const [distUnit, setDistUnit] = useState("auto"); // auto|m|km|ft|mi
-  const [areaUnit, setAreaUnit] = useState("auto"); // auto|m2|ha|km2|ft2|acres
+// MeasurementDisplay accepts:
+// type: "distance" | "area" | "both"
+// valueMeters: distance in meters
+// areaSqm: area in m² (for type "both")
+// points: array of [lat, lng]
+export default function MeasurementDisplay({ type, valueMeters, areaSqm, points, style = "desktop" }) {
+  const [distUnit, setDistUnit] = useState("auto");
+  const [areaUnit, setAreaUnit] = useState("auto");
   const [elevProfile, setElevProfile] = useState(null);
   const [loadingElev, setLoadingElev] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
 
-  // Fetch elevation when points change (distance tool only)
   useEffect(() => {
-    if (type !== "distance" || !points || points.length < 2) {
+    if ((type !== "distance" && type !== "both") || !points || points.length < 2) {
       setElevProfile(null);
       return;
     }
@@ -123,16 +127,10 @@ export default function MeasurementDisplay({ type, valueMeters, points, style = 
     { id: "acres", label: "ac" },
   ];
 
-  let displayStr = "";
-  if (type === "distance") {
-    const u = distUnit === "auto" ? null : distUnit;
-    const d = convertDistance(valueMeters, u);
-    displayStr = `${d.value} ${d.label}`;
-  } else if (type === "area") {
-    const u = areaUnit === "auto" ? null : areaUnit;
-    const a = convertArea(valueMeters, u);
-    displayStr = `${a.value} ${a.label}`;
-  }
+  const distU = distUnit === "auto" ? null : distUnit;
+  const areaU = areaUnit === "auto" ? null : areaUnit;
+  const distDisplay = convertDistance(valueMeters, distU);
+  const areaDisplay = areaSqm ? convertArea(areaSqm, areaU) : null;
 
   const isDesktop = style === "desktop";
 
@@ -144,28 +142,44 @@ export default function MeasurementDisplay({ type, valueMeters, points, style = 
         exit={{ opacity: 0, y: 8 }}
         className={`bg-slate-900/92 backdrop-blur-xl text-white rounded-xl shadow-2xl border border-white/10 ${isDesktop ? "px-4 py-3 min-w-[220px]" : "px-3 py-2 min-w-[180px]"}`}
       >
-        {/* Main value + unit switcher */}
+        {/* Distance row */}
         <div className="flex items-center gap-2">
-          <span className="text-lg font-bold text-emerald-400 leading-none">{displayStr}</span>
+          <Ruler className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+          <span className="text-lg font-bold text-emerald-400 leading-none">{distDisplay.value} {distDisplay.label}</span>
           <div className="flex flex-wrap gap-0.5 ml-auto">
-            {(type === "distance" ? DIST_UNITS : AREA_UNITS).map(u => (
+            {DIST_UNITS.map(u => (
               <button
                 key={u.id}
-                onClick={() => type === "distance" ? setDistUnit(u.id) : setAreaUnit(u.id)}
+                onClick={() => setDistUnit(u.id)}
                 className={`text-[9px] px-1.5 py-0.5 rounded transition-all ${
-                  (type === "distance" ? distUnit : areaUnit) === u.id
-                    ? "bg-emerald-500 text-white font-bold"
-                    : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                  distUnit === u.id ? "bg-emerald-500 text-white font-bold" : "bg-slate-700 text-slate-300 hover:bg-slate-600"
                 }`}
-              >
-                {u.label}
-              </button>
+              >{u.label}</button>
             ))}
           </div>
         </div>
 
-        {/* Elevation toggle (distance only) */}
-        {type === "distance" && (
+        {/* Area row — only for "area" or "both" */}
+        {(type === "area" || type === "both") && areaDisplay && (
+          <div className="flex items-center gap-2 mt-1.5 pt-1.5 border-t border-white/10">
+            <Square className="w-3.5 h-3.5 text-violet-400 shrink-0" />
+            <span className="text-sm font-bold text-violet-400 leading-none">{areaDisplay.value} {areaDisplay.label}</span>
+            <div className="flex flex-wrap gap-0.5 ml-auto">
+              {AREA_UNITS.map(u => (
+                <button
+                  key={u.id}
+                  onClick={() => setAreaUnit(u.id)}
+                  className={`text-[9px] px-1.5 py-0.5 rounded transition-all ${
+                    areaUnit === u.id ? "bg-violet-500 text-white font-bold" : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                  }`}
+                >{u.label}</button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Elevation toggle */}
+        {(type === "distance" || type === "both") && (
           <div className="mt-2">
             <button
               onClick={() => setShowProfile(p => !p)}
