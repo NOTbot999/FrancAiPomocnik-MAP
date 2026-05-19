@@ -112,8 +112,27 @@ function DrawingHandler({ activeTool, onMeasurement, drawings, setDrawings }) {
     return () => { el.style.cursor = ""; };
   }, [activeTool, map]);
 
+  // Check if the original DOM click hit a UI button/control — if so, ignore map click
+  function isUIClick(e) {
+    const orig = e.originalEvent;
+    if (!orig) return false;
+    const target = orig.target;
+    if (!target) return false;
+    // If the click target is or is inside a button, input, select, or any element with z-index >= 900
+    if (target.closest("button, input, select, [role='button'], .leaflet-control")) return true;
+    // Check computed z-index of the target's stacking context
+    let el = target;
+    while (el && el !== document.body) {
+      const z = parseInt(window.getComputedStyle(el).zIndex, 10);
+      if (!isNaN(z) && z >= 900) return true;
+      el = el.parentElement;
+    }
+    return false;
+  }
+
   useMapEvents({
     click(e) {
+      if (isUIClick(e)) return;
       if (activeTool === "marker") {
         setDrawings((prev) => ({
           ...prev,
@@ -126,12 +145,12 @@ function DrawingHandler({ activeTool, onMeasurement, drawings, setDrawings }) {
           let total = 0;
           for (let i = 1; i < pts.length; i++)
             total += L.latLng(pts[i - 1]).distanceTo(L.latLng(pts[i]));
-          onMeasurement(`Distance: ${formatDistance(total)}`);
+          onMeasurement({ type: "distance", meters: total, points: pts });
         }
       } else if (activeTool === "area") {
         const pts = [...currentPoints, [e.latlng.lat, e.latlng.lng]];
         setCurrentPoints(pts);
-        if (pts.length >= 3) onMeasurement(`Area: ${formatArea(computeArea(pts))}`);
+        if (pts.length >= 3) onMeasurement({ type: "area", meters: computeArea(pts), points: pts });
       }
     },
     dblclick(e) {
@@ -252,6 +271,8 @@ function PinPickHandler({ onPinPicked }) {
   }, [map]);
   useMapEvents({
     click(e) {
+      const orig = e.originalEvent;
+      if (orig?.target?.closest("button, input, select, [role='button'], .leaflet-control")) return;
       onPinPicked(e.latlng);
     }
   });

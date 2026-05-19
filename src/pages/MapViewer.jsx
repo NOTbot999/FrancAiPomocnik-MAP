@@ -26,7 +26,7 @@ export default function MapViewer() {
   const [layerOrder, setLayerOrder] = useState([]); // ordered array of layerIds (bottom→top)
   const [flyToLocation, setFlyToLocation] = useState(null);
   const [activeTool, setActiveTool] = useState("pointer");
-  const [measurements, setMeasurements] = useState(null);
+  const [measurements, setMeasurements] = useState(null); // { type, meters, points }
   const [drawings, setDrawings] = useState({ markers: [], lines: [], polygons: [] });
   const [gpsTrack, setGpsTrack] = useState([]);
   const [isGpsTracking, setIsGpsTracking] = useState(false);
@@ -184,7 +184,7 @@ export default function MapViewer() {
         layerOrder={layerOrder}
         flyToLocation={flyToLocation}
         activeTool={activeTool}
-        onMeasurement={setMeasurements}
+        onMeasurement={(m) => setMeasurements(m)}
         drawings={drawings}
         setDrawings={setDrawings}
         routePolyline={routePolyline}
@@ -211,6 +211,7 @@ export default function MapViewer() {
           onRouteResult: handleRouteResult,
           isAIOpen,
           onAIToggle: () => setIsAIOpen(p => !p),
+          measurements,
         } : null}
         isPinPicking={isPinPicking}
         onPinPicked={(latlng) => { setPinnedLocation([latlng.lat, latlng.lng]); setIsPinPicking(false); }}

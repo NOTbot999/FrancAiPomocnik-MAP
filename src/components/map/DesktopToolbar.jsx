@@ -9,6 +9,7 @@ import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/comp
 import { motion, AnimatePresence } from "framer-motion";
 import { base44 } from "@/api/base44Client";
 import ThemeCustomizer, { loadTheme, saveTheme, DEFAULT_THEME } from "@/components/map/ThemeCustomizer";
+import MeasurementDisplay from "@/components/map/MeasurementDisplay";
 
 const BUTTON_DEFS = [
   { id: "layers",          icon: Layers,        label: "Sloji",                color: "emerald" },
@@ -353,19 +354,16 @@ export default function DesktopToolbar({
       </AnimatePresence>
 
       {/* Measurement display */}
-      <AnimatePresence>
-        {measurements && (
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 8 }}
-            style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 960 }}
-            className="bg-slate-900/90 backdrop-blur-xl text-white px-4 py-2 rounded-xl shadow-xl pointer-events-none"
-          >
-            <p className="text-xs font-medium">{measurements}</p>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {measurements && (
+        <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 960 }}>
+          <MeasurementDisplay
+            type={measurements.type}
+            valueMeters={measurements.meters}
+            points={measurements.points}
+            style="desktop"
+          />
+        </div>
+      )}
 
       {/* Theme customizer panel */}
       {showTheme && (

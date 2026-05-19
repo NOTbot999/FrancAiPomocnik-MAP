@@ -8,6 +8,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import NavigationPanel from "./NavigationPanel";
 import OfflineManager from "./OfflineManager";
 import { loadTheme } from "@/components/map/ThemeCustomizer";
+import MeasurementDisplay from "@/components/map/MeasurementDisplay";
 
 const TOOLS = [
   { id: "pointer", icon: MousePointer2, label: "Select" },
@@ -23,6 +24,7 @@ function MobileTopBarInner({
   onLocationSelect, isGpsTracking, onGpsToggle,
   onShowTracks, gpsTrack, onLoadTrack,
   onRouteResult, isAIOpen, onAIToggle,
+  measurements,
 }) {
   const map = useMap();
   const container = map.getContainer();
@@ -233,8 +235,19 @@ function MobileTopBarInner({
             onTouchStart={(e) => e.stopPropagation()}
             onTouchMove={(e) => e.stopPropagation()}
             style={{ pointerEvents: "auto", gap: `${Math.round(8 * scale)}px` }}
-            className="absolute bottom-8 right-14 flex flex-col"
+            className="absolute bottom-8 right-14 flex flex-col items-end"
           >
+            {/* Measurement result above the tool buttons */}
+            {measurements && (
+              <div className="mb-1">
+                <MeasurementDisplay
+                  type={measurements.type}
+                  valueMeters={measurements.meters}
+                  points={measurements.points}
+                  style="mobile"
+                />
+              </div>
+            )}
             {TOOLS.map((tool) => {
               const Icon = tool.icon;
               const isActive = activeTool === tool.id;
@@ -245,7 +258,6 @@ function MobileTopBarInner({
                     if (tool.id === "clear") { onClear(); setShowRuler(false); }
                     else onToolChange(tool.id === activeTool ? "pointer" : tool.id);
                   }}
-                  style={btnStyle}
                   style={isActive ? btnActiveStyle : tool.id === "clear" ? { ...btnStyle, color: "#f87171", borderColor: "#fecaca" } : btnStyle}
                   className={btnBase}
                 >
