@@ -150,6 +150,14 @@ export default function MapViewer() {
     setShowMyTracks(false);
   }, []);
 
+  const [customLayers, setCustomLayers] = useState([]);
+  const handleAddCustomLayer = useCallback((layer) => {
+    setCustomLayers(prev => [...prev.filter(l => l.name !== layer.name), { ...layer, id: `custom_${Date.now()}` }]);
+  }, []);
+  const handleRemoveCustomLayer = useCallback((layerId) => {
+    setCustomLayers(prev => prev.filter(l => l.id !== layerId));
+  }, []);
+
   const [routePolyline, setRoutePolyline] = useState(null);
   const [aiRoutePolyline, setAiRoutePolyline] = useState(null);
   const [isNavOpen, setIsNavOpen] = useState(false);
@@ -191,6 +199,8 @@ export default function MapViewer() {
         setDrawings={setDrawings}
         routePolyline={routePolyline}
         aiRoutePolyline={aiRoutePolyline}
+        customLayers={customLayers}
+        onRemoveCustomLayer={handleRemoveCustomLayer}
         offlineOpen={isOfflineOpen}
         onOfflineClose={() => setIsOfflineOpen(false)}
         showZoomControls={!isMobile}
@@ -272,6 +282,8 @@ export default function MapViewer() {
                   setDrawings(prev => ({ ...prev, markers: prev.markers.filter(m => !m.isAi) }));
                   setAiRoutePolyline(null);
                 }}
+                onAddCustomLayer={handleAddCustomLayer}
+                onRemoveCustomLayer={handleRemoveCustomLayer}
               />
             </div>
           )}
@@ -348,6 +360,8 @@ export default function MapViewer() {
               setDrawings(prev => ({ ...prev, markers: prev.markers.filter(m => !m.isAi) }));
               setAiRoutePolyline(null);
             }}
+            onAddCustomLayer={handleAddCustomLayer}
+            onRemoveCustomLayer={handleRemoveCustomLayer}
           />
         </div>
       )}
@@ -385,6 +399,8 @@ export default function MapViewer() {
         onOpacityChange={handleOpacityChange}
         layerOrder={layerOrder}
         onLayerReorder={handleLayerReorder}
+        customLayers={customLayers}
+        onRemoveCustomLayer={handleRemoveCustomLayer}
       />
 
       {/* Navigation Panel — available on both mobile and desktop */}

@@ -252,7 +252,27 @@ function FavoritesCategory({ favoriteLayerIds, allCategories, activeLayers, onTo
   );
 }
 
-function PanelContent({ activeBaseLayers, onSelectBaseLayer, onBaseOpacityChange, activeLayers, onToggleLayer, onOpacityChange, favorites, onToggleFavorite, layerOrder, onLayerReorder }) {
+function CustomLayersSection({ customLayers, onRemoveCustomLayer }) {
+  if (!customLayers || customLayers.length === 0) return null;
+  return (
+    <div className="border-b border-slate-700/50 px-3 py-2">
+      <p className="text-[10px] font-bold uppercase tracking-widest text-purple-400 mb-2">🎨 AI Custom Sloji</p>
+      <div className="space-y-1">
+        {customLayers.map(layer => (
+          <div key={layer.id} className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-slate-700/40">
+            <div className="w-3 h-3 rounded-full shrink-0 border border-white/20" style={{ backgroundColor: layer.color || "#e11d48" }} />
+            <span className="text-xs text-slate-200 flex-1 truncate">{layer.name}</span>
+            <span className="text-[9px] text-slate-500">{layer.features?.length || 0}×</span>
+            <button onClick={() => onRemoveCustomLayer && onRemoveCustomLayer(layer.id)}
+              className="text-[10px] text-slate-500 hover:text-red-400 transition px-1">✕</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PanelContent({ activeBaseLayers, onSelectBaseLayer, onBaseOpacityChange, activeLayers, onToggleLayer, onOpacityChange, favorites, onToggleFavorite, layerOrder, onLayerReorder, customLayers, onRemoveCustomLayer }) {
   const activeLayerCount = Object.keys(activeLayers).length;
 
   return (
@@ -263,6 +283,9 @@ function PanelContent({ activeBaseLayers, onSelectBaseLayer, onBaseOpacityChange
         onSelectBaseLayer={onSelectBaseLayer}
         onBaseOpacityChange={onBaseOpacityChange}
       />
+
+      {/* AI Custom layers */}
+      <CustomLayersSection customLayers={customLayers} onRemoveCustomLayer={onRemoveCustomLayer} />
 
       {/* Active overlay layers with drag & drop reorder */}
       <ActiveLayersCategory
@@ -327,6 +350,8 @@ export default function LayerPanel({
   onOpacityChange,
   layerOrder,
   onLayerReorder,
+  customLayers,
+  onRemoveCustomLayer,
 }) {
   const isMobile = useIsMobile();
   const [favorites, setFavorites] = useState(() => scopedGet("layerFavorites") || []);
@@ -366,7 +391,7 @@ export default function LayerPanel({
 
   const theme = loadTheme();
   const [showLegend, setShowLegend] = useState(false);
-  const panelProps = { activeBaseLayers, onSelectBaseLayer: handleSelectBaseLayer, onBaseOpacityChange, activeLayers, onToggleLayer: trackedToggleLayer, onOpacityChange, favorites, onToggleFavorite: handleToggleFavorite, layerOrder, onLayerReorder };
+  const panelProps = { activeBaseLayers, onSelectBaseLayer: handleSelectBaseLayer, onBaseOpacityChange, activeLayers, onToggleLayer: trackedToggleLayer, onOpacityChange, favorites, onToggleFavorite: handleToggleFavorite, layerOrder, onLayerReorder, customLayers, onRemoveCustomLayer };
 
   const panelBg = theme.panelBg || "#0f172a";
   const panelText = theme.panelText || "#e2e8f0";

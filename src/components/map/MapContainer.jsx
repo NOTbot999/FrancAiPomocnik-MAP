@@ -412,6 +412,8 @@ export default function MapContainerComponent({
   isPinPicking,
   onPinPicked,
   aiRoutePolyline,
+  customLayers,
+  onRemoveCustomLayer,
 }) {
   const allLayers = getAllLayersFlat();
   const activeBaseLayerEntries = activeBaseLayers
@@ -522,6 +524,33 @@ export default function MapContainerComponent({
       {aiRoutePolyline && aiRoutePolyline.length > 1 && (
         <Polyline positions={aiRoutePolyline} color="#f59e0b" weight={4} opacity={0.9} dashArray="8,5" />
       )}
+      {/* Custom AI layers */}
+      {(customLayers || []).map((layer) => (
+        <React.Fragment key={layer.id}>
+          {(layer.features || []).map((f, fi) => {
+            const color = layer.color || "#e11d48";
+            if (f.type === "LineString" && f.coords?.length > 1) {
+              return <Polyline key={fi} positions={f.coords} color={color} weight={3} opacity={0.9} />;
+            }
+            if (f.type === "Polygon" && f.coords?.length > 2) {
+              return <Polygon key={fi} positions={f.coords} pathOptions={{ color, fillColor: color, fillOpacity: 0.15, weight: 2 }} />;
+            }
+            if (f.type === "Point" && f.coords?.length === 2) {
+              const icon = L.divIcon({
+                className: "",
+                html: `<div style="width:12px;height:12px;background:${color};border:2px solid white;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,.5);transform:translate(-6px,-6px)"></div>`,
+                iconSize: [0, 0],
+              });
+              return (
+                <Marker key={fi} position={f.coords} icon={icon}>
+                  {f.label && <Popup><span className="text-xs font-semibold">{f.label}</span></Popup>}
+                </Marker>
+              );
+            }
+            return null;
+          })}
+        </React.Fragment>
+      ))}
       <FlyToLocation location={flyToLocation} />
       <CoordsDisplay onMapMove={onMapMove} />
       <RightClickHandler onLocationSummary={onLocationSummary} />

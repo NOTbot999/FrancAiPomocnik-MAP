@@ -10,6 +10,7 @@ import { OVERLAY_CATEGORIES, BASE_LAYERS } from "./layerConfig";
 import { loadTheme } from "@/components/map/ThemeCustomizer";
 import ReactMarkdown from "react-markdown";
 import UnifiedAnalysisPanel from "./UnifiedAnalysisPanel";
+import SimpleAnalysisPanel from "./SimpleAnalysisPanel";
 
 // ─── Layer summary for Ask Franc ───────────────────────────────────────────
 const LAYER_SUMMARY = [
@@ -199,7 +200,8 @@ function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme, messag
 
 // ─── Main AIPanel ─────────────────────────────────────────────────────────────
 const TABS = [
-  { id: "ask", label: "Vprašaj Franca", emoji: "💬" },
+  { id: "ask", label: "Franc", emoji: "💬" },
+  { id: "simple", label: "Analiza v1", emoji: "⚡" },
   { id: "analysis", label: "Analiza", emoji: "🛰️" },
 ];
 
@@ -323,6 +325,19 @@ export default function AIPanel({
                 onAddCustomLayer={onAddCustomLayer}
                 onRemoveCustomLayer={onRemoveCustomLayer}
               />
+            )}
+            {tab === "simple" && (
+              <div className="flex-1 overflow-y-auto min-h-0">
+                <div className="px-4 py-3">
+                  <SimpleAnalysisPanel
+                    mapCenter={mapCenter}
+                    pinnedLocation={pinnedLocation}
+                    onRequestPin={onRequestPin}
+                    onAddCustomLayer={onAddCustomLayer}
+                    theme={theme}
+                  />
+                </div>
+              </div>
             )}
             {tab === "analysis" && (
               <div className="flex-1 overflow-y-auto min-h-0">
