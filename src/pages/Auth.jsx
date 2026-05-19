@@ -239,18 +239,7 @@ export default function Auth() {
             {isLogin ? 'Prijava' : 'Ustvari račun'}
           </Button>
 
-          <button
-            type="button"
-            onClick={() => window.location.href = '/'}
-            className="w-full mt-2 py-2 text-sm text-slate-500 hover:text-slate-700 transition text-center"
-          >
-            Nadaljuj brez prijave →
-          </button>
         </form>
-
-        <p className="text-center text-[11px] text-slate-400 mt-4 px-2">
-          💡 Prijava ni obvezna — brez nje ne morete shranjevati tras in risb
-        </p>
       </div>
     </div>
   );

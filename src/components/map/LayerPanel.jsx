@@ -12,20 +12,9 @@ import { scopedGet, scopedSet } from "@/lib/userPrefs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-// Base Map grid — radio style (1 active), 4-col grid
+// Base Map grid — always 1 active (radio style), no slider, 2×4 grid at the top
 function BaseMapGrid({ activeBaseLayers, onSelectBaseLayer }) {
   const activeId = activeBaseLayers ? Object.keys(activeBaseLayers)[0] : "osm";
-
-  const thumbnails = {
-    osm: "https://images.unsplash.com/photo-1524661135-423995f22d0b?w=80&h=60&fit=crop",
-    carto_voyager: "https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?w=80&h=60&fit=crop",
-    satellite: "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=80&h=60&fit=crop",
-    topo: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=80&h=60&fit=crop",
-    esri_topo: "https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=80&h=60&fit=crop",
-    dark: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=80&h=60&fit=crop",
-    lidar_hillshade: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=80&h=60&fit=crop",
-    arso_topo_nova: "https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=80&h=60&fit=crop",
-  };
 
   return (
     <div className="px-3 pb-3 pt-2 border-b border-slate-700/50">
@@ -33,7 +22,6 @@ function BaseMapGrid({ activeBaseLayers, onSelectBaseLayer }) {
       <div className="grid grid-cols-4 gap-1.5">
         {BASE_LAYERS.map((layer) => {
           const isActive = layer.id === activeId;
-          const thumb = thumbnails[layer.id] || layer.thumbnail;
           return (
             <button
               key={layer.id}
@@ -41,7 +29,7 @@ function BaseMapGrid({ activeBaseLayers, onSelectBaseLayer }) {
               className={`flex flex-col items-center gap-1 rounded-xl p-1.5 transition-all ${isActive ? 'ring-2 ring-emerald-400 bg-slate-700/60' : 'hover:bg-slate-700/30'}`}
             >
               <div className={`w-full aspect-video rounded-lg overflow-hidden border ${isActive ? 'border-emerald-400/60' : 'border-slate-600/30'}`}>
-                <img src={thumb} alt={layer.name} className="w-full h-full object-cover" loading="lazy" />
+                <img src={layer.thumbnail} alt={layer.name} className="w-full h-full object-cover" loading="lazy" />
               </div>
               <span className={`text-[9px] leading-tight text-center w-full truncate ${isActive ? 'text-emerald-400 font-bold' : 'text-slate-400'}`}>
                 {layer.name}

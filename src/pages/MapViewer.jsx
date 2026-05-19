@@ -229,8 +229,8 @@ export default function MapViewer() {
       {/* ── DESKTOP ONLY ── */}
       {!isMobile && (
         <>
-          {/* Search bar — centered top, account for user badge on left */}
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[950] w-full max-w-md px-4" style={{ paddingLeft: currentUser ? "0px" : "4px" }}>
+          {/* Search bar — centered top */}
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[950] w-full max-w-md px-4">
             <SearchBar onLocationSelect={(loc) => handleLocate(loc)} mapCenter={mapCenter} />
           </div>
 

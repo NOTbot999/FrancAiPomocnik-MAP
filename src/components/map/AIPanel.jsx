@@ -270,15 +270,11 @@ export default function AIPanel({
     >
       {/* Header */}
       <div className="flex items-center gap-2.5 px-4 py-3 shrink-0" style={{ borderBottom: `1px solid ${theme.panelText}18` }}>
-        <img src="https://media.base44.com/images/public/69ad3ce309822f8e71f66838/75ef0a326_EZU3mXIlM90xjxOrcrhU--0--SNgLs.jpg" alt="Franc" className="w-8 h-8 rounded-full object-cover ring-2 ring-emerald-500/40 shrink-0" />
-        <div className="flex-1 min-w-0">
-          <span className="text-sm font-bold block leading-tight" style={{ color: theme.panelText }}>Asistent Franc</span>
-          <span className="text-[10px] opacity-50 leading-none" style={{ color: theme.panelText }}>GIS AI za Slovenijo</span>
-        </div>
+        <span className="text-sm font-semibold flex-1" style={{ color: theme.panelText }}>Asistent Franc</span>
         {isPremium && (
-          <span className="text-[9px] bg-amber-500/20 text-amber-400 font-bold px-1.5 py-0.5 rounded-full shrink-0">PREMIUM</span>
+          <span className="text-[9px] bg-amber-500/20 text-amber-400 font-bold px-1.5 py-0.5 rounded-full">PREMIUM</span>
         )}
-        <button onClick={onClose} className="opacity-50 hover:opacity-100 transition-opacity p-1 rounded-lg hover:bg-white/10 shrink-0" style={{ color: theme.panelText }}>
+        <button onClick={onClose} className="opacity-50 hover:opacity-100 transition-opacity" style={{ color: theme.panelText }}>
           <X className="w-4 h-4" />
         </button>
       </div>
