@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback } from "react";
 import {
   Layers, Locate, LoaderCircle, Ruler, MapPin, Trash2,
-  MousePointer2, Navigation, Route, X,
+  Navigation, Route, X,
   Map, Settings, Eye, EyeOff, Save, FolderOpen,
   Loader2, Check, GripVertical, Palette, Brain, TrendingUp
 } from "lucide-react";
@@ -25,10 +25,9 @@ const BUTTON_DEFS = [
 ];
 
 const RULER_TOOLS = [
-  { id: "pointer",  icon: MousePointer2, label: "Izberi" },
-  { id: "distance", icon: Ruler,         label: "Meri razdaljo" },
-  { id: "marker",   icon: MapPin,        label: "Postavi oznako" },
-  { id: "clear",    icon: Trash2,        label: "Počisti vse" },
+  { id: "distance", icon: Ruler,    label: "Meri razdaljo" },
+  { id: "marker",   icon: MapPin,   label: "Postavi oznako" },
+  { id: "clear",    icon: Trash2,   label: "Počisti vse" },
 ];
 
 const STORAGE_KEY = "desktopToolbarPos";
@@ -356,9 +355,9 @@ export default function DesktopToolbar({
         )}
       </AnimatePresence>
 
-      {/* Measurement display */}
+      {/* Measurement display — spodnji levi kot */}
       {measurements && (
-        <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 960 }}>
+        <div style={{ position: "fixed", bottom: 32, left: 16, zIndex: 960 }}>
           <MeasurementDisplay
             type={measurements.type}
             valueMeters={measurements.meters}

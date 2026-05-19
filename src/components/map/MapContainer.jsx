@@ -211,13 +211,13 @@ function DrawingHandler({ activeTool, onMeasurement, drawings, setDrawings }) {
 
   return (
     <>
-      {/* Live drawing line */}
+      {/* Live drawing line — solid, no dashes */}
       {currentPoints.length >= 2 && activeTool === "distance" && (
-        <Polyline positions={currentPoints} color="#10b981" weight={3} dashArray="8 4" />
+        <Polyline positions={currentPoints} color="#10b981" weight={3} />
       )}
-      {/* Snap preview polygon outline when >= 3 points */}
+      {/* Snap preview polygon fill when >= 3 points */}
       {currentPoints.length >= 3 && activeTool === "distance" && (
-        <Polygon positions={currentPoints} pathOptions={{ color: "#10b981", fillColor: "#10b981", fillOpacity: 0.08, dashArray: "6 3" }} />
+        <Polygon positions={currentPoints} pathOptions={{ color: "#10b981", fillColor: "#10b981", fillOpacity: 0.08, weight: 2 }} />
       )}
       {/* Drawing dots */}
       {currentPoints.map((p, i) => (
