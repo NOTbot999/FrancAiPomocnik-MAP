@@ -25,27 +25,40 @@ const ASK_SYSTEM = `Si AI asistent za GIS Explorer Slovenije. VEDNO odgovarjaj v
 KLJUČNO PRAVILO — KDAJ UPORABITI KAJ:
 
 1. AKTIVACIJA OBSTOJEČIH SLOJEV (VEDNO PREDNOSTNO):
-   Kadar uporabnik prosi za prikaz česar koli, kar je že v seznamu slojev (reke, jezera, ceste, jame, poti, ortofoto...),
-   VEDNO aktiviraj obstoječi sloj iz seznama. NIKOLI ne riši custom layer za podatke ki obstajajo kot pravi sloj.
-   Primer: "pokaži vodne površine" → aktiviraj arso_vode_povrsine in arso_vodotoki, NE rišeš custom layer.
-   Primer: "pokaži železnico" → aktiviraj railway_lines.
-   Primer: "pokaži reke v Savinjski dolini" → aktiviraj arso_vodotoki (to so VSE reke, ne samo nekatere).
+   Kadar uporabnik prosi za prikaz česar koli iz seznama slojev → takoj aktiviraj.
    <activate_layers>["id1","id2"]</activate_layers>
 
-2. CUSTOM LAYER — SAMO ZA SPECIFIČNE TOČKE/LOKACIJE:
-   Uporabi IZKLJUČNO ko uporabnik zahteva označitev konkretnih znanih točk ki jih SAM POZNAŠ z natančnimi koordinatami
-   (npr. "označi vrh Triglava", "označi center Ljubljane", "nariši mejo med občinama").
-   NIKOLI ne izmišljaj koordinat za "vse reke", "vse jezera", "vse poti" ali kar koli kar ne poznaš točno.
-   Če ne poznaš natančnih koordinat — NE naredi custom layerja, namesto tega aktiviraj pravi sloj.
-   <custom_layer>{"name":"Naziv","color":"#hexcolor","features":[{"type":"Point","coords":[lat,lng],"label":"Ime"}]}</custom_layer>
+2. OVERPASS POIZVEDBA — za prikaz realnih OSM podatkov na custom layerju:
+   Kadar uporabnik prosi za "pokaži vse X v območju Y" kjer X so vodne površine, reke, jezera, stavbe, parki ipd.,
+   generiraj Overpass API poizvedbo. Sistem jo bo sam izvedel in narisal rezultate.
+   Podaj bbox kot: south,west,north,east (decimalne stopinje).
+   Primer za vodne površine Savinjske doline:
+   <overpass_query name="Vodne površine Savinjska dolina" color="#1d9bf0" bbox="46.0,15.0,46.4,15.5">
+   [out:json][timeout:25];
+   (
+     way["natural"="water"]({{bbox}});
+     relation["natural"="water"]({{bbox}});
+     way["waterway"~"river|stream|canal"]({{bbox}});
+   );
+   out geom;
+   </overpass_query>
+   
+   Navodila za bbox: uporabi razumno velikost (~0.3–0.5 stopinje za dolino, ~0.1 za vas/mesto).
+   Za znana slovenska območja uporabi pravilne koordinate:
+   - Savinjska dolina: bbox="46.0,15.0,46.4,15.6"
+   - Ljubljanska kotlina: bbox="45.9,14.3,46.2,14.8"
+   - Kranjska Gora: bbox="46.45,13.7,46.55,13.85"
+   - Blejsko jezero: bbox="46.35,14.0,46.4,14.15"
 
-3. NIKOLI NE IZMIŠLJAJ PODATKOV: Ne riši "vseh vodnih površin" ali "vseh rek" kot custom layer.
-   To bi bili izmišljeni, netočni podatki. Aktiviraj pravi GIS sloj ki vsebuje točne podatke.
+3. CUSTOM LAYER (samo za znane posamične točke):
+   IZKLJUČNO za točke ki jih TOČNO poznaš (vrh gore, center mesta).
+   NIKOLI ne izmišljaj koordinat rek/jezer/poti.
+   <custom_layer>{"name":"Naziv","color":"#hex","features":[{"type":"Point","coords":[lat,lng],"label":"Ime"}]}</custom_layer>
 
-RAZPOLOŽLJIVI SLOJI (aktiviraj te, ne izmišljaj):
+RAZPOLOŽLJIVI SLOJI:
 ${LAYER_SUMMARY}
 
-Odgovori so kratki in jasni. Takoj aktiviraj pravi sloj.`;
+Odgovori kratko. Takoj ukrepaj.`;
 
 // ─── Premium Lock screen ──────────────────────────────────────────────────────
 function PremiumLock({ theme }) {
@@ -80,6 +93,43 @@ function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme, messag
     return BASE_LAYERS.find(l => l.id === id)?.name || id;
   });
 
+  const executeOverpassQuery = async (queryStr, name, color, bbox) => {
+    // Replace {{bbox}} with actual south,west,north,east
+    const bboxParts = bbox.split(",").map(Number);
+    const [south, west, north, east] = bboxParts;
+    const bboxOverpass = `${south},${west},${north},${east}`;
+    const finalQuery = queryStr.replace(/\{\{bbox\}\}/g, bboxOverpass);
+
+    const res = await fetch("https://overpass-api.de/api/interpreter", {
+      method: "POST",
+      body: "data=" + encodeURIComponent(finalQuery),
+    });
+    const data = await res.json();
+
+    const features = [];
+    for (const el of (data.elements || [])) {
+      const label = el.tags?.name || el.tags?.["name:sl"] || "";
+      if (el.type === "node" && el.lat != null) {
+        features.push({ type: "Point", coords: [el.lat, el.lon], label });
+      } else if (el.type === "way" && el.geometry) {
+        const coords = el.geometry.map(p => [p.lat, p.lon]);
+        if (coords.length > 0) {
+          // Close polygon if natural=water / waterway area
+          const isArea = el.tags?.natural === "water" || el.tags?.landuse === "reservoir";
+          features.push({ type: isArea ? "Polygon" : "LineString", coords, label });
+        }
+      } else if (el.type === "relation" && el.members) {
+        for (const m of el.members) {
+          if (m.geometry && m.geometry.length > 0) {
+            const coords = m.geometry.map(p => [p.lat, p.lon]);
+            features.push({ type: "Polygon", coords, label: el.tags?.name || "" });
+          }
+        }
+      }
+    }
+    return { name, color: color || "#1d9bf0", features };
+  };
+
   const send = async () => {
     if (!input.trim() || loading) return;
     const userMsg = input.trim();
@@ -93,10 +143,19 @@ function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme, messag
       add_context_from_internet: true, model: "gemini_3_flash"
     });
     const text = typeof res === "string" ? res : res?.content || JSON.stringify(res);
+
+    // Parse all tags
     const layerMatch = text.match(/<activate_layers>(.*?)<\/activate_layers>/s);
     const customMatch = text.match(/<custom_layer>(.*?)<\/custom_layer>/s);
-    let cleanText = text.replace(/<activate_layers>.*?<\/activate_layers>/s, "").replace(/<custom_layer>.*?<\/custom_layer>/s, "").trim();
-    
+    const overpassMatch = text.match(/<overpass_query([^>]*)>([\s\S]*?)<\/overpass_query>/);
+
+    let cleanText = text
+      .replace(/<activate_layers>.*?<\/activate_layers>/s, "")
+      .replace(/<custom_layer>.*?<\/custom_layer>/s, "")
+      .replace(/<overpass_query[\s\S]*?<\/overpass_query>/s, "")
+      .trim();
+
+    // Activate existing layers
     let activated = [];
     if (layerMatch) {
       try {
@@ -110,7 +169,8 @@ function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme, messag
       } catch {}
     }
     if (activated.length > 0) cleanText += `\n\n✅ Aktivirano: ${activated.join(", ")}`;
-    
+
+    // Add static custom layer
     if (customMatch) {
       try {
         const customLayer = JSON.parse(customMatch[1]);
@@ -118,7 +178,39 @@ function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme, messag
         cleanText += `\n\n🎨 Custom layer: ${customLayer.name}`;
       } catch {}
     }
-    
+
+    // Execute Overpass query for real OSM data
+    if (overpassMatch) {
+      const attrsStr = overpassMatch[1];
+      const nameM = attrsStr.match(/name="([^"]+)"/);
+      const colorM = attrsStr.match(/color="([^"]+)"/);
+      const bboxM = attrsStr.match(/bbox="([^"]+)"/);
+      const queryBody = overpassMatch[2].trim();
+      const layerName = nameM?.[1] || "OSM sloj";
+      const layerColor = colorM?.[1] || "#1d9bf0";
+      const bbox = bboxM?.[1] || `${(mapCenter?.[0] || 46.1) - 0.2},${(mapCenter?.[1] || 15.0) - 0.3},${(mapCenter?.[0] || 46.1) + 0.2},${(mapCenter?.[1] || 15.0) + 0.3}`;
+      try {
+        cleanText += `\n\n🔍 Iščem podatke v OSM bazi...`;
+        setMessages(prev => [...prev, { role: "assistant", content: cleanText }]);
+        const customLayer = await executeOverpassQuery(queryBody, layerName, layerColor, bbox);
+        if (onAddCustomLayer) onAddCustomLayer(customLayer);
+        // Update last message
+        setMessages(prev => {
+          const updated = [...prev];
+          const lastIdx = updated.length - 1;
+          updated[lastIdx] = {
+            ...updated[lastIdx],
+            content: updated[lastIdx].content.replace("🔍 Iščem podatke v OSM bazi...", `🗺️ Narisano ${customLayer.features.length} elementov: **${layerName}**`)
+          };
+          return updated;
+        });
+        setLoading(false);
+        return;
+      } catch (err) {
+        cleanText += `\n\n❌ Napaka pri pridobivanju OSM podatkov.`;
+      }
+    }
+
     setMessages(prev => [...prev, { role: "assistant", content: cleanText }]);
     setLoading(false);
   };

@@ -604,16 +604,24 @@ export default function MapContainerComponent({
       {aiRoutePolyline && aiRoutePolyline.length > 1 && (
         <Polyline positions={aiRoutePolyline} color="#f59e0b" weight={4} opacity={0.9} dashArray="8,5" />
       )}
-      {/* Custom AI layers */}
+      {/* Custom AI layers (incl. Overpass results) */}
       {(customLayers || []).map((layer) => (
         <React.Fragment key={layer.id}>
           {(layer.features || []).map((f, fi) => {
             const color = layer.color || "#e11d48";
             if (f.type === "LineString" && f.coords?.length > 1) {
-              return <Polyline key={fi} positions={f.coords} color={color} weight={3} opacity={0.9} />;
+              return (
+                <Polyline key={fi} positions={f.coords} color={color} weight={3} opacity={0.9}>
+                  {f.label && <Popup><span className="text-xs font-semibold">{f.label}</span></Popup>}
+                </Polyline>
+              );
             }
             if (f.type === "Polygon" && f.coords?.length > 2) {
-              return <Polygon key={fi} positions={f.coords} pathOptions={{ color, fillColor: color, fillOpacity: 0.15, weight: 2 }} />;
+              return (
+                <Polygon key={fi} positions={f.coords} pathOptions={{ color, fillColor: color, fillOpacity: 0.35, weight: 2, opacity: 0.9 }}>
+                  {f.label && <Popup><span className="text-xs font-semibold">{f.label}</span></Popup>}
+                </Polygon>
+              );
             }
             if (f.type === "Point" && f.coords?.length === 2) {
               const icon = L.divIcon({
