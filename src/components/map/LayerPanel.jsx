@@ -235,16 +235,35 @@ function CustomLayersSection({ customLayers, onRemoveCustomLayer }) {
   );
 }
 
-function PanelContent({ activeBaseLayers, onSelectBaseLayer, onBaseOpacityChange, activeLayers, onToggleLayer, onOpacityChange, favorites, onToggleFavorite, layerOrder, onLayerReorder, customLayers, onRemoveCustomLayer }) {
+function PanelContent({ activeBaseLayers, onSelectBaseLayer, activeLayers, onToggleLayer, onOpacityChange, favorites, onToggleFavorite, layerOrder, onLayerReorder, customLayers, onRemoveCustomLayer }) {
   const activeLayerCount = Object.keys(activeLayers).length;
+
+  // Category order — persisted in localStorage
+  const [categoryOrder, setCategoryOrder] = useState(() => {
+    const saved = scopedGet("categoryOrder");
+    if (saved && Array.isArray(saved)) return saved;
+    return OVERLAY_CATEGORIES.map(c => c.id);
+  });
+
+  const orderedCategories = categoryOrder
+    .map(id => OVERLAY_CATEGORIES.find(c => c.id === id))
+    .filter(Boolean)
+    // include any new categories not yet in saved order
+    .concat(OVERLAY_CATEGORIES.filter(c => !categoryOrder.includes(c.id)));
+
+  const handleCategoryDragEnd = (result) => {
+    if (!result.destination) return;
+    const newOrder = [...categoryOrder];
+    const [moved] = newOrder.splice(result.source.index, 1);
+    newOrder.splice(result.destination.index, 0, moved);
+    setCategoryOrder(newOrder);
+    scopedSet("categoryOrder", newOrder);
+  };
 
   return (
     <div className="pt-2 pb-4">
       {/* Base Map grid — always at top, radio select */}
-      <BaseMapGrid
-        activeBaseLayers={activeBaseLayers}
-        onSelectBaseLayer={onSelectBaseLayer}
-      />
+      <BaseMapGrid activeBaseLayers={activeBaseLayers} onSelectBaseLayer={onSelectBaseLayer} />
 
       {/* AI Custom layers */}
       <CustomLayersSection customLayers={customLayers} onRemoveCustomLayer={onRemoveCustomLayer} />
@@ -259,7 +278,7 @@ function PanelContent({ activeBaseLayers, onSelectBaseLayer, onBaseOpacityChange
         onLayerReorder={onLayerReorder}
       />
 
-      {/* Overlay limit indicator — always visible */}
+      {/* Overlay limit indicator */}
       <div className="px-4 py-1.5">
         <div className="flex items-center justify-between mb-1">
           <span className="text-[9px] text-slate-500 uppercase tracking-widest">Prekrivni sloji</span>
@@ -283,20 +302,39 @@ function PanelContent({ activeBaseLayers, onSelectBaseLayer, onBaseOpacityChange
         activeLayerCount={activeLayerCount}
       />
 
-      {/* Overlay categories — plain list, no drag */}
-      {OVERLAY_CATEGORIES.map((category) => (
-        <LayerCategory
-          key={category.id}
-          category={category}
-          activeLayers={activeLayers}
-          onToggleLayer={onToggleLayer}
-          onOpacityChange={onOpacityChange}
-          favorites={favorites}
-          onToggleFavorite={(layerId, layerName, catId, catName) => onToggleFavorite(layerId, layerName, catId, catName)}
-          activeLayerCount={activeLayerCount}
-          maxLayers={MAX_OVERLAY_LAYERS}
-        />
-      ))}
+      {/* Overlay categories — drag & drop reorder */}
+      <DragDropContext onDragEnd={handleCategoryDragEnd}>
+        <Droppable droppableId="categories">
+          {(provided) => (
+            <div {...provided.droppableProps} ref={provided.innerRef}>
+              {orderedCategories.map((category, index) => (
+                <Draggable key={category.id} draggableId={`cat-${category.id}`} index={index}>
+                  {(drag, snapshot) => (
+                    <div
+                      ref={drag.innerRef}
+                      {...drag.draggableProps}
+                      className={snapshot.isDragging ? 'opacity-80' : ''}
+                    >
+                      <LayerCategory
+                        category={category}
+                        activeLayers={activeLayers}
+                        onToggleLayer={onToggleLayer}
+                        onOpacityChange={onOpacityChange}
+                        favorites={favorites}
+                        onToggleFavorite={(layerId, layerName, catId, catName) => onToggleFavorite(layerId, layerName, catId, catName)}
+                        activeLayerCount={activeLayerCount}
+                        maxLayers={MAX_OVERLAY_LAYERS}
+                        dragHandleProps={drag.dragHandleProps}
+                      />
+                    </div>
+                  )}
+                </Draggable>
+              ))}
+              {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
+      </DragDropContext>
     </div>
   );
 }
@@ -341,7 +379,7 @@ export default function LayerPanel({
 
   const theme = loadTheme();
   const [showLegend, setShowLegend] = useState(false);
-  const panelProps = { activeBaseLayers, onSelectBaseLayer: handleSelectBaseLayer, onBaseOpacityChange, activeLayers, onToggleLayer: trackedToggleLayer, onOpacityChange, favorites, onToggleFavorite: handleToggleFavorite, layerOrder, onLayerReorder, customLayers, onRemoveCustomLayer };
+  const panelProps = { activeBaseLayers, onSelectBaseLayer: handleSelectBaseLayer, activeLayers, onToggleLayer: trackedToggleLayer, onOpacityChange, favorites, onToggleFavorite: handleToggleFavorite, layerOrder, onLayerReorder, customLayers, onRemoveCustomLayer };
 
   const panelBg = theme.panelBg || "#0f172a";
   const panelText = theme.panelText || "#e2e8f0";

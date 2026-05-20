@@ -1,33 +1,40 @@
 import React, { useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, GripVertical } from "lucide-react";
 
 import { Slider } from "@/components/ui/slider";
 
-export default function LayerCategory({ category, activeLayers, onToggleLayer, onOpacityChange, favorites = [], onToggleFavorite, activeLayerCount = 0, maxLayers = 6 }) {
+export default function LayerCategory({ category, activeLayers, onToggleLayer, onOpacityChange, favorites = [], onToggleFavorite, activeLayerCount = 0, maxLayers = 6, dragHandleProps }) {
   const [isOpen, setIsOpen] = useState(false);
   const activeCount = category.layers.filter((l) => activeLayers[l.id]).length;
 
   return (
     <div className="border-b border-white/6 last:border-0">
       {/* Category header */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center gap-2.5 px-4 py-3 transition-all hover:bg-white/5 active:bg-white/8"
-      >
-        {/* Category thumbnail */}
-        {category.thumbnail && (
-          <div className="w-9 h-6 rounded-lg overflow-hidden shrink-0 ring-1 ring-white/10">
-            <img src={category.thumbnail} alt="" className="w-full h-full object-cover" loading="lazy" />
+      <div className="flex items-center gap-1 pr-2">
+        {dragHandleProps && (
+          <div {...dragHandleProps} className="shrink-0 pl-2 py-3 cursor-grab active:cursor-grabbing touch-none">
+            <GripVertical className="w-3.5 h-3.5 text-slate-600 hover:text-slate-400 transition-colors" />
           </div>
         )}
-        <span className="text-sm font-medium text-slate-200 flex-1 text-left leading-tight">{category.name}</span>
-        {activeCount > 0 && (
-          <span className="text-[10px] font-bold bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded-full">
-            {activeCount}
-          </span>
-        )}
-        <ChevronDown className={`w-3.5 h-3.5 text-slate-500 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
-      </button>
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex-1 flex items-center gap-2.5 px-3 py-3 transition-all hover:bg-white/5 active:bg-white/8"
+        >
+          {/* Category thumbnail */}
+          {category.thumbnail && (
+            <div className="w-9 h-6 rounded-lg overflow-hidden shrink-0 ring-1 ring-white/10">
+              <img src={category.thumbnail} alt="" className="w-full h-full object-cover" loading="lazy" />
+            </div>
+          )}
+          <span className="text-sm font-medium text-slate-200 flex-1 text-left leading-tight">{category.name}</span>
+          {activeCount > 0 && (
+            <span className="text-[10px] font-bold bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded-full">
+              {activeCount}
+            </span>
+          )}
+            <ChevronDown className={`w-3.5 h-3.5 text-slate-500 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+        </button>
+      </div>
 
       {/* Layer list */}
       {isOpen && (

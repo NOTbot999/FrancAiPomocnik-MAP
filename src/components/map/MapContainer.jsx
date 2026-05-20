@@ -309,6 +309,75 @@ function DrawingHandler({ activeTool, onMeasurement, drawings, setDrawings }) {
   );
 }
 
+// Renders base layer using a stable Leaflet tile layer (no key change = overlays stay on top)
+function BaseLayerRenderer({ activeBaseLayerEntries }) {
+  const map = useMap();
+  const layerRef = useRef(null);
+  const arcLayerRef = useRef(null);
+
+  const entry = activeBaseLayerEntries[0]; // radio select — always one
+  const layerId = entry?.[0];
+  const opacity = entry?.[1]?.opacity ?? 1;
+  const bl = layerId ? BASE_LAYERS.find(l => l.id === layerId) : null;
+
+  useEffect(() => {
+    // Remove any existing layers
+    if (layerRef.current) { layerRef.current.remove(); layerRef.current = null; }
+    if (arcLayerRef.current) { arcLayerRef.current.remove(); arcLayerRef.current = null; }
+    if (!bl) return;
+
+    if (bl.type === 'arcgis_export') {
+      const arcLayer = L.tileLayer("about:blank", {
+        tileSize: 256, opacity, maxZoom: 22, maxNativeZoom: 19,
+        bounds: [[45.3, 13.3], [46.9, 16.8]],
+        keepBuffer: 2, updateWhenIdle: true, updateWhenZooming: false,
+        pane: "tilePane",
+      });
+      const useSR = bl.bboxSR || 3857;
+      const useFormat = bl.format || "jpg";
+      arcLayer.getTileUrl = function (coords) {
+        const tileBounds = this._tileCoordsToBounds(coords);
+        const size = this.getTileSize();
+        let bbox;
+        if (useSR === 4326) {
+          const sw = tileBounds.getSouthWest(); const ne = tileBounds.getNorthEast();
+          bbox = `${sw.lng},${sw.lat},${ne.lng},${ne.lat}`;
+        } else {
+          const sw = map.options.crs.project(tileBounds.getSouthWest());
+          const ne = map.options.crs.project(tileBounds.getNorthEast());
+          bbox = `${sw.x},${sw.y},${ne.x},${ne.y}`;
+        }
+        return bl.arcgisUrl + `?bbox=${bbox}&bboxSR=${useSR}&imageSR=3857&size=${size.x},${size.y}&f=image&format=${useFormat}&transparent=false`;
+      };
+      arcLayer.addTo(map);
+      arcLayerRef.current = arcLayer;
+    } else {
+      const tl = L.tileLayer(bl.url, {
+        attribution: bl.attribution || "",
+        maxZoom: 22, maxNativeZoom: bl.maxNativeZoom || 19,
+        opacity, keepBuffer: 4, updateWhenIdle: false, updateWhenZooming: false,
+        pane: "tilePane",
+      });
+      tl.addTo(map);
+      layerRef.current = tl;
+    }
+  }, [layerId]); // only re-create when layer TYPE changes
+
+  // Update opacity without re-creating
+  useEffect(() => {
+    if (layerRef.current) layerRef.current.setOpacity(opacity);
+    if (arcLayerRef.current) arcLayerRef.current.setOpacity(opacity);
+  }, [opacity]);
+
+  // Ensure base layer is always below overlays (bring to back)
+  useEffect(() => {
+    if (layerRef.current?.bringToBack) layerRef.current.bringToBack();
+    if (arcLayerRef.current?.bringToBack) arcLayerRef.current.bringToBack();
+  });
+
+  return null;
+}
+
 function getAllLayersFlat() {
   const map = {};
   OVERLAY_CATEGORIES.forEach((cat) => cat.layers.forEach((l) => { map[l.id] = l; }));
@@ -435,16 +504,8 @@ export default function MapContainerComponent({
       doubleClickZoom={activeTool === "pointer"}
       style={{ zIndex: 1 }}
     >
-      {/* Base layers (multi-select) */}
-      {activeBaseLayerEntries.map(([layerId, config]) => {
-        const bl = BASE_LAYERS.find(l => l.id === layerId);
-        if (!bl) return null;
-        const opacity = config?.opacity ?? 1;
-        if (bl.type === 'arcgis_export') {
-          return <ArcGISExportLayer key={bl.id} url={bl.arcgisUrl} opacity={opacity} bboxSR={bl.bboxSR} transparent={bl.transparent} format={bl.format} />;
-        }
-        return <TileLayer key={bl.id} url={bl.url} opacity={opacity} attribution={bl.attribution || ""} maxZoom={22} maxNativeZoom={bl.maxNativeZoom || 19} keepBuffer={4} updateWhenIdle={false} updateWhenZooming={false} />;
-      })}
+      {/* Base layer — always rendered with stable key="base-layer" so overlay layers stay on top when switching */}
+      <BaseLayerRenderer activeBaseLayerEntries={activeBaseLayerEntries} />
 
       {/* Active overlay layers — rendered in layerOrder (bottom→top) */}
       {(layerOrder && layerOrder.length > 0 ? layerOrder : Object.keys(activeLayers)).map((layerId) => {
