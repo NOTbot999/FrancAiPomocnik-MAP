@@ -15,6 +15,7 @@ import LocationSummarizer from "@/components/map/LocationSummarizer";
 import DesktopToolbar from "@/components/map/DesktopToolbar";
 import { useUserSettings } from "@/hooks/useUserSettings";
 import { base44 } from "@/api/base44Client";
+import { scopedGet, scopedSet } from "@/lib/userPrefs";
 
 
 export default function MapViewer() {
@@ -145,12 +146,20 @@ export default function MapViewer() {
     setShowMyTracks(false);
   }, []);
 
-  const [customLayers, setCustomLayers] = useState([]);
+  const [customLayers, setCustomLayers] = useState(() => scopedGet("customLayers") || []);
   const handleAddCustomLayer = useCallback((layer) => {
-    setCustomLayers(prev => [...prev.filter(l => l.name !== layer.name), { ...layer, id: `custom_${Date.now()}` }]);
+    setCustomLayers(prev => {
+      const next = [...prev.filter(l => l.name !== layer.name), { ...layer, id: `custom_${Date.now()}` }];
+      scopedSet("customLayers", next);
+      return next;
+    });
   }, []);
   const handleRemoveCustomLayer = useCallback((layerId) => {
-    setCustomLayers(prev => prev.filter(l => l.id !== layerId));
+    setCustomLayers(prev => {
+      const next = prev.filter(l => l.id !== layerId);
+      scopedSet("customLayers", next);
+      return next;
+    });
   }, []);
 
   const [routePolyline, setRoutePolyline] = useState(null);
@@ -175,10 +184,16 @@ export default function MapViewer() {
 
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [currentUser, setCurrentUser] = useState(() => localStorage.getItem('userUsername'));
+  const [hasSeenAuthPrompt, setHasSeenAuthPrompt] = useState(
+    () => !!localStorage.getItem('hasSeenAuthPrompt')
+  );
   useEffect(() => {
     const loggedIn = localStorage.getItem('userUsername');
     setCurrentUser(loggedIn);
-    if (!loggedIn) setShowAuthModal(true);
+    // Show auth modal only for users who have never seen it and are not logged in
+    if (!loggedIn && !localStorage.getItem('hasSeenAuthPrompt')) {
+      setShowAuthModal(true);
+    }
   }, []);
 
   return (
@@ -441,10 +456,16 @@ export default function MapViewer() {
 
       {showAuthModal && (
         <AuthModal
-          onClose={() => setShowAuthModal(false)}
+          onClose={() => {
+            setShowAuthModal(false);
+            // Mark that user has seen the prompt so it doesn't show again
+            localStorage.setItem('hasSeenAuthPrompt', '1');
+            setHasSeenAuthPrompt(true);
+          }}
           onSuccess={(data) => {
             setCurrentUser(data?.username || localStorage.getItem('userUsername'));
             setShowAuthModal(false);
+            localStorage.setItem('hasSeenAuthPrompt', '1');
             if (data?.is_premium) setIsPremium(true);
           }}
         />

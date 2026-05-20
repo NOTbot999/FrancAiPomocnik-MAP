@@ -386,7 +386,7 @@ function getAllLayersFlat() {
 
 // ArcGIS MapServer export as a Leaflet TileLayer (dynamic tiles via /export endpoint)
 // bboxSR=4326 works best with ARSO D96TM cached services; bboxSR=3857 for dynamic services like LIDAR
-function ArcGISExportLayer({ url, opacity, layerIds, maxZoom, bboxSR, transparent, format }) {
+function ArcGISExportLayer({ url, opacity, layerIds, maxZoom, bboxSR, transparent, format, pane, zIndex }) {
    const map = useMap();
    const layerRef = useRef(null);
    const useSR = bboxSR || 3857;
@@ -403,6 +403,8 @@ function ArcGISExportLayer({ url, opacity, layerIds, maxZoom, bboxSR, transparen
        keepBuffer: 2,
        updateWhenIdle: true,
        updateWhenZooming: false,
+       pane: pane || "overlayPane",
+       zIndex: zIndex || 400,
      });
 
     arcLayer.getTileUrl = function (coords) {
@@ -507,13 +509,15 @@ export default function MapContainerComponent({
       {/* Base layer — always rendered with stable key="base-layer" so overlay layers stay on top when switching */}
       <BaseLayerRenderer activeBaseLayerEntries={activeBaseLayerEntries} />
 
-      {/* Active overlay layers — rendered in layerOrder (bottom→top) */}
-      {(layerOrder && layerOrder.length > 0 ? layerOrder : Object.keys(activeLayers)).map((layerId) => {
+      {/* Active overlay layers — rendered in layerOrder (bottom→top), each in its own overlayPane so they always sit above the base */}
+      {(layerOrder && layerOrder.length > 0 ? layerOrder : Object.keys(activeLayers)).map((layerId, index) => {
         const config = activeLayers[layerId];
         if (!config) return null;
         const layer = allLayers[layerId];
         if (!layer) return null;
         const opacity = config.opacity ?? layer.opacity ?? 0.7;
+        // Use overlayPane (z-index 400 in Leaflet) — always above tilePane (z-index 200)
+        const pane = "overlayPane";
 
         // Standard tile layer
          if (layer.type === "tile") {
@@ -529,6 +533,8 @@ export default function MapContainerComponent({
                keepBuffer={4}
                updateWhenIdle={false}
                updateWhenZooming={false}
+               pane={pane}
+               zIndex={400 + index}
              />
            );
          }
@@ -545,6 +551,8 @@ export default function MapContainerComponent({
                bboxSR={layer.bboxSR}
                transparent={layer.transparent}
                format={layer.format}
+               pane={pane}
+               zIndex={400 + index}
              />
            );
          }
@@ -568,6 +576,8 @@ export default function MapContainerComponent({
               keepBuffer={2}
               updateWhenIdle={true}
               updateWhenZooming={false}
+              pane={pane}
+              zIndex={400 + index}
             />
           );
         }
