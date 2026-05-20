@@ -225,43 +225,9 @@ function MobileTopBarInner({
         )}
       </AnimatePresence>
 
-      {/* Ruler tool strip */}
+      {/* Measurement + tools swipe-up panel — bottom sheet, shown when ruler is active */}
       <AnimatePresence>
         {showRuler && (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-            onPointerDown={(e) => e.stopPropagation()}
-            onTouchStart={(e) => e.stopPropagation()}
-            onTouchMove={(e) => e.stopPropagation()}
-            style={{ pointerEvents: "auto", gap: `${Math.round(8 * scale)}px` }}
-            className="absolute bottom-8 right-14 flex flex-col items-end"
-          >
-            {TOOLS.map((tool) => {
-              const Icon = tool.icon;
-              const isActive = activeTool === tool.id;
-              return (
-                <button
-                  key={tool.id}
-                  onClick={() => {
-                    if (tool.id === "clear") { onClear(); setShowRuler(false); }
-                    else onToolChange(tool.id === activeTool ? "pointer" : tool.id);
-                  }}
-                  style={isActive ? btnActiveStyle : tool.id === "clear" ? { ...btnStyle, color: "#f87171", borderColor: "#fecaca" } : btnStyle}
-                  className={btnBase}
-                >
-                  <Icon style={iconStyle} className="shrink-0" />
-                </button>
-              );
-            })}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Measurement swipe-up panel — bottom sheet, same style as layer panel */}
-      <AnimatePresence>
-        {measurements && (
           <motion.div
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
@@ -271,18 +237,52 @@ function MobileTopBarInner({
             onTouchStart={(e) => e.stopPropagation()}
             onTouchMove={(e) => e.stopPropagation()}
             style={{ pointerEvents: "auto", backgroundColor: "rgba(15,23,42,0.96)", backdropFilter: "blur(20px)" }}
-            className="absolute bottom-0 left-0 right-0 rounded-t-2xl border-t border-white/10 shadow-2xl px-5 py-4 z-[910]"
+            className="absolute bottom-0 left-0 right-0 rounded-t-2xl border-t border-white/10 shadow-2xl z-[910]"
           >
-            <div className="flex justify-center mb-3">
+            {/* Drag handle */}
+            <div className="flex justify-center pt-3 pb-1">
               <div className="w-8 h-1 rounded-full bg-white/20" />
             </div>
-            <MeasurementDisplay
-              type={measurements.type}
-              valueMeters={measurements.meters}
-              areaSqm={measurements.areaSqm}
-              points={measurements.points}
-              style="mobile"
-            />
+
+            {/* Tool buttons row */}
+            <div className="flex items-center justify-center gap-3 px-5 py-3 border-b border-white/10">
+              {TOOLS.map((tool) => {
+                const Icon = tool.icon;
+                const isActive = activeTool === tool.id;
+                return (
+                  <button
+                    key={tool.id}
+                    onClick={() => {
+                      if (tool.id === "clear") { onClear(); }
+                      else onToolChange(tool.id === activeTool ? "pointer" : tool.id);
+                    }}
+                    style={isActive ? btnActiveStyle : tool.id === "clear" ? { ...btnStyle, color: "#f87171", borderColor: "#fecaca40" } : btnStyle}
+                    className={`${btnBase} flex-col gap-1 px-4 py-2`}
+                  >
+                    <Icon style={iconStyle} className="shrink-0" />
+                    <span className="text-[9px] opacity-70">{tool.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Measurement display */}
+            {measurements && (
+              <div className="px-5 py-4">
+                <MeasurementDisplay
+                  type={measurements.type}
+                  valueMeters={measurements.meters}
+                  areaSqm={measurements.areaSqm}
+                  points={measurements.points}
+                  style="mobile"
+                />
+              </div>
+            )}
+            {!measurements && (
+              <div className="px-5 py-4 text-center text-slate-500 text-xs">
+                Tapni na karto za začetek merjenja
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
