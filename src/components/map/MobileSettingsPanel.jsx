@@ -330,15 +330,8 @@ export default function MobileSettingsPanel({ onClose, prefs, setPrefs, gpsTrack
         )}
       </div>
 
-      {/* Version selector section */}
-      <div className="mx-4 border-t border-slate-200 my-2" />
-      <div className="px-4 pb-2">
-        <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Verzija aplikacije</p>
-        <VersionSelector />
-      </div>
-
       {/* Link Devices section */}
-      <div className="px-2 pb-3">
+      <div className="px-2 pb-1">
         <button
           onClick={() => { setShowDeviceLink(p => !p); setShowTracks(false); }}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-slate-50 hover:bg-white transition-all text-slate-700"
@@ -352,6 +345,13 @@ export default function MobileSettingsPanel({ onClose, prefs, setPrefs, gpsTrack
             <DeviceLink deviceId={deviceId} onClose={() => setShowDeviceLink(false)} />
           </div>
         )}
+      </div>
+
+      {/* Version selector section */}
+      <div className="mx-4 border-t border-slate-200 my-2" />
+      <div className="px-4 pb-3">
+        <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Verzija aplikacije</p>
+        <VersionSelector />
       </div>
     </div>
   );

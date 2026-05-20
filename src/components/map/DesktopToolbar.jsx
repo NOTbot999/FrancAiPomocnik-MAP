@@ -3,8 +3,68 @@ import {
   Layers, Locate, LoaderCircle, Ruler, MapPin, Trash2,
   Navigation, Route, X,
   Map, Settings, Eye, EyeOff, Save, FolderOpen,
-  Loader2, Check, GripVertical, Palette, Brain, TrendingUp
+  Loader2, Check, GripVertical, Palette, Brain, TrendingUp,
+  FlaskConical, CheckCircle2
 } from "lucide-react";
+
+// ─── App versions ─────────────────────────────────────────────────────────────
+const APP_VERSIONS = [
+  {
+    id: "stable",
+    label: "Stabilna verzija",
+    description: "Javna – dostopna vsem",
+    url: "https://gis-explorer-slovenije-c2bb2b.base44.app",
+    badge: "LIVE",
+    badgeColor: "#10b981",
+  },
+  {
+    id: "beta",
+    label: "Beta verzija",
+    description: "Trenutna – v razvoju",
+    url: null,
+    badge: "BETA",
+    badgeColor: "#f59e0b",
+  },
+];
+
+function VersionSelectorDesktop({ theme }) {
+  const stableUrl = APP_VERSIONS[0].url;
+  const active = stableUrl && window.location.href.startsWith(stableUrl) ? "stable" : "beta";
+
+  const handleSelect = (v) => {
+    if (v.id === active) return;
+    if (v.url) window.location.href = v.url;
+  };
+
+  return (
+    <div className="space-y-1 mt-1">
+      {APP_VERSIONS.map((v) => {
+        const isActive = active === v.id;
+        return (
+          <button
+            key={v.id}
+            onClick={() => handleSelect(v)}
+            style={isActive
+              ? { backgroundColor: "#1e293b", color: "#f1f5f9", border: "1px solid #334155" }
+              : { backgroundColor: theme.menuBg + "aa", color: theme.menuText, border: `1px solid ${theme.menuText}20`, opacity: 0.7 }
+            }
+            className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl transition-all text-left hover:opacity-100"
+          >
+            <FlaskConical className="w-3.5 h-3.5 shrink-0" style={{ color: isActive ? "#34d399" : theme.menuText }} />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1">
+                <span className="text-[11px] font-semibold truncate">{v.label}</span>
+                <span className="text-[8px] font-bold px-1 py-0.5 rounded text-white shrink-0" style={{ backgroundColor: v.badgeColor }}>{v.badge}</span>
+              </div>
+              <p className="text-[9px] opacity-60 truncate">{v.description}</p>
+            </div>
+            {isActive && <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-emerald-400" />}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { motion, AnimatePresence } from "framer-motion";
 import { base44 } from "@/api/base44Client";
@@ -431,6 +491,12 @@ export default function DesktopToolbar({
             >
               Ponastavi vrstico
             </button>
+
+            {/* Version selector */}
+            <div className="mt-3 pt-2" style={{ borderTop: `1px solid ${theme.menuText}22` }}>
+              <p className="text-[9px] font-bold uppercase tracking-wider opacity-40 mb-1.5" style={{ color: theme.menuText }}>Verzija aplikacije</p>
+              <VersionSelectorDesktop theme={theme} />
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
