@@ -12,114 +12,32 @@ import { scopedGet, scopedSet } from "@/lib/userPrefs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-// Base Map grid — toggle any layer on/off; first active = primary background, rest = overlays
-function BaseMapGrid({ activeBaseLayers, onSelectBaseLayer, onBaseOpacityChange }) {
-  const layerEntries = activeBaseLayers ? Object.entries(activeBaseLayers) : [["osm", { opacity: 1 }]];
-  const primaryId = layerEntries[0]?.[0] ?? null;
-  const activeIds = layerEntries.map(([id]) => id);
-
-  const handleToggle = (layerId) => {
-    const isActive = activeIds.includes(layerId);
-    if (isActive) {
-      // Izklop — ne dovoli izklopa če je edini aktiven
-      if (activeIds.length === 1) {
-        // Zamenjaj primarni z "brez ozadja" — odstrani in ne dodaj novega
-        onSelectBaseLayer(layerId, "remove_all");
-      } else {
-        onSelectBaseLayer(layerId, "remove");
-      }
-    } else {
-      // Vklop — če ni nobene aktivne, postane primary, sicer overlay
-      onSelectBaseLayer(layerId, activeIds.length === 0 ? "set_primary" : "add_overlay");
-    }
-  };
-
-  const handleSetPrimary = (layerId) => {
-    // Postavi ta layer kot primarnega (ozadje)
-    onSelectBaseLayer(layerId, "set_primary");
-  };
+// Base Map grid — radio select (samo ena naenkrat kot ozadje)
+function BaseMapGrid({ activeBaseLayers, onSelectBaseLayer }) {
+  const primaryId = activeBaseLayers ? Object.keys(activeBaseLayers)[0] : "osm";
 
   return (
     <div className="px-3 pb-3 pt-2 border-b border-slate-700/50">
-      <div className="flex items-center justify-between mb-2">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Osnovna karta</p>
-        {activeIds.length > 0 && (
-          <button
-            onClick={() => onSelectBaseLayer(null, "remove_all")}
-            className="text-[9px] text-slate-600 hover:text-red-400 transition px-1.5 py-0.5 rounded hover:bg-red-500/10"
-          >izklopi vse</button>
-        )}
-      </div>
+      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Osnovna karta</p>
       <div className="grid grid-cols-4 gap-1.5">
         {BASE_LAYERS.map((layer) => {
-          const isPrimary = layer.id === primaryId;
-          const isOverlay = activeIds.includes(layer.id) && !isPrimary;
-          const isActive = isPrimary || isOverlay;
+          const isActive = layer.id === primaryId;
           return (
-            <div key={layer.id} className="flex flex-col gap-0.5">
-              <button
-                onClick={() => handleToggle(layer.id)}
-                className={`flex flex-col items-center gap-1 rounded-xl p-1.5 transition-all w-full ${
-                  isPrimary ? 'ring-2 ring-emerald-400 bg-slate-700/60' :
-                  isOverlay ? 'ring-2 ring-amber-400 bg-slate-700/50' :
-                  'hover:bg-slate-700/30 opacity-50 hover:opacity-70'
-                }`}
-              >
-                <div className={`w-full aspect-video rounded-lg overflow-hidden border relative ${
-                  isPrimary ? 'border-emerald-400/60' :
-                  isOverlay ? 'border-amber-400/60' :
-                  'border-slate-600/30'
-                }`}>
-                  <img src={layer.thumbnail} alt={layer.name} className="w-full h-full object-cover" loading="lazy" />
-                  {!isActive && (
-                    <div className="absolute inset-0 bg-slate-900/50 flex items-center justify-center">
-                      <span className="text-slate-400 text-[14px]">✕</span>
-                    </div>
-                  )}
-                  {isPrimary && (
-                    <div className="absolute top-0.5 right-0.5 bg-emerald-500 rounded-full w-2.5 h-2.5" />
-                  )}
-                </div>
-                <span className={`text-[9px] leading-tight text-center w-full truncate ${
-                  isPrimary ? 'text-emerald-400 font-bold' :
-                  isOverlay ? 'text-amber-400 font-semibold' :
-                  'text-slate-500'
-                }`}>
-                  {layer.name}
-                </span>
-              </button>
-              {/* "Nastavi kot ozadje" za overlay layerje */}
-              {isOverlay && (
-                <button
-                  onClick={() => handleSetPrimary(layer.id)}
-                  className="text-[8px] text-amber-400/70 hover:text-emerald-400 text-center transition py-0.5 rounded hover:bg-slate-700/40"
-                >↑ ozadje</button>
-              )}
-            </div>
+            <button
+              key={layer.id}
+              onClick={() => onSelectBaseLayer(layer.id)}
+              className={`flex flex-col items-center gap-1 rounded-xl p-1.5 transition-all ${isActive ? 'ring-2 ring-emerald-400 bg-slate-700/60' : 'hover:bg-slate-700/30'}`}
+            >
+              <div className={`w-full aspect-video rounded-lg overflow-hidden border ${isActive ? 'border-emerald-400/60' : 'border-slate-600/30'}`}>
+                <img src={layer.thumbnail} alt={layer.name} className="w-full h-full object-cover" loading="lazy" />
+              </div>
+              <span className={`text-[9px] leading-tight text-center w-full truncate ${isActive ? 'text-emerald-400 font-bold' : 'text-slate-400'}`}>
+                {layer.name}
+              </span>
+            </button>
           );
         })}
       </div>
-      {/* Opacity sliders for overlay base layers */}
-      {layerEntries.filter(([id]) => id !== primaryId).map(([id, cfg]) => {
-        const layer = BASE_LAYERS.find(l => l.id === id);
-        if (!layer) return null;
-        const opacity = cfg?.opacity ?? 0.7;
-        return (
-          <div key={id} className="mt-2 flex items-center gap-2 px-1">
-            <div className="w-8 h-5 rounded overflow-hidden shrink-0 border border-amber-400/40">
-              <img src={layer.thumbnail} alt={layer.name} className="w-full h-full object-cover" />
-            </div>
-            <span className="text-[10px] text-amber-400 flex-1 truncate">{layer.name}</span>
-            <span className="text-[10px] text-slate-500 w-8 text-right">{Math.round(opacity * 100)}%</span>
-            <Slider
-              value={[Math.round(opacity * 100)]}
-              onValueChange={([v]) => onBaseOpacityChange && onBaseOpacityChange(id, v / 100)}
-              max={100} min={0} step={5}
-              className="w-20"
-            />
-          </div>
-        );
-      })}
     </div>
   );
 }
@@ -326,7 +244,6 @@ function PanelContent({ activeBaseLayers, onSelectBaseLayer, onBaseOpacityChange
       <BaseMapGrid
         activeBaseLayers={activeBaseLayers}
         onSelectBaseLayer={onSelectBaseLayer}
-        onBaseOpacityChange={onBaseOpacityChange}
       />
 
       {/* AI Custom layers */}
@@ -401,21 +318,10 @@ export default function LayerPanel({
   const isMobile = useIsMobile();
   const [favorites, setFavorites] = useState(() => scopedGet("layerFavorites") || []);
 
-  // Base layer selection
-  const handleSelectBaseLayer = useCallback((layerId, action) => {
-    const currentIds = activeBaseLayers ? Object.keys(activeBaseLayers) : [];
-    if (action === "remove_all") {
-      // Izklopi vse base layerje
-      currentIds.forEach(id => onToggleBaseLayer(id, null, "remove"));
-    } else if (action === "remove") {
-      onToggleBaseLayer(layerId, null, "remove");
-    } else if (action === "add_overlay") {
-      onToggleBaseLayer(layerId, 0.5, "add_overlay");
-    } else if (action === "set_primary") {
-      // Premakni ta layer na začetek (postane ozadje)
-      onToggleBaseLayer(layerId, null, "set_primary");
-    }
-  }, [activeBaseLayers, onToggleBaseLayer]);
+  // Base layer selection — radio style, samo en aktiven
+  const handleSelectBaseLayer = useCallback((layerId) => {
+    onToggleBaseLayer(layerId);
+  }, [onToggleBaseLayer]);
 
   const handleToggleFavorite = useCallback((layerId) => {
     setFavorites(prev => {

@@ -331,6 +331,9 @@ function ArcGISExportLayer({ url, opacity, layerIds, maxZoom, bboxSR, transparen
        maxZoom: maxZoom || 22,
        maxNativeZoom: 19,
        bounds: [[45.3, 13.3], [46.9, 16.8]],
+       keepBuffer: 2,
+       updateWhenIdle: true,
+       updateWhenZooming: false,
      });
 
     arcLayer.getTileUrl = function (coords) {
@@ -440,7 +443,7 @@ export default function MapContainerComponent({
         if (bl.type === 'arcgis_export') {
           return <ArcGISExportLayer key={bl.id} url={bl.arcgisUrl} opacity={opacity} bboxSR={bl.bboxSR} transparent={bl.transparent} format={bl.format} />;
         }
-        return <TileLayer key={bl.id} url={bl.url} opacity={opacity} attribution={bl.attribution || ""} maxZoom={22} maxNativeZoom={bl.maxNativeZoom || 19} />;
+        return <TileLayer key={bl.id} url={bl.url} opacity={opacity} attribution={bl.attribution || ""} maxZoom={22} maxNativeZoom={bl.maxNativeZoom || 19} keepBuffer={4} updateWhenIdle={false} updateWhenZooming={false} />;
       })}
 
       {/* Active overlay layers — rendered in layerOrder (bottom→top) */}
@@ -462,6 +465,9 @@ export default function MapContainerComponent({
                maxZoom={22}
                maxNativeZoom={layer.maxNativeZoom || layer.maxZoom || 19}
                attribution={layer.attribution || ""}
+               keepBuffer={4}
+               updateWhenIdle={false}
+               updateWhenZooming={false}
              />
            );
          }
@@ -498,6 +504,9 @@ export default function MapContainerComponent({
               crs={L.CRS.EPSG3857}
               tileSize={layer.tileSize || 512}
               detectRetina={false}
+              keepBuffer={2}
+              updateWhenIdle={true}
+              updateWhenZooming={false}
             />
           );
         }

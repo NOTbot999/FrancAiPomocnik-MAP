@@ -330,6 +330,96 @@ export const OVERLAY_CATEGORIES = [
     ]
   },
 
+  // ── OSNOVNI SLOJI (kot overlay) ──────────────────────────────
+  {
+    id: "osnovni",
+    name: "Osnovni sloji",
+    icon: "Map",
+    thumbnail: "https://images.unsplash.com/photo-1524661135-423995f22d0b?w=80&h=60&fit=crop",
+    description: "Osnovne karte kot prekrivni sloji (OSM, satelit, topo, LIDAR...)",
+    layers: [
+      {
+        id: "ol_osm",
+        name: "OpenStreetMap",
+        type: "tile",
+        url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        attribution: '&copy; OpenStreetMap',
+        opacity: 0.9,
+        thumbnail: "https://images.unsplash.com/photo-1524661135-423995f22d0b?w=80&h=60&fit=crop",
+        description: "OpenStreetMap kot prekrivni sloj"
+      },
+      {
+        id: "ol_carto_voyager",
+        name: "Carto Voyager",
+        type: "tile",
+        url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+        attribution: '&copy; OpenStreetMap &copy; CARTO',
+        opacity: 0.9,
+        thumbnail: "https://images.unsplash.com/photo-1524661135-423995f22d0b?w=80&h=60&fit=crop",
+        description: "Carto Voyager kot prekrivni sloj"
+      },
+      {
+        id: "ol_satellite",
+        name: "Satelit",
+        type: "tile",
+        url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        attribution: "&copy; Esri, Maxar",
+        opacity: 0.9,
+        thumbnail: "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=80&h=60&fit=crop",
+        description: "Satelitski posnetek kot prekrivni sloj"
+      },
+      {
+        id: "ol_topo",
+        name: "OpenTopoMap",
+        type: "tile",
+        url: "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
+        attribution: "&copy; OpenTopoMap",
+        maxNativeZoom: 17,
+        opacity: 0.9,
+        thumbnail: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=80&h=60&fit=crop",
+        description: "Topografska karta kot prekrivni sloj"
+      },
+      {
+        id: "ol_esri_topo",
+        name: "ESRI Topo",
+        type: "tile",
+        url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
+        attribution: "&copy; Esri",
+        opacity: 0.9,
+        thumbnail: "https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=80&h=60&fit=crop",
+        description: "ESRI World Topo kot prekrivni sloj"
+      },
+      {
+        id: "ol_dark",
+        name: "Temna",
+        type: "tile",
+        url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+        attribution: "&copy; CartoDB",
+        opacity: 0.9,
+        thumbnail: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=80&h=60&fit=crop",
+        description: "Temna karta kot prekrivni sloj"
+      },
+      {
+        id: "ol_lidar",
+        name: "LIDAR Senčenje",
+        type: "arcgis_export",
+        url: "https://gis.arso.gov.si/arcgis/rest/services/Lidar_hillshade_D96TM/MapServer/export",
+        opacity: 0.8,
+        thumbnail: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=80&h=60&fit=crop",
+        description: "LIDAR senčenje kot prekrivni sloj"
+      },
+      {
+        id: "ol_arso_topo",
+        name: "ARSO Topo",
+        type: "arcgis_export",
+        url: "https://gis.arso.gov.si/arcgis/rest/services/Topografske_karte_ARSO_nova/MapServer/export",
+        opacity: 0.9,
+        thumbnail: "https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=80&h=60&fit=crop",
+        description: "ARSO topografska karta kot prekrivni sloj"
+      }
+    ]
+  },
+
   // ── ZGODOVINSKI & URBEX ──────────────────────────────────────
   {
     id: "zgodovinski",
