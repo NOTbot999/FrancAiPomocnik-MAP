@@ -249,6 +249,57 @@ export const OVERLAY_CATEGORIES = [
     thumbnail: "https://images.unsplash.com/photo-1448375240586-882707db888b?w=80&h=60&fit=crop",
     description: "Jame, naravne vrednote, vreme, ekološka območja",
     layers: [
+      // Vodne površine — WMS iz ARSO
+      {
+        id: "arso_vode_povrsine",
+        name: "Vodne površine (jezera, reke)",
+        type: "wms",
+        url: ARSO_WMS,
+        layers: "ARSO:PV_POV",
+        format: "image/png",
+        transparent: true,
+        version: "1.1.1",
+        opacity: 0.85,
+        thumbnail: "https://images.unsplash.com/photo-1559825481-12a05cc00344?w=80&h=60&fit=crop",
+        description: "Vodne površine iz ARSO registra voda — jezera, akumulacije, ribniki"
+      },
+      {
+        id: "arso_vodotoki",
+        name: "Vodotoki (reke, potoki)",
+        type: "wms",
+        url: ARSO_WMS,
+        layers: "ARSO:PV_VOD",
+        format: "image/png",
+        transparent: true,
+        version: "1.1.1",
+        opacity: 0.85,
+        thumbnail: "https://images.unsplash.com/photo-1559825481-12a05cc00344?w=80&h=60&fit=crop",
+        description: "Vodotoki iz ARSO registra voda — vse reke in potoki v Sloveniji"
+      },
+      {
+        id: "arso_poplave",
+        name: "Poplavna območja",
+        type: "wms",
+        url: ARSO_WMS,
+        layers: "ARSO:PV_OPO",
+        format: "image/png",
+        transparent: true,
+        version: "1.1.1",
+        opacity: 0.6,
+        thumbnail: "https://images.unsplash.com/photo-1559825481-12a05cc00344?w=80&h=60&fit=crop",
+        description: "Poplavna tvegana območja iz ARSO"
+      },
+      // OpenStreetMap Water overlay — svetlo modre vodne površine
+      {
+        id: "osm_water_overlay",
+        name: "OSM Vodni sloj (modre površine)",
+        type: "tile",
+        url: "https://tiles.wmflabs.org/osm-no-labels/{z}/{x}/{y}.png",
+        transparent: true,
+        opacity: 0.9,
+        thumbnail: "https://images.unsplash.com/photo-1559825481-12a05cc00344?w=80&h=60&fit=crop",
+        description: "OSM render brez oznak — vidne modre vodne površine točno kot v OSM bazi"
+      },
       // Raba tal (premesteno iz Karte & Kataster)
       {
         id: "raba_farmland",
