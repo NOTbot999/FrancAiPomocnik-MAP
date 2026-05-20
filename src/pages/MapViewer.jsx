@@ -146,18 +146,45 @@ export default function MapViewer() {
     setShowMyTracks(false);
   }, []);
 
-  const [customLayers, setCustomLayers] = useState(() => scopedGet("customLayers") || []);
+  // Custom layers: session-only by default, persisted only if favorited
+  const [customLayers, setCustomLayers] = useState(() => scopedGet("savedCustomLayers") || []);
+  const [favoritedCustomLayerIds, setFavoritedCustomLayerIds] = useState(() => scopedGet("favCustomLayerIds") || []);
+
   const handleAddCustomLayer = useCallback((layer) => {
+    const id = `custom_${Date.now()}`;
+    setCustomLayers(prev => [...prev.filter(l => l.name !== layer.name), { ...layer, id }]);
+    // Do NOT persist to localStorage — only saved if user favorites it
+  }, []);
+
+  const handleFavoriteCustomLayer = useCallback((layerId) => {
     setCustomLayers(prev => {
-      const next = [...prev.filter(l => l.name !== layer.name), { ...layer, id: `custom_${Date.now()}` }];
-      scopedSet("customLayers", next);
-      return next;
+      const layer = prev.find(l => l.id === layerId);
+      if (!layer) return prev;
+      setFavoritedCustomLayerIds(favs => {
+        const next = favs.includes(layerId) ? favs.filter(id => id !== layerId) : [...favs, layerId];
+        scopedSet("favCustomLayerIds", next);
+        // Save/remove from persistent storage
+        const saved = scopedGet("savedCustomLayers") || [];
+        let updatedSaved;
+        if (next.includes(layerId)) {
+          updatedSaved = [...saved.filter(l => l.id !== layerId), layer];
+        } else {
+          updatedSaved = saved.filter(l => l.id !== layerId);
+        }
+        scopedSet("savedCustomLayers", updatedSaved);
+        return next;
+      });
+      return prev;
     });
   }, []);
+
   const handleRemoveCustomLayer = useCallback((layerId) => {
-    setCustomLayers(prev => {
-      const next = prev.filter(l => l.id !== layerId);
-      scopedSet("customLayers", next);
+    setCustomLayers(prev => prev.filter(l => l.id !== layerId));
+    setFavoritedCustomLayerIds(prev => {
+      const next = prev.filter(id => id !== layerId);
+      scopedSet("favCustomLayerIds", next);
+      const saved = scopedGet("savedCustomLayers") || [];
+      scopedSet("savedCustomLayers", saved.filter(l => l.id !== layerId));
       return next;
     });
   }, []);
@@ -411,6 +438,8 @@ export default function MapViewer() {
         onLayerReorder={handleLayerReorder}
         customLayers={customLayers}
         onRemoveCustomLayer={handleRemoveCustomLayer}
+        favoritedCustomLayerIds={favoritedCustomLayerIds}
+        onFavoriteCustomLayer={handleFavoriteCustomLayer}
       />
 
       {/* Navigation Panel — available on both mobile and desktop */}

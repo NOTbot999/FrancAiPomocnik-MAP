@@ -98,7 +98,7 @@ function computeArea(points) {
 }
 
 // SNAP_THRESHOLD_PX: if click is within this many pixels of the first point, auto-close polygon
-const SNAP_THRESHOLD_PX = 20;
+const SNAP_THRESHOLD_PX = 35;
 
 function DrawingHandler({ activeTool, onMeasurement, drawings, setDrawings }) {
   const [currentPoints, setCurrentPoints] = useState([]);
@@ -192,15 +192,17 @@ function DrawingHandler({ activeTool, onMeasurement, drawings, setDrawings }) {
 
   const dotIcon = L.divIcon({
     className: "",
-    html: `<div style="width:10px;height:10px;background:#10b981;border:2px solid white;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,.4);transform:translate(-5px,-5px)"></div>`,
-    iconSize: [0, 0],
+    html: `<div style="width:10px;height:10px;background:#10b981;border:2px solid white;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,.4)"></div>`,
+    iconSize: [10, 10],
+    iconAnchor: [5, 5],
   });
 
-  // First-point snap indicator
+  // First-point snap indicator — iconSize and iconAnchor ensure correct centering
   const snapIcon = L.divIcon({
     className: "",
-    html: `<div style="width:18px;height:18px;background:rgba(16,185,129,0.3);border:2px solid #10b981;border-radius:50%;box-shadow:0 0 6px #10b981;transform:translate(-9px,-9px)"></div>`,
-    iconSize: [0, 0],
+    html: `<div style="width:24px;height:24px;background:rgba(16,185,129,0.25);border:2.5px solid #10b981;border-radius:50%;box-shadow:0 0 8px #10b981"></div>`,
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],
   });
 
   const markerIcon = L.divIcon({

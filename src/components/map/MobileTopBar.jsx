@@ -225,7 +225,7 @@ function MobileTopBarInner({
         )}
       </AnimatePresence>
 
-      {/* Ruler tool strip — uses same scale as other buttons */}
+      {/* Ruler tool strip */}
       <AnimatePresence>
         {showRuler && (
           <motion.div
@@ -238,18 +238,6 @@ function MobileTopBarInner({
             style={{ pointerEvents: "auto", gap: `${Math.round(8 * scale)}px` }}
             className="absolute bottom-8 right-14 flex flex-col items-end"
           >
-            {/* Measurement result above the tool buttons */}
-            {measurements && (
-              <div className="mb-1">
-                <MeasurementDisplay
-                  type={measurements.type}
-                  valueMeters={measurements.meters}
-                  areaSqm={measurements.areaSqm}
-                  points={measurements.points}
-                  style="mobile"
-                />
-              </div>
-            )}
             {TOOLS.map((tool) => {
               const Icon = tool.icon;
               const isActive = activeTool === tool.id;
@@ -267,6 +255,34 @@ function MobileTopBarInner({
                 </button>
               );
             })}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Measurement swipe-up panel — bottom sheet, same style as layer panel */}
+      <AnimatePresence>
+        {measurements && (
+          <motion.div
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{ type: "spring", damping: 32, stiffness: 340 }}
+            onPointerDown={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
+            style={{ pointerEvents: "auto", backgroundColor: "rgba(15,23,42,0.96)", backdropFilter: "blur(20px)" }}
+            className="absolute bottom-0 left-0 right-0 rounded-t-2xl border-t border-white/10 shadow-2xl px-5 py-4 z-[910]"
+          >
+            <div className="flex justify-center mb-3">
+              <div className="w-8 h-1 rounded-full bg-white/20" />
+            </div>
+            <MeasurementDisplay
+              type={measurements.type}
+              valueMeters={measurements.meters}
+              areaSqm={measurements.areaSqm}
+              points={measurements.points}
+              style="mobile"
+            />
           </motion.div>
         )}
       </AnimatePresence>

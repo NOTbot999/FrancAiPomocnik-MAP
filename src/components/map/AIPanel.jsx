@@ -55,6 +55,10 @@ KLJUČNO PRAVILO — KDAJ UPORABITI KAJ:
    NIKOLI ne izmišljaj koordinat rek/jezer/poti.
    <custom_layer>{"name":"Naziv","color":"#hex","features":[{"type":"Point","coords":[lat,lng],"label":"Ime"}]}</custom_layer>
 
+4. VISION ANALIZA KARTE — ko uporabnik prosi "poglej karto", "kaj vidiš", "analiziraj vidno":
+   Zajameš screenshot trenutnega pogleda in ga analiziraš z AI. Uporabi kadar je potrebno vizualno zaznavanje.
+   <vision_analyze prompt="Natančno opiši kaj je vidno na tej karti. Identificiraj objekte, barve, tipe površin (voda=modra, gozd=zelena, ceste=siva)." />
+
 RAZPOLOŽLJIVI SLOJI:
 ${LAYER_SUMMARY}
 
@@ -92,6 +96,19 @@ function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme, messag
     }
     return BASE_LAYERS.find(l => l.id === id)?.name || id;
   });
+
+  // Capture current map viewport as base64 image via html2canvas
+  const captureMapImage = async () => {
+    try {
+      const { default: html2canvas } = await import("html2canvas");
+      const mapEl = document.querySelector(".leaflet-container");
+      if (!mapEl) return null;
+      const canvas = await html2canvas(mapEl, { useCORS: true, allowTaint: true, logging: false, scale: 0.5 });
+      return canvas.toDataURL("image/jpeg", 0.7);
+    } catch {
+      return null;
+    }
+  };
 
   const executeOverpassQuery = async (queryStr, name, color, bbox) => {
     // Replace {{bbox}} with actual south,west,north,east
@@ -148,12 +165,41 @@ function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme, messag
     const layerMatch = text.match(/<activate_layers>(.*?)<\/activate_layers>/s);
     const customMatch = text.match(/<custom_layer>(.*?)<\/custom_layer>/s);
     const overpassMatch = text.match(/<overpass_query([^>]*)>([\s\S]*?)<\/overpass_query>/);
+    const visionMatch = text.match(/<vision_analyze\s+prompt="([^"]+)"\s*\/>/);
 
     let cleanText = text
       .replace(/<activate_layers>.*?<\/activate_layers>/s, "")
       .replace(/<custom_layer>.*?<\/custom_layer>/s, "")
       .replace(/<overpass_query[\s\S]*?<\/overpass_query>/s, "")
+      .replace(/<vision_analyze[^/]*\/>/g, "")
       .trim();
+
+    // Vision analysis — capture map screenshot and analyze with LLM
+    if (visionMatch) {
+      const visionPrompt = visionMatch[1];
+      cleanText += `\n\n📸 Analiziram karto...`;
+      setMessages(prev => [...prev, { role: "assistant", content: cleanText }]);
+      const imgData = await captureMapImage();
+      if (imgData) {
+        // Upload image
+        const blob = await (await fetch(imgData)).blob();
+        const file = new File([blob], "map.jpg", { type: "image/jpeg" });
+        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+        const visionRes = await base44.integrations.Core.InvokeLLM({
+          prompt: `${visionPrompt}\nOdgovori v slovenščini. Bodi natančen in konkreten.`,
+          file_urls: [file_url],
+          model: "gemini_3_flash"
+        });
+        const visionText = typeof visionRes === "string" ? visionRes : JSON.stringify(visionRes);
+        setMessages(prev => {
+          const updated = [...prev];
+          updated[updated.length - 1] = { role: "assistant", content: cleanText.replace("📸 Analiziram karto...", `📸 **Analiza karte:**\n\n${visionText}`) };
+          return updated;
+        });
+        setLoading(false);
+        return;
+      }
+    }
 
     // Activate existing layers
     let activated = [];
