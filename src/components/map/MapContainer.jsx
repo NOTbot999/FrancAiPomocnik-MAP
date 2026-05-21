@@ -7,6 +7,7 @@ import {
   useMapEvents,
   Marker,
   Popup,
+  Tooltip,
   Polyline,
   Polygon,
 } from "react-leaflet";
@@ -489,6 +490,8 @@ export default function MapContainerComponent({
   onPinPicked,
   aiRoutePolyline,
   customLayers,
+  customLayerOpacities,
+  customLayerVisible,
   onRemoveCustomLayer,
 }) {
   const allLayers = getAllLayersFlat();
@@ -607,40 +610,49 @@ export default function MapContainerComponent({
         <Polyline positions={aiRoutePolyline} color="#f59e0b" weight={4} opacity={0.9} dashArray="8,5" />
       )}
       {/* Custom AI layers (incl. Overpass results) */}
-      {(customLayers || []).map((layer) => (
-        <React.Fragment key={layer.id}>
-          {(layer.features || []).map((f, fi) => {
-            const color = layer.color || "#e11d48";
-            if (f.type === "LineString" && f.coords?.length > 1) {
-              return (
-                <Polyline key={fi} positions={f.coords} color={color} weight={3} opacity={0.9}>
-                  {f.label && <Popup><span className="text-xs font-semibold">{f.label}</span></Popup>}
-                </Polyline>
-              );
-            }
-            if (f.type === "Polygon" && f.coords?.length > 2) {
-              return (
-                <Polygon key={fi} positions={f.coords} pathOptions={{ color, fillColor: color, fillOpacity: 0.35, weight: 2, opacity: 0.9 }}>
-                  {f.label && <Popup><span className="text-xs font-semibold">{f.label}</span></Popup>}
-                </Polygon>
-              );
-            }
-            if (f.type === "Point" && f.coords?.length === 2) {
-              const icon = L.divIcon({
-                className: "",
-                html: `<div style="width:12px;height:12px;background:${color};border:2px solid white;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,.5);transform:translate(-6px,-6px)"></div>`,
-                iconSize: [0, 0],
-              });
-              return (
-                <Marker key={fi} position={f.coords} icon={icon}>
-                  {f.label && <Popup><span className="text-xs font-semibold">{f.label}</span></Popup>}
-                </Marker>
-              );
-            }
-            return null;
-          })}
-        </React.Fragment>
-      ))}
+      {(customLayers || []).map((layer) => {
+        const isVisible = customLayerVisible?.[layer.id] !== false;
+        if (!isVisible) return null;
+        const opacity = customLayerOpacities?.[layer.id] ?? 0.9;
+        return (
+          <React.Fragment key={layer.id}>
+            {(layer.features || []).map((f, fi) => {
+              const color = layer.color || "#e11d48";
+              if (f.type === "LineString" && f.coords?.length > 1) {
+                return (
+                  <Polyline key={fi} positions={f.coords} color={color} weight={3} opacity={opacity}>
+                    {f.label && <Tooltip sticky>{f.label}</Tooltip>}
+                  </Polyline>
+                );
+              }
+              if (f.type === "Polygon" && f.coords?.length > 2) {
+                return (
+                  <Polygon key={fi} positions={f.coords} pathOptions={{ color, fillColor: color, fillOpacity: opacity * 0.4, weight: 2, opacity }}>
+                    {f.label && <Tooltip sticky>{f.label}</Tooltip>}
+                  </Polygon>
+                );
+              }
+              if (f.type === "Point" && f.coords?.length === 2) {
+                const icon = L.divIcon({
+                  className: "",
+                  html: `<div style="width:12px;height:12px;background:${color};border:2px solid white;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,.5);transform:translate(-6px,-6px);opacity:${opacity}"></div>`,
+                  iconSize: [0, 0],
+                });
+                return (
+                  <Marker key={fi} position={f.coords} icon={icon}>
+                    {f.label && (
+                      <Tooltip permanent={false} sticky direction="top" offset={[0, -8]}>
+                        <span className="text-xs font-semibold">{f.label}</span>
+                      </Tooltip>
+                    )}
+                  </Marker>
+                );
+              }
+              return null;
+            })}
+          </React.Fragment>
+        );
+      })}
       <FlyToLocation location={flyToLocation} />
       <CoordsDisplay onMapMove={onMapMove} />
       <RightClickHandler onLocationSummary={onLocationSummary} />

@@ -146,15 +146,36 @@ export default function MapViewer() {
     setShowMyTracks(false);
   }, []);
 
-  // Custom layers: session-only by default, persisted only if favorited
+  // Custom layers: session + favorites persisted; each has a `visible` flag for ON/OFF
   const [customLayers, setCustomLayers] = useState(() => scopedGet("savedCustomLayers") || []);
   const [favoritedCustomLayerIds, setFavoritedCustomLayerIds] = useState(() => scopedGet("favCustomLayerIds") || []);
+  const [customLayerOpacities, setCustomLayerOpacities] = useState(() => scopedGet("customLayerOpacities") || {});
+  const [customLayerVisible, setCustomLayerVisible] = useState(() => scopedGet("customLayerVisible") || {});
 
   const handleAddCustomLayer = useCallback((layer) => {
     const id = `custom_${Date.now()}`;
-    // Always add as new layer — never replace existing ones by name
     setCustomLayers(prev => [...prev, { ...layer, id }]);
-    // Do NOT persist to localStorage — only saved if user favorites it
+    setCustomLayerVisible(prev => {
+      const next = { ...prev, [id]: true };
+      scopedSet("customLayerVisible", next);
+      return next;
+    });
+  }, []);
+
+  const handleToggleCustomLayerVisible = useCallback((layerId) => {
+    setCustomLayerVisible(prev => {
+      const next = { ...prev, [layerId]: !prev[layerId] };
+      scopedSet("customLayerVisible", next);
+      return next;
+    });
+  }, []);
+
+  const handleCustomLayerOpacity = useCallback((layerId, opacity) => {
+    setCustomLayerOpacities(prev => {
+      const next = { ...prev, [layerId]: opacity };
+      scopedSet("customLayerOpacities", next);
+      return next;
+    });
   }, []);
 
   const handleFavoriteCustomLayer = useCallback((layerId) => {
@@ -163,12 +184,10 @@ export default function MapViewer() {
       setFavoritedCustomLayerIds(favs => {
         const isFav = favs.includes(layerId);
         if (isFav) {
-          // Remove from favorites list only — keep layer in savedCustomLayers and customLayers
           const next = favs.filter(id => id !== layerId);
           scopedSet("favCustomLayerIds", next);
           return next;
         } else {
-          // Add to favorites — persist to localStorage
           const next = [...favs, layerId];
           scopedSet("favCustomLayerIds", next);
           if (layer) {
@@ -191,6 +210,8 @@ export default function MapViewer() {
       scopedSet("savedCustomLayers", saved.filter(l => l.id !== layerId));
       return next;
     });
+    setCustomLayerVisible(prev => { const next = { ...prev }; delete next[layerId]; scopedSet("customLayerVisible", next); return next; });
+    setCustomLayerOpacities(prev => { const next = { ...prev }; delete next[layerId]; scopedSet("customLayerOpacities", next); return next; });
   }, []);
 
   const [routePolyline, setRoutePolyline] = useState(null);
@@ -241,6 +262,8 @@ export default function MapViewer() {
         routePolyline={routePolyline}
         aiRoutePolyline={aiRoutePolyline}
         customLayers={customLayers}
+        customLayerOpacities={customLayerOpacities}
+        customLayerVisible={customLayerVisible}
         onRemoveCustomLayer={handleRemoveCustomLayer}
         offlineOpen={isOfflineOpen}
         onOfflineClose={() => setIsOfflineOpen(false)}
@@ -441,6 +464,10 @@ export default function MapViewer() {
         layerOrder={layerOrder}
         onLayerReorder={handleLayerReorder}
         customLayers={customLayers}
+        customLayerOpacities={customLayerOpacities}
+        customLayerVisible={customLayerVisible}
+        onToggleCustomLayerVisible={handleToggleCustomLayerVisible}
+        onCustomLayerOpacity={handleCustomLayerOpacity}
         onRemoveCustomLayer={handleRemoveCustomLayer}
         favoritedCustomLayerIds={favoritedCustomLayerIds}
         onFavoriteCustomLayer={handleFavoriteCustomLayer}

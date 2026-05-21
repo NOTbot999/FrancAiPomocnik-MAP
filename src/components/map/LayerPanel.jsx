@@ -141,10 +141,9 @@ function ActiveLayersCategory({ activeLayers, allCategories, onToggleLayer, onOp
   );
 }
 
-function FavoritesCategory({ favoriteLayerIds, allCategories, activeLayers, onToggleLayer, onOpacityChange, onToggleFavorite, activeLayerCount, favoritedCustomLayers, onRemoveFavCustomLayer }) {
+function FavoritesCategory({ favoriteLayerIds, allCategories, activeLayers, onToggleLayer, onOpacityChange, onToggleFavorite, activeLayerCount, favoritedCustomLayers, onRemoveFavCustomLayer, customLayerVisible, onToggleCustomVisible, customLayerOpacities, onCustomOpacity }) {
   const [isOpen, setIsOpen] = useState(true);
 
-  // Regular overlay favorites
   const favLayers = [];
   for (const cat of allCategories) {
     for (const layer of cat.layers) {
@@ -154,23 +153,16 @@ function FavoritesCategory({ favoriteLayerIds, allCategories, activeLayers, onTo
     }
   }
 
-  // Add favorited custom layers
   const favCustom = (favoritedCustomLayers || []).map(l => ({ ...l, _categoryName: "AI Custom", _isCustom: true }));
   const allFavs = [...favLayers, ...favCustom];
 
-  if (favoriteLayerIds.length === 0 && favCustom.length === 0) return null;
   if (allFavs.length === 0) return null;
 
   return (
     <div className="border-b border-slate-700/50">
       <button onClick={() => setIsOpen(p => !p)} className="w-full flex items-center gap-2.5 px-4 py-3 hover:bg-slate-700/30 transition-colors">
         <span className="text-base leading-none shrink-0">❤️</span>
-        <span className="text-sm font-medium text-slate-200 flex-1 text-left">Favorite ❤️</span>
-        {favLayers.filter(l => activeLayers[l.id]).length > 0 && (
-          <span className="text-[10px] font-bold bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded-full">
-            {favLayers.filter(l => activeLayers[l.id]).length}
-          </span>
-        )}
+        <span className="text-sm font-medium text-slate-200 flex-1 text-left">Favorite</span>
         <ChevronDown className={`w-3.5 h-3.5 text-slate-500 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
       <AnimatePresence>
@@ -179,17 +171,30 @@ function FavoritesCategory({ favoriteLayerIds, allCategories, activeLayers, onTo
             <div className="px-3 pb-3 space-y-1.5">
               {allFavs.map((layer) => {
                 if (layer._isCustom) {
-                  // Custom AI layer — show with color dot; ❤️ removes from favorites only (does NOT delete layer)
+                  const isVisible = customLayerVisible?.[layer.id] !== false;
+                  const opacity = customLayerOpacities?.[layer.id] ?? 0.9;
                   return (
-                    <div key={layer.id} className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-slate-700/40">
-                      <div className="w-3 h-3 rounded-full shrink-0 border border-white/20" style={{ backgroundColor: layer.color || "#e11d48" }} />
-                      <span className="text-xs text-slate-200 flex-1 truncate">{layer.name}</span>
-                      <span className="text-[9px] text-slate-500">{layer.features?.length || 0}× AI</span>
-                      <button
-                        onClick={() => onRemoveFavCustomLayer && onRemoveFavCustomLayer(layer.id)}
-                        className="text-base leading-none opacity-100 hover:scale-125 transition-transform"
-                        title="Odstrani iz Favorit (sloj ostane shranjen)"
-                      >❤️</button>
+                    <div key={layer.id} className={`rounded-lg transition-colors ${isVisible ? 'bg-slate-700/50' : 'bg-slate-800/40'}`}>
+                      <div className="flex items-center gap-2 px-2 py-1.5">
+                        <div className="w-3 h-3 rounded-full shrink-0 border border-white/20" style={{ backgroundColor: layer.color || "#e11d48" }} />
+                        <span className="text-xs text-slate-200 flex-1 truncate">{layer.name}</span>
+                        <span className="text-[9px] text-slate-500 shrink-0">{layer.features?.length || 0}× AI</span>
+                        <button
+                          onClick={() => onRemoveFavCustomLayer && onRemoveFavCustomLayer(layer.id)}
+                          className="text-base leading-none opacity-100 hover:scale-125 transition-transform shrink-0"
+                          title="Odstrani iz Favorit"
+                        >❤️</button>
+                        <button
+                          onClick={() => onToggleCustomVisible && onToggleCustomVisible(layer.id)}
+                          className={`shrink-0 px-2 py-0.5 rounded text-[10px] font-bold transition-all ${isVisible ? 'bg-emerald-500 text-white' : 'bg-slate-700 text-slate-400 hover:bg-slate-600'}`}
+                        >{isVisible ? 'ON' : 'OFF'}</button>
+                      </div>
+                      {isVisible && (
+                        <div className="flex items-center gap-2 px-3 pb-1.5 pt-0.5">
+                          <span className="text-[10px] text-slate-500 w-8">{Math.round(opacity * 100)}%</span>
+                          <Slider value={[Math.round(opacity * 100)]} onValueChange={([v]) => onCustomOpacity && onCustomOpacity(layer.id, v / 100)} max={100} min={0} step={5} className="flex-1" />
+                        </div>
+                      )}
                     </div>
                   );
                 }
@@ -212,9 +217,7 @@ function FavoritesCategory({ favoriteLayerIds, allCategories, activeLayers, onTo
                         onClick={() => !atLimit && onToggleLayer(layer.id)}
                         disabled={atLimit}
                         className={`shrink-0 px-2 py-0.5 rounded text-[10px] font-bold transition-all ${isActive ? 'bg-emerald-500 text-white' : atLimit ? 'bg-slate-800 text-slate-600 cursor-not-allowed' : 'bg-slate-700 text-slate-400 hover:bg-slate-600'}`}
-                      >
-                        {isActive ? 'ON' : 'OFF'}
-                      </button>
+                      >{isActive ? 'ON' : 'OFF'}</button>
                     </div>
                     {isActive && (
                       <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} className="px-3 pb-1 pt-0.5">
@@ -235,36 +238,57 @@ function FavoritesCategory({ favoriteLayerIds, allCategories, activeLayers, onTo
   );
 }
 
-function CustomLayersSection({ customLayers, onRemoveCustomLayer, favoritedIds, onFavorite }) {
+function CustomLayersSection({ customLayers, onRemoveCustomLayer, favoritedIds, onFavorite, customLayerVisible, onToggleVisible, customLayerOpacities, onOpacityChange }) {
+  const [isOpen, setIsOpen] = useState(true);
   if (!customLayers || customLayers.length === 0) return null;
   return (
-    <div className="border-b border-slate-700/50 px-3 py-2">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-purple-400 mb-1">🎨 AI Custom Sloji</p>
-      <p className="text-[9px] text-slate-500 mb-2">Klikni ❤️ da shraniš v Favorite (ON/OFF) ali ✕ za brisanje</p>
-      <div className="space-y-1">
-        {customLayers.map(layer => {
-          const isFav = favoritedIds?.includes(layer.id);
-          return (
-            <div key={layer.id} className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-slate-700/40">
-              <div className="w-3 h-3 rounded-full shrink-0 border border-white/20" style={{ backgroundColor: layer.color || "#e11d48" }} />
-              <span className="text-xs text-slate-200 flex-1 truncate">{layer.name}</span>
-              <span className="text-[9px] text-slate-500">{layer.features?.length || 0}×</span>
-              <button
-                onClick={() => onFavorite && onFavorite(layer.id)}
-                className={`text-base leading-none transition-transform hover:scale-125 ${isFav ? 'opacity-100' : 'opacity-40 hover:opacity-80'}`}
-                title={isFav ? "Odstrani iz Favorit" : "Dodaj v Favorite ❤️"}
-              >❤️</button>
-              <button onClick={() => onRemoveCustomLayer && onRemoveCustomLayer(layer.id)}
-                className="text-[10px] text-slate-500 hover:text-red-400 transition px-1">✕</button>
-            </div>
-          );
-        })}
-      </div>
+    <div className="border-b border-slate-700/50">
+      <button onClick={() => setIsOpen(p => !p)} className="w-full flex items-center gap-2.5 px-4 py-3 hover:bg-slate-700/30 transition-colors">
+        <span className="text-base leading-none shrink-0">🎨</span>
+        <span className="text-sm font-medium text-slate-200 flex-1 text-left">AI Custom Sloji</span>
+        <span className="text-[10px] font-bold bg-purple-500/20 text-purple-400 px-1.5 py-0.5 rounded-full">{customLayers.length}</span>
+        <ChevronDown className={`w-3.5 h-3.5 text-slate-500 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+      {isOpen && (
+        <div className="px-3 pb-3 space-y-1.5">
+          {customLayers.map(layer => {
+            const isFav = favoritedIds?.includes(layer.id);
+            const isVisible = customLayerVisible?.[layer.id] !== false;
+            const opacity = customLayerOpacities?.[layer.id] ?? 0.9;
+            return (
+              <div key={layer.id} className={`rounded-lg transition-colors ${isVisible ? 'bg-slate-700/50' : 'bg-slate-800/40'}`}>
+                <div className="flex items-center gap-2 px-2 py-1.5">
+                  <div className="w-3 h-3 rounded-full shrink-0 border border-white/20" style={{ backgroundColor: layer.color || "#e11d48" }} />
+                  <span className="text-xs text-slate-200 flex-1 truncate">{layer.name}</span>
+                  <span className="text-[9px] text-slate-500 shrink-0">{layer.features?.length || 0}×</span>
+                  <button
+                    onClick={() => onFavorite && onFavorite(layer.id)}
+                    className={`text-base leading-none transition-transform hover:scale-125 shrink-0 ${isFav ? 'opacity-100' : 'opacity-35 hover:opacity-80'}`}
+                    title={isFav ? "Odstrani iz Favorit" : "Dodaj v Favorite"}
+                  >❤️</button>
+                  <button
+                    onClick={() => onToggleVisible && onToggleVisible(layer.id)}
+                    className={`shrink-0 px-2 py-0.5 rounded text-[10px] font-bold transition-all ${isVisible ? 'bg-emerald-500 text-white' : 'bg-slate-700 text-slate-400 hover:bg-slate-600'}`}
+                  >{isVisible ? 'ON' : 'OFF'}</button>
+                  <button onClick={() => onRemoveCustomLayer && onRemoveCustomLayer(layer.id)}
+                    className="text-[10px] text-slate-500 hover:text-red-400 transition px-1 shrink-0">✕</button>
+                </div>
+                {isVisible && (
+                  <div className="flex items-center gap-2 px-3 pb-1.5 pt-0.5">
+                    <span className="text-[10px] text-slate-500 w-8">{Math.round(opacity * 100)}%</span>
+                    <Slider value={[Math.round(opacity * 100)]} onValueChange={([v]) => onOpacityChange && onOpacityChange(layer.id, v / 100)} max={100} min={0} step={5} className="flex-1" />
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
 
-function PanelContent({ activeBaseLayers, onSelectBaseLayer, activeLayers, onToggleLayer, onOpacityChange, favorites, onToggleFavorite, layerOrder, onLayerReorder, customLayers, onRemoveCustomLayer, favoritedCustomLayerIds, onFavoriteCustomLayer, savedCustomLayers }) {
+function PanelContent({ activeBaseLayers, onSelectBaseLayer, activeLayers, onToggleLayer, onOpacityChange, favorites, onToggleFavorite, layerOrder, onLayerReorder, customLayers, onRemoveCustomLayer, favoritedCustomLayerIds, onFavoriteCustomLayer, savedCustomLayers, customLayerVisible, onToggleCustomLayerVisible, customLayerOpacities, onCustomLayerOpacity }) {
   const activeLayerCount = Object.keys(activeLayers).length;
 
   // Category order — persisted in localStorage
@@ -295,7 +319,7 @@ function PanelContent({ activeBaseLayers, onSelectBaseLayer, activeLayers, onTog
       <BaseMapGrid activeBaseLayers={activeBaseLayers} onSelectBaseLayer={onSelectBaseLayer} />
 
       {/* AI Custom layers */}
-      <CustomLayersSection customLayers={customLayers} onRemoveCustomLayer={onRemoveCustomLayer} favoritedIds={favoritedCustomLayerIds} onFavorite={onFavoriteCustomLayer} />
+      <CustomLayersSection customLayers={customLayers} onRemoveCustomLayer={onRemoveCustomLayer} favoritedIds={favoritedCustomLayerIds} onFavorite={onFavoriteCustomLayer} customLayerVisible={customLayerVisible} onToggleVisible={onToggleCustomLayerVisible} customLayerOpacities={customLayerOpacities} onOpacityChange={onCustomLayerOpacity} />
 
       {/* Active overlay layers with drag & drop reorder */}
       <ActiveLayersCategory
@@ -331,6 +355,10 @@ function PanelContent({ activeBaseLayers, onSelectBaseLayer, activeLayers, onTog
         activeLayerCount={activeLayerCount}
         favoritedCustomLayers={savedCustomLayers}
         onRemoveFavCustomLayer={onFavoriteCustomLayer}
+        customLayerVisible={customLayerVisible}
+        onToggleCustomVisible={onToggleCustomLayerVisible}
+        customLayerOpacities={customLayerOpacities}
+        onCustomOpacity={onCustomLayerOpacity}
       />
 
       {/* Overlay categories — drag & drop reorder */}
@@ -385,6 +413,10 @@ export default function LayerPanel({
   onRemoveCustomLayer,
   favoritedCustomLayerIds,
   onFavoriteCustomLayer,
+  customLayerVisible,
+  onToggleCustomLayerVisible,
+  customLayerOpacities,
+  onCustomLayerOpacity,
 }) {
   const isMobile = useIsMobile();
   const [favorites, setFavorites] = useState(() => scopedGet("layerFavorites") || []);
@@ -417,7 +449,7 @@ export default function LayerPanel({
     .map(id => customLayers?.find(l => l.id === id))
     .filter(Boolean);
 
-  const panelProps = { activeBaseLayers, onSelectBaseLayer: handleSelectBaseLayer, activeLayers, onToggleLayer: trackedToggleLayer, onOpacityChange, favorites, onToggleFavorite: handleToggleFavorite, layerOrder, onLayerReorder, customLayers, onRemoveCustomLayer, favoritedCustomLayerIds, onFavoriteCustomLayer, savedCustomLayers };
+  const panelProps = { activeBaseLayers, onSelectBaseLayer: handleSelectBaseLayer, activeLayers, onToggleLayer: trackedToggleLayer, onOpacityChange, favorites, onToggleFavorite: handleToggleFavorite, layerOrder, onLayerReorder, customLayers, onRemoveCustomLayer, favoritedCustomLayerIds, onFavoriteCustomLayer, savedCustomLayers, customLayerVisible, onToggleCustomLayerVisible, customLayerOpacities, onCustomLayerOpacity };
 
   const panelBg = theme.panelBg || "#0f172a";
   const panelText = theme.panelText || "#e2e8f0";
