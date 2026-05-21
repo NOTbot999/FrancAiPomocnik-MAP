@@ -3,20 +3,62 @@ import { Search, X, MapPin, Loader2, ChevronDown, Navigation } from "lucide-reac
 import { motion, AnimatePresence } from "framer-motion";
 
 // ── Category definitions ──────────────────────────────────────────────────────
+// Categories with overpassFull = fetch entire Slovenia as custom layer on click
 const CATEGORIES = [
-  { id: null,             label: "Vse",       emoji: "🔍" },
-  { id: "castle",         label: "Gradovi",   emoji: "🏰", amenity: null, historic: "castle", natural: null },
-  { id: "lake",           label: "Jezera",    emoji: "🌊", natural: "water", water: "lake" },
-  { id: "chapel",         label: "Kapelice",  emoji: "⛪", amenity: "place_of_worship", religion: null },
-  { id: "park",           label: "Parki",     emoji: "🌳", leisure: "park" },
-  { id: "peak",           label: "Vrhovi",    emoji: "⛰️", natural: "peak" },
-  { id: "waterfall",      label: "Slapovi",   emoji: "💧", waterway: "waterfall" },
-  { id: "viewpoint",      label: "Razglediš.", emoji: "👁️", tourism: "viewpoint" },
-  { id: "museum",         label: "Muzeji",    emoji: "🏛️", tourism: "museum" },
-  { id: "cave",           label: "Jame",      emoji: "🕳️", natural: "cave_entrance" },
-  { id: "ruins",          label: "Ruševine",  emoji: "🗿", historic: "ruins" },
-  { id: "spring",         label: "Izviri",    emoji: "💦", natural: "spring" },
+  { id: null,             label: "Vse",           emoji: "🔍" },
+  { id: "castle",         label: "Gradovi",        emoji: "🏰" },
+  { id: "lake",           label: "Jezera",         emoji: "🌊" },
+  { id: "chapel",         label: "Kapelice",       emoji: "⛪" },
+  { id: "park",           label: "Parki",          emoji: "🌳" },
+  { id: "peak",           label: "Vrhovi",         emoji: "⛰️" },
+  { id: "waterfall",      label: "Slapovi",        emoji: "💧" },
+  { id: "viewpoint",      label: "Razglediš.",     emoji: "👁️" },
+  { id: "museum",         label: "Muzeji",         emoji: "🏛️" },
+  { id: "cave",           label: "Jame",           emoji: "🕳️" },
+  { id: "ruins",          label: "Ruševine",       emoji: "🗿" },
+  { id: "spring",         label: "Izviri",         emoji: "💦" },
+  // ── NEW ──
+  { id: "pipe",           label: "Pipe",           emoji: "🚰", overpassFull: true },
+  { id: "parking",        label: "Parkirišča",     emoji: "🅿️", overpassFull: true },
+  { id: "church",         label: "Cerkve",         emoji: "⛩️", overpassFull: true },
+  { id: "camp",           label: "Kampi",          emoji: "🏕️", overpassFull: true },
+  { id: "fuel",           label: "Bencinske",      emoji: "⛽", overpassFull: true },
+  { id: "fire_station",   label: "Gasilski dom",   emoji: "🚒", overpassFull: true },
+  { id: "police",         label: "Policija",       emoji: "🚔", overpassFull: true },
+  { id: "hospital",       label: "Bolnice",        emoji: "🏥", overpassFull: true },
+  { id: "clinic",         label: "Ambulante",      emoji: "🩺", overpassFull: true },
+  { id: "dentist",        label: "Zobozdravstvo",  emoji: "🦷", overpassFull: true },
+  { id: "supermarket",    label: "Živila",         emoji: "🛒", overpassFull: true },
+  { id: "motorway_jct",   label: "AV uvozi",       emoji: "🛣️", overpassFull: true },
+  { id: "bus_station",    label: "Avt. postaje",   emoji: "🚌", overpassFull: true },
+  { id: "train_station",  label: "Vlak postaje",   emoji: "🚂", overpassFull: true },
+  { id: "municipality",   label: "Občine/Kraji",   emoji: "🏘️", overpassFull: true },
+  { id: "aerodrome",      label: "Letališča",      emoji: "✈️", overpassFull: true },
+  { id: "cemetery",       label: "Pokopališča",    emoji: "⚰️", overpassFull: true },
+  { id: "atm",            label: "Bankomati",      emoji: "💳", overpassFull: true },
 ];
+
+// Overpass queries for full-Slovenia custom layers
+const OVERPASS_FULL_QUERIES = {
+  pipe:          { query: `[out:json][timeout:30];node["amenity"="drinking_water"](45.4,13.4,46.9,16.6);out;`, color: "#0ea5e9" },
+  parking:       { query: `[out:json][timeout:30];(node["amenity"="parking"](45.4,13.4,46.9,16.6);way["amenity"="parking"](45.4,13.4,46.9,16.6););out center;`, color: "#6366f1" },
+  church:        { query: `[out:json][timeout:30];(node["amenity"="place_of_worship"]["religion"="christian"](45.4,13.4,46.9,16.6);way["amenity"="place_of_worship"]["religion"="christian"](45.4,13.4,46.9,16.6););out center;`, color: "#8b5cf6" },
+  camp:          { query: `[out:json][timeout:30];(node["tourism"="camp_site"](45.4,13.4,46.9,16.6);way["tourism"="camp_site"](45.4,13.4,46.9,16.6););out center;`, color: "#22c55e" },
+  fuel:          { query: `[out:json][timeout:30];node["amenity"="fuel"](45.4,13.4,46.9,16.6);out;`, color: "#f59e0b" },
+  fire_station:  { query: `[out:json][timeout:30];(node["amenity"="fire_station"](45.4,13.4,46.9,16.6);way["amenity"="fire_station"](45.4,13.4,46.9,16.6););out center;`, color: "#ef4444" },
+  police:        { query: `[out:json][timeout:30];(node["amenity"="police"](45.4,13.4,46.9,16.6);way["amenity"="police"](45.4,13.4,46.9,16.6););out center;`, color: "#3b82f6" },
+  hospital:      { query: `[out:json][timeout:30];(node["amenity"="hospital"](45.4,13.4,46.9,16.6);way["amenity"="hospital"](45.4,13.4,46.9,16.6););out center;`, color: "#ec4899" },
+  clinic:        { query: `[out:json][timeout:30];(node["amenity"~"clinic|doctors"](45.4,13.4,46.9,16.6);way["amenity"~"clinic|doctors"](45.4,13.4,46.9,16.6););out center;`, color: "#14b8a6" },
+  dentist:       { query: `[out:json][timeout:30];(node["amenity"="dentist"](45.4,13.4,46.9,16.6);way["amenity"="dentist"](45.4,13.4,46.9,16.6););out center;`, color: "#a855f7" },
+  supermarket:   { query: `[out:json][timeout:30];(node["shop"~"supermarket|grocery|convenience"](45.4,13.4,46.9,16.6);way["shop"~"supermarket|grocery|convenience"](45.4,13.4,46.9,16.6););out center;`, color: "#f97316" },
+  motorway_jct:  { query: `[out:json][timeout:30];node["highway"="motorway_junction"](45.4,13.4,46.9,16.6);out;`, color: "#64748b" },
+  bus_station:   { query: `[out:json][timeout:30];(node["amenity"="bus_station"](45.4,13.4,46.9,16.6);node["highway"="bus_stop"](45.4,13.4,46.9,16.6););out;`, color: "#f59e0b" },
+  train_station: { query: `[out:json][timeout:30];(node["railway"="station"](45.4,13.4,46.9,16.6);node["railway"="halt"](45.4,13.4,46.9,16.6););out;`, color: "#78716c" },
+  municipality:  { query: `[out:json][timeout:30];(node["place"~"town|village|hamlet|suburb"](45.4,13.4,46.9,16.6););out;`, color: "#10b981" },
+  aerodrome:     { query: `[out:json][timeout:30];(node["aeroway"="aerodrome"](45.4,13.4,46.9,16.6);way["aeroway"="aerodrome"](45.4,13.4,46.9,16.6););out center;`, color: "#06b6d4" },
+  cemetery:      { query: `[out:json][timeout:30];(node["landuse"="cemetery"](45.4,13.4,46.9,16.6);way["landuse"="cemetery"](45.4,13.4,46.9,16.6););out center;`, color: "#6b7280" },
+  atm:           { query: `[out:json][timeout:30];node["amenity"="atm"](45.4,13.4,46.9,16.6);out;`, color: "#84cc16" },
+};
 
 const CATEGORY_QUERY_MAP = {
   castle:    "[historic=castle]",
@@ -30,6 +72,24 @@ const CATEGORY_QUERY_MAP = {
   cave:      "[natural=cave_entrance]",
   ruins:     "[historic=ruins]",
   spring:    "[natural=spring]",
+  pipe:          "[amenity=drinking_water]",
+  parking:       "[amenity=parking]",
+  church:        "[amenity=place_of_worship][religion=christian]",
+  camp:          "[tourism=camp_site]",
+  fuel:          "[amenity=fuel]",
+  fire_station:  "[amenity=fire_station]",
+  police:        "[amenity=police]",
+  hospital:      "[amenity=hospital]",
+  clinic:        "[amenity~clinic|doctors]",
+  dentist:       "[amenity=dentist]",
+  supermarket:   "[shop~supermarket|grocery|convenience]",
+  motorway_jct:  "[highway=motorway_junction]",
+  bus_station:   "[amenity=bus_station]",
+  train_station: "[railway=station]",
+  municipality:  "[place~town|village|hamlet]",
+  aerodrome:     "[aeroway=aerodrome]",
+  cemetery:      "[landuse=cemetery]",
+  atm:           "[amenity=atm]",
 };
 
 // ── Type icon helpers ─────────────────────────────────────────────────────────
@@ -119,8 +179,31 @@ async function searchNominatim(q, category) {
   return data;
 }
 
+// ── Fetch full-Slovenia Overpass layer ────────────────────────────────────────
+async function fetchFullSloveniaLayer(categoryId) {
+  const cfg = OVERPASS_FULL_QUERIES[categoryId];
+  if (!cfg) return null;
+  const res = await fetch("https://overpass-api.de/api/interpreter", {
+    method: "POST",
+    body: "data=" + encodeURIComponent(cfg.query),
+  });
+  const data = await res.json();
+  const cat = CATEGORIES.find(c => c.id === categoryId);
+  const features = (data.elements || []).map(el => {
+    const lat = el.lat ?? el.center?.lat;
+    const lon = el.lon ?? el.center?.lon;
+    if (!lat || !lon) return null;
+    return {
+      type: "Point",
+      coords: [lat, lon],
+      label: el.tags?.name || el.tags?.["name:sl"] || el.tags?.ref || ""
+    };
+  }).filter(Boolean);
+  return { name: `${cat?.emoji || ""} ${cat?.label || categoryId}`, color: cfg.color, features, _categoryId: categoryId };
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
-export default function SearchBar({ onLocationSelect, mapCenter, autoFocus }) {
+export default function SearchBar({ onLocationSelect, mapCenter, autoFocus, onAddCustomLayer, onRemoveCustomLayer }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [nearbyResults, setNearbyResults] = useState([]);
@@ -130,6 +213,8 @@ export default function SearchBar({ onLocationSelect, mapCenter, autoFocus }) {
   const [highlighted, setHighlighted] = useState(-1);
   const [activeCategory, setActiveCategory] = useState(null); // null = all
   const [showCategories, setShowCategories] = useState(false);
+  const [fullLayerLoading, setFullLayerLoading] = useState(null); // categoryId being loaded
+  const [activeFullLayers, setActiveFullLayers] = useState({}); // categoryId -> layerId
 
   const inputRef = useRef(null);
   const timeoutRef = useRef(null);
@@ -202,7 +287,32 @@ export default function SearchBar({ onLocationSelect, mapCenter, autoFocus }) {
     setResults([]);
   };
 
-  const handleCategorySelect = (catId) => {
+  const handleCategorySelect = async (catId) => {
+    const cat = CATEGORIES.find(c => c.id === catId);
+
+    // For full-Slovenia overpass categories — toggle layer on/off
+    if (cat?.overpassFull && onAddCustomLayer) {
+      setShowCategories(false);
+      // If already active, remove it
+      if (activeFullLayers[catId]) {
+        if (onRemoveCustomLayer) onRemoveCustomLayer(activeFullLayers[catId]);
+        setActiveFullLayers(prev => { const n = { ...prev }; delete n[catId]; return n; });
+        return;
+      }
+      setFullLayerLoading(catId);
+      try {
+        const layer = await fetchFullSloveniaLayer(catId);
+        if (layer) {
+          const layerId = `search_${catId}_${Date.now()}`;
+          onAddCustomLayer({ ...layer, id: layerId, _searchCat: catId });
+          setActiveFullLayers(prev => ({ ...prev, [catId]: layerId }));
+        }
+      } finally {
+        setFullLayerLoading(null);
+      }
+      return;
+    }
+
     setActiveCategory(catId);
     setShowCategories(false);
     if (!catId) { setNearbyResults([]); if (query.length < 2) setIsOpen(false); }
@@ -264,9 +374,9 @@ export default function SearchBar({ onLocationSelect, mapCenter, autoFocus }) {
             exit={{ opacity: 0, y: -4 }}
             className="absolute top-full left-0 right-0 mt-1.5 bg-white/97 backdrop-blur-xl rounded-xl shadow-xl border border-slate-100 p-2 z-[1010]"
           >
-            <p className="text-[10px] font-semibold text-slate-400 uppercase px-1.5 pb-1.5">Kategorije</p>
-            <div className="grid grid-cols-4 gap-1">
-              {CATEGORIES.map(cat => (
+            <p className="text-[10px] font-semibold text-slate-400 uppercase px-1.5 pb-1.5">Kategorije iskanja</p>
+            <div className="grid grid-cols-4 gap-1 mb-2">
+              {CATEGORIES.filter(c => !c.overpassFull).map(cat => (
                 <button
                   key={String(cat.id)}
                   onClick={() => handleCategorySelect(cat.id)}
@@ -280,6 +390,37 @@ export default function SearchBar({ onLocationSelect, mapCenter, autoFocus }) {
                   <span className="text-[10px] leading-tight">{cat.label}</span>
                 </button>
               ))}
+            </div>
+            <div className="border-t border-slate-100 pt-2">
+              <p className="text-[10px] font-semibold text-slate-400 uppercase px-1.5 pb-1.5">🇸🇮 Celotna Slovenija (AI Layer)</p>
+              <div className="grid grid-cols-4 gap-1">
+                {CATEGORIES.filter(c => c.overpassFull).map(cat => {
+                  const isActive = !!activeFullLayers[cat.id];
+                  const isLoading = fullLayerLoading === cat.id;
+                  return (
+                    <button
+                      key={cat.id}
+                      onClick={() => handleCategorySelect(cat.id)}
+                      disabled={isLoading}
+                      className={`flex flex-col items-center gap-0.5 px-1 py-2 rounded-lg text-center transition-all text-xs font-medium relative ${
+                        isActive
+                          ? "bg-emerald-50 text-emerald-700 ring-2 ring-emerald-400"
+                          : isLoading
+                          ? "bg-slate-100 text-slate-400 cursor-wait"
+                          : "hover:bg-slate-50 text-slate-600"
+                      }`}
+                    >
+                      {isLoading ? (
+                        <span className="text-lg leading-none animate-spin">⏳</span>
+                      ) : (
+                        <span className="text-lg leading-none">{cat.emoji}</span>
+                      )}
+                      <span className="text-[10px] leading-tight">{cat.label}</span>
+                      {isActive && <span className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-emerald-500" />}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </motion.div>
         )}

@@ -240,18 +240,20 @@ function FavoritesCategory({ favoriteLayerIds, allCategories, activeLayers, onTo
 
 function CustomLayersSection({ customLayers, onRemoveCustomLayer, favoritedIds, onFavorite, customLayerVisible, onToggleVisible, customLayerOpacities, onOpacityChange }) {
   const [isOpen, setIsOpen] = useState(true);
-  if (!customLayers || customLayers.length === 0) return null;
+  // Hide search-category full-Slovenia layers from the panel (they're managed via SearchBar)
+  const visibleLayers = (customLayers || []).filter(l => !l._searchCat);
+  if (!visibleLayers || visibleLayers.length === 0) return null;
   return (
     <div className="border-b border-slate-700/50">
       <button onClick={() => setIsOpen(p => !p)} className="w-full flex items-center gap-2.5 px-4 py-3 hover:bg-slate-700/30 transition-colors">
         <span className="text-base leading-none shrink-0">🎨</span>
         <span className="text-sm font-medium text-slate-200 flex-1 text-left">AI Custom Sloji</span>
-        <span className="text-[10px] font-bold bg-purple-500/20 text-purple-400 px-1.5 py-0.5 rounded-full">{customLayers.length}</span>
+        <span className="text-[10px] font-bold bg-purple-500/20 text-purple-400 px-1.5 py-0.5 rounded-full">{visibleLayers.length}</span>
         <ChevronDown className={`w-3.5 h-3.5 text-slate-500 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
       {isOpen && (
         <div className="px-3 pb-3 space-y-1.5">
-          {customLayers.map(layer => {
+          {visibleLayers.map(layer => {
             const isFav = favoritedIds?.includes(layer.id);
             const isVisible = customLayerVisible?.[layer.id] !== false;
             const opacity = customLayerOpacities?.[layer.id] ?? 0.9;

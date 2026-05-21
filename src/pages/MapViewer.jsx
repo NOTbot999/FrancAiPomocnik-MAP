@@ -153,7 +153,7 @@ export default function MapViewer() {
   const [customLayerVisible, setCustomLayerVisible] = useState(() => scopedGet("customLayerVisible") || {});
 
   const handleAddCustomLayer = useCallback((layer) => {
-    const id = `custom_${Date.now()}`;
+    const id = layer.id || `custom_${Date.now()}`;
     setCustomLayers(prev => [...prev, { ...layer, id }]);
     setCustomLayerVisible(prev => {
       const next = { ...prev, [id]: true };
@@ -289,6 +289,8 @@ export default function MapViewer() {
           isAIOpen,
           onAIToggle: () => setIsAIOpen(p => !p),
           measurements,
+          onAddCustomLayer: handleAddCustomLayer,
+          onRemoveCustomLayer: handleRemoveCustomLayer,
         } : null}
         isPinPicking={isPinPicking}
         onPinPicked={(latlng) => { setPinnedLocation([latlng.lat, latlng.lng]); setIsPinPicking(false); }}
@@ -305,7 +307,7 @@ export default function MapViewer() {
         <>
           {/* Search bar — centered top */}
           <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[950] w-full max-w-md px-4">
-            <SearchBar onLocationSelect={(loc) => handleLocate(loc)} mapCenter={mapCenter} />
+            <SearchBar onLocationSelect={(loc) => handleLocate(loc)} mapCenter={mapCenter} onAddCustomLayer={handleAddCustomLayer} onRemoveCustomLayer={handleRemoveCustomLayer} />
           </div>
 
           {/* My Tracks panel */}

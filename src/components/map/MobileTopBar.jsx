@@ -24,6 +24,7 @@ function MobileTopBarInner({
   onShowTracks, gpsTrack, onLoadTrack,
   onRouteResult, isAIOpen, onAIToggle,
   measurements, mapCenter,
+  onAddCustomLayer, onRemoveCustomLayer,
 }) {
   const map = useMap();
   const container = map.getContainer();
@@ -112,6 +113,8 @@ function MobileTopBarInner({
             onLocationSelect={(loc) => { onLocationSelect(loc); }}
             mapCenter={mapCenter}
             autoFocus={false}
+            onAddCustomLayer={onAddCustomLayer}
+            onRemoveCustomLayer={onRemoveCustomLayer}
           />
         </div>
       )}
@@ -167,6 +170,8 @@ function MobileTopBarInner({
               onLocationSelect={(loc) => { onLocationSelect(loc); setShowSearch(false); }}
               mapCenter={mapCenter}
               autoFocus
+              onAddCustomLayer={onAddCustomLayer}
+              onRemoveCustomLayer={onRemoveCustomLayer}
             />
           </motion.div>
         )}
