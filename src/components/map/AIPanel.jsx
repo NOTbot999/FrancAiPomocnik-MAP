@@ -27,6 +27,11 @@ Ko uporabnik reče "ustvari", "narisi", "naredi", "označi", "pokaži", "dodaj",
 Ko uporabnik sprašuje informacije ("kje je", "koliko", "kaj je", "razloži") → odgovori z besedilom.
 ══════════════════════════════
 
+KONTEKST: Sistem SAMODEJNO pri vsakem odgovoru:
+- Poizve OSM Overpass bazo za objekte v bližini (ceste, stavbe, narava, amenity)
+- Zajame in analizira screenshot OSM karte, Satelita in LIDAR senčenja vzporedno
+Te podatke dobiš v odgovoru sistemu kot "OSM baza" in "OSM + Satelit + LIDAR". Uporabi jih za natančnejše odgovore — ne ponavljaj kar je že v vision analizi.
+
 AKCIJE (uporabi takoj ko ti narekuje besedna zveza):
 
 1. AKTIVACIJA OBSTOJEČIH SLOJEV — ko prosi za sloj iz seznama:
@@ -52,7 +57,7 @@ AKCIJE (uporabi takoj ko ti narekuje besedna zveza):
    NIKOLI ne izmišljaj koordinat! Samo za točke ki jih zagotovo poznaš.
    VSE koordinate morajo biti znotraj (lat: 45.4–46.9, lng: 13.4–16.6).
 
-4. VISION ANALIZA — ko prosi za analizo karte/vidnega:
+4. VISION ANALIZA — ko prosi za ročno analizo karte/vidnega:
    <vision_analyze prompt="Natančno opiši kaj je vidno na tej karti." />
 
 RAZPOLOŽLJIVI SLOJI:
@@ -106,6 +111,30 @@ function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme, messag
     }
   };
 
+  // Upload image data URL and return file_url for LLM vision
+  const uploadImageForVision = async (dataUrl) => {
+    if (!dataUrl) return null;
+    try {
+      const blob = await (await fetch(dataUrl)).blob();
+      const file = new File([blob], "map.jpg", { type: "image/jpeg" });
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      return file_url;
+    } catch { return null; }
+  };
+
+  // Capture map tile at given bbox using Leaflet tile URLs — returns dataUrl
+  // We capture the live map with a specific base layer active by temporarily swapping tiles
+  // Simpler: just capture 3x with different base tile overlays via canvas
+  const captureTileImage = async (tileUrlTemplate, label) => {
+    try {
+      const { default: html2canvas } = await import("html2canvas");
+      const mapEl = document.querySelector(".leaflet-container");
+      if (!mapEl) return null;
+      const canvas = await html2canvas(mapEl, { useCORS: true, allowTaint: true, logging: false, scale: 0.5 });
+      return { dataUrl: canvas.toDataURL("image/jpeg", 0.65), label };
+    } catch { return null; }
+  };
+
   const executeOverpassQuery = async (queryStr, name, color, bbox) => {
     // Replace {{bbox}} with actual south,west,north,east
     const bboxParts = bbox.split(",").map(Number);
@@ -153,7 +182,7 @@ function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme, messag
     const context = `Karta: središče=[${mapCenter?.[0]?.toFixed(4)}, ${mapCenter?.[1]?.toFixed(4)}], zoom=${mapZoom}, aktivni sloji: ${activeLayerNames.join(", ") || "ni aktivnih"}.`;
     const history = messages.map(m => `${m.role === "user" ? "Uporabnik" : "Asistent"}: ${m.content}`).join("\n");
 
-    // 1. Capture map screenshot in parallel with first LLM call
+    // 1. Vzporedno: LLM klic + zajem screenshota
     const [res, imgData] = await Promise.all([
       base44.integrations.Core.InvokeLLM({
         prompt: `${ASK_SYSTEM}\n\n${context}\n\nZgodovina:\n${history}\n\nUporabnik: ${userMsg}\nAsistent:`,
@@ -164,7 +193,7 @@ function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme, messag
 
     const text = typeof res === "string" ? res : res?.content || JSON.stringify(res);
 
-    // Parse all tags
+    // Parse tags
     const layerMatch = text.match(/<activate_layers>(.*?)<\/activate_layers>/s);
     const customMatch = text.match(/<custom_layer>(.*?)<\/custom_layer>/s);
     const overpassMatch = text.match(/<overpass_query([^>]*)>([\s\S]*?)<\/overpass_query>/);
@@ -176,33 +205,6 @@ function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme, messag
       .replace(/<overpass_query[\s\S]*?<\/overpass_query>/s, "")
       .replace(/<vision_analyze[^/]*\/>/g, "")
       .trim();
-
-    // Vision analysis — capture map screenshot and analyze with LLM
-    if (visionMatch) {
-      const visionPrompt = visionMatch[1];
-      cleanText += `\n\n📸 Analiziram karto...`;
-      setMessages(prev => [...prev, { role: "assistant", content: cleanText }]);
-      const imgData = await captureMapImage();
-      if (imgData) {
-        // Upload image
-        const blob = await (await fetch(imgData)).blob();
-        const file = new File([blob], "map.jpg", { type: "image/jpeg" });
-        const { file_url } = await base44.integrations.Core.UploadFile({ file });
-        const visionRes = await base44.integrations.Core.InvokeLLM({
-          prompt: `${visionPrompt}\nOdgovori v slovenščini. Bodi natančen in konkreten.`,
-          file_urls: [file_url],
-          model: "gemini_3_flash"
-        });
-        const visionText = typeof visionRes === "string" ? visionRes : JSON.stringify(visionRes);
-        setMessages(prev => {
-          const updated = [...prev];
-          updated[updated.length - 1] = { role: "assistant", content: cleanText.replace("📸 Analiziram karto...", `📸 **Analiza karte:**\n\n${visionText}`) };
-          return updated;
-        });
-        setLoading(false);
-        return;
-      }
-    }
 
     // Activate existing layers
     let activated = [];
@@ -239,63 +241,105 @@ function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme, messag
       const layerColor = colorM?.[1] || "#1d9bf0";
       const bbox = bboxM?.[1] || `${(mapCenter?.[0] || 46.1) - 0.2},${(mapCenter?.[1] || 15.0) - 0.3},${(mapCenter?.[0] || 46.1) + 0.2},${(mapCenter?.[1] || 15.0) + 0.3}`;
       try {
-        cleanText += `\n\n🔍 Iščem podatke v OSM bazi...`;
+        cleanText += `\n\n🔍 Iščem v OSM bazi...`;
         setMessages(prev => [...prev, { role: "assistant", content: cleanText }]);
         const customLayer = await executeOverpassQuery(queryBody, layerName, layerColor, bbox);
         if (onAddCustomLayer) onAddCustomLayer(customLayer);
-        // Update last message
         setMessages(prev => {
           const updated = [...prev];
           const lastIdx = updated.length - 1;
-          updated[lastIdx] = {
-            ...updated[lastIdx],
-            content: updated[lastIdx].content.replace("🔍 Iščem podatke v OSM bazi...", `🗺️ Narisano ${customLayer.features.length} elementov: **${layerName}**`)
-          };
-          return updated;
-        });
-        setLoading(false);
-        return;
-      } catch (err) {
-        cleanText += `\n\n❌ Napaka pri pridobivanju OSM podatkov.`;
-      }
-    }
-
-    // --- Auto vision analysis of active layers if screenshot available and layers exist ---
-    if (imgData && activeLayerNames.length > 0 && !visionMatch && !overpassMatch) {
-      setMessages(prev => [...prev, { role: "assistant", content: cleanText + "\n\n🔍 Preverjam odgovor in analiziram karto..." }]);
-      try {
-        const blob = await (await fetch(imgData)).blob();
-        const file = new File([blob], "map.jpg", { type: "image/jpeg" });
-        const { file_url } = await base44.integrations.Core.UploadFile({ file });
-
-        // Run web backup check + vision analysis in parallel
-        const [webCheck, visionResult] = await Promise.all([
-          base44.integrations.Core.InvokeLLM({
-            prompt: `Preveri in dopolni spodnji GIS odgovor z aktualnimi spletnimi viri. Aktivni sloji: ${activeLayerNames.join(", ")}. Dodaj le konkretne dopolnitve ali popravke — ne ponavljaj kar je že napisano. Odgovori v slovenščini, max 2 stavka.\n\nOdgovor ki ga preverjam:\n${cleanText}`,
-            add_context_from_internet: true, model: "gemini_3_flash"
-          }),
-          base44.integrations.Core.InvokeLLM({
-            prompt: `Analiziraj to karto GIS Explorerja Slovenije. Aktivni sloji so: ${activeLayerNames.join(", ")}. Opiši kar vidiš — površine, objekte, barve, vzorce. Bodi kratek (max 2 stavka). Odgovori v slovenščini.`,
-            file_urls: [file_url], model: "gemini_3_flash"
-          })
-        ]);
-
-        const webText = typeof webCheck === "string" ? webCheck : JSON.stringify(webCheck);
-        const visionText = typeof visionResult === "string" ? visionResult : JSON.stringify(visionResult);
-
-        const enriched = cleanText
-          + (webText?.trim() ? `\n\n🌐 **Spletno preverjanje:** ${webText.trim()}` : "")
-          + (visionText?.trim() ? `\n\n📸 **Vizualna analiza karte:** ${visionText.trim()}` : "");
-
-        setMessages(prev => {
-          const updated = [...prev];
-          updated[updated.length - 1] = { role: "assistant", content: enriched };
+          updated[lastIdx] = { ...updated[lastIdx], content: updated[lastIdx].content.replace("🔍 Iščem v OSM bazi...", `🗺️ Narisano ${customLayer.features.length} elementov: **${layerName}**`) };
           return updated;
         });
         setLoading(false);
         return;
       } catch {
-        // fallback — just show original answer
+        cleanText += `\n\n❌ Napaka pri pridobivanju OSM podatkov.`;
+      }
+    }
+
+    // Explicit vision analyze tag
+    if (visionMatch) {
+      const visionPrompt = visionMatch[1];
+      cleanText += `\n\n📸 Analiziram karto...`;
+      setMessages(prev => [...prev, { role: "assistant", content: cleanText }]);
+      const url = await uploadImageForVision(imgData || await captureMapImage());
+      if (url) {
+        const visionRes = await base44.integrations.Core.InvokeLLM({
+          prompt: `${visionPrompt}\nOdgovori v slovenščini. Bodi natančen in konkreten.`,
+          file_urls: [url], model: "gemini_3_flash"
+        });
+        const visionText = typeof visionRes === "string" ? visionRes : JSON.stringify(visionRes);
+        setMessages(prev => {
+          const updated = [...prev];
+          updated[updated.length - 1] = { role: "assistant", content: cleanText.replace("📸 Analiziram karto...", `📸 **Analiza karte:**\n\n${visionText}`) };
+          return updated;
+        });
+      }
+      setLoading(false);
+      return;
+    }
+
+    // ── Avtomatska 3-slojna vision analiza + OSM kontekst ────────────────────
+    // Vedno se izvede: screenshot trenutnega pogleda + Satelit tile + LIDAR tile vzporedno
+    if (imgData) {
+      setMessages(prev => [...prev, { role: "assistant", content: cleanText + "\n\n🔬 Analiziram OSM, Satelit in LIDAR..." }]);
+      try {
+        // Zajem tile-slik za satelit in LIDAR iz tile strežnikov glede na center/zoom
+        const lat = mapCenter?.[0] || 46.15;
+        const lng = mapCenter?.[1] || 14.99;
+        const z = Math.min(mapZoom || 12, 16);
+
+        // Pretvorba lat/lng v tile XY
+        const n = Math.pow(2, z);
+        const tileX = Math.floor((lng + 180) / 360 * n);
+        const tileY = Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * n);
+
+        const osmTileUrl = `https://tile.openstreetmap.org/${z}/${tileX}/${tileY}.png`;
+        const satTileUrl = `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${tileY}/${tileX}`;
+        const lidarExportUrl = `https://gis.arso.gov.si/arcgis/rest/services/Lidar_hillshade_D96TM/MapServer/export?bbox=${lng-0.05},${lat-0.03},${lng+0.05},${lat+0.03}&bboxSR=4326&size=400,300&imageSR=4326&format=png&f=image`;
+
+        // Vzporedno: naloži vse 3 slike + OSM Overpass kontekst poizvedba za 500m radius
+        const bboxSmall = `${lat-0.01},${lng-0.015},${lat+0.01},${lng+0.015}`;
+        const overpassContextQuery = `[out:json][timeout:10];(way["highway"](${bboxSmall});way["building"](${bboxSmall});way["natural"](${bboxSmall});node["amenity"](${bboxSmall}););out geom 50;`;
+
+        const [osmImg, satImg, lidarImg, osmContextRes] = await Promise.all([
+          fetch(osmTileUrl).then(r => r.blob()).then(b => { const f = new File([b],"osm.png",{type:"image/png"}); return base44.integrations.Core.UploadFile({file:f}); }).catch(()=>null),
+          fetch(satTileUrl).then(r => r.blob()).then(b => { const f = new File([b],"sat.jpg",{type:"image/jpeg"}); return base44.integrations.Core.UploadFile({file:f}); }).catch(()=>null),
+          fetch(lidarExportUrl).then(r => r.blob()).then(b => { const f = new File([b],"lidar.png",{type:"image/png"}); return base44.integrations.Core.UploadFile({file:f}); }).catch(()=>null),
+          fetch("https://overpass-api.de/api/interpreter", { method:"POST", body:"data="+encodeURIComponent(overpassContextQuery) }).then(r=>r.json()).catch(()=>null)
+        ]);
+
+        // Pripravi OSM kontekst besedilo
+        const osmFeatures = osmContextRes?.elements?.slice(0,20).map(el => {
+          const name = el.tags?.name || el.tags?.["name:sl"] || "";
+          const type = el.tags?.highway || el.tags?.building || el.tags?.natural || el.tags?.amenity || el.type;
+          return `${type}${name ? ` (${name})` : ""}`;
+        }).filter(Boolean).join(", ") || "";
+
+        // Zberi veljavne URL-je slik
+        const visionFileUrls = [osmImg?.file_url, satImg?.file_url, lidarImg?.file_url].filter(Boolean);
+
+        if (visionFileUrls.length > 0) {
+          const visionRes = await base44.integrations.Core.InvokeLLM({
+            prompt: `Analiziraš 3 poglede istega območja v GIS Explorerju Slovenije (zoom ${z}, center: ${lat.toFixed(4)}, ${lng.toFixed(4)}):\n1. OSM karta\n2. Satelitski posnetek\n3. LIDAR senčenje\n\nOSM baza v bližini vsebuje: ${osmFeatures || "ni podatkov"}.\n\nNa podlagi VSEH 3 pogledov in OSM podatkov analiziraj:\n- Kakšen je teren (ravnina, hribi, dolina)?\n- Kaj je vidno (gozdovi, njive, stavbe, ceste, voda)?\n- Zanimivosti ali anomalije ki jih vidiš?\nBodi konkreten, max 3 stavke. Odgovori v slovenščini.`,
+            file_urls: visionFileUrls,
+            model: "gemini_3_flash"
+          });
+          const visionText = typeof visionRes === "string" ? visionRes : JSON.stringify(visionRes);
+          setMessages(prev => {
+            const updated = [...prev];
+            updated[updated.length - 1] = {
+              role: "assistant",
+              content: cleanText + (osmFeatures ? `\n\n🗺️ **OSM baza:** ${osmFeatures}` : "") + `\n\n🔬 **OSM + Satelit + LIDAR:** ${visionText}`
+            };
+            return updated;
+          });
+          setLoading(false);
+          return;
+        }
+      } catch {
+        // fallback — pokaži samo čisti odgovor
       }
     }
 
