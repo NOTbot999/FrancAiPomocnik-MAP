@@ -18,6 +18,7 @@ import MapScaleBar from "./MapScaleBar";
 import GpsTracker from "./GpsTracker";
 import MyLocationDot from "./MyLocationDot";
 import OfflineManager from "./OfflineManager";
+import SearchCategoryLayer from "./SearchCategoryLayer";
 
 function OfflineManagerPortal({ onClose }) {
   const map = useMap();
@@ -609,8 +610,15 @@ export default function MapContainerComponent({
       {aiRoutePolyline && aiRoutePolyline.length > 1 && (
         <Polyline positions={aiRoutePolyline} color="#f59e0b" weight={4} opacity={0.9} dashArray="8,5" />
       )}
-      {/* Custom AI layers (incl. Overpass results) */}
-      {(customLayers || []).map((layer) => {
+      {/* Search category layers — canvas renderer, no lag with thousands of points, always on top */}
+      {(customLayers || []).filter(l => l._searchCat).map((layer) => {
+        const isVisible = customLayerVisible?.[layer.id] !== false;
+        if (!isVisible) return null;
+        return <SearchCategoryLayer key={layer.id} layer={layer} />;
+      })}
+
+      {/* Custom AI layers (non-search) */}
+      {(customLayers || []).filter(l => !l._searchCat).map((layer) => {
         const isVisible = customLayerVisible?.[layer.id] !== false;
         if (!isVisible) return null;
         const opacity = customLayerOpacities?.[layer.id] ?? 0.9;

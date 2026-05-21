@@ -36,11 +36,38 @@ const CATEGORIES = [
   { id: "motorway_jct",  label: "AC uvozi",       emoji: "🛣️", color: "#64748b", query: `[out:json][timeout:30];node["highway"="motorway_junction"](45.4,13.4,46.9,16.6);out;` },
 ];
 
-// Cache za že naložene layerje (da ne fetchamo vsakič znova)
+// Cache — v-memory + localStorage za hitrost
 const layerCache = {};
+const LS_PREFIX = "slomapcat_";
+
+function saveToStorage(catId, features) {
+  try {
+    localStorage.setItem(LS_PREFIX + catId, JSON.stringify({ ts: Date.now(), features }));
+  } catch(e) { /* quota */ }
+}
+
+function loadFromStorage(catId) {
+  try {
+    const raw = localStorage.getItem(LS_PREFIX + catId);
+    if (!raw) return null;
+    const { ts, features } = JSON.parse(raw);
+    // Cache valid for 7 days
+    if (Date.now() - ts > 7 * 24 * 60 * 60 * 1000) { localStorage.removeItem(LS_PREFIX + catId); return null; }
+    return features;
+  } catch(e) { return null; }
+}
 
 async function fetchFullSloveniaLayer(cat) {
+  // 1. In-memory cache
   if (layerCache[cat.id]) return layerCache[cat.id];
+  // 2. localStorage cache
+  const cached = loadFromStorage(cat.id);
+  if (cached) {
+    const layer = { name: `${cat.emoji} ${cat.label}`, color: cat.color, features: cached, _categoryId: cat.id };
+    layerCache[cat.id] = layer;
+    return layer;
+  }
+  // 3. Fetch from Overpass
   const res = await fetch("https://overpass-api.de/api/interpreter", {
     method: "POST",
     body: "data=" + encodeURIComponent(cat.query),
@@ -56,6 +83,7 @@ async function fetchFullSloveniaLayer(cat) {
       label: el.tags?.name || el.tags?.["name:sl"] || el.tags?.ref || "",
     };
   }).filter(Boolean);
+  saveToStorage(cat.id, features);
   const layer = { name: `${cat.emoji} ${cat.label}`, color: cat.color, features, _categoryId: cat.id };
   layerCache[cat.id] = layer;
   return layer;
