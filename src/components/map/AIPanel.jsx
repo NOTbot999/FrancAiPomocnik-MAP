@@ -22,6 +22,14 @@ const LAYER_SUMMARY = [
 
 const ASK_SYSTEM = `Si AI asistent za GIS Explorer Slovenije. VEDNO odgovarjaj v SLOVENŠČINI.
 
+NAVODILA ZA SPLETNO ISKANJE IN PREVERJANJE:
+- Vedno preveri svoje znanje z aktualnimi spletnimi viri kadar odgovarjaš o specifičnih lokacijah, podatkih ali dejstvih.
+- Če si kaj spregledal ali nisi 100% prepričan, eksplicitno napiši da si preveril na spletu.
+
+NAVODILA ZA VISION ANALIZO:
+- Kadar je relevantno za odgovor (npr. uporabnik sprašuje o vidnem na karti, terenu, slojih), VEDNO proaktivno aktiviraj vision analizo.
+- Na začetku analize vseh aktivnih slojev VEDNO zajemi screenshot in ga analiziraj.
+
 KLJUČNO PRAVILO — KDAJ UPORABITI KAJ:
 
 1. AKTIVACIJA OBSTOJEČIH SLOJEV (VEDNO PREDNOSTNO):
@@ -157,12 +165,19 @@ function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme, messag
     setInput("");
     setMessages(prev => [...prev, { role: "user", content: userMsg }]);
     setLoading(true);
+
     const context = `Karta: središče=[${mapCenter?.[0]?.toFixed(4)}, ${mapCenter?.[1]?.toFixed(4)}], zoom=${mapZoom}, aktivni sloji: ${activeLayerNames.join(", ") || "ni aktivnih"}.`;
     const history = messages.map(m => `${m.role === "user" ? "Uporabnik" : "Asistent"}: ${m.content}`).join("\n");
-    const res = await base44.integrations.Core.InvokeLLM({
-      prompt: `${ASK_SYSTEM}\n\n${context}\n\nZgodovina:\n${history}\n\nUporabnik: ${userMsg}\nAsistent:`,
-      add_context_from_internet: true, model: "gemini_3_flash"
-    });
+
+    // 1. Capture map screenshot in parallel with first LLM call
+    const [res, imgData] = await Promise.all([
+      base44.integrations.Core.InvokeLLM({
+        prompt: `${ASK_SYSTEM}\n\n${context}\n\nZgodovina:\n${history}\n\nUporabnik: ${userMsg}\nAsistent:`,
+        add_context_from_internet: true, model: "gemini_3_flash"
+      }),
+      captureMapImage()
+    ]);
+
     const text = typeof res === "string" ? res : res?.content || JSON.stringify(res);
 
     // Parse all tags
@@ -258,6 +273,45 @@ function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme, messag
         return;
       } catch (err) {
         cleanText += `\n\n❌ Napaka pri pridobivanju OSM podatkov.`;
+      }
+    }
+
+    // --- Auto vision analysis of active layers if screenshot available and layers exist ---
+    if (imgData && activeLayerNames.length > 0 && !visionMatch && !overpassMatch) {
+      setMessages(prev => [...prev, { role: "assistant", content: cleanText + "\n\n🔍 Preverjam odgovor in analiziram karto..." }]);
+      try {
+        const blob = await (await fetch(imgData)).blob();
+        const file = new File([blob], "map.jpg", { type: "image/jpeg" });
+        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+
+        // Run web backup check + vision analysis in parallel
+        const [webCheck, visionResult] = await Promise.all([
+          base44.integrations.Core.InvokeLLM({
+            prompt: `Preveri in dopolni spodnji GIS odgovor z aktualnimi spletnimi viri. Aktivni sloji: ${activeLayerNames.join(", ")}. Dodaj le konkretne dopolnitve ali popravke — ne ponavljaj kar je že napisano. Odgovori v slovenščini, max 2 stavka.\n\nOdgovor ki ga preverjam:\n${cleanText}`,
+            add_context_from_internet: true, model: "gemini_3_flash"
+          }),
+          base44.integrations.Core.InvokeLLM({
+            prompt: `Analiziraj to karto GIS Explorerja Slovenije. Aktivni sloji so: ${activeLayerNames.join(", ")}. Opiši kar vidiš — površine, objekte, barve, vzorce. Bodi kratek (max 2 stavka). Odgovori v slovenščini.`,
+            file_urls: [file_url], model: "gemini_3_flash"
+          })
+        ]);
+
+        const webText = typeof webCheck === "string" ? webCheck : JSON.stringify(webCheck);
+        const visionText = typeof visionResult === "string" ? visionResult : JSON.stringify(visionResult);
+
+        const enriched = cleanText
+          + (webText?.trim() ? `\n\n🌐 **Spletno preverjanje:** ${webText.trim()}` : "")
+          + (visionText?.trim() ? `\n\n📸 **Vizualna analiza karte:** ${visionText.trim()}` : "");
+
+        setMessages(prev => {
+          const updated = [...prev];
+          updated[updated.length - 1] = { role: "assistant", content: enriched };
+          return updated;
+        });
+        setLoading(false);
+        return;
+      } catch {
+        // fallback — just show original answer
       }
     }
 
