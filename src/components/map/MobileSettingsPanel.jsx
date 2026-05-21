@@ -188,28 +188,36 @@ export default function MobileSettingsPanel({ onClose, prefs, setPrefs, gpsTrack
                       <div
                         ref={prov.innerRef}
                         {...prov.draggableProps}
-                        {...prov.dragHandleProps}
-                        className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all mb-0.5 cursor-grab active:cursor-grabbing select-none ${
+                        className={`flex items-center rounded-xl transition-all mb-0.5 select-none ${
                           snapshot.isDragging ? "bg-white shadow-lg" : "bg-slate-50 hover:bg-white"
                         }`}
                       >
-                        <GripVertical className="w-5 h-5 text-slate-300 shrink-0" />
-                        <Icon className={`w-4 h-4 shrink-0 ${isVisible ? "text-slate-600" : "text-slate-300"}`} />
-                        <span className={`flex-1 text-xs font-medium ${isVisible ? "text-slate-600" : "text-slate-300"}`}>
-                          {btn.label}
-                        </span>
-                        {/* Toggle — stop propagation so tap doesn't trigger drag */}
-                        <button
-                          onPointerDown={(e) => e.stopPropagation()}
-                          onClick={(e) => { e.stopPropagation(); toggleHidden(btn.id); }}
-                          className={`w-10 h-6 rounded-full transition-colors relative flex-shrink-0 ${
-                            isVisible ? "bg-emerald-500" : "bg-slate-300"
-                          }`}
+                        {/* LEFT 1/3 — drag handle only */}
+                        <div
+                          {...prov.dragHandleProps}
+                          className="flex items-center gap-2 px-3 py-3 cursor-grab active:cursor-grabbing"
+                          style={{ width: "33%" }}
                         >
-                          <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all ${
-                            isVisible ? "left-[18px]" : "left-0.5"
-                          }`} />
-                        </button>
+                          <GripVertical className="w-5 h-5 text-slate-300 shrink-0" />
+                          <Icon className={`w-4 h-4 shrink-0 ${isVisible ? "text-slate-600" : "text-slate-300"}`} />
+                        </div>
+                        {/* RIGHT 2/3 — scrollable / tap area */}
+                        <div className="flex items-center gap-2 px-2 py-3 flex-1" style={{ touchAction: "pan-y" }}>
+                          <span className={`flex-1 text-xs font-medium ${isVisible ? "text-slate-600" : "text-slate-300"}`}>
+                            {btn.label}
+                          </span>
+                          <button
+                            onPointerDown={(e) => e.stopPropagation()}
+                            onClick={(e) => { e.stopPropagation(); toggleHidden(btn.id); }}
+                            className={`w-10 h-6 rounded-full transition-colors relative flex-shrink-0 ${
+                              isVisible ? "bg-emerald-500" : "bg-slate-300"
+                            }`}
+                          >
+                            <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all ${
+                              isVisible ? "left-[18px]" : "left-0.5"
+                            }`} />
+                          </button>
+                        </div>
                       </div>
                     )}
                   </Draggable>
