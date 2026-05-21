@@ -179,14 +179,17 @@ function FavoritesCategory({ favoriteLayerIds, allCategories, activeLayers, onTo
             <div className="px-3 pb-3 space-y-1.5">
               {allFavs.map((layer) => {
                 if (layer._isCustom) {
-                  // Custom AI layer — show with color dot and remove button
+                  // Custom AI layer — show with color dot; ❤️ removes from favorites only (does NOT delete layer)
                   return (
                     <div key={layer.id} className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-slate-700/40">
                       <div className="w-3 h-3 rounded-full shrink-0 border border-white/20" style={{ backgroundColor: layer.color || "#e11d48" }} />
                       <span className="text-xs text-slate-200 flex-1 truncate">{layer.name}</span>
                       <span className="text-[9px] text-slate-500">{layer.features?.length || 0}× AI</span>
-                      <button onClick={() => onRemoveFavCustomLayer && onRemoveFavCustomLayer(layer.id)}
-                        className="text-base leading-none opacity-100 hover:scale-125 transition-transform" title="Odstrani iz Favorit">❤️</button>
+                      <button
+                        onClick={() => onRemoveFavCustomLayer && onRemoveFavCustomLayer(layer.id)}
+                        className="text-base leading-none opacity-100 hover:scale-125 transition-transform"
+                        title="Odstrani iz Favorit (sloj ostane shranjen)"
+                      >❤️</button>
                     </div>
                   );
                 }

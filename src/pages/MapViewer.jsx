@@ -152,27 +152,31 @@ export default function MapViewer() {
 
   const handleAddCustomLayer = useCallback((layer) => {
     const id = `custom_${Date.now()}`;
-    setCustomLayers(prev => [...prev.filter(l => l.name !== layer.name), { ...layer, id }]);
+    // Always add as new layer — never replace existing ones by name
+    setCustomLayers(prev => [...prev, { ...layer, id }]);
     // Do NOT persist to localStorage — only saved if user favorites it
   }, []);
 
   const handleFavoriteCustomLayer = useCallback((layerId) => {
     setCustomLayers(prev => {
       const layer = prev.find(l => l.id === layerId);
-      if (!layer) return prev;
       setFavoritedCustomLayerIds(favs => {
-        const next = favs.includes(layerId) ? favs.filter(id => id !== layerId) : [...favs, layerId];
-        scopedSet("favCustomLayerIds", next);
-        // Save/remove from persistent storage
-        const saved = scopedGet("savedCustomLayers") || [];
-        let updatedSaved;
-        if (next.includes(layerId)) {
-          updatedSaved = [...saved.filter(l => l.id !== layerId), layer];
+        const isFav = favs.includes(layerId);
+        if (isFav) {
+          // Remove from favorites list only — keep layer in savedCustomLayers and customLayers
+          const next = favs.filter(id => id !== layerId);
+          scopedSet("favCustomLayerIds", next);
+          return next;
         } else {
-          updatedSaved = saved.filter(l => l.id !== layerId);
+          // Add to favorites — persist to localStorage
+          const next = [...favs, layerId];
+          scopedSet("favCustomLayerIds", next);
+          if (layer) {
+            const saved = scopedGet("savedCustomLayers") || [];
+            scopedSet("savedCustomLayers", [...saved.filter(l => l.id !== layerId), layer]);
+          }
+          return next;
         }
-        scopedSet("savedCustomLayers", updatedSaved);
-        return next;
       });
       return prev;
     });
