@@ -44,15 +44,19 @@ KLJUČNO PRAVILO — KDAJ UPORABITI KAJ:
    </overpass_query>
    
    Navodila za bbox: uporabi razumno velikost (~0.3–0.5 stopinje za dolino, ~0.1 za vas/mesto).
+   KRITIČNO: bbox MORA biti znotraj meja Slovenije (lat: 45.4–46.9, lng: 13.4–16.6). NIKOLI ne sežeš čez mejo!
    Za znana slovenska območja uporabi pravilne koordinate:
    - Savinjska dolina: bbox="46.0,15.0,46.4,15.6"
    - Ljubljanska kotlina: bbox="45.9,14.3,46.2,14.8"
    - Kranjska Gora: bbox="46.45,13.7,46.55,13.85"
    - Blejsko jezero: bbox="46.35,14.0,46.4,14.15"
+   - Celotna Slovenija (MAX): bbox="45.4,13.4,46.9,16.6"
 
 3. CUSTOM LAYER (samo za znane posamične točke):
    IZKLJUČNO za točke ki jih TOČNO poznaš (vrh gore, center mesta).
    NIKOLI ne izmišljaj koordinat rek/jezer/poti.
+   VSE koordinate MORAJO biti znotraj meja Slovenije (lat: 45.4–46.9, lng: 13.4–16.6).
+   NIKOLI ne postavljaj točk izven teh meja.
    <custom_layer>{"name":"Naziv","color":"#hex","features":[{"type":"Point","coords":[lat,lng],"label":"Ime"}]}</custom_layer>
 
 4. VISION ANALIZA KARTE — ko uporabnik prosi "poglej karto", "kaj vidiš", "analiziraj vidno":

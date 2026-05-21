@@ -13,7 +13,7 @@ const APP_VERSIONS = [
     id: "stable",
     label: "Stabilna verzija",
     description: "Javna – dostopna vsem",
-    url: "https://gis-explorer-slovenije-c2bb2b.base44.app",
+    url: "https://gis-explorer-slovenije.base44.app",
     badge: "LIVE",
     badgeColor: "#10b981",
   },
