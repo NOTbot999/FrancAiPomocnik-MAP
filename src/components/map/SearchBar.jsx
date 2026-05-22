@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Search, X, Loader2, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { usePrefetchCategories } from "@/hooks/usePrefetchCategories";
 
 // ── All categories — each toggles a full-Slovenia layer ───────────────────────
 const CATEGORIES = [
@@ -128,6 +129,9 @@ function getSubtitle(item) {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function SearchBar({ onLocationSelect, autoFocus, onAddCustomLayer, onRemoveCustomLayer }) {
+  // Pre-warm Overpass cache for all categories in background on first render
+  usePrefetchCategories(CATEGORIES);
+
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
