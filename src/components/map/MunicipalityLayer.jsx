@@ -65,15 +65,35 @@ function dist(a, b) {
   return dlat * dlat + dlon * dlon;
 }
 
+const OVERPASS_MIRRORS = [
+  "https://overpass-api.de/api/interpreter",
+  "https://overpass.kumi.systems/api/interpreter",
+  "https://overpass.openstreetmap.fr/api/interpreter",
+];
+
+async function overpassFetch(query) {
+  for (const mirror of OVERPASS_MIRRORS) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 30000);
+      const res = await fetch(mirror, {
+        method: "POST",
+        body: "data=" + encodeURIComponent(query),
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+      if (!res.ok) continue;
+      return await res.json();
+    } catch { /* try next */ }
+  }
+  throw new Error("Overpass nedosegljiv");
+}
+
 async function fetchMunicipalities() {
   const query = `[out:json][timeout:90];
 relation["admin_level"="8"]["boundary"="administrative"](45.4,13.3,46.9,16.7);
 out geom;`;
-  const res = await fetch("https://overpass-api.de/api/interpreter", {
-    method: "POST",
-    body: "data=" + encodeURIComponent(query),
-  });
-  const data = await res.json();
+  const data = await overpassFetch(query);
 
   const features = [];
   for (const el of data.elements || []) {
@@ -103,11 +123,7 @@ out geom;`;
 
 async function fetchPlaces() {
   const query = `[out:json][timeout:30];node["place"~"town|village|hamlet"](45.4,13.3,46.9,16.7);out;`;
-  const res = await fetch("https://overpass-api.de/api/interpreter", {
-    method: "POST",
-    body: "data=" + encodeURIComponent(query),
-  });
-  const data = await res.json();
+  const data = await overpassFetch(query);
   return (data.elements || []).map(el => ({
     lat: el.lat, lon: el.lon,
     name: el.tags?.name || "",

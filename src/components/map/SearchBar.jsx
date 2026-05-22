@@ -42,7 +42,7 @@ const CATEGORIES = [
   try { localStorage.removeItem("slomapcat_" + id); } catch {}
 });
 // Invalidate old municipality cache (stitching fix)
-["slomapcat_mun_v1","slomapcat_mun_v2","slomapcat_mun_v3","slomapcat_municipalities_v2"].forEach(k => {
+["slomapcat_mun_v1","slomapcat_mun_v2","slomapcat_mun_v3","slomapcat_municipalities_v2","slomapcat_mun_v4","slomapcat_places_v2"].forEach(k => {
   try { localStorage.removeItem(k); } catch {}
 });
 
@@ -67,6 +67,32 @@ function loadFromStorage(catId) {
   } catch(e) { return null; }
 }
 
+const OVERPASS_MIRRORS = [
+  "https://overpass-api.de/api/interpreter",
+  "https://overpass.kumi.systems/api/interpreter",
+  "https://overpass.openstreetmap.fr/api/interpreter",
+];
+
+async function fetchOverpass(query) {
+  for (const mirror of OVERPASS_MIRRORS) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 20000);
+      const res = await fetch(mirror, {
+        method: "POST",
+        body: "data=" + encodeURIComponent(query),
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+      if (!res.ok) continue;
+      return await res.json();
+    } catch {
+      // try next mirror
+    }
+  }
+  throw new Error("Vsi Overpass strežniki so nedosegljivi");
+}
+
 async function fetchFullSloveniaLayer(cat) {
   // 1. In-memory cache
   if (layerCache[cat.id]) return layerCache[cat.id];
@@ -77,12 +103,8 @@ async function fetchFullSloveniaLayer(cat) {
     layerCache[cat.id] = layer;
     return layer;
   }
-  // 3. Fetch from Overpass
-  const res = await fetch("https://overpass-api.de/api/interpreter", {
-    method: "POST",
-    body: "data=" + encodeURIComponent(cat.query),
-  });
-  const data = await res.json();
+  // 3. Fetch from Overpass (with mirror fallback)
+  const data = await fetchOverpass(cat.query);
   const features = (data.elements || []).map(el => {
     const lat = el.lat ?? el.center?.lat;
     const lon = el.lon ?? el.center?.lon;

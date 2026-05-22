@@ -165,10 +165,12 @@ export default function MobileSettingsPanel({ onClose, prefs, setPrefs, gpsTrack
     <div
       onPointerDown={(e) => e.stopPropagation()}
       onTouchStart={(e) => e.stopPropagation()}
-      onTouchMove={(e) => e.stopPropagation()}
-      ref={scrollRef}
-      style={{ pointerEvents: "auto", maxHeight: "calc(100vh - 24px)", overflowY: "auto", overscrollBehavior: "contain" }}
       className="absolute top-3 right-14 z-[970] w-72 bg-slate-100 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/60"
+      style={{ pointerEvents: "auto" }}
+    >
+    <div
+      ref={scrollRef}
+      style={{ maxHeight: "calc(100vh - 24px)", overflowY: "auto", overscrollBehavior: "contain" }}
     >
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
@@ -369,6 +371,7 @@ export default function MobileSettingsPanel({ onClose, prefs, setPrefs, gpsTrack
         <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Verzija aplikacije</p>
         <VersionSelector />
       </div>
+    </div>
     </div>
   );
 }
