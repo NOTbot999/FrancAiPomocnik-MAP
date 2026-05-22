@@ -161,8 +161,9 @@ export default function SearchBar({ onLocationSelect, autoFocus, onAddCustomLaye
         setShowCategories(false);
       }
     };
-    document.addEventListener("mousedown", handle);
-    return () => document.removeEventListener("mousedown", handle);
+    // Use capture=true so we get the event before Leaflet swallows it on mobile
+    document.addEventListener("pointerdown", handle, true);
+    return () => document.removeEventListener("pointerdown", handle, true);
   }, []);
 
   const doSearch = useCallback(async (q) => {
@@ -284,6 +285,7 @@ export default function SearchBar({ onLocationSelect, autoFocus, onAddCustomLaye
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
+            onPointerDown={e => e.stopPropagation()}
             className="absolute top-full left-0 right-0 mt-1.5 bg-white/97 backdrop-blur-xl rounded-xl shadow-xl border border-slate-100 p-2.5 z-[1010]"
             style={{ minWidth: 280 }}
           >
