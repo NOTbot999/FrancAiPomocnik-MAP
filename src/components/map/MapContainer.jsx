@@ -352,7 +352,7 @@ function BaseLayerRenderer({ activeBaseLayerEntries }) {
           const ne = map.options.crs.project(tileBounds.getNorthEast());
           bbox = `${sw.x},${sw.y},${ne.x},${ne.y}`;
         }
-        return bl.arcgisUrl + `?bbox=${bbox}&bboxSR=${useSR}&imageSR=3857&size=${size.x},${size.y}&f=image&format=${useFormat}&transparent=false`;
+        return bl.arcgisUrl + `?bbox=${bbox}&bboxSR=${useSR}&imageSR=${useSR}&size=${size.x},${size.y}&f=image&format=${useFormat}&transparent=false`;
       };
       arcLayer.addTo(map);
       arcLayerRef.current = arcLayer;
@@ -391,10 +391,11 @@ function getAllLayersFlat() {
 
 // ArcGIS MapServer export as a Leaflet TileLayer (dynamic tiles via /export endpoint)
 // bboxSR=4326 works best with ARSO D96TM cached services; bboxSR=3857 for dynamic services like LIDAR
-function ArcGISExportLayer({ url, opacity, layerIds, maxZoom, bboxSR, transparent, format, pane, zIndex }) {
+function ArcGISExportLayer({ url, opacity, layerIds, maxZoom, bboxSR, imageSR, transparent, format, pane, zIndex }) {
    const map = useMap();
    const layerRef = useRef(null);
-   const useSR = bboxSR || 3857;
+   const useBboxSR = bboxSR || 3857;
+   const useImageSR = imageSR || useBboxSR || 3857;
    const useFormat = format || (transparent ? "png32" : "jpg");
    const useTransparent = transparent !== false;
 
@@ -416,7 +417,7 @@ function ArcGISExportLayer({ url, opacity, layerIds, maxZoom, bboxSR, transparen
       const tileBounds = this._tileCoordsToBounds(coords);
       const size = this.getTileSize();
       let bbox;
-      if (useSR === 4326) {
+      if (useBboxSR === 4326) {
         const sw = tileBounds.getSouthWest();
         const ne = tileBounds.getNorthEast();
         bbox = `${sw.lng},${sw.lat},${ne.lng},${ne.lat}`;
@@ -427,7 +428,7 @@ function ArcGISExportLayer({ url, opacity, layerIds, maxZoom, bboxSR, transparen
       }
       return (
         url +
-        `?bbox=${bbox}&bboxSR=${useSR}&imageSR=3857&size=${size.x},${size.y}&f=image&format=${useFormat}&transparent=${useTransparent}` +
+        `?bbox=${bbox}&bboxSR=${useBboxSR}&imageSR=${useImageSR}&size=${size.x},${size.y}&f=image&format=${useFormat}&transparent=${useTransparent}` +
         (layerIds ? `&layers=${layerIds}` : "")
       );
     };
@@ -435,7 +436,7 @@ function ArcGISExportLayer({ url, opacity, layerIds, maxZoom, bboxSR, transparen
     arcLayer.addTo(map);
     layerRef.current = arcLayer;
     return () => { arcLayer.remove(); };
-  }, [url, opacity, layerIds, map, useSR, useFormat, useTransparent]);
+  }, [url, opacity, layerIds, map, useBboxSR, useImageSR, useFormat, useTransparent]);
 
   // Update opacity
   useEffect(() => {
