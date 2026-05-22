@@ -11,18 +11,21 @@ export default function LagReportModal({ onClose, username }) {
   const handleSend = async () => {
     if (!description.trim()) return;
     setSending(true);
-    await base44.entities.LagReport.create({
-      username: username || "gost",
-      description: description.trim(),
-      user_agent: navigator.userAgent,
-      reported_at: new Date().toISOString(),
-    });
-    base44.analytics.track({ eventName: "lag_report_submitted", properties: { username: username || "gost" } });
-    setSending(false);
-    setSent(true);
-    setTimeout(() => {
-      onClose();
-    }, 1800);
+    try {
+      await base44.entities.LagReport.create({
+        username: username || "gost",
+        description: description.trim(),
+        user_agent: navigator.userAgent,
+        reported_at: new Date().toISOString(),
+      });
+      base44.analytics.track({ eventName: "lag_report_submitted", properties: { username: username || "gost" } });
+      setSent(true);
+      setTimeout(() => onClose(), 1800);
+    } catch (e) {
+      console.error("LagReport error:", e);
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
