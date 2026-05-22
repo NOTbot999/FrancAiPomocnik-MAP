@@ -104,10 +104,10 @@ function ActiveLayersCategory({ activeLayers, allCategories, onToggleLayer, onOp
                           className={`rounded-lg transition-colors ${snapshot.isDragging ? 'bg-slate-600/80 shadow-lg' : 'bg-slate-700/50'}`}
                         >
                           <div className="flex items-center gap-2 px-2 py-1.5">
-                            <div {...drag.dragHandleProps} className="shrink-0 cursor-grab active:cursor-grabbing p-0.5">
-                              <GripVertical className="w-3.5 h-3.5 text-slate-500" />
-                            </div>
-                            <div className="w-9 h-6 rounded overflow-hidden shrink-0 border border-emerald-500/60">
+                            <div
+                              {...drag.dragHandleProps}
+                              className="w-9 h-6 rounded overflow-hidden shrink-0 border border-emerald-500/60 cursor-grab active:cursor-grabbing"
+                            >
                               {layer.thumbnail
                                 ? <img src={layer.thumbnail} alt={layer.name} className="w-full h-full object-cover" loading="lazy" />
                                 : <div className="w-full h-full flex items-center justify-center text-[9px] font-bold bg-emerald-500/20 text-emerald-400">{layer.name?.charAt(0)}</div>

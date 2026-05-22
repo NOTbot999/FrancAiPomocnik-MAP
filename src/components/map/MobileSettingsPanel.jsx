@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { GripVertical, Search, Locate, Navigation, Route, Ruler, X, Link2, ChevronDown, ChevronUp, Layers, Plus, WifiOff, Palette, Brain, FlaskConical, CheckCircle2 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
@@ -139,12 +139,19 @@ export default function MobileSettingsPanel({ onClose, prefs, setPrefs, gpsTrack
     .map(id => DEFAULT_BUTTONS.find(b => b.id === id))
     .filter(Boolean);
 
+  const scrollRef = React.useRef(null);
+
   const handleDragEnd = (result) => {
+    if (scrollRef.current) scrollRef.current.style.overflowY = "auto";
     if (!result.destination) return;
     const newOrder = [...prefs.order];
     const [moved] = newOrder.splice(result.source.index, 1);
     newOrder.splice(result.destination.index, 0, moved);
     setPrefs({ ...prefs, order: newOrder });
+  };
+
+  const handleDragStart = () => {
+    if (scrollRef.current) scrollRef.current.style.overflowY = "hidden";
   };
 
   const toggleHidden = (id) => {
@@ -159,7 +166,8 @@ export default function MobileSettingsPanel({ onClose, prefs, setPrefs, gpsTrack
       onPointerDown={(e) => e.stopPropagation()}
       onTouchStart={(e) => e.stopPropagation()}
       onTouchMove={(e) => e.stopPropagation()}
-      style={{ pointerEvents: "auto", maxHeight: "calc(100vh - 24px)", overflowY: "auto" }}
+      ref={scrollRef}
+      style={{ pointerEvents: "auto", maxHeight: "calc(100vh - 24px)", overflowY: "auto", overscrollBehavior: "contain" }}
       className="absolute top-3 right-14 z-[970] w-72 bg-slate-100 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/60"
     >
       {/* Header */}
@@ -175,7 +183,7 @@ export default function MobileSettingsPanel({ onClose, prefs, setPrefs, gpsTrack
         <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Gumbi na zaslonu</p>
         <p className="text-[10px] text-slate-400 mb-2">Povleci za vrstni red · preklopi za prikaz na zaslonu</p>
       </div>
-      <DragDropContext onDragEnd={handleDragEnd}>
+      <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         <Droppable droppableId="buttons">
           {(provided) => (
             <div ref={provided.innerRef} {...provided.droppableProps} className="pb-2 px-2">
