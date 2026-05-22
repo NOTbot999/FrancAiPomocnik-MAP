@@ -1,77 +1,13 @@
 import React, { useState, useCallback, useRef } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { GripVertical, Search, Locate, Navigation, Route, Ruler, X, Link2, ChevronDown, ChevronUp, Layers, Plus, WifiOff, Palette, Brain, FlaskConical, CheckCircle2 } from "lucide-react";
+import { GripVertical, Search, Locate, Navigation, Route, Ruler, X, Link2, ChevronDown, ChevronUp, Layers, Plus, WifiOff, Palette, Brain, AlertTriangle } from "lucide-react";
+import LagReportModal from "@/components/map/LagReportModal";
 import { Slider } from "@/components/ui/slider";
 import MyTracks from "./MyTracks";
 import DeviceLink from "./DeviceLink";
 import ThemeCustomizer, { loadTheme } from "@/components/map/ThemeCustomizer";
 
-// ─── App versions ────────────────────────────────────────────────────────────
-const APP_VERSIONS = [
-  {
-    id: "stable",
-    label: "Stabilna verzija",
-    description: "Javna – dostopna vsem uporabnikom",
-    url: "https://gis-explorer-slovenije.base44.app",
-    badge: "LIVE",
-    badgeColor: "bg-emerald-500",
-  },
-  {
-    id: "beta",
-    label: "Beta verzija",
-    description: "Trenutna – nova funkcionalnost v razvoju",
-    url: null, // current app
-    badge: "BETA",
-    badgeColor: "bg-amber-500",
-  },
-];
 
-function VersionSelector() {
-  const currentUrl = window.location.href;
-  // Determine active version: if URL matches stable, select stable, else beta
-  const stableUrl = APP_VERSIONS[0].url;
-  const [active, setActive] = useState(() => {
-    return stableUrl && currentUrl.startsWith(stableUrl) ? "stable" : "beta";
-  });
-
-  const handleSelect = (v) => {
-    if (v.id === active) return;
-    if (v.url) {
-      window.location.href = v.url;
-    } else {
-      setActive(v.id);
-    }
-  };
-
-  return (
-    <div className="space-y-1.5">
-      {APP_VERSIONS.map((v) => {
-        const isActive = active === v.id;
-        return (
-          <button
-            key={v.id}
-            onClick={() => handleSelect(v)}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all text-left ${
-              isActive
-                ? "bg-slate-800 border-slate-600 text-white"
-                : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-white"
-            }`}
-          >
-            <FlaskConical className={`w-4 h-4 shrink-0 ${isActive ? "text-emerald-400" : "text-slate-400"}`} />
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5">
-                <span className={`text-xs font-semibold ${isActive ? "text-white" : "text-slate-700"}`}>{v.label}</span>
-                <span className={`text-[8px] font-bold px-1 py-0.5 rounded ${v.badgeColor} text-white`}>{v.badge}</span>
-              </div>
-              <p className={`text-[10px] truncate ${isActive ? "text-slate-400" : "text-slate-400"}`}>{v.description}</p>
-            </div>
-            {isActive && <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
 
 const DEFAULT_BUTTONS = [
   { id: "layers",  label: "Sloji",          icon: Layers },
@@ -132,7 +68,9 @@ export default function MobileSettingsPanel({ onClose, prefs, setPrefs, gpsTrack
   const [showTracks, setShowTracks] = useState(false);
   const [showDeviceLink, setShowDeviceLink] = useState(false);
   const [showTheme, setShowTheme] = useState(false);
+  const [showLagReport, setShowLagReport] = useState(false);
   const [theme, setTheme] = useState(loadTheme);
+  const username = localStorage.getItem("userUsername") || null;
   const deviceId = getDeviceId();
 
   const orderedButtons = prefs.order
@@ -365,12 +303,21 @@ export default function MobileSettingsPanel({ onClose, prefs, setPrefs, gpsTrack
         )}
       </div>
 
-      {/* Version selector section */}
+      {/* Lag Report button */}
       <div className="mx-4 border-t border-slate-200 my-2" />
-      <div className="px-4 pb-3">
-        <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Verzija aplikacije</p>
-        <VersionSelector />
+      <div className="px-2 pb-3">
+        <button
+          onClick={() => setShowLagReport(true)}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 transition-all text-amber-700 border border-amber-200"
+        >
+          <AlertTriangle className="w-4 h-4 text-amber-500" />
+          <span className="flex-1 text-xs font-medium text-left">Poročaj o zaostanku</span>
+        </button>
       </div>
+
+      {showLagReport && (
+        <LagReportModal username={username} onClose={() => setShowLagReport(false)} />
+      )}
     </div>
     </div>
   );

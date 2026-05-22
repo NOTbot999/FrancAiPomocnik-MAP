@@ -1,0 +1,46 @@
+{
+  "name": "LagReport",
+  "type": "object",
+  "properties": {
+    "username": {
+      "type": "string",
+      "description": "Username of the reporter"
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of the lag/bug"
+    },
+    "user_agent": {
+      "type": "string",
+      "description": "Browser/device info"
+    },
+    "reported_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the report was submitted"
+    }
+  },
+  "required": [
+    "description"
+  ],
+  "rls": {
+    "create": {
+      "everyone": true
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
