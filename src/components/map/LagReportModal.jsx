@@ -43,12 +43,13 @@ export default function LagReportModal({ onClose, username }) {
     if (!description.trim()) return;
     setSending(true);
     try {
-      const imageUrls = images.filter(i => i.url).map(i => i.url);
+      const screenshot_urls = images.filter(i => i.url).map(i => i.url);
       await base44.entities.LagReport.create({
         username: username || "gost",
-        description: description.trim() + (imageUrls.length ? `\n\nSlike: ${imageUrls.join(", ")}` : ""),
+        description: description.trim(),
         user_agent: navigator.userAgent,
         reported_at: new Date().toISOString(),
+        screenshot_urls,
       });
       base44.analytics.track({ eventName: "lag_report_submitted", properties: { username: username || "gost" } });
       setSent(true);

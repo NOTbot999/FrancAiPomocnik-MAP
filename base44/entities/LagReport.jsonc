@@ -18,12 +18,22 @@
       "type": "string",
       "format": "date-time",
       "description": "When the report was submitted"
+    },
+    "screenshot_urls": {
+      "type": "array",
+      "description": "Up to 3 screenshot URLs",
+      "items": {
+        "type": "string"
+      }
     }
   },
   "required": [
     "description"
   ],
   "rls": {
+    "create": {
+      "everyone": true
+    },
     "read": {
       "user_condition": {
         "role": "admin"
@@ -35,11 +45,6 @@
       }
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
-    },
-    "write": {
       "user_condition": {
         "role": "admin"
       }
