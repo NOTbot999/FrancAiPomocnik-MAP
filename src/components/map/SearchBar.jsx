@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Search, X, Loader2, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePrefetchCategories } from "@/hooks/usePrefetchCategories";
+import { base44 } from "@/api/base44Client";
 
 // ── All categories — each toggles a full-Slovenia layer ───────────────────────
 const CATEGORIES = [
@@ -103,7 +104,18 @@ async function fetchFullSloveniaLayer(cat) {
     layerCache[cat.id] = layer;
     return layer;
   }
-  // 3. Fetch from Overpass (with mirror fallback)
+  // 3. Server-side prebuilt cache (fastest remote source)
+  try {
+    const serverData = await base44.entities.CachedLayer.filter({ category_id: cat.id });
+    if (serverData && serverData.length > 0 && serverData[0].features?.length > 0) {
+      const features = serverData[0].features;
+      saveToStorage(cat.id, features);
+      const layer = { name: `${cat.emoji} ${cat.label}`, color: cat.color, features, _categoryId: cat.id };
+      layerCache[cat.id] = layer;
+      return layer;
+    }
+  } catch { /* fallback to Overpass */ }
+  // 4. Fallback: Fetch from Overpass (with mirror fallback)
   const data = await fetchOverpass(cat.query);
   const features = (data.elements || []).map(el => {
     const lat = el.lat ?? el.center?.lat;

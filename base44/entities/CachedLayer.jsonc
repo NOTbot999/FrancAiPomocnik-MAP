@@ -1,0 +1,63 @@
+{
+  "name": "CachedLayer",
+  "type": "object",
+  "properties": {
+    "category_id": {
+      "type": "string",
+      "description": "Category ID (e.g. castle, peak, waterfall)"
+    },
+    "features": {
+      "type": "array",
+      "description": "Array of GeoPoint features",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "coords": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "label": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "feature_count": {
+      "type": "number",
+      "description": "Number of features cached"
+    },
+    "built_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this layer was last built"
+    }
+  },
+  "required": [
+    "category_id"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "everyone": true
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
