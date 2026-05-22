@@ -44,7 +44,7 @@ export default function LagReportModal({ onClose, username }) {
     setSending(true);
     try {
       const screenshot_urls = images.filter(i => i.url).map(i => i.url);
-      await base44.entities.LagReport.create({
+      await base44.functions.invoke("submitLagReport", {
         username: username || "gost",
         description: description.trim(),
         user_agent: navigator.userAgent,
