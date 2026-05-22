@@ -173,7 +173,8 @@ export default function MunicipalityLayer({ visible }) {
             font-size: 10px;
             font-weight: 800;
             color: #1d4ed8;
-            text-shadow: 0 0 3px rgba(255,255,255,1), 0 0 6px rgba(255,255,255,0.95);
+            -webkit-text-stroke: 2.5px white;
+            paint-order: stroke fill;
             white-space: nowrap;
             pointer-events: none;
             transform: translate(-50%, -50%);
