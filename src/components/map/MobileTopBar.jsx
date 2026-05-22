@@ -102,8 +102,27 @@ function MobileTopBarInner({
 
   const searchAlwaysVisible = isVisible("search");
 
+  const anyMenuOpen = showSettings || showNav || showOffline || showRuler || showSearch;
+
   return createPortal(
     <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, zIndex: 950, pointerEvents: "none" }}>
+      {/* Map interaction blocker — when any menu is open */}
+      {anyMenuOpen && (
+        <div
+          style={{ position: "absolute", inset: 0, zIndex: 951, pointerEvents: "auto" }}
+          onTouchStart={(e) => e.stopPropagation()}
+          onTouchMove={(e) => e.stopPropagation()}
+          onTouchEnd={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={() => {
+            setShowSettings(false);
+            setShowNav(false);
+            setShowOffline(false);
+            setShowRuler(false);
+            setShowSearch(false);
+          }}
+        />
+      )}
 
 
 
@@ -184,13 +203,15 @@ function MobileTopBarInner({
 
       {/* Settings panel */}
       {showSettings && (
-        <MobileSettingsPanel
-          onClose={() => setShowSettings(false)}
-          prefs={prefs}
-          setPrefs={setPrefs}
-          gpsTrack={gpsTrack}
-          onLoadTrack={onLoadTrack}
-        />
+        <div style={{ position: "absolute", top: 0, right: 0, bottom: 0, zIndex: 970, pointerEvents: "none" }}>
+          <MobileSettingsPanel
+            onClose={() => setShowSettings(false)}
+            prefs={prefs}
+            setPrefs={setPrefs}
+            gpsTrack={gpsTrack}
+            onLoadTrack={onLoadTrack}
+          />
+        </div>
       )}
 
       {/* Navigation Panel for mobile — positioned like settings panel */}
