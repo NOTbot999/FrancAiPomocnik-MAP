@@ -108,10 +108,7 @@ export default function MobileSettingsPanel({ onClose, prefs, setPrefs, gpsTrack
     >
     <div
       ref={scrollRef}
-      style={{ maxHeight: "calc(100vh - 24px)", overflowY: "auto", overscrollBehavior: "contain" }}
-      onTouchStart={(e) => e.stopPropagation()}
-      onTouchMove={(e) => e.stopPropagation()}
-      onTouchEnd={(e) => e.stopPropagation()}
+      style={{ maxHeight: "calc(100vh - 24px)", overflowY: "auto", overscrollBehavior: "contain", touchAction: "pan-y" }}
       onWheel={(e) => e.stopPropagation()}
     >
       {/* Header */}
