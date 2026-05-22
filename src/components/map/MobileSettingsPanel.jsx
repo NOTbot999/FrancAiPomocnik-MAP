@@ -203,7 +203,7 @@ export default function MobileSettingsPanel({ onClose, prefs, setPrefs, gpsTrack
                         {/* LEFT 1/3 — drag handle only */}
                         <div
                           {...prov.dragHandleProps}
-                          className="flex items-center gap-2 px-3 py-3 cursor-grab active:cursor-grabbing"
+                          className="flex items-center gap-2 px-3 py-3 cursor-grab active:cursor-grabbing touch-none"
                           style={{ width: "33%" }}
                         >
                           <GripVertical className="w-5 h-5 text-slate-300 shrink-0" />
