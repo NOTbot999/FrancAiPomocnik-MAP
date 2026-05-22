@@ -40,6 +40,10 @@ const CATEGORIES = [
 ["fuel","atm","hospital","clinic","lake"].forEach(id => {
   try { localStorage.removeItem("slomapcat_" + id); } catch {}
 });
+// Invalidate old municipality cache (stitching fix)
+["slomapcat_mun_v1","slomapcat_mun_v2","slomapcat_mun_v3","slomapcat_municipalities_v2"].forEach(k => {
+  try { localStorage.removeItem(k); } catch {}
+});
 
 // Cache — v-memory + localStorage za hitrost
 const layerCache = {};
