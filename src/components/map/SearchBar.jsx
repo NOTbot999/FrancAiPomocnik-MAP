@@ -202,11 +202,11 @@ export default function SearchBar({ onLocationSelect, autoFocus, onAddCustomLaye
   };
 
   const handleCategoryClick = async (cat) => {
-    setShowCategories(false);
     if (!onAddCustomLayer) return;
 
     // Toggle off if already active
     if (activeLayers[cat.id]) {
+      setShowCategories(false);
       if (onRemoveCustomLayer) onRemoveCustomLayer(activeLayers[cat.id]);
       setActiveLayers(prev => { const n = { ...prev }; delete n[cat.id]; return n; });
       return;
@@ -214,12 +214,14 @@ export default function SearchBar({ onLocationSelect, autoFocus, onAddCustomLaye
 
     // Municipality layer — special polygon layer, no Overpass fetch needed
     if (cat._municipalityLayer) {
+      setShowCategories(false);
       const layerId = `search_municipality`;
       onAddCustomLayer({ id: layerId, name: "🏘️ Občine", color: "#b45309", features: [], _searchCat: cat.id, _municipalityLayer: true });
       setActiveLayers(prev => ({ ...prev, [cat.id]: layerId }));
       return;
     }
 
+    // Start loading — keep menu open so user sees the spinner on the button
     setLoadingCat(cat.id);
     try {
       const layer = await fetchFullSloveniaLayer(cat);
@@ -230,6 +232,7 @@ export default function SearchBar({ onLocationSelect, autoFocus, onAddCustomLaye
       }
     } finally {
       setLoadingCat(null);
+      setShowCategories(false);
     }
   };
 
