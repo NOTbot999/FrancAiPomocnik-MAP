@@ -25,6 +25,7 @@ function MobileTopBarInner({
   onRouteResult, isAIOpen, onAIToggle,
   measurements, mapCenter,
   onAddCustomLayer, onRemoveCustomLayer,
+  activeSearchLayers, onSearchLayersChange,
 }) {
   const map = useMap();
   const container = map.getContainer();
@@ -115,6 +116,8 @@ function MobileTopBarInner({
             autoFocus={false}
             onAddCustomLayer={onAddCustomLayer}
             onRemoveCustomLayer={onRemoveCustomLayer}
+            activeSearchLayers={activeSearchLayers}
+            onSearchLayersChange={onSearchLayersChange}
           />
         </div>
       )}
@@ -172,6 +175,8 @@ function MobileTopBarInner({
               autoFocus
               onAddCustomLayer={onAddCustomLayer}
               onRemoveCustomLayer={onRemoveCustomLayer}
+              activeSearchLayers={activeSearchLayers}
+              onSearchLayersChange={onSearchLayersChange}
             />
           </motion.div>
         )}

@@ -128,7 +128,7 @@ function getSubtitle(item) {
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
-export default function SearchBar({ onLocationSelect, autoFocus, onAddCustomLayer, onRemoveCustomLayer }) {
+export default function SearchBar({ onLocationSelect, autoFocus, onAddCustomLayer, onRemoveCustomLayer, activeSearchLayers, onSearchLayersChange }) {
   // Pre-warm Overpass cache for all categories in background on first render
   usePrefetchCategories(CATEGORIES);
 
@@ -139,7 +139,14 @@ export default function SearchBar({ onLocationSelect, autoFocus, onAddCustomLaye
   const [highlighted, setHighlighted] = useState(-1);
   const [showCategories, setShowCategories] = useState(false);
   const [loadingCat, setLoadingCat] = useState(null);
-  const [activeLayers, setActiveLayers] = useState({}); // catId -> layerId
+  // Use controlled state from parent if provided, otherwise local fallback
+  const [localActiveLayers, setLocalActiveLayers] = useState({});
+  const activeLayers = activeSearchLayers ?? localActiveLayers;
+  const setActiveLayers = (updater) => {
+    const next = typeof updater === "function" ? updater(activeLayers) : updater;
+    if (onSearchLayersChange) onSearchLayersChange(next);
+    else setLocalActiveLayers(next);
+  };
 
   const inputRef = useRef(null);
   const timeoutRef = useRef(null);

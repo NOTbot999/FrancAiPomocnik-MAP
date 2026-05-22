@@ -154,7 +154,11 @@ export default function MapViewer() {
 
   const handleAddCustomLayer = useCallback((layer) => {
     const id = layer.id || `custom_${Date.now()}`;
-    setCustomLayers(prev => [...prev, { ...layer, id }]);
+    setCustomLayers(prev => {
+      // Prevent duplicates — replace existing layer with same id
+      const filtered = prev.filter(l => l.id !== id);
+      return [...filtered, { ...layer, id }];
+    });
     setCustomLayerVisible(prev => {
       const next = { ...prev, [id]: true };
       scopedSet("customLayerVisible", next);
@@ -213,6 +217,9 @@ export default function MapViewer() {
     setCustomLayerVisible(prev => { const next = { ...prev }; delete next[layerId]; scopedSet("customLayerVisible", next); return next; });
     setCustomLayerOpacities(prev => { const next = { ...prev }; delete next[layerId]; scopedSet("customLayerOpacities", next); return next; });
   }, []);
+
+  // Shared search category active layers — lifted up so both mobile and desktop SearchBar share state
+  const [activeSearchLayers, setActiveSearchLayers] = useState({});
 
   const [routePolyline, setRoutePolyline] = useState(null);
   const [aiRoutePolyline, setAiRoutePolyline] = useState(null);
@@ -291,6 +298,8 @@ export default function MapViewer() {
           measurements,
           onAddCustomLayer: handleAddCustomLayer,
           onRemoveCustomLayer: handleRemoveCustomLayer,
+          activeSearchLayers,
+          onSearchLayersChange: setActiveSearchLayers,
         } : null}
         isPinPicking={isPinPicking}
         onPinPicked={(latlng) => { setPinnedLocation([latlng.lat, latlng.lng]); setIsPinPicking(false); }}
@@ -307,7 +316,7 @@ export default function MapViewer() {
         <>
           {/* Search bar — centered top */}
           <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[950] w-full max-w-md px-4">
-            <SearchBar onLocationSelect={(loc) => handleLocate(loc)} mapCenter={mapCenter} onAddCustomLayer={handleAddCustomLayer} onRemoveCustomLayer={handleRemoveCustomLayer} />
+            <SearchBar onLocationSelect={(loc) => handleLocate(loc)} mapCenter={mapCenter} onAddCustomLayer={handleAddCustomLayer} onRemoveCustomLayer={handleRemoveCustomLayer} activeSearchLayers={activeSearchLayers} onSearchLayersChange={setActiveSearchLayers} />
           </div>
 
           {/* My Tracks panel */}
