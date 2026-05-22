@@ -60,6 +60,8 @@ export const BASE_LAYERS = [
     name: "LIDAR Senčenje",
     type: "arcgis_export",
     arcgisUrl: "https://gis.arso.gov.si/arcgis/rest/services/Lidar_hillshade_D96TM/MapServer/export",
+    bboxSR: 4326,
+    imageSR: 4326,
     attribution: "&copy; ARSO LIDAR",
     thumbnail: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=80&h=60&fit=crop"
   },
@@ -68,6 +70,8 @@ export const BASE_LAYERS = [
     name: "ARSO Topo",
     type: "arcgis_export",
     arcgisUrl: "https://gis.arso.gov.si/arcgis/rest/services/Topografske_karte_ARSO_nova/MapServer/export",
+    bboxSR: 4326,
+    imageSR: 4326,
     attribution: "&copy; ARSO",
     thumbnail: "https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=80&h=60&fit=crop"
   }
@@ -117,6 +121,10 @@ export const OVERLAY_CATEGORIES = [
         type: "arcgis_export",
         url: "https://gis.arso.gov.si/arcgis/rest/services/Lidar_hillshade_D96TM/MapServer/export",
         opacity: 0.85,
+        bboxSR: 4326,
+        imageSR: 4326,
+        transparent: false,
+        format: "jpg",
         thumbnail: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=80&h=60&fit=crop",
         description: "1 m LIDAR senčenje iz državnega aerolaserskega snemanja ARSO"
       },
@@ -126,6 +134,10 @@ export const OVERLAY_CATEGORIES = [
         type: "arcgis_export",
         url: "https://gis.arso.gov.si/arcgis/rest/services/Lidar_fishnet_D96/MapServer/export",
         opacity: 0.6,
+        bboxSR: 4326,
+        imageSR: 4326,
+        transparent: true,
+        format: "png32",
         thumbnail: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=80&h=60&fit=crop",
         description: "Mreža LIDAR blokov — katera območja so bila snemana"
       },
@@ -164,6 +176,10 @@ export const OVERLAY_CATEGORIES = [
         type: "arcgis_export",
         url: "https://gis.arso.gov.si/arcgis/rest/services/Topografske_karte_ARSO_nova/MapServer/export",
         opacity: 0.9,
+        bboxSR: 4326,
+        imageSR: 4326,
+        transparent: false,
+        format: "jpg",
         thumbnail: "https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=80&h=60&fit=crop",
         description: "Nova ARSO topografska karta z OSM, GURS in PZS podatki"
       },
@@ -289,26 +305,19 @@ export const OVERLAY_CATEGORIES = [
         thumbnail: "https://images.unsplash.com/photo-1559825481-12a05cc00344?w=80&h=60&fit=crop",
         description: "Poplavna tvegana območja iz ARSO"
       },
-      // OpenStreetMap Water overlay — svetlo modre vodne površine
-      {
-        id: "osm_water_overlay",
-        name: "OSM Vodni sloj (modre površine)",
-        type: "tile",
-        url: "https://tiles.wmflabs.org/osm-no-labels/{z}/{x}/{y}.png",
-        transparent: true,
-        opacity: 0.9,
-        thumbnail: "https://images.unsplash.com/photo-1559825481-12a05cc00344?w=80&h=60&fit=crop",
-        description: "OSM render brez oznak — vidne modre vodne površine točno kot v OSM bazi"
-      },
-      // Raba tal (premesteno iz Karte & Kataster)
+      // Raba tal — MKGP WMS (pravi vir, ne pokvarjen TMS)
       {
         id: "raba_farmland",
         name: "Raba kmetijskih zemljišč",
-        type: "tile",
-        url: "https://wms.openstreetmap.de/tms/RABA/{z}/{x}/{y}.png",
+        type: "wms",
+        url: "https://rkg.gov.si/GERK/wms/",
+        layers: "RABA",
+        format: "image/png",
+        transparent: true,
+        version: "1.1.1",
         opacity: 0.65,
         thumbnail: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=80&h=60&fit=crop",
-        description: "Raba kmetijskih zemljišč iz MKGP"
+        description: "Raba kmetijskih zemljišč iz MKGP RABA registra"
       },
       // Jame
       {
@@ -350,7 +359,7 @@ export const OVERLAY_CATEGORIES = [
         thumbnail: "https://images.unsplash.com/photo-1448375240586-882707db888b?w=80&h=60&fit=crop",
         description: "Register naravnih vrednot (vključuje jame)"
       },
-      // Vreme
+      // Vreme — OpenWeatherMap
       {
         id: "owm_clouds",
         name: "Oblačnost",
@@ -456,6 +465,10 @@ export const OVERLAY_CATEGORIES = [
         type: "arcgis_export",
         url: "https://gis.arso.gov.si/arcgis/rest/services/Lidar_hillshade_D96TM/MapServer/export",
         opacity: 0.8,
+        bboxSR: 4326,
+        imageSR: 4326,
+        transparent: false,
+        format: "jpg",
         thumbnail: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=80&h=60&fit=crop",
         description: "LIDAR senčenje kot prekrivni sloj"
       },
@@ -465,6 +478,10 @@ export const OVERLAY_CATEGORIES = [
         type: "arcgis_export",
         url: "https://gis.arso.gov.si/arcgis/rest/services/Topografske_karte_ARSO_nova/MapServer/export",
         opacity: 0.9,
+        bboxSR: 4326,
+        imageSR: 4326,
+        transparent: false,
+        format: "jpg",
         thumbnail: "https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=80&h=60&fit=crop",
         description: "ARSO topografska karta kot prekrivni sloj"
       }
@@ -528,7 +545,7 @@ export const OVERLAY_CATEGORIES = [
         imageSR: 4326,
         transparent: false,
         format: "jpg",
-        thumbnail: "https://images.unsplash.com/photo-1446491865332-7a61a109cc05?w=80&h=60&fit=crop",
+        thumbnail: "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=80&h=60&fit=crop",
         description: "ARSO ortofoto 2016"
       },
       {
@@ -614,7 +631,8 @@ export const OVERLAY_CATEGORIES = [
         id: "stamen_toner",
         name: "Toner (visok kontrast)",
         type: "tile",
-        url: "https://stamen-tiles.a.ssl.fastly.net/toner/{z}/{x}/{y}.png",
+        // Stamen CDN je mrtev — nadomestek je Stadia Maps (Stamen naslednik)
+        url: "https://tiles.stadiamaps.com/tiles/stamen_toner/{z}/{x}/{y}{r}.png",
         opacity: 0.85,
         thumbnail: "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=80&h=60&fit=crop",
         description: "Visokokontrastna B/W karta — izpostavi ceste in zgradbe ki niso na navadni karti"
@@ -625,6 +643,10 @@ export const OVERLAY_CATEGORIES = [
         type: "arcgis_export",
         url: "https://gis.arso.gov.si/arcgis/rest/services/Lidar_hillshade_D96TM/MapServer/export",
         opacity: 0.7,
+        bboxSR: 4326,
+        imageSR: 4326,
+        transparent: false,
+        format: "jpg",
         thumbnail: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=80&h=60&fit=crop",
         description: "LIDAR kot overlay — jarki, nasipi, temelji zgradb"
       },
