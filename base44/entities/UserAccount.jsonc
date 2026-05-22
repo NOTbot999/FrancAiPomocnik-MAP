@@ -114,9 +114,6 @@
     "read": {
       "$or": [
         {
-          "data.username": "{{user.email}}"
-        },
-        {
           "data.email": "{{user.email}}"
         },
         {
