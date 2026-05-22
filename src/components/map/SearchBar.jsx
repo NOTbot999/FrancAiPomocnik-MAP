@@ -12,16 +12,16 @@ const CATEGORIES = [
   { id: "museum",        label: "Muzeji",         emoji: "🏛️", color: "#a855f7", query: `[out:json][timeout:30];(node["tourism"="museum"](45.4,13.4,46.9,16.6);way["tourism"="museum"](45.4,13.4,46.9,16.6););out center;` },
   { id: "ruins",         label: "Ruševine",       emoji: "🗿", color: "#92400e", query: `[out:json][timeout:30];(node["historic"="ruins"](45.4,13.4,46.9,16.6);way["historic"="ruins"](45.4,13.4,46.9,16.6););out center;` },
   { id: "spring",        label: "Izviri",         emoji: "💦", color: "#06b6d4", query: `[out:json][timeout:30];node["natural"="spring"](45.4,13.4,46.9,16.6);out;` },
-  { id: "lake",          label: "Jezera",         emoji: "🌊", color: "#3b82f6", query: `[out:json][timeout:30];(way["natural"="water"]["water"="lake"](45.4,13.4,46.9,16.6);relation["natural"="water"]["water"="lake"](45.4,13.4,46.9,16.6););out center;` },
+  { id: "lake",          label: "Jezera",         emoji: "🌊", color: "#3b82f6", query: `[out:json][timeout:45];(way["natural"="water"]["water"~"lake|reservoir|pond"](45.4,13.4,46.9,16.6);way["natural"="water"][!"water"](45.4,13.4,46.9,16.6);way["landuse"="reservoir"](45.4,13.4,46.9,16.6);relation["natural"="water"](45.4,13.4,46.9,16.6););out center;` },
   { id: "park",          label: "Parki",          emoji: "🌳", color: "#22c55e", query: `[out:json][timeout:30];(way["leisure"="park"](45.4,13.4,46.9,16.6);relation["leisure"="park"](45.4,13.4,46.9,16.6););out center;` },
   { id: "chapel",        label: "Kapelice",       emoji: "⛪", color: "#e879f9", query: `[out:json][timeout:30];(node["amenity"="place_of_worship"]["religion"="christian"]["building"~"chapel|wayside_shrine"](45.4,13.4,46.9,16.6);node["historic"="wayside_shrine"](45.4,13.4,46.9,16.6););out;` },
   { id: "church",        label: "Cerkve",         emoji: "🕌", color: "#d946ef", query: `[out:json][timeout:30];(node["amenity"="place_of_worship"]["religion"="christian"](45.4,13.4,46.9,16.6);way["amenity"="place_of_worship"]["religion"="christian"](45.4,13.4,46.9,16.6););out center;` },
-  { id: "fuel",          label: "Bencinske",      emoji: "⛽", color: "#f59e0b", query: `[out:json][timeout:30];node["amenity"="fuel"](45.4,13.4,46.9,16.6);out;` },
+  { id: "fuel",          label: "Bencinske",      emoji: "⛽", color: "#f59e0b", query: `[out:json][timeout:45];(node["amenity"="fuel"](45.4,13.4,46.9,16.6);way["amenity"="fuel"](45.4,13.4,46.9,16.6);node["fuel"="yes"](45.4,13.4,46.9,16.6););out center;` },
   { id: "parking",       label: "Parkirišča",     emoji: "🅿️", color: "#6366f1", query: `[out:json][timeout:30];(node["amenity"="parking"](45.4,13.4,46.9,16.6);way["amenity"="parking"](45.4,13.4,46.9,16.6););out center;` },
   { id: "supermarket",   label: "Živila",         emoji: "🛒", color: "#f97316", query: `[out:json][timeout:30];(node["shop"~"supermarket|grocery|convenience"](45.4,13.4,46.9,16.6);way["shop"~"supermarket|grocery|convenience"](45.4,13.4,46.9,16.6););out center;` },
-  { id: "atm",           label: "Bankomati",      emoji: "💳", color: "#84cc16", query: `[out:json][timeout:30];node["amenity"="atm"](45.4,13.4,46.9,16.6);out;` },
-  { id: "hospital",      label: "Bolnice",        emoji: "🏥", color: "#ec4899", query: `[out:json][timeout:30];(node["amenity"="hospital"](45.4,13.4,46.9,16.6);way["amenity"="hospital"](45.4,13.4,46.9,16.6););out center;` },
-  { id: "clinic",        label: "Ambulante",      emoji: "🩺", color: "#14b8a6", query: `[out:json][timeout:30];(node["amenity"~"clinic|doctors"](45.4,13.4,46.9,16.6);way["amenity"~"clinic|doctors"](45.4,13.4,46.9,16.6););out center;` },
+  { id: "atm",           label: "Bankomati",      emoji: "💳", color: "#84cc16", query: `[out:json][timeout:45];(node["amenity"="atm"](45.4,13.4,46.9,16.6);node["amenity"="bank"]["atm"!="no"](45.4,13.4,46.9,16.6);way["amenity"="bank"]["atm"!="no"](45.4,13.4,46.9,16.6););out center;` },
+  { id: "hospital",      label: "Bolnice",        emoji: "🏥", color: "#ec4899", query: `[out:json][timeout:45];(node["amenity"="hospital"](45.4,13.4,46.9,16.6);way["amenity"="hospital"](45.4,13.4,46.9,16.6);node["amenity"="health_post"](45.4,13.4,46.9,16.6);relation["amenity"="hospital"](45.4,13.4,46.9,16.6););out center;` },
+  { id: "clinic",        label: "Ambulante",      emoji: "🩺", color: "#14b8a6", query: `[out:json][timeout:45];(node["amenity"~"clinic|doctors|health_centre"](45.4,13.4,46.9,16.6);way["amenity"~"clinic|doctors|health_centre"](45.4,13.4,46.9,16.6);node["healthcare"~"centre|clinic|doctor|general_practitioner"](45.4,13.4,46.9,16.6);way["healthcare"~"centre|clinic"](45.4,13.4,46.9,16.6););out center;` },
   { id: "dentist",       label: "Zobozdrav.",     emoji: "🦷", color: "#a855f7", query: `[out:json][timeout:30];(node["amenity"="dentist"](45.4,13.4,46.9,16.6);way["amenity"="dentist"](45.4,13.4,46.9,16.6););out center;` },
   { id: "pharmacy",      label: "Lekarne",        emoji: "💊", color: "#10b981", query: `[out:json][timeout:30];(node["amenity"="pharmacy"](45.4,13.4,46.9,16.6);way["amenity"="pharmacy"](45.4,13.4,46.9,16.6););out center;` },
   { id: "fire_station",  label: "Gasilci",        emoji: "🚒", color: "#ef4444", query: `[out:json][timeout:30];(node["amenity"="fire_station"](45.4,13.4,46.9,16.6);way["amenity"="fire_station"](45.4,13.4,46.9,16.6););out center;` },
@@ -32,9 +32,14 @@ const CATEGORIES = [
   { id: "camp",          label: "Kampi",          emoji: "🏕️", color: "#22c55e", query: `[out:json][timeout:30];(node["tourism"="camp_site"](45.4,13.4,46.9,16.6);way["tourism"="camp_site"](45.4,13.4,46.9,16.6););out center;` },
   { id: "aerodrome",     label: "Letališča",      emoji: "✈️", color: "#06b6d4", query: `[out:json][timeout:30];(node["aeroway"="aerodrome"](45.4,13.4,46.9,16.6);way["aeroway"="aerodrome"](45.4,13.4,46.9,16.6););out center;` },
   { id: "cemetery",      label: "Pokopališča",    emoji: "⚰️", color: "#6b7280", query: `[out:json][timeout:30];(node["landuse"="cemetery"](45.4,13.4,46.9,16.6);way["landuse"="cemetery"](45.4,13.4,46.9,16.6););out center;` },
-  { id: "municipality",  label: "Kraji",          emoji: "🏘️", color: "#10b981", query: `[out:json][timeout:30];node["place"~"town|village|hamlet"](45.4,13.4,46.9,16.6);out;` },
+  { id: "municipality",  label: "Občine",         emoji: "🏘️", color: "#b45309", _municipalityLayer: true, query: `` },
   { id: "motorway_jct",  label: "AC uvozi",       emoji: "🛣️", color: "#64748b", query: `[out:json][timeout:30];node["highway"="motorway_junction"](45.4,13.4,46.9,16.6);out;` },
 ];
+
+// Invalidate old cache for improved queries
+["fuel","atm","hospital","clinic","lake"].forEach(id => {
+  try { localStorage.removeItem("slomapcat_" + id); } catch {}
+});
 
 // Cache — v-memory + localStorage za hitrost
 const layerCache = {};
@@ -188,6 +193,14 @@ export default function SearchBar({ onLocationSelect, autoFocus, onAddCustomLaye
     if (activeLayers[cat.id]) {
       if (onRemoveCustomLayer) onRemoveCustomLayer(activeLayers[cat.id]);
       setActiveLayers(prev => { const n = { ...prev }; delete n[cat.id]; return n; });
+      return;
+    }
+
+    // Municipality layer — special polygon layer, no Overpass fetch needed
+    if (cat._municipalityLayer) {
+      const layerId = `search_municipality`;
+      onAddCustomLayer({ id: layerId, name: "🏘️ Občine", color: "#b45309", features: [], _searchCat: cat.id, _municipalityLayer: true });
+      setActiveLayers(prev => ({ ...prev, [cat.id]: layerId }));
       return;
     }
 

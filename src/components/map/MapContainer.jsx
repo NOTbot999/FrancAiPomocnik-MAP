@@ -19,6 +19,7 @@ import GpsTracker from "./GpsTracker";
 import MyLocationDot from "./MyLocationDot";
 import OfflineManager from "./OfflineManager";
 import SearchCategoryLayer from "./SearchCategoryLayer";
+import MunicipalityLayer from "./MunicipalityLayer";
 
 function OfflineManagerPortal({ onClose }) {
   const map = useMap();
@@ -610,8 +611,15 @@ export default function MapContainerComponent({
       {aiRoutePolyline && aiRoutePolyline.length > 1 && (
         <Polyline positions={aiRoutePolyline} color="#f59e0b" weight={4} opacity={0.9} dashArray="8,5" />
       )}
+      {/* Municipality polygon layer — special dedicated component */}
+      {(() => {
+        const munLayer = (customLayers || []).find(l => l._municipalityLayer);
+        const visible = munLayer && customLayerVisible?.[munLayer.id] !== false;
+        return <MunicipalityLayer key="municipalities" visible={!!visible} />;
+      })()}
+
       {/* Search category layers — canvas renderer, no lag with thousands of points, always on top */}
-      {(customLayers || []).filter(l => l._searchCat).map((layer) => {
+      {(customLayers || []).filter(l => l._searchCat && !l._municipalityLayer).map((layer) => {
         const isVisible = customLayerVisible?.[layer.id] !== false;
         if (!isVisible) return null;
         return <SearchCategoryLayer key={layer.id} layer={layer} />;
