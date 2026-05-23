@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Navigation, Plus, Trash2, X, Loader2, Route } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { loadTheme } from "@/components/map/ThemeCustomizer";
@@ -7,25 +7,33 @@ function PointInput({ label, value, onChange, onClear }) {
   const [query, setQuery] = useState(value?.label || "");
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [focused, setFocused] = useState(false);
   const debounceRef = useRef(null);
-  const [open, setOpen] = useState(false);
+  const containerRef = useRef(null);
 
-  const search = (q) => {
+  const doSearch = async (q) => {
+    if (!q || q.length < 2) { setSuggestions([]); setLoading(false); return; }
+    setLoading(true);
+    try {
+      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=8&addressdetails=1&namedetails=1&dedupe=1&accept-language=sl,hr,en`;
+      const res = await fetch(url, { headers: { "User-Agent": "SloveniaGISExplorer/1.0" } });
+      const data = await res.json();
+      setSuggestions(data);
+    } catch { setSuggestions([]); }
+    setLoading(false);
+  };
+
+  const handleChange = (q) => {
     setQuery(q);
-    setOpen(true);
-    if (!q || q.length < 2) { setSuggestions([]); return; }
     clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(async () => {
-      setLoading(true);
-      try {
-        // Use structured Nominatim search with Slovenian language, countrycodes for SI+HR+AT+IT proximity
-        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=8&addressdetails=1&namedetails=1&dedupe=1&accept-language=sl,hr,en`;
-        const res = await fetch(url, { headers: { "User-Agent": "SloveniaGISExplorer/1.0" } });
-        const data = await res.json();
-        setSuggestions(data);
-      } catch {}
-      setLoading(false);
-    }, 350);
+    debounceRef.current = setTimeout(() => doSearch(q), 350);
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && query.length >= 2) {
+      clearTimeout(debounceRef.current);
+      doSearch(query);
+    }
   };
 
   const buildLabel = (s) => {
@@ -35,7 +43,6 @@ function PointInput({ label, value, onChange, onClear }) {
     const place = a.city || a.town || a.village || a.hamlet || a.suburb || a.municipality;
     const postcode = a.postcode;
     const country = a.country;
-
     const parts = [];
     if (street && houseNo) parts.push(`${street} ${houseNo}`);
     else if (street) parts.push(street);
@@ -48,44 +55,57 @@ function PointInput({ label, value, onChange, onClear }) {
     const shortLabel = buildLabel(s);
     setQuery(shortLabel);
     setSuggestions([]);
-    setOpen(false);
+    setFocused(false);
     onChange({ label: shortLabel, lat: parseFloat(s.lat), lng: parseFloat(s.lon) });
   };
 
   const clear = () => {
     setQuery("");
     setSuggestions([]);
-    setOpen(false);
     onClear();
   };
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handler = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setFocused(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const showDropdown = focused && suggestions.length > 0;
   const placeholders = { A: "Izhodišče (naslov, kraj...)", B: "Cilj (naslov, kraj...)" };
   const placeholder = placeholders[label] || "Vmesna točka...";
 
   return (
-    <div className="relative">
+    <div className="relative" ref={containerRef}>
       <div className="flex items-center gap-1">
         <span className="text-[10px] font-bold text-slate-500 w-6 shrink-0">{label}</span>
         <div className="relative flex-1">
           <input
             value={query}
-            onChange={e => search(e.target.value)}
-            onFocus={() => suggestions.length > 0 && setOpen(true)}
-            onBlur={() => setTimeout(() => setOpen(false), 150)}
+            onChange={e => handleChange(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onFocus={() => setFocused(true)}
             placeholder={placeholder}
             autoComplete="off"
+            autoCorrect="off"
+            spellCheck={false}
             className="w-full text-xs px-2 py-1.5 rounded-lg border focus:outline-none focus:ring-1 focus:ring-emerald-400 pr-6"
             style={{ backgroundColor: "transparent", borderColor: "#e2e8f0", color: "inherit" }}
           />
           {loading && <Loader2 className="absolute right-2 top-1.5 w-3 h-3 animate-spin text-slate-400" />}
           {!loading && query && (
-            <button onMouseDown={e => { e.preventDefault(); clear(); }} className="absolute right-1.5 top-1.5 text-slate-300 hover:text-slate-500">
+            <button onClick={clear} className="absolute right-1.5 top-1.5 text-slate-300 hover:text-slate-500">
               <X className="w-3 h-3" />
             </button>
           )}
         </div>
       </div>
-      {open && suggestions.length > 0 && (
+      {showDropdown && (
         <div className="absolute left-7 right-0 top-full mt-0.5 bg-white border border-slate-200 rounded-lg shadow-xl z-[1100] max-h-52 overflow-y-auto">
           {suggestions.map((s, i) => {
             const a = s.address || {};
@@ -94,13 +114,13 @@ function PointInput({ label, value, onChange, onClear }) {
             const place = a.city || a.town || a.village || a.hamlet || a.suburb || a.municipality;
             const postcode = a.postcode;
             const mainLine = street
-              ? houseNo ? `${street} ${houseNo}` : street
+              ? (houseNo ? `${street} ${houseNo}` : street)
               : (a.amenity || a.tourism || a.shop || s.namedetails?.name || s.display_name.split(",")[0]);
             const subLine = [postcode ? `${postcode} ${place}` : place, a.country].filter(Boolean).join(", ");
             return (
               <button
                 key={i}
-                onMouseDown={e => { e.preventDefault(); select(s); }}
+                onClick={() => select(s)}
                 className="w-full text-left px-3 py-2 hover:bg-emerald-50 border-b border-slate-100 last:border-0 transition-colors"
               >
                 <div className="text-xs font-medium text-slate-800 truncate">{mainLine}</div>
