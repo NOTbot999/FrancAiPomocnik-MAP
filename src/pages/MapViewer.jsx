@@ -469,30 +469,26 @@ export default function MapViewer() {
       {/* Mobile 3D overlay controls — visible on top of MapLibre when 3D is active */}
       {isMobile && is3DOpen && (
         <>
-          {/* Top bar with settings and close */}
-          <div className="absolute top-3 left-3 right-3 z-[960] flex items-center gap-2" style={{ pointerEvents: "auto" }}>
-            {/* Settings button */}
-            <button
-              onClick={() => setIsMobile3DMenuOpen(true)}
-              className="flex items-center justify-center rounded-xl border border-slate-400/40 shadow-md bg-black/40 backdrop-blur"
-              style={{ padding: "10px", color: "#fff" }}
-              title="Nastavitve"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m5.08 5.08l4.24 4.24M1 12h6m6 0h6M4.22 19.78l4.24-4.24m5.08-5.08l4.24-4.24"/></svg>
-            </button>
+          {/* Right side tool stack - vertical column with close and settings at top */}
+          <div className="absolute top-3 right-3 z-[960] flex flex-col gap-2" style={{ pointerEvents: "auto" }}>
             {/* Close 3D */}
             <button
               onClick={() => setIs3DOpen(false)}
               className="flex items-center justify-center rounded-xl border border-red-400/50 shadow-md bg-black/40 backdrop-blur"
               style={{ padding: "10px", color: "#f87171" }}
-              title="Zapri 3D"
+              title="Close"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
-          </div>
-
-          {/* Right side tool stack - vertical column */}
-          <div className="absolute top-24 right-3 z-[960] flex flex-col gap-2" style={{ pointerEvents: "auto" }}>
+            {/* Settings button */}
+            <button
+              onClick={() => setIsMobile3DMenuOpen(true)}
+              className="flex items-center justify-center rounded-xl border border-slate-400/40 shadow-md bg-black/40 backdrop-blur"
+              style={{ padding: "10px", color: "#fff" }}
+              title="Settings"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m5.08 5.08l4.24 4.24M1 12h6m6 0h6M4.22 19.78l4.24-4.24m5.08-5.08l4.24-4.24"/></svg>
+            </button>
             {mobileButtonPrefs.order?.map((btnId) => {
               if (mobileButtonPrefs.hidden?.includes(btnId)) return null;
               
