@@ -191,7 +191,7 @@ export default function Map3DView({ center, zoom, onClose }) {
           pitch: 60,
           bearing: 0,
           antialias: true,
-          maxPitch: 90,
+          maxPitch: 85,
         });
 
         mapRef.current = map;
@@ -269,7 +269,7 @@ export default function Map3DView({ center, zoom, onClose }) {
   const changePitch = useCallback((delta) => {
     if (!mapRef.current) return;
     const current = mapRef.current.getPitch();
-    const next = Math.max(0, Math.min(90, current + delta));
+    const next = Math.max(0, Math.min(85, current + delta));
     mapRef.current.setPitch(next);
     setPitch(Math.round(next));
   }, []);
