@@ -1,0 +1,57 @@
+{
+  "name": "Cave",
+  "type": "object",
+  "properties": {
+    "cave_id": {
+      "type": "string",
+      "description": "Original cave ID from the registry"
+    },
+    "name": {
+      "type": "string",
+      "description": "Name of the cave"
+    },
+    "latitude": {
+      "type": "number",
+      "description": "Latitude coordinate"
+    },
+    "longitude": {
+      "type": "number",
+      "description": "Longitude coordinate"
+    },
+    "length_m": {
+      "type": "number",
+      "description": "Length in meters"
+    },
+    "depth_m": {
+      "type": "number",
+      "description": "Depth in meters"
+    },
+    "area_m2": {
+      "type": "number",
+      "description": "Area in square meters"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "everyone": true
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
