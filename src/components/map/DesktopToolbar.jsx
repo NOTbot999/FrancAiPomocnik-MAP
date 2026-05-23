@@ -4,7 +4,7 @@ import {
   Navigation, Route, X,
   Map, Settings, Eye, EyeOff, Save, FolderOpen,
   Loader2, Check, GripVertical, Palette, Brain, TrendingUp,
-  AlertTriangle, Box
+  AlertTriangle, Box, Mountain, Square
 } from "lucide-react";
 import LagReportModal from "@/components/map/LagReportModal";
 
@@ -83,6 +83,7 @@ export default function DesktopToolbar({
   isTrackAnalyzerOpen, onTrackAnalyzerToggle,
   drawings, gpsTrack, onLoadDrawings,
   is3DOpen, on3DToggle,
+  use3DMode, onToggle3DMode,
 }) {
   const [pos, setPos] = useState(loadPos);
   const [hidden, setHidden] = useState(loadHidden);
@@ -271,6 +272,32 @@ export default function DesktopToolbar({
               );
             })}
           </TooltipProvider>
+
+          {/* 2D/3D mode toggle — only visible when 3D view is open */}
+          {is3DOpen && (
+            <>
+              <div className="w-6 h-px bg-slate-200 my-0.5" />
+              <TooltipProvider delayDuration={400}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={onToggle3DMode}
+                      style={use3DMode
+                        ? { backgroundColor: theme.buttonActiveBg, color: theme.buttonActiveText, borderColor: theme.buttonActiveBg }
+                        : { backgroundColor: theme.toolbarBg, color: theme.toolbarText, borderColor: "#e2e8f0" }
+                      }
+                      className="relative w-10 h-10 rounded-xl flex items-center justify-center border shadow-md hover:shadow-lg transition-all duration-150 cursor-pointer hover:scale-105"
+                    >
+                      {use3DMode ? <Mountain className="w-4 h-4" /> : <Square className="w-4 h-4" />}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="left" className="z-[9999]" sideOffset={6}>
+                    <p className="text-xs font-medium">{use3DMode ? "Preklopi na 2D rotacijo" : "Preklopi na 3D terrain"}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </>
+          )}
 
           {/* Divider + Settings + Theme buttons */}
           <div className="w-6 h-px bg-slate-200 my-1" />
