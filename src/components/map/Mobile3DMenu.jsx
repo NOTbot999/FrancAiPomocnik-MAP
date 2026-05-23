@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { GripVertical, Search, Locate, Navigation, Route, Ruler, X, Link2, ChevronDown, ChevronUp, Layers, Plus, WifiOff, Palette, Brain, AlertTriangle, TrendingUp, Box } from "lucide-react";
+import { GripVertical, Navigation, Route, X, Link2, ChevronDown, ChevronUp, Layers, WifiOff, Palette, Brain, AlertTriangle, TrendingUp, Box, Locate } from "lucide-react";
 import LagReportModal from "@/components/map/LagReportModal";
 import { Slider } from "@/components/ui/slider";
 import MyTracks from "./MyTracks";
@@ -10,11 +10,8 @@ import ThemeCustomizer, { loadTheme } from "@/components/map/ThemeCustomizer";
 
 const DEFAULT_BUTTONS = [
   { id: "layers",  label: "Sloji",          icon: Layers },
-  { id: "zoom",    label: "Zoom",           icon: Plus },
-  { id: "search",  label: "Iskanje",        icon: Search },
   { id: "locate",  label: "Moja lokacija",  icon: Locate },
   { id: "gps",     label: "GPS sled",       icon: Navigation },
-  { id: "ruler",   label: "Merilo",         icon: Ruler },
   { id: "nav",     label: "Navigacija",     icon: Route },
   { id: "offline", label: "Offline karte",  icon: WifiOff },
   { id: "ai",      label: "AI Asistent",    icon: Brain },
@@ -36,7 +33,7 @@ function loadPrefs() {
       return p;
     }
   } catch {}
-  return { order: DEFAULT_BUTTONS.map(b => b.id), hidden: ["layers", "zoom"], buttonScale: 1.0, scaleBarVisible: true, scaleBarScale: 1.0 };
+  return { order: DEFAULT_BUTTONS.map(b => b.id), hidden: ["layers"], buttonScale: 1.0, scaleBarVisible: false, scaleBarScale: 1.0 };
 }
 
 function savePrefs(prefs) {
@@ -122,10 +119,8 @@ export default function Mobile3DMenu({
   const handleButtonClick = (btnId) => {
     switch (btnId) {
       case "layers": onTogglePanel(); break;
-      case "search": onLocate(null); break;
       case "locate": onLocate(null); break;
       case "gps": onGpsToggle(); break;
-      case "ruler": onToolChange(activeTool === "ruler" ? "pointer" : "ruler"); break;
       case "nav": onNavToggle(); break;
       case "offline": onOfflineToggle(); break;
       case "ai": onAIToggle(); break;
