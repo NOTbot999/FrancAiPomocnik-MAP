@@ -491,8 +491,8 @@ export default function MapViewer() {
             </button>
           </div>
 
-          {/* Right side tool grid - compact grouped layout */}
-          <div className="absolute top-24 right-3 z-[960] grid grid-cols-3 gap-2" style={{ pointerEvents: "auto", width: "fit-content" }}>
+          {/* Right side tool stack - vertical column */}
+          <div className="absolute top-24 right-3 z-[960] flex flex-col gap-2" style={{ pointerEvents: "auto" }}>
             {mobileButtonPrefs.order?.map((btnId) => {
               if (mobileButtonPrefs.hidden?.includes(btnId)) return null;
               
