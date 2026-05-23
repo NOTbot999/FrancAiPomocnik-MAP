@@ -218,6 +218,10 @@ export function useMapLibreLayers(mapRef, mapReadyRef, {
         const hasLines = geojsonFeatures.some(f => f.geometry.type === "LineString");
         const hasPolygons = geojsonFeatures.some(f => f.geometry.type === "Polygon");
 
+        // Get all existing layer IDs to find the topmost one
+        const allLayers = map.getStyle().layers || [];
+        const topLayerId = allLayers.length > 0 ? allLayers[allLayers.length - 1].id : null;
+
         if (hasPoints) {
           const pointLayerId = `${mlId}-points`;
           if (!map.getLayer(pointLayerId)) {
@@ -233,7 +237,7 @@ export function useMapLibreLayers(mapRef, mapReadyRef, {
                 "circle-stroke-width": 2,
                 "circle-stroke-color": "#ffffff"
               }
-            });
+            }, topLayerId || undefined);
           } else {
             try {
               map.setPaintProperty(pointLayerId, "circle-opacity", opacity);
@@ -255,7 +259,7 @@ export function useMapLibreLayers(mapRef, mapReadyRef, {
                 "line-color": layer.color || "#1d9bf0",
                 "line-opacity": opacity
               }
-            });
+            }, topLayerId || undefined);
           } else {
             try {
               map.setPaintProperty(lineLayerId, "line-opacity", opacity);
@@ -276,7 +280,7 @@ export function useMapLibreLayers(mapRef, mapReadyRef, {
                 "fill-color": layer.color || "#1d9bf0",
                 "fill-opacity": opacity * 0.6
               }
-            });
+            }, topLayerId || undefined);
           } else {
             try {
               map.setPaintProperty(polygonLayerId, "fill-opacity", opacity * 0.6);
