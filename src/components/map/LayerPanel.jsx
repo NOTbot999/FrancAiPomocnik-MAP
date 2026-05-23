@@ -14,7 +14,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 // Base Map grid — radio select (samo ena naenkrat kot ozadje)
-function BaseMapGrid({ activeBaseLayers, onSelectBaseLayer }) {
+// Vključuje tudi 3D/MapLibre izbiro kadar je 3D odprt
+function BaseMapGrid({ activeBaseLayers, onSelectBaseLayer, is3DOpen, activeMLBase, onMLBaseChange }) {
   const primaryId = activeBaseLayers ? Object.keys(activeBaseLayers)[0] : "osm";
 
   return (
@@ -39,6 +40,32 @@ function BaseMapGrid({ activeBaseLayers, onSelectBaseLayer }) {
           );
         })}
       </div>
+
+      {/* 3D / MapLibre style selector — samo kadar je 3D pogled aktiven */}
+      {is3DOpen && (
+        <div className="mt-3 pt-2 border-t border-slate-700/40">
+          <div className="flex items-center gap-1.5 mb-2">
+            <Mountain className="w-3 h-3 text-emerald-400" />
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">3D ozadje</p>
+          </div>
+          <div className="grid grid-cols-5 gap-1">
+            {ML_BASE_STYLES.map(style => {
+              const isActive = activeMLBase === style.id;
+              return (
+                <button
+                  key={style.id}
+                  onClick={() => onMLBaseChange && onMLBaseChange(style.id)}
+                  className={`px-1.5 py-1.5 rounded-lg text-[9px] font-medium transition-all ${
+                    isActive ? "bg-emerald-500 text-white" : "bg-slate-700/60 hover:bg-slate-600/60 text-slate-300"
+                  }`}
+                >
+                  {style.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -291,32 +318,7 @@ function CustomLayersSection({ customLayers, onRemoveCustomLayer, favoritedIds, 
   );
 }
 
-function MLBaseGrid({ activeMLBase, onMLBaseChange }) {
-  return (
-    <div className="px-3 pb-3 pt-2 border-b border-slate-700/50">
-      <div className="flex items-center gap-1.5 mb-2">
-        <Mountain className="w-3 h-3 text-emerald-400" />
-        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">3D / MapLibre karta</p>
-      </div>
-      <div className="grid grid-cols-5 gap-1">
-        {ML_BASE_STYLES.map(style => {
-          const isActive = activeMLBase === style.id;
-          return (
-            <button
-              key={style.id}
-              onClick={() => onMLBaseChange && onMLBaseChange(style.id)}
-              className={`px-1.5 py-1.5 rounded-lg text-[9px] font-medium transition-all ${
-                isActive ? "bg-emerald-500 text-white" : "bg-slate-700/60 hover:bg-slate-600/60 text-slate-300"
-              }`}
-            >
-              {style.label}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
+
 
 function PanelContent({ activeBaseLayers, onSelectBaseLayer, activeLayers, onToggleLayer, onOpacityChange, favorites, onToggleFavorite, layerOrder, onLayerReorder, customLayers, onRemoveCustomLayer, favoritedCustomLayerIds, onFavoriteCustomLayer, savedCustomLayers, customLayerVisible, onToggleCustomLayerVisible, customLayerOpacities, onCustomLayerOpacity, is3DOpen, activeMLBase, onMLBaseChange }) {
   const activeLayerCount = Object.keys(activeLayers).length;
@@ -345,11 +347,14 @@ function PanelContent({ activeBaseLayers, onSelectBaseLayer, activeLayers, onTog
 
   return (
     <div className="pt-2 pb-4">
-      {/* Base Map grid — always at top, radio select */}
-      <BaseMapGrid activeBaseLayers={activeBaseLayers} onSelectBaseLayer={onSelectBaseLayer} />
-
-      {/* MapLibre 3D base styles — shown only when 3D view is active */}
-      {is3DOpen && <MLBaseGrid activeMLBase={activeMLBase} onMLBaseChange={onMLBaseChange} />}
+      {/* Base Map grid — always at top, includes 3D selector when active */}
+      <BaseMapGrid
+        activeBaseLayers={activeBaseLayers}
+        onSelectBaseLayer={onSelectBaseLayer}
+        is3DOpen={is3DOpen}
+        activeMLBase={activeMLBase}
+        onMLBaseChange={onMLBaseChange}
+      />
 
       {/* AI Custom layers */}
       <CustomLayersSection customLayers={customLayers} onRemoveCustomLayer={onRemoveCustomLayer} favoritedIds={favoritedCustomLayerIds} onFavorite={onFavoriteCustomLayer} customLayerVisible={customLayerVisible} onToggleVisible={onToggleCustomLayerVisible} customLayerOpacities={customLayerOpacities} onOpacityChange={onCustomLayerOpacity} />

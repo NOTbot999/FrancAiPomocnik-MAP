@@ -7,21 +7,25 @@ function resolveTileUrl(url) {
 }
 
 // Build a WMS tile URL for MapLibre
+// IMPORTANT: {bbox-epsg-3857} must NOT be URL-encoded — build the string manually
 function wmsUrl(layer) {
-  const params = new URLSearchParams({
-    service: "WMS",
-    request: "GetMap",
-    version: layer.version || "1.1.1",
-    layers: layer.layers,
-    styles: "",
-    format: layer.format || "image/png",
-    transparent: layer.transparent !== false ? "true" : "false",
-    width: "256",
-    height: "256",
-    srs: "EPSG:3857",
-    bbox: "{bbox-epsg-3857}",
-  });
-  return `${layer.url}?${params.toString()}`;
+  const version = layer.version || "1.1.1";
+  const srsKey = version.startsWith("1.3") ? "crs" : "srs";
+  const srsVal = "EPSG:3857";
+  const parts = [
+    `service=WMS`,
+    `request=GetMap`,
+    `version=${version}`,
+    `layers=${encodeURIComponent(layer.layers)}`,
+    `styles=`,
+    `format=${encodeURIComponent(layer.format || "image/png")}`,
+    `transparent=${layer.transparent !== false ? "true" : "false"}`,
+    `width=256`,
+    `height=256`,
+    `${srsKey}=${srsVal}`,
+    `bbox={bbox-epsg-3857}`,
+  ];
+  return `${layer.url}?${parts.join("&")}`;
 }
 
 // Build an ArcGIS export tile URL for MapLibre
