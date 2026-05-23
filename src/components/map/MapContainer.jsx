@@ -46,7 +46,7 @@ L.Icon.Default.mergeOptions({
 function FlyToLocation({ location }) {
   const map = useMap();
   useEffect(() => {
-    if (location) {
+    if (location && location.lat !== undefined && location.lng !== undefined) {
       map.flyTo([location.lat, location.lng], location.zoom || 15, { duration: 1.5 });
     }
   }, [location, map]);
