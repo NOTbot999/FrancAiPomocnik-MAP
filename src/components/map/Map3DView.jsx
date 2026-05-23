@@ -282,43 +282,10 @@ const Map3DView = forwardRef(function Map3DView({
         </div>
       )}
 
-      {/* Controls — bottom right, above z-index 1 but below UI panels */}
+      {/* Controls — bottom right, only reset button */}
       {!loading && !error && (
-        <div className="absolute bottom-8 right-4 z-[500] flex flex-col gap-1.5">
-          {/* Status pill */}
-          <div className="bg-black/60 backdrop-blur text-white text-[10px] px-2 py-1 rounded-lg text-center font-mono mb-1">
-            {is3D ? <Mountain className="w-3 h-3 inline mr-1" /> : <Square className="w-3 h-3 inline mr-1" />}
-            P:{pitch}° B:{bearing}°
-          </div>
-
-          <button onClick={() => rotateTo(-15)} className="bg-black/60 hover:bg-black/80 text-white rounded-full p-2 backdrop-blur transition" title="Zavrti levo">
-            <RotateCcw className="w-3.5 h-3.5" />
-          </button>
-          <button onClick={() => rotateTo(15)} className="bg-black/60 hover:bg-black/80 text-white rounded-full p-2 backdrop-blur transition" title="Zavrti desno">
-            <RotateCw className="w-3.5 h-3.5" />
-          </button>
-          <button
-            onClick={toggleAutoRotate}
-            className={`rounded-full p-2 backdrop-blur transition ${isAutoRotating ? "bg-emerald-500 text-white" : "bg-black/60 hover:bg-black/80 text-white"}`}
-            title="Samodejno vrtenje"
-          >
-            <Compass className="w-3.5 h-3.5" />
-          </button>
-
-          {is3D && (
-            <>
-              <div className="w-px h-3 bg-white/20 mx-auto" />
-              <button onClick={() => changePitch(10)} className="bg-black/60 hover:bg-black/80 text-white rounded-full p-2 backdrop-blur transition" title="Pogled bolj navzdol">
-                <ChevronDown className="w-3.5 h-3.5" />
-              </button>
-              <button onClick={() => changePitch(-10)} className="bg-black/60 hover:bg-black/80 text-white rounded-full p-2 backdrop-blur transition" title="Pogled bolj ravno">
-                <ChevronUp className="w-3.5 h-3.5" />
-              </button>
-            </>
-          )}
-
-          <div className="w-px h-3 bg-white/20 mx-auto" />
-          <button onClick={resetView} className="bg-black/60 hover:bg-black/80 text-white rounded-lg px-1.5 py-1 text-[9px] backdrop-blur transition font-medium">
+        <div className="absolute bottom-8 right-4 z-[500]">
+          <button onClick={resetView} className="bg-black/60 hover:bg-black/80 text-white rounded-lg px-3 py-2 text-xs backdrop-blur transition font-medium">
             Reset
           </button>
         </div>
