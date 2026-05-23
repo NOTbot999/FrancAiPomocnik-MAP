@@ -168,6 +168,7 @@ export default function Map3DView({ center, zoom, onClose }) {
             document.head.appendChild(link);
             const script = document.createElement("script");
             script.src = "https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js";
+            script.crossOrigin = "anonymous";
             script.onload = resolve;
             script.onerror = reject;
             document.head.appendChild(script);
