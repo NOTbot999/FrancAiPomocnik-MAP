@@ -120,6 +120,7 @@ export function useMapLibreLayers(mapRef, mapReadyRef, {
   customLayers = [],
   customLayerVisible = {},
   customLayerOpacities = {},
+  gpsTrack = [],
 }) {
   // Store custom layer state in refs so they persist across style changes
   const customLayersRef = useRef([]);
@@ -425,4 +426,103 @@ export function useMapLibreLayers(mapRef, mapReadyRef, {
     }, 50);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapReady]); // Re-run when mapReady increments (after style load)
+
+  // Sync GPS track
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapReadyRef.current || mapReady === 0) return;
+
+    const gpsSourceId = "src-gps-track";
+    const gpsLayerId = "ml-gps-track";
+
+    // Remove existing
+    if (map.getLayer(gpsLayerId)) try { map.removeLayer(gpsLayerId); } catch {}
+    if (map.getSource(gpsSourceId)) try { map.removeSource(gpsSourceId); } catch {}
+
+    // Add new track if has points
+    if (gpsTrack && gpsTrack.length > 1) {
+      const geojson = {
+        type: "FeatureCollection",
+        features: [{
+          type: "Feature",
+          geometry: {
+            type: "LineString",
+            coordinates: gpsTrack.map(pt => [pt[1] || pt.lng, pt[0] || pt.lat])
+          },
+          properties: {}
+        }]
+      };
+
+      map.addSource(gpsSourceId, { type: "geojson", data: geojson });
+
+      // Get topmost layer for z-index
+      const allLayers = map.getStyle().layers || [];
+      const topLayerId = allLayers.length > 0 ? allLayers[allLayers.length - 1].id : undefined;
+
+      map.addLayer({
+        id: gpsLayerId,
+        type: "line",
+        source: gpsSourceId,
+        paint: {
+          "line-width": 4,
+          "line-color": "#10b981",
+          "line-opacity": 0.9,
+          "line-dasharray": [2, 2]
+        }
+      }, topLayerId);
+
+      // Add start/end markers
+      const startMarkerId = "ml-gps-start";
+      const endMarkerId = "ml-gps-end";
+      if (map.getLayer(startMarkerId)) try { map.removeLayer(startMarkerId); } catch {}
+      if (map.getLayer(endMarkerId)) try { map.removeLayer(endMarkerId); } catch {}
+      if (map.getSource("src-gps-start")) try { map.removeSource("src-gps-start"); } catch {}
+      if (map.getSource("src-gps-end")) try { map.removeSource("src-gps-end"); } catch {}
+
+      // Start marker (green)
+      const startPt = gpsTrack[0];
+      map.addSource("src-gps-start", {
+        type: "geojson",
+        data: {
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [startPt[1] || startPt.lng, startPt[0] || startPt.lat] },
+          properties: {}
+        }
+      });
+      map.addLayer({
+        id: startMarkerId,
+        type: "circle",
+        source: "src-gps-start",
+        paint: {
+          "circle-radius": 6,
+          "circle-color": "#10b981",
+          "circle-stroke-width": 2,
+          "circle-stroke-color": "#ffffff"
+        }
+      }, topLayerId);
+
+      // End marker (red)
+      const endPt = gpsTrack[gpsTrack.length - 1];
+      map.addSource("src-gps-end", {
+        type: "geojson",
+        data: {
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [endPt[1] || endPt.lng, endPt[0] || endPt.lat] },
+          properties: {}
+        }
+      });
+      map.addLayer({
+        id: endMarkerId,
+        type: "circle",
+        source: "src-gps-end",
+        paint: {
+          "circle-radius": 6,
+          "circle-color": "#ef4444",
+          "circle-stroke-width": 2,
+          "circle-stroke-color": "#ffffff"
+        }
+      }, topLayerId);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gpsTrack, mapReady]);
 }

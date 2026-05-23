@@ -18,6 +18,7 @@ const Map3DView = forwardRef(function Map3DView({
   layerOpacities = {}, baseLayerOpacities = {},
   activeMLBase, onMLBaseChange,
   customLayers = [], customLayerVisible = {}, customLayerOpacities = {},
+  gpsTrack = [],
   onPinPicked,
 }, ref) {
   const containerRef = useRef(null);
@@ -44,6 +45,7 @@ const Map3DView = forwardRef(function Map3DView({
     customLayers,
     customLayerVisible,
     customLayerOpacities,
+    gpsTrack,
   });
 
   const setupTerrain = useCallback((map, key) => {

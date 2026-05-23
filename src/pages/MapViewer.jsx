@@ -282,6 +282,7 @@ export default function MapViewer() {
           customLayers={customLayers}
           customLayerVisible={customLayerVisible}
           customLayerOpacities={customLayerOpacities}
+          gpsTrack={gpsTrack}
           onPinPicked={isPinPicking ? (latlng) => { setPinnedLocation([latlng.lat, latlng.lng]); setIsPinPicking(false); } : null}
         />
       </div>
@@ -449,29 +450,98 @@ export default function MapViewer() {
 
       {/* Mobile 3D overlay controls — visible on top of MapLibre when 3D is active */}
       {isMobile && is3DOpen && (
-        <div className="absolute top-3 right-3 z-[960] flex flex-col gap-2" style={{ pointerEvents: "auto" }}>
-          <button
-            onClick={() => setIs3DOpen(false)}
-            className="flex items-center justify-center rounded-xl border border-red-400/50 shadow-md bg-black/40 backdrop-blur"
-            style={{ padding: "10px", color: "#f87171" }}
-            title="Zapri 3D"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
-          <button
-            onClick={() => setIsPanelOpen(p => !p)}
-            className="flex items-center justify-center rounded-xl border border-slate-400/40 shadow-md bg-black/40 backdrop-blur relative"
-            style={{ padding: "10px", color: isPanelOpen ? "#10b981" : "#fff" }}
-            title="Sloji"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
-            {activeLayerCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-emerald-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
-                {activeLayerCount}
-              </span>
-            )}
-          </button>
-        </div>
+        <>
+          {/* Top bar with main tools */}
+          <div className="absolute top-3 left-3 right-3 z-[960] flex items-center gap-2" style={{ pointerEvents: "auto" }}>
+            {/* Search button */}
+            <button
+              onClick={() => setFlyToLocation(null)} // Triggers search bar in MobileTopBar style
+              className="flex-1 flex items-center justify-center rounded-xl border border-slate-400/40 shadow-md bg-black/40 backdrop-blur px-3 py-2"
+              style={{ color: "#fff" }}
+              title="Iskanje"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <span className="text-xs">Išči lokacijo...</span>
+            </button>
+            {/* Close 3D */}
+            <button
+              onClick={() => setIs3DOpen(false)}
+              className="flex items-center justify-center rounded-xl border border-red-400/50 shadow-md bg-black/40 backdrop-blur"
+              style={{ padding: "10px", color: "#f87171" }}
+              title="Zapri 3D"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+
+          {/* Right side tool stack */}
+          <div className="absolute top-24 right-3 z-[960] flex flex-col gap-2" style={{ pointerEvents: "auto" }}>
+            {/* Layers */}
+            <button
+              onClick={() => setIsPanelOpen(p => !p)}
+              className="flex items-center justify-center rounded-xl border border-slate-400/40 shadow-md bg-black/40 backdrop-blur relative"
+              style={{ padding: "10px", color: isPanelOpen ? "#10b981" : "#fff" }}
+              title="Sloji"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+              {activeLayerCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-emerald-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                  {activeLayerCount}
+                </span>
+              )}
+            </button>
+            {/* AI Panel */}
+            <button
+              onClick={() => setIsAIOpen(p => !p)}
+              className="flex items-center justify-center rounded-xl border border-slate-400/40 shadow-md bg-black/40 backdrop-blur relative"
+              style={{ padding: "10px", color: isAIOpen ? "#10b981" : "#fff" }}
+              title="FrancAI"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.78V11a2 2 0 0 1-2 2H9.5A2.5 2.5 0 0 0 7 15.5V19a2 2 0 0 1-2 2H3"/><path d="M12 22v-3"/><path d="M8 22h8"/><path d="M17 22a2 2 0 0 0 2-2v-1.5a2.5 2.5 0 0 1 2.5-2.5H22"/><path d="M22 15v4"/></svg>
+            </button>
+            {/* Navigation */}
+            <button
+              onClick={() => setIsNavOpen(p => !p)}
+              className="flex items-center justify-center rounded-xl border border-slate-400/40 shadow-md bg-black/40 backdrop-blur"
+              style={{ padding: "10px", color: isNavOpen ? "#10b981" : "#fff" }}
+              title="Navigacija"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+            </button>
+            {/* GPS Tracking */}
+            <button
+              onClick={handleGpsToggle}
+              className={`flex items-center justify-center rounded-xl border shadow-md bg-black/40 backdrop-blur relative ${isGpsTracking ? "border-emerald-400/60" : "border-slate-400/40"}`}
+              style={{ padding: "10px", color: isGpsTracking ? "#10b981" : "#fff" }}
+              title="GPS sledenje"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M4.93 4.93l1.41 1.41"/><path d="M17.66 17.66l1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="M4.93 19.07l1.41-1.41"/><path d="M17.66 6.34l1.41-1.41"/></svg>
+              {isGpsTracking && gpsTrack.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-emerald-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                  {Math.floor((gpsTrack.length * 0.0001).toFixed(1) * 10)}
+                </span>
+              )}
+            </button>
+            {/* My Tracks */}
+            <button
+              onClick={() => setShowMyTracks(p => !p)}
+              className="flex items-center justify-center rounded-xl border border-slate-400/40 shadow-md bg-black/40 backdrop-blur"
+              style={{ padding: "10px", color: showMyTracks ? "#10b981" : "#fff" }}
+              title="Moje poti"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/></svg>
+            </button>
+            {/* Track Analyzer */}
+            <button
+              onClick={() => setIsTrackAnalyzerOpen(p => !p)}
+              className="flex items-center justify-center rounded-xl border border-slate-400/40 shadow-md bg-black/40 backdrop-blur"
+              style={{ padding: "10px", color: isTrackAnalyzerOpen ? "#10b981" : "#fff" }}
+              title="Analiza poti"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            </button>
+          </div>
+        </>
       )}
 
       {/* AI Panel — mobile */}
