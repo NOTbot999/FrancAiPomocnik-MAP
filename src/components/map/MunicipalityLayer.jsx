@@ -227,7 +227,7 @@ export default function MunicipalityLayer({ visible }) {
       }
     }
 
-    load();
+    load().catch(() => { /* Overpass nedosegljiv — tiho odpoved */ });
 
     return () => {
       cancelled = true;
