@@ -370,6 +370,10 @@ export function useMapLibreLayers(mapRef, mapReadyRef, {
       const hasLines = (layer.features || []).some(f => f.type === "LineString");
       const hasPolygons = (layer.features || []).some(f => f.type === "Polygon");
 
+      // Get the topmost layer ID to add custom layers on top
+      const allLayers = map.getStyle().layers || [];
+      const topLayerId = allLayers.length > 0 ? allLayers[allLayers.length - 1].id : undefined;
+
       if (hasPoints && !map.getLayer(`${mlId}-points`)) {
         map.addLayer({
           id: `${mlId}-points`,
@@ -383,7 +387,7 @@ export function useMapLibreLayers(mapRef, mapReadyRef, {
             "circle-stroke-width": 2,
             "circle-stroke-color": "#ffffff"
           }
-        });
+        }, topLayerId);
       }
 
       if (hasLines && !map.getLayer(`${mlId}-lines`)) {
@@ -397,7 +401,7 @@ export function useMapLibreLayers(mapRef, mapReadyRef, {
             "line-color": layer.color || "#1d9bf0",
             "line-opacity": opacity
           }
-        });
+        }, topLayerId);
       }
 
       if (hasPolygons && !map.getLayer(`${mlId}-polygons`)) {
@@ -410,7 +414,7 @@ export function useMapLibreLayers(mapRef, mapReadyRef, {
             "fill-color": layer.color || "#1d9bf0",
             "fill-opacity": opacity * 0.6
           }
-        });
+        }, topLayerId);
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
