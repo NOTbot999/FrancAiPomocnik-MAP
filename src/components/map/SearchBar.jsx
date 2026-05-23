@@ -3,6 +3,7 @@ import { Search, X, Loader2, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePrefetchCategories } from "@/hooks/usePrefetchCategories";
 import { base44 } from "@/api/base44Client";
+import { loadCaves, cavesToLayerFeatures } from "@/components/map/CaveLayer";
 
 // ── All categories — each toggles a full-Slovenia layer ───────────────────────
 export const CATEGORIES = [
@@ -36,6 +37,7 @@ export const CATEGORIES = [
   { id: "cemetery",      label: "Pokopališča",    emoji: "⚰️", color: "#6b7280", query: `[out:json][timeout:30];(node["landuse"="cemetery"](45.4,13.4,46.9,16.6);way["landuse"="cemetery"](45.4,13.4,46.9,16.6););out center;` },
   { id: "municipality",  label: "Občine",         emoji: "🏘️", color: "#b45309", _municipalityLayer: true, query: `` },
   { id: "motorway_jct",  label: "AC uvozi",       emoji: "🛣️", color: "#64748b", query: `[out:json][timeout:30];node["highway"="motorway_junction"](45.4,13.4,46.9,16.6);out;` },
+  { id: "caves_db",     label: "Jame (baza)",    emoji: "🕳️", color: "#78716c", _caveDbLayer: true, query: `` },
 ];
 
 // Invalidate old cache for improved queries
@@ -263,6 +265,22 @@ export default function SearchBar({ onLocationSelect, autoFocus, onAddCustomLaye
       const layerId = `search_municipality`;
       onAddCustomLayer({ id: layerId, name: "🏘️ Občine", color: "#b45309", features: [], _searchCat: cat.id, _municipalityLayer: true });
       setActiveLayers(prev => ({ ...prev, [cat.id]: layerId }));
+      return;
+    }
+
+    // Cave DB layer — load from database
+    if (cat._caveDbLayer) {
+      setLoadingCat(cat.id);
+      try {
+        const caves = await loadCaves();
+        const features = cavesToLayerFeatures(caves);
+        const layerId = `search_caves_db`;
+        onAddCustomLayer({ id: layerId, name: "🕳️ Jame (baza)", color: "#78716c", features, _searchCat: cat.id, _caveDbLayer: true });
+        setActiveLayers(prev => ({ ...prev, [cat.id]: layerId }));
+      } finally {
+        setLoadingCat(null);
+        setShowCategories(false);
+      }
       return;
     }
 

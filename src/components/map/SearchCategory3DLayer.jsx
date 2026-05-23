@@ -9,6 +9,7 @@ const EMOJI_MAP = {
   museum: "🏛️",
   viewpoint: "👁️",
   cave: "🕳️",
+  caves_db: "🕳️",
   bridge: "🌉",
   monument: "🗿",
   lake: "🏞️",

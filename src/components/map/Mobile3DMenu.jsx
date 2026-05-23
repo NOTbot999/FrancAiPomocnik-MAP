@@ -7,6 +7,7 @@ import MyTracks from "./MyTracks";
 import DeviceLink from "./DeviceLink";
 import ThemeCustomizer, { loadTheme } from "@/components/map/ThemeCustomizer";
 import { CATEGORIES, fetchFullSloveniaLayer } from "./SearchBar";
+import { loadCaves, cavesToLayerFeatures } from "@/components/map/CaveLayer";
 
 
 const DEFAULT_BUTTONS = [
@@ -120,6 +121,21 @@ export default function Mobile3DMenu({
       const layerId = `search_municipality`;
       onAddCustomLayer({ id: layerId, name: "🏘️ Občine", color: "#b45309", features: [], _searchCat: cat.id, _municipalityLayer: true });
       setActiveLayers(prev => ({ ...prev, [cat.id]: layerId }));
+      return;
+    }
+
+    // Cave DB layer — load from database
+    if (cat._caveDbLayer) {
+      setLoadingCat(cat.id);
+      try {
+        const caves = await loadCaves();
+        const features = cavesToLayerFeatures(caves);
+        const layerId = `search_caves_db`;
+        onAddCustomLayer({ id: layerId, name: "🕳️ Jame (baza)", color: "#78716c", features, _searchCat: cat.id, _caveDbLayer: true });
+        setActiveLayers(prev => ({ ...prev, [cat.id]: layerId }));
+      } finally {
+        setLoadingCat(null);
+      }
       return;
     }
 
