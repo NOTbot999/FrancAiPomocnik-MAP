@@ -300,6 +300,7 @@ export default function MapViewer() {
           customLayers={customLayers}
           customLayerVisible={customLayerVisible}
           customLayerOpacities={customLayerOpacities}
+          searchCategoryLayers={Object.values(activeSearchLayers).map(layerId => customLayers.find(l => l.id === layerId)).filter(Boolean)}
           gpsTrack={gpsTrack}
           onPinPicked={isPinPicking ? (latlng) => { setPinnedLocation([latlng.lat, latlng.lng]); setIsPinPicking(false); } : null}
         />

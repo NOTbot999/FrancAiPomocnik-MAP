@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useCallback, useImperativeHandle, f
 import { RotateCcw, RotateCw, Compass, ChevronUp, ChevronDown, Mountain, Square } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useMapLibreLayers } from "./useMapLibreLayers";
+import SearchCategory3DLayer from "./SearchCategory3DLayer";
 
 // MapLibre base map styles
 export const ML_BASE_STYLES = [
@@ -18,6 +19,7 @@ const Map3DView = forwardRef(function Map3DView({
   layerOpacities = {}, baseLayerOpacities = {},
   activeMLBase, onMLBaseChange,
   customLayers = [], customLayerVisible = {}, customLayerOpacities = {},
+  searchCategoryLayers = [],
   gpsTrack = [],
   onPinPicked,
 }, ref) {
@@ -291,7 +293,15 @@ const Map3DView = forwardRef(function Map3DView({
         </div>
       )}
 
-      {/* Base map selector removed — now lives in LayerPanel */}
+      {/* Search category layers (3D emoji symbols) */}
+      {searchCategoryLayers.map(catLayer => (
+        <SearchCategory3DLayer
+          key={catLayer.id}
+          layer={catLayer}
+          map={mapRef.current}
+          mapReady={mapReadyRef.current}
+        />
+      ))}
     </div>
   );
 });
