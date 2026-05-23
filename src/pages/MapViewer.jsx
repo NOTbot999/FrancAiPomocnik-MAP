@@ -704,31 +704,33 @@ export default function MapViewer() {
       )}
 
       {/* Mobile 3D Menu */}
-      <Mobile3DMenu
-        onClose={() => setIsMobile3DMenuOpen(false)}
-        isPanelOpen={isPanelOpen}
-        onTogglePanel={() => setIsPanelOpen(p => !p)}
-        activeTool={activeTool}
-        onToolChange={setActiveTool}
-        isGpsTracking={isGpsTracking}
-        onGpsToggle={handleGpsToggle}
-        isNavOpen={isNavOpen}
-        onNavToggle={() => setIsNavOpen(p => !p)}
-        isOfflineOpen={isOfflineOpen}
-        onOfflineToggle={() => setIsOfflineOpen(p => !p)}
-        isTrackAnalyzerOpen={isTrackAnalyzerOpen}
-        onTrackAnalyzerToggle={() => setIsTrackAnalyzerOpen(p => !p)}
-        isAIOpen={isAIOpen}
-        onAIToggle={() => setIsAIOpen(p => !p)}
-        onLocate={handleLocate}
-        measurements={measurements}
-        gpsTrack={gpsTrack}
-        showMyTracks={showMyTracks}
-        onShowMyTracks={() => setShowMyTracks(p => !p)}
-        onLoadTrack={handleLoadTrack}
-        is3DOpen={is3DOpen}
-        on3DToggle={() => { setIs3DOpen(p => !p); setMapLibreEverOpened(true); }}
-      />
+      {isMobile3DMenuOpen && (
+        <Mobile3DMenu
+          onClose={() => setIsMobile3DMenuOpen(false)}
+          isPanelOpen={isPanelOpen}
+          onTogglePanel={() => setIsPanelOpen(p => !p)}
+          activeTool={activeTool}
+          onToolChange={setActiveTool}
+          isGpsTracking={isGpsTracking}
+          onGpsToggle={handleGpsToggle}
+          isNavOpen={isNavOpen}
+          onNavToggle={() => setIsNavOpen(p => !p)}
+          isOfflineOpen={isOfflineOpen}
+          onOfflineToggle={() => setIsOfflineOpen(p => !p)}
+          isTrackAnalyzerOpen={isTrackAnalyzerOpen}
+          onTrackAnalyzerToggle={() => setIsTrackAnalyzerOpen(p => !p)}
+          isAIOpen={isAIOpen}
+          onAIToggle={() => setIsAIOpen(p => !p)}
+          onLocate={handleLocate}
+          measurements={measurements}
+          gpsTrack={gpsTrack}
+          showMyTracks={showMyTracks}
+          onShowMyTracks={() => setShowMyTracks(p => !p)}
+          onLoadTrack={handleLoadTrack}
+          is3DOpen={is3DOpen}
+          on3DToggle={() => { setIs3DOpen(p => !p); setMapLibreEverOpened(true); }}
+        />
+      )}
     </div>
   );
 }
