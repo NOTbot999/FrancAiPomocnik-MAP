@@ -36,7 +36,6 @@ const CATEGORIES = [
   { id: "cemetery",      label: "Pokopališča",    emoji: "⚰️", color: "#6b7280", query: `[out:json][timeout:30];(node["landuse"="cemetery"](45.4,13.4,46.9,16.6);way["landuse"="cemetery"](45.4,13.4,46.9,16.6););out center;` },
   { id: "municipality",  label: "Občine",         emoji: "🏘️", color: "#b45309", _municipalityLayer: true, query: `` },
   { id: "motorway_jct",  label: "AC uvozi",       emoji: "🛣️", color: "#64748b", query: `[out:json][timeout:30];node["highway"="motorway_junction"](45.4,13.4,46.9,16.6);out;` },
-  { id: "striptiz_psi", label: "Striptiz bar za pse", emoji: "🐶🦮💃", color: "#e11d48", _staticFeatures: [{ type: "Point", coords: [46.27760, 15.00911], label: "🐶🦮💃 striptiz bar za pse" }] },
 ];
 
 // Invalidate old cache for improved queries
@@ -96,12 +95,6 @@ async function fetchOverpass(query) {
 }
 
 async function fetchFullSloveniaLayer(cat) {
-  // Static features — no Overpass needed
-  if (cat._staticFeatures) {
-    const layer = { name: `${cat.emoji} ${cat.label}`, color: cat.color, features: cat._staticFeatures, _categoryId: cat.id };
-    layerCache[cat.id] = layer;
-    return layer;
-  }
   // 1. In-memory cache
   if (layerCache[cat.id]) return layerCache[cat.id];
   // 2. localStorage cache
