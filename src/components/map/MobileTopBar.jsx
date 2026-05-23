@@ -108,7 +108,7 @@ function MobileTopBarInner({
 
   const searchAlwaysVisible = isVisible("search");
 
-  const anyMenuOpen = showSettings || showNav || showOffline || showRuler || showSearch;
+  const anyMenuOpen = showSettings || showOffline || showRuler || showSearch;
 
   return createPortal(
     <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, zIndex: 950, pointerEvents: "none" }}>
@@ -230,6 +230,7 @@ function MobileTopBarInner({
             onPointerDown={(e) => e.stopPropagation()}
             onTouchStart={(e) => e.stopPropagation()}
             onTouchMove={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
             style={{ pointerEvents: "auto" }}
             className="absolute top-3 right-14 z-[970] w-72"
           >

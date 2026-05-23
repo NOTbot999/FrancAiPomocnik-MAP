@@ -216,7 +216,7 @@ export default function NavigationPanel({ onRouteResult, onClose, isOpen, onTogg
   };
 
   const panelInner = (
-    <div className="backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/60 overflow-hidden" style={{ backgroundColor: theme.menuBg, color: theme.menuText }}>
+    <div className="backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/60" style={{ backgroundColor: theme.menuBg, color: theme.menuText, overflow: "visible" }}>
       <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: theme.menuText + "22" }}>
         <span className="text-sm font-semibold flex items-center gap-2" style={{ color: theme.menuText }}>
           <Navigation className="w-4 h-4" style={{ color: theme.accentColor }} /> Route Planner

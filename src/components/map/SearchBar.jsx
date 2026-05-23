@@ -221,11 +221,22 @@ export default function SearchBar({ onLocationSelect, autoFocus, onAddCustomLaye
   };
 
   const handleKeyDown = (e) => {
+    if (e.key === "Escape") { setIsOpen(false); setShowCategories(false); return; }
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (highlighted >= 0 && results[highlighted]) {
+        handleSelect(results[highlighted]);
+      } else if (results.length > 0) {
+        handleSelect(results[0]);
+      } else if (query.length >= 2) {
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        doSearch(query);
+      }
+      return;
+    }
     if (!isOpen || results.length === 0) return;
     if (e.key === "ArrowDown") { e.preventDefault(); setHighlighted(h => Math.min(h + 1, results.length - 1)); }
     else if (e.key === "ArrowUp") { e.preventDefault(); setHighlighted(h => Math.max(h - 1, 0)); }
-    else if (e.key === "Enter" && highlighted >= 0) { e.preventDefault(); handleSelect(results[highlighted]); }
-    else if (e.key === "Escape") { setIsOpen(false); setShowCategories(false); }
   };
 
   const handleSelect = (item) => {
