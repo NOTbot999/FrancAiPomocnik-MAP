@@ -18,6 +18,7 @@ import { useUserSettings } from "@/hooks/useUserSettings";
 import { base44 } from "@/api/base44Client";
 import { scopedGet, scopedSet } from "@/lib/userPrefs";
 import Mobile3DMenu from "@/components/map/Mobile3DMenu";
+import { Layers, Search, Locate, Navigation, Ruler, Route, WifiOff, Brain, TrendingUp, Box } from "lucide-react";
 
 
 export default function MapViewer() {
@@ -506,20 +507,21 @@ export default function MapViewer() {
               if (mobileButtonPrefs.hidden?.includes(btnId)) return null;
               
               const buttonConfigs = {
-                layers: { icon: "M12 2 L2 7 L12 12 L22 7 L12 2 M2 17 L12 22 L22 17 M2 12 L12 17 L22 12", label: "Sloji", onClick: () => setIsPanelOpen(p => !p), isActive: isPanelOpen },
-                search: { icon: "M11 5a6 6 0 016 6m0 0a6 6 0 11-12 0 6 6 0 0112 0zM21 21l-4.35-4.35", label: "Iskanje", onClick: () => {}, isActive: false },
-                locate: { icon: "M21.5 2v6h-6M2.5 22v-6h6M2 11.5a9.5 9.5 0 0119 0 9.5 9.5 0 01-19 0", label: "Moja lokacija", onClick: () => handleLocate(mapCenter), isActive: false },
-                gps: { icon: "M12 2v6m0 8v6M4.93 4.93l4.24 4.24m5.66 5.66l4.24 4.24M2 12h6m6 0h6M4.93 19.07l4.24-4.24m5.66-5.66l4.24-4.24", label: "GPS sled", onClick: () => handleGpsToggle(), isActive: isGpsTracking },
-                ruler: { icon: "M3 3h18v18H3z", label: "Merilo", onClick: () => {}, isActive: activeTool === "ruler" },
-                nav: { icon: "M3 11l19-9L13 21l-2-8L3 11z", label: "Navigacija", onClick: () => setIsNavOpen(p => !p), isActive: isNavOpen },
-                offline: { icon: "M12 8v8m4-4H8", label: "Offline karte", onClick: () => setIsOfflineOpen(p => !p), isActive: isOfflineOpen },
-                ai: { icon: "M12 2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2.5 2.5 0 00-2.5 2.5V19a2 2 0 01-2 2", label: "AI Asistent", onClick: () => setIsAIOpen(p => !p), isActive: isAIOpen },
-                trackanalyzer: { icon: "M18 20v-10M12 20v-4M6 20v-6", label: "Analiza sledi", onClick: () => setIsTrackAnalyzerOpen(p => !p), isActive: isTrackAnalyzerOpen },
-                view3d: { icon: "M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z", label: "3D Pogled", onClick: () => { setIs3DOpen(p => !p); setMapLibreEverOpened(true); }, isActive: is3DOpen },
+                layers: { Icon: Layers, label: "Sloji", onClick: () => setIsPanelOpen(p => !p), isActive: isPanelOpen },
+                search: { Icon: Search, label: "Iskanje", onClick: () => {}, isActive: false },
+                locate: { Icon: Locate, label: "Moja lokacija", onClick: () => handleLocate(mapCenter), isActive: false },
+                gps: { Icon: Navigation, label: "GPS sled", onClick: () => handleGpsToggle(), isActive: isGpsTracking },
+                ruler: { Icon: Ruler, label: "Merilo", onClick: () => {}, isActive: activeTool === "ruler" },
+                nav: { Icon: Route, label: "Navigacija", onClick: () => setIsNavOpen(p => !p), isActive: isNavOpen },
+                offline: { Icon: WifiOff, label: "Offline karte", onClick: () => setIsOfflineOpen(p => !p), isActive: isOfflineOpen },
+                ai: { Icon: Brain, label: "AI Asistent", onClick: () => setIsAIOpen(p => !p), isActive: isAIOpen },
+                trackanalyzer: { Icon: TrendingUp, label: "Analiza sledi", onClick: () => setIsTrackAnalyzerOpen(p => !p), isActive: isTrackAnalyzerOpen },
+                view3d: { Icon: Box, label: "3D Pogled", onClick: () => { setIs3DOpen(p => !p); setMapLibreEverOpened(true); }, isActive: is3DOpen },
               };
               
               const config = buttonConfigs[btnId];
               if (!config) return null;
+              const Icon = config.Icon;
               
               return (
                 <button
@@ -529,7 +531,7 @@ export default function MapViewer() {
                   style={{ padding: "10px", color: config.isActive ? "#10b981" : "#fff", borderColor: config.isActive ? "rgba(16, 185, 129, 0.6)" : "rgba(148, 163, 184, 0.4)" }}
                   title={config.label}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" dangerouslySetInnerHTML={{ __html: config.icon }} />
+                  <Icon width={20} height={20} />
                 </button>
               );
             })}
