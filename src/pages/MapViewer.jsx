@@ -11,6 +11,7 @@ import { OVERLAY_CATEGORIES } from "@/components/map/layerConfig";
 import { useIsMobile } from "@/hooks/use-mobile";
 import AIPanel from "@/components/map/AIPanel";
 import TrackAnalyzer from "@/components/map/TrackAnalyzer";
+import Map3DView from "@/components/map/Map3DView";
 import LocationSummarizer from "@/components/map/LocationSummarizer";
 import DesktopToolbar from "@/components/map/DesktopToolbar";
 import { useUserSettings } from "@/hooks/useUserSettings";
@@ -226,6 +227,7 @@ export default function MapViewer() {
   const [isNavOpen, setIsNavOpen] = useState(false);
   const [isOfflineOpen, setIsOfflineOpen] = useState(false);
   const [isTrackAnalyzerOpen, setIsTrackAnalyzerOpen] = useState(false);
+  const [is3DOpen, setIs3DOpen] = useState(false);
   const [locationSummary, setLocationSummary] = useState(null); // { latlng: [lat, lng] }
   const [mapCenter, setMapCenter] = useState([46.1512, 14.9955]);
   const [mapZoom, setMapZoom] = useState(9);
@@ -302,6 +304,8 @@ export default function MapViewer() {
           onRemoveCustomLayer: handleRemoveCustomLayer,
           activeSearchLayers,
           onSearchLayersChange: setActiveSearchLayers,
+          is3DOpen,
+          on3DToggle: () => setIs3DOpen(p => !p),
         } : null}
         isPinPicking={isPinPicking}
         onPinPicked={(latlng) => { setPinnedLocation([latlng.lat, latlng.lng]); setIsPinPicking(false); }}
@@ -405,6 +409,8 @@ export default function MapViewer() {
             drawings={drawings}
             gpsTrack={gpsTrack}
             onLoadDrawings={handleLoadDrawings}
+            is3DOpen={is3DOpen}
+            on3DToggle={() => setIs3DOpen(p => !p)}
           />
         </>
       )}
@@ -535,6 +541,15 @@ export default function MapViewer() {
             🔑 Prijava
           </button>
         </div>
+      )}
+
+      {/* 3D View overlay */}
+      {is3DOpen && (
+        <Map3DView
+          center={mapCenter}
+          zoom={mapZoom}
+          onClose={() => setIs3DOpen(false)}
+        />
       )}
 
       {showAuthModal && (

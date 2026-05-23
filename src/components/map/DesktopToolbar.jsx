@@ -4,7 +4,7 @@ import {
   Navigation, Route, X,
   Map, Settings, Eye, EyeOff, Save, FolderOpen,
   Loader2, Check, GripVertical, Palette, Brain, TrendingUp,
-  AlertTriangle
+  AlertTriangle, Box
 } from "lucide-react";
 import LagReportModal from "@/components/map/LagReportModal";
 
@@ -26,6 +26,7 @@ const BUTTON_DEFS = [
   { id: "nav",             icon: Route,         label: "Načrtovanje poti",     color: "emerald" },
   { id: "ai",              icon: Brain,         label: "AI Asistent (Premium)", color: "amber" },
   { id: "trackanalyzer",   icon: TrendingUp,    label: "Analiza sledi (AI)",   color: "blue" },
+  { id: "view3d",          icon: Box,           label: "3D Pogled",            color: "violet" },
 ];
 
 const RULER_TOOLS = [
@@ -81,6 +82,7 @@ export default function DesktopToolbar({
   isAIOpen, onAIToggle,
   isTrackAnalyzerOpen, onTrackAnalyzerToggle,
   drawings, gpsTrack, onLoadDrawings,
+  is3DOpen, on3DToggle,
 }) {
   const [pos, setPos] = useState(loadPos);
   const [hidden, setHidden] = useState(loadHidden);
@@ -187,6 +189,7 @@ export default function DesktopToolbar({
     if (id === "nav")           return isNavOpen;
     if (id === "ai")            return isAIOpen;
     if (id === "trackanalyzer") return isTrackAnalyzerOpen;
+    if (id === "view3d")        return is3DOpen;
     if (id === "ruler")         return rulerOpen || ["distance","area","marker"].includes(activeTool);
     if (id === "save")          return savedOk;
     return false;
@@ -200,6 +203,7 @@ export default function DesktopToolbar({
     if (id === "nav")           { if (!isNavOpen) base44.analytics.track({ eventName: "route_planner_opened" }); return onNavToggle(); }
     if (id === "ai")            { if (!isAIOpen) base44.analytics.track({ eventName: "ai_panel_opened" }); return onAIToggle(); }
     if (id === "trackanalyzer") { if (!isTrackAnalyzerOpen) base44.analytics.track({ eventName: "track_analyzer_opened" }); return onTrackAnalyzerToggle(); }
+    if (id === "view3d")        return on3DToggle && on3DToggle();
     if (id === "ruler")         return setRulerOpen(p => !p);
     if (id === "save")          return handleSave();
     if (id === "load")          return handleLoad();

@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { GripVertical, Search, Locate, Navigation, Route, Ruler, X, Link2, ChevronDown, ChevronUp, Layers, Plus, WifiOff, Palette, Brain, AlertTriangle, TrendingUp } from "lucide-react";
+import { GripVertical, Search, Locate, Navigation, Route, Ruler, X, Link2, ChevronDown, ChevronUp, Layers, Plus, WifiOff, Palette, Brain, AlertTriangle, TrendingUp, Box } from "lucide-react";
 import LagReportModal from "@/components/map/LagReportModal";
 import { Slider } from "@/components/ui/slider";
 import MyTracks from "./MyTracks";
@@ -19,8 +19,8 @@ const DEFAULT_BUTTONS = [
   { id: "nav",     label: "Navigacija",     icon: Route },
   { id: "offline", label: "Offline karte",  icon: WifiOff },
   { id: "ai",      label: "AI Asistent",    icon: Brain },
-  { id: "nav",          label: "Načrtovanje poti", icon: Route },
   { id: "trackanalyzer", label: "Analiza sledi",    icon: TrendingUp },
+  { id: "view3d",        label: "3D Pogled",         icon: Box },
 ];
 
 function loadPrefs() {
