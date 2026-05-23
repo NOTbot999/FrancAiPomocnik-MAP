@@ -268,6 +268,10 @@ export default function MapViewer() {
           zoom={mapZoom}
           is3D={use3DMode}
           onClose={() => setIs3DOpen(false)}
+          activeBaseLayers={Object.fromEntries(Object.entries(activeBaseLayers).map(([id]) => [id, true]))}
+          activeLayers={Object.fromEntries(Object.entries(activeLayers).map(([id]) => [id, true]))}
+          layerOpacities={Object.fromEntries(Object.entries(activeLayers).map(([id, v]) => [id, v?.opacity ?? 0.7]))}
+          baseLayerOpacities={Object.fromEntries(Object.entries(activeBaseLayers).map(([id, v]) => [id, v?.opacity ?? 1]))}
         />
       )}
 

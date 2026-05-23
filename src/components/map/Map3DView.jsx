@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { RotateCcw, RotateCw, Compass, ChevronUp, ChevronDown, Mountain, Square } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { useMapLibreLayers } from "./useMapLibreLayers";
 
 // MapLibre base map styles
 export const ML_BASE_STYLES = [
@@ -11,7 +12,11 @@ export const ML_BASE_STYLES = [
   { id: "hybrid",    label: "Hibrid",      style: (key) => `https://api.maptiler.com/maps/hybrid/style.json?key=${key}` },
 ];
 
-export default function Map3DView({ center, zoom, onClose, is3D = true }) {
+export default function Map3DView({
+  center, zoom, onClose, is3D = true,
+  activeBaseLayers = {}, activeLayers = {},
+  layerOpacities = {}, baseLayerOpacities = {},
+}) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   const apiKeyRef = useRef(null);
@@ -23,6 +28,16 @@ export default function Map3DView({ center, zoom, onClose, is3D = true }) {
   const autoRotate = useRef(null);
   const [isAutoRotating, setIsAutoRotating] = useState(false);
   const mapReadyRef = useRef(false);
+  const [mapReady, setMapReady] = useState(false);
+
+  // Sync LayerPanel layers into MapLibre
+  useMapLibreLayers(mapRef, mapReadyRef, {
+    activeBaseLayers,
+    activeLayers,
+    layerOpacities,
+    baseLayerOpacities,
+    mapReady,
+  });
 
   const setupTerrain = useCallback((map, key) => {
     if (!map.getSource("terrain-dem")) {
@@ -95,6 +110,7 @@ export default function Map3DView({ center, zoom, onClose, is3D = true }) {
           if (cancelled) return;
           if (is3D) setupTerrain(map, apiKey);
           mapReadyRef.current = true;
+          setMapReady(true);
           setLoading(false);
         });
 
@@ -123,9 +139,14 @@ export default function Map3DView({ center, zoom, onClose, is3D = true }) {
     const styleDef = ML_BASE_STYLES.find(s => s.id === styleId);
     if (!styleDef) return;
     setActiveBase(styleId);
+    mapReadyRef.current = false;
     map.setStyle(styleDef.style(apiKey));
     map.once("style.load", () => {
       if (is3D) setupTerrain(map, apiKey);
+      mapReadyRef.current = true;
+      // Force re-sync of layers by toggling mapReady
+      setMapReady(false);
+      setTimeout(() => setMapReady(true), 50);
     });
   }, [setupTerrain, is3D]);
 
