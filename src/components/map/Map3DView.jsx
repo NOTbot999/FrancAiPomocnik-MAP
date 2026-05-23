@@ -94,10 +94,12 @@ const Map3DView = forwardRef(function Map3DView({
         if (cancelled || !containerRef.current) return;
 
         const maplibre = window.maplibregl;
+        const safeLng = (center && !isNaN(center[1])) ? center[1] : 14.9955;
+        const safeLat = (center && !isNaN(center[0])) ? center[0] : 46.1512;
         map = new maplibre.Map({
           container: containerRef.current,
           style: ML_BASE_STYLES[0].style(apiKey),
-          center: [center[1], center[0]],
+          center: [safeLng, safeLat],
           zoom: zoom ?? 11,
           pitch: is3D ? 60 : 0,
           bearing: 0,
@@ -141,6 +143,8 @@ const Map3DView = forwardRef(function Map3DView({
     if (!styleDef) return;
     setActiveBase(styleId);
     if (onMLBaseChange) onMLBaseChange(styleId);
+    // Stop any in-flight camera animation before switching style to prevent NaN unproject errors
+    try { map.stop(); } catch {}
     mapReadyRef.current = false;
     map.setStyle(styleDef.style(apiKey));
     map.once("style.load", () => {
@@ -211,6 +215,7 @@ const Map3DView = forwardRef(function Map3DView({
     const map = mapRef.current;
     const apiKey = apiKeyRef.current;
     if (!map || !mapReadyRef.current) return;
+    try { map.stop(); } catch {}
     const targetPitch = is3D ? 60 : 0;
     map.easeTo({ pitch: targetPitch, duration: 600 });
     setPitch(targetPitch);
