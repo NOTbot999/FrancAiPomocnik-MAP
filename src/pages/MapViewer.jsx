@@ -228,6 +228,7 @@ export default function MapViewer() {
   const [isOfflineOpen, setIsOfflineOpen] = useState(false);
   const [isTrackAnalyzerOpen, setIsTrackAnalyzerOpen] = useState(false);
   const [is3DOpen, setIs3DOpen] = useState(false);
+  const [mapLibreEverOpened, setMapLibreEverOpened] = useState(false);
   const [use3DMode, setUse3DMode] = useState(true); // true = 3D terrain, false = 2D rotatable
   const [locationSummary, setLocationSummary] = useState(null); // { latlng: [lat, lng] }
   const [mapCenter, setMapCenter] = useState([46.1512, 14.9955]);
@@ -261,19 +262,20 @@ export default function MapViewer() {
   return (
     <div className="relative w-full h-screen overflow-hidden" style={{ backgroundColor: "#e8ede8", backgroundImage: "url('https://media.base44.com/images/public/69ad3ce309822f8e71f66838/b15473e19_5992128811794894233.jpg')", backgroundSize: "contain", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>
 
-      {/* MapLibre 3D/2D-rotatable map — rendered as base layer when active */}
-      {is3DOpen && (
+      {/* MapLibre 3D/2D-rotatable map — kept mounted once initialized to avoid re-init on toggle */}
+      <div style={{ position: "absolute", inset: 0, visibility: is3DOpen ? "visible" : "hidden", pointerEvents: is3DOpen ? "auto" : "none", display: mapLibreEverOpened ? undefined : "none" }}>
         <Map3DView
           center={mapCenter}
           zoom={mapZoom}
           is3D={use3DMode}
+          isVisible={is3DOpen}
           onClose={() => setIs3DOpen(false)}
           activeBaseLayers={Object.fromEntries(Object.entries(activeBaseLayers).map(([id]) => [id, true]))}
           activeLayers={Object.fromEntries(Object.entries(activeLayers).map(([id]) => [id, true]))}
           layerOpacities={Object.fromEntries(Object.entries(activeLayers).map(([id, v]) => [id, v?.opacity ?? 0.7]))}
           baseLayerOpacities={Object.fromEntries(Object.entries(activeBaseLayers).map(([id, v]) => [id, v?.opacity ?? 1]))}
         />
-      )}
+      </div>
 
       {/* Leaflet 2D map — hidden (not unmounted) when 3D is active to preserve state */}
       <div style={{ position: "absolute", inset: 0, visibility: is3DOpen ? "hidden" : "visible", pointerEvents: is3DOpen ? "none" : "auto" }}>
@@ -323,7 +325,7 @@ export default function MapViewer() {
           activeSearchLayers,
           onSearchLayersChange: setActiveSearchLayers,
           is3DOpen,
-          on3DToggle: () => setIs3DOpen(p => !p),
+          on3DToggle: () => { setIs3DOpen(p => !p); setMapLibreEverOpened(true); },
         } : null}
         isPinPicking={isPinPicking}
         onPinPicked={(latlng) => { setPinnedLocation([latlng.lat, latlng.lng]); setIsPinPicking(false); }}
@@ -429,9 +431,9 @@ export default function MapViewer() {
             gpsTrack={gpsTrack}
             onLoadDrawings={handleLoadDrawings}
             is3DOpen={is3DOpen}
-            on3DToggle={() => setIs3DOpen(p => !p)}
+            on3DToggle={() => { setIs3DOpen(p => !p); setMapLibreEverOpened(true); }}
             use3DMode={use3DMode}
-            onToggle3DMode={() => setUse3DMode(p => !p)}
+            onToggle3DMode={() => { setUse3DMode(p => !p); setIs3DOpen(true); setMapLibreEverOpened(true); }}
           />
         </>
       )}

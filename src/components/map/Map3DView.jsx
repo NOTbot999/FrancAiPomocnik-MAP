@@ -13,7 +13,7 @@ export const ML_BASE_STYLES = [
 ];
 
 export default function Map3DView({
-  center, zoom, onClose, is3D = true,
+  center, zoom, onClose, is3D = true, isVisible = true,
   activeBaseLayers = {}, activeLayers = {},
   layerOpacities = {}, baseLayerOpacities = {},
 }) {
@@ -192,6 +192,29 @@ export default function Map3DView({
   useEffect(() => {
     return () => { if (autoRotate.current) clearInterval(autoRotate.current); };
   }, []);
+
+  // Trigger resize when map becomes visible
+  useEffect(() => {
+    if (!isVisible) return;
+    const map = mapRef.current;
+    if (!map || !mapReadyRef.current) return;
+    setTimeout(() => { try { map.resize(); } catch {} }, 50);
+  }, [isVisible]);
+
+  // React to is3D prop changes without full re-init
+  useEffect(() => {
+    const map = mapRef.current;
+    const apiKey = apiKeyRef.current;
+    if (!map || !mapReadyRef.current) return;
+    const targetPitch = is3D ? 60 : 0;
+    map.easeTo({ pitch: targetPitch, duration: 600 });
+    setPitch(targetPitch);
+    if (is3D && apiKey) {
+      setupTerrain(map, apiKey);
+    } else {
+      try { map.setTerrain(null); } catch {}
+    }
+  }, [is3D, setupTerrain]);
 
   return (
     <div className="absolute inset-0" style={{ zIndex: 1 }}>
