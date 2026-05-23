@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import AuthModal from "@/components/AuthModal";
 import MapContainerComponent from "@/components/map/MapContainer";
 import LayerPanel from "@/components/map/LayerPanel";
@@ -230,6 +230,8 @@ export default function MapViewer() {
   const [is3DOpen, setIs3DOpen] = useState(false);
   const [mapLibreEverOpened, setMapLibreEverOpened] = useState(false);
   const [use3DMode, setUse3DMode] = useState(true); // true = 3D terrain, false = 2D rotatable
+  const [activeMLBase, setActiveMLBase] = useState("satellite");
+  const map3DRef = useRef(null);
   const [locationSummary, setLocationSummary] = useState(null); // { latlng: [lat, lng] }
   const [mapCenter, setMapCenter] = useState([46.1512, 14.9955]);
   const [mapZoom, setMapZoom] = useState(9);
@@ -265,6 +267,7 @@ export default function MapViewer() {
       {/* MapLibre 3D/2D-rotatable map — kept mounted once initialized to avoid re-init on toggle */}
       <div style={{ position: "absolute", inset: 0, visibility: is3DOpen ? "visible" : "hidden", pointerEvents: is3DOpen ? "auto" : "none", display: mapLibreEverOpened ? undefined : "none" }}>
         <Map3DView
+          ref={map3DRef}
           center={mapCenter}
           zoom={mapZoom}
           is3D={use3DMode}
@@ -274,6 +277,8 @@ export default function MapViewer() {
           activeLayers={Object.fromEntries(Object.entries(activeLayers).map(([id]) => [id, true]))}
           layerOpacities={Object.fromEntries(Object.entries(activeLayers).map(([id, v]) => [id, v?.opacity ?? 0.7]))}
           baseLayerOpacities={Object.fromEntries(Object.entries(activeBaseLayers).map(([id, v]) => [id, v?.opacity ?? 1]))}
+          activeMLBase={activeMLBase}
+          onMLBaseChange={(id) => { setActiveMLBase(id); }}
         />
       </div>
 
@@ -438,6 +443,33 @@ export default function MapViewer() {
         </>
       )}
 
+      {/* Mobile 3D overlay controls — visible on top of MapLibre when 3D is active */}
+      {isMobile && is3DOpen && (
+        <div className="absolute top-3 right-3 z-[960] flex flex-col gap-2" style={{ pointerEvents: "auto" }}>
+          <button
+            onClick={() => setIs3DOpen(false)}
+            className="flex items-center justify-center rounded-xl border border-red-400/50 shadow-md bg-black/40 backdrop-blur"
+            style={{ padding: "10px", color: "#f87171" }}
+            title="Zapri 3D"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+          <button
+            onClick={() => setIsPanelOpen(p => !p)}
+            className="flex items-center justify-center rounded-xl border border-slate-400/40 shadow-md bg-black/40 backdrop-blur relative"
+            style={{ padding: "10px", color: isPanelOpen ? "#10b981" : "#fff" }}
+            title="Sloji"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+            {activeLayerCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-emerald-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                {activeLayerCount}
+              </span>
+            )}
+          </button>
+        </div>
+      )}
+
       {/* AI Panel — mobile */}
       {isMobile && isAIOpen && (
         <div className="absolute bottom-0 left-0 right-0 z-[960] flex justify-center pb-4 px-3">
@@ -523,6 +555,9 @@ export default function MapViewer() {
         onRemoveCustomLayer={handleRemoveCustomLayer}
         favoritedCustomLayerIds={favoritedCustomLayerIds}
         onFavoriteCustomLayer={handleFavoriteCustomLayer}
+        is3DOpen={is3DOpen}
+        activeMLBase={activeMLBase}
+        onMLBaseChange={(id) => { setActiveMLBase(id); map3DRef.current?.switchBase(id); }}
       />
 
       {/* Navigation Panel — available on both mobile and desktop */}

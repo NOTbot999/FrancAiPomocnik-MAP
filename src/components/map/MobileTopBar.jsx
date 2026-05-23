@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Layers, Locate, LoaderCircle, Plus, Minus, Ruler, MapPin, Trash2, MousePointer2, Navigation, Settings, Route, WifiOff, Brain, TrendingUp, Box } from "lucide-react";
+import { Layers, Locate, LoaderCircle, Plus, Minus, Ruler, MapPin, Trash2, MousePointer2, Navigation, Settings, Route, WifiOff, Brain, TrendingUp, Box, X, RotateCcw, RotateCw } from "lucide-react";
 import { useMap } from "react-leaflet";
 import { createPortal } from "react-dom";
 import SearchBar from "./SearchBar";
@@ -118,6 +118,9 @@ function MobileTopBarInner({
 
   return createPortal(
     <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, zIndex: 950, pointerEvents: "none" }}>
+
+
+
       {/* Map interaction blocker — when any menu is open */}
       {anyMenuOpen && (
         <div

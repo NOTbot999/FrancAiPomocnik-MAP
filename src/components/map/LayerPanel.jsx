@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useRef } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { Layers, X, ExternalLink, ChevronDown, BookOpen, GripVertical } from "lucide-react";
+import { Layers, X, ExternalLink, ChevronDown, BookOpen, GripVertical, Mountain } from "lucide-react";
+import { ML_BASE_STYLES } from "./Map3DView";
 import { base44 } from "@/api/base44Client";
 import { Slider } from "@/components/ui/slider";
 import { motion, AnimatePresence } from "framer-motion";
@@ -290,7 +291,34 @@ function CustomLayersSection({ customLayers, onRemoveCustomLayer, favoritedIds, 
   );
 }
 
-function PanelContent({ activeBaseLayers, onSelectBaseLayer, activeLayers, onToggleLayer, onOpacityChange, favorites, onToggleFavorite, layerOrder, onLayerReorder, customLayers, onRemoveCustomLayer, favoritedCustomLayerIds, onFavoriteCustomLayer, savedCustomLayers, customLayerVisible, onToggleCustomLayerVisible, customLayerOpacities, onCustomLayerOpacity }) {
+function MLBaseGrid({ activeMLBase, onMLBaseChange }) {
+  return (
+    <div className="px-3 pb-3 pt-2 border-b border-slate-700/50">
+      <div className="flex items-center gap-1.5 mb-2">
+        <Mountain className="w-3 h-3 text-emerald-400" />
+        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">3D / MapLibre karta</p>
+      </div>
+      <div className="grid grid-cols-5 gap-1">
+        {ML_BASE_STYLES.map(style => {
+          const isActive = activeMLBase === style.id;
+          return (
+            <button
+              key={style.id}
+              onClick={() => onMLBaseChange && onMLBaseChange(style.id)}
+              className={`px-1.5 py-1.5 rounded-lg text-[9px] font-medium transition-all ${
+                isActive ? "bg-emerald-500 text-white" : "bg-slate-700/60 hover:bg-slate-600/60 text-slate-300"
+              }`}
+            >
+              {style.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function PanelContent({ activeBaseLayers, onSelectBaseLayer, activeLayers, onToggleLayer, onOpacityChange, favorites, onToggleFavorite, layerOrder, onLayerReorder, customLayers, onRemoveCustomLayer, favoritedCustomLayerIds, onFavoriteCustomLayer, savedCustomLayers, customLayerVisible, onToggleCustomLayerVisible, customLayerOpacities, onCustomLayerOpacity, is3DOpen, activeMLBase, onMLBaseChange }) {
   const activeLayerCount = Object.keys(activeLayers).length;
 
   // Category order — persisted in localStorage
@@ -319,6 +347,9 @@ function PanelContent({ activeBaseLayers, onSelectBaseLayer, activeLayers, onTog
     <div className="pt-2 pb-4">
       {/* Base Map grid — always at top, radio select */}
       <BaseMapGrid activeBaseLayers={activeBaseLayers} onSelectBaseLayer={onSelectBaseLayer} />
+
+      {/* MapLibre 3D base styles — shown only when 3D view is active */}
+      {is3DOpen && <MLBaseGrid activeMLBase={activeMLBase} onMLBaseChange={onMLBaseChange} />}
 
       {/* AI Custom layers */}
       <CustomLayersSection customLayers={customLayers} onRemoveCustomLayer={onRemoveCustomLayer} favoritedIds={favoritedCustomLayerIds} onFavorite={onFavoriteCustomLayer} customLayerVisible={customLayerVisible} onToggleVisible={onToggleCustomLayerVisible} customLayerOpacities={customLayerOpacities} onOpacityChange={onCustomLayerOpacity} />
@@ -419,6 +450,9 @@ export default function LayerPanel({
   onToggleCustomLayerVisible,
   customLayerOpacities,
   onCustomLayerOpacity,
+  is3DOpen,
+  activeMLBase,
+  onMLBaseChange,
 }) {
   const isMobile = useIsMobile();
   const [favorites, setFavorites] = useState(() => scopedGet("layerFavorites") || []);
@@ -451,7 +485,7 @@ export default function LayerPanel({
     .map(id => customLayers?.find(l => l.id === id))
     .filter(Boolean);
 
-  const panelProps = { activeBaseLayers, onSelectBaseLayer: handleSelectBaseLayer, activeLayers, onToggleLayer: trackedToggleLayer, onOpacityChange, favorites, onToggleFavorite: handleToggleFavorite, layerOrder, onLayerReorder, customLayers, onRemoveCustomLayer, favoritedCustomLayerIds, onFavoriteCustomLayer, savedCustomLayers, customLayerVisible, onToggleCustomLayerVisible, customLayerOpacities, onCustomLayerOpacity };
+  const panelProps = { activeBaseLayers, onSelectBaseLayer: handleSelectBaseLayer, activeLayers, onToggleLayer: trackedToggleLayer, onOpacityChange, favorites, onToggleFavorite: handleToggleFavorite, layerOrder, onLayerReorder, customLayers, onRemoveCustomLayer, favoritedCustomLayerIds, onFavoriteCustomLayer, savedCustomLayers, customLayerVisible, onToggleCustomLayerVisible, customLayerOpacities, onCustomLayerOpacity, is3DOpen, activeMLBase, onMLBaseChange };
 
   const panelBg = theme.panelBg || "#0f172a";
   const panelText = theme.panelText || "#e2e8f0";

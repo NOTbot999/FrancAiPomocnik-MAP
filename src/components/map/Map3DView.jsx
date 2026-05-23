@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback, useImperativeHandle, forwardRef } from "react";
 import { RotateCcw, RotateCw, Compass, ChevronUp, ChevronDown, Mountain, Square } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useMapLibreLayers } from "./useMapLibreLayers";
@@ -12,11 +12,12 @@ export const ML_BASE_STYLES = [
   { id: "hybrid",    label: "Hibrid",      style: (key) => `https://api.maptiler.com/maps/hybrid/style.json?key=${key}` },
 ];
 
-export default function Map3DView({
+const Map3DView = forwardRef(function Map3DView({
   center, zoom, onClose, is3D = true, isVisible = true,
   activeBaseLayers = {}, activeLayers = {},
   layerOpacities = {}, baseLayerOpacities = {},
-}) {
+  activeMLBase, onMLBaseChange,
+}, ref) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   const apiKeyRef = useRef(null);
@@ -24,7 +25,7 @@ export default function Map3DView({
   const [error, setError] = useState(null);
   const [pitch, setPitch] = useState(is3D ? 60 : 0);
   const [bearing, setBearing] = useState(0);
-  const [activeBase, setActiveBase] = useState("satellite");
+  const [activeBase, setActiveBase] = useState(activeMLBase || "satellite");
   const autoRotate = useRef(null);
   const [isAutoRotating, setIsAutoRotating] = useState(false);
   const mapReadyRef = useRef(false);
@@ -139,6 +140,7 @@ export default function Map3DView({
     const styleDef = ML_BASE_STYLES.find(s => s.id === styleId);
     if (!styleDef) return;
     setActiveBase(styleId);
+    if (onMLBaseChange) onMLBaseChange(styleId);
     mapReadyRef.current = false;
     map.setStyle(styleDef.style(apiKey));
     map.once("style.load", () => {
@@ -192,6 +194,9 @@ export default function Map3DView({
   useEffect(() => {
     return () => { if (autoRotate.current) clearInterval(autoRotate.current); };
   }, []);
+
+  // Expose switchBase to parent via ref
+  useImperativeHandle(ref, () => ({ switchBase }), [switchBase]);
 
   // Trigger resize when map becomes visible
   useEffect(() => {
@@ -279,24 +284,9 @@ export default function Map3DView({
         </div>
       )}
 
-      {/* Base map selector — bottom left */}
-      {!loading && !error && (
-        <div className="absolute bottom-8 left-4 z-[500] flex flex-col gap-1">
-          {ML_BASE_STYLES.map(style => (
-            <button
-              key={style.id}
-              onClick={() => switchBase(style.id)}
-              className={`px-2 py-1 rounded-lg text-[10px] font-medium backdrop-blur transition ${
-                activeBase === style.id
-                  ? "bg-emerald-500 text-white"
-                  : "bg-black/60 hover:bg-black/80 text-white/80"
-              }`}
-            >
-              {style.label}
-            </button>
-          ))}
-        </div>
-      )}
+      {/* Base map selector removed — now lives in LayerPanel */}
     </div>
   );
-}
+});
+
+export default Map3DView;
