@@ -135,12 +135,12 @@ async function fetchFullSloveniaLayer(cat) {
 
 // ── Nominatim text search ─────────────────────────────────────────────────────
 async function searchNominatim(q) {
-  const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=10&addressdetails=1&countrycodes=si&dedupe=1`;
-  const res = await fetch(url, { headers: { "Accept-Language": "sl,en" } });
+  const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=10&addressdetails=1&namedetails=1&countrycodes=si&dedupe=1`;
+  const res = await fetch(url, { headers: { "Accept-Language": "sl,hr,en", "User-Agent": "SloveniaGISExplorer/1.0" } });
   let data = await res.json();
   if (data.length === 0) {
-    const global = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=8&addressdetails=1&dedupe=1`;
-    const res2 = await fetch(global, { headers: { "Accept-Language": "sl,en" } });
+    const global = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=8&addressdetails=1&namedetails=1&dedupe=1`;
+    const res2 = await fetch(global, { headers: { "Accept-Language": "sl,hr,en", "User-Agent": "SloveniaGISExplorer/1.0" } });
     data = await res2.json();
   }
   return data;
