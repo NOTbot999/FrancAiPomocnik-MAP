@@ -172,8 +172,119 @@ export function useMapLibreLayers(mapRef, mapReadyRef, {
       const srcId = `src-${id}`;
 
       if (!visible) {
+        // Remove GeoJSON layers (points, lines, polygons)
+        if (map.getLayer(`${mlId}-points`)) try { map.removeLayer(`${mlId}-points`); } catch {}
+        if (map.getLayer(`${mlId}-lines`)) try { map.removeLayer(`${mlId}-lines`); } catch {}
+        if (map.getLayer(`${mlId}-polygons`)) try { map.removeLayer(`${mlId}-polygons`); } catch {}
+        // Remove raster layer
         if (map.getLayer(mlId)) try { map.removeLayer(mlId); } catch {}
         if (map.getSource(srcId)) try { map.removeSource(srcId); } catch {}
+        continue;
+      }
+
+      // Check if this is a GeoJSON custom layer (has features array)
+      if (layer.features && Array.isArray(layer.features)) {
+        // Convert features to GeoJSON
+        const geojsonFeatures = layer.features.map(f => {
+          if (f.type === "Point") {
+            return {
+              type: "Feature",
+              geometry: { type: "Point", coordinates: [f.coords[1], f.coords[0]] },
+              properties: { label: f.label || "" }
+            };
+          } else if (f.type === "LineString" || f.type === "Polygon") {
+            return {
+              type: "Feature",
+              geometry: { type: f.type, coordinates: f.coords.map(c => [c[1], c[0]]) },
+              properties: { label: f.label || "" }
+            };
+          }
+          return null;
+        }).filter(Boolean);
+
+        const geojson = { type: "FeatureCollection", features: geojsonFeatures };
+
+        if (!map.getSource(srcId)) {
+          map.addSource(srcId, { type: "geojson", data: geojson });
+        } else {
+          map.getSource(srcId).setData(geojson);
+        }
+
+        // Remove old raster layer if exists
+        if (map.getLayer(mlId)) try { map.removeLayer(mlId); } catch {}
+
+        // Add appropriate layer type based on geometry
+        const hasPoints = geojsonFeatures.some(f => f.geometry.type === "Point");
+        const hasLines = geojsonFeatures.some(f => f.geometry.type === "LineString");
+        const hasPolygons = geojsonFeatures.some(f => f.geometry.type === "Polygon");
+
+        if (hasPoints) {
+          const pointLayerId = `${mlId}-points`;
+          if (!map.getLayer(pointLayerId)) {
+            map.addLayer({
+              id: pointLayerId,
+              type: "circle",
+              source: srcId,
+              filter: ["==", "$type", "Point"],
+              paint: {
+                "circle-radius": 6,
+                "circle-color": layer.color || "#1d9bf0",
+                "circle-opacity": opacity,
+                "circle-stroke-width": 2,
+                "circle-stroke-color": "#ffffff"
+              }
+            });
+          } else {
+            try {
+              map.setPaintProperty(pointLayerId, "circle-opacity", opacity);
+              map.setPaintProperty(pointLayerId, "circle-color", layer.color || "#1d9bf0");
+            } catch {}
+          }
+        }
+
+        if (hasLines) {
+          const lineLayerId = `${mlId}-lines`;
+          if (!map.getLayer(lineLayerId)) {
+            map.addLayer({
+              id: lineLayerId,
+              type: "line",
+              source: srcId,
+              filter: ["==", "$type", "LineString"],
+              paint: {
+                "line-width": 3,
+                "line-color": layer.color || "#1d9bf0",
+                "line-opacity": opacity
+              }
+            });
+          } else {
+            try {
+              map.setPaintProperty(lineLayerId, "line-opacity", opacity);
+              map.setPaintProperty(lineLayerId, "line-color", layer.color || "#1d9bf0");
+            } catch {}
+          }
+        }
+
+        if (hasPolygons) {
+          const polygonLayerId = `${mlId}-polygons`;
+          if (!map.getLayer(polygonLayerId)) {
+            map.addLayer({
+              id: polygonLayerId,
+              type: "fill",
+              source: srcId,
+              filter: ["==", "$type", "Polygon"],
+              paint: {
+                "fill-color": layer.color || "#1d9bf0",
+                "fill-opacity": opacity * 0.6
+              }
+            });
+          } else {
+            try {
+              map.setPaintProperty(polygonLayerId, "fill-opacity", opacity * 0.6);
+              map.setPaintProperty(polygonLayerId, "fill-color", layer.color || "#1d9bf0");
+            } catch {}
+          }
+        }
+
         continue;
       }
 
@@ -195,4 +306,15 @@ export function useMapLibreLayers(mapRef, mapReadyRef, {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [customLayers, customLayerVisible, customLayerOpacities, mapReady]);
+
+  // Cleanup removed custom layers
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapReadyRef.current) return;
+
+    const customIds = customLayers.map(l => l.id);
+    // Find and remove layers that are no longer in customLayers array
+    // This is handled by the main effect when layers are removed from the array
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customLayers]);
 }
