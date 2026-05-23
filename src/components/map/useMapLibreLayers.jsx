@@ -76,21 +76,20 @@ function addLayerToMap(map, layerId, config, opacity = 1) {
       type: "raster",
       tiles: [tileUrl],
       tileSize: config.tileSize || 256,
+      minzoom: 0,
+      maxzoom: 19,
     });
   }
 
-  // Insert before terrain/sky so it doesn't cover 3D
-  const beforeLayer = map.getLayer("sky") ? "sky" : undefined;
-
-  map.addLayer(
-    {
-      id: mlLayerId,
-      type: "raster",
-      source: sourceId,
-      paint: { "raster-opacity": opacity },
+  map.addLayer({
+    id: mlLayerId,
+    type: "raster",
+    source: sourceId,
+    paint: {
+      "raster-opacity": opacity,
+      "raster-fade-duration": 0,
     },
-    beforeLayer
-  );
+  });
 }
 
 function removeLayerFromMap(map, layerId) {

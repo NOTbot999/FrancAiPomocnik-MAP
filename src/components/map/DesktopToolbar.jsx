@@ -27,6 +27,7 @@ const BUTTON_DEFS = [
   { id: "ai",              icon: Brain,         label: "AI Asistent (Premium)", color: "amber" },
   { id: "trackanalyzer",   icon: TrendingUp,    label: "Analiza sledi (AI)",   color: "blue" },
   { id: "view3d",          icon: Box,           label: "3D Pogled",            color: "violet" },
+  { id: "toggle3dmode",    icon: Mountain,      label: "3D Terrain / 2D Rotacija", color: "slate" },
 ];
 
 const RULER_TOOLS = [
@@ -191,6 +192,7 @@ export default function DesktopToolbar({
     if (id === "ai")            return isAIOpen;
     if (id === "trackanalyzer") return isTrackAnalyzerOpen;
     if (id === "view3d")        return is3DOpen;
+    if (id === "toggle3dmode")  return use3DMode;
     if (id === "ruler")         return rulerOpen || ["distance","area","marker"].includes(activeTool);
     if (id === "save")          return savedOk;
     return false;
@@ -205,12 +207,19 @@ export default function DesktopToolbar({
     if (id === "ai")            { if (!isAIOpen) base44.analytics.track({ eventName: "ai_panel_opened" }); return onAIToggle(); }
     if (id === "trackanalyzer") { if (!isTrackAnalyzerOpen) base44.analytics.track({ eventName: "track_analyzer_opened" }); return onTrackAnalyzerToggle(); }
     if (id === "view3d")        return on3DToggle && on3DToggle();
+    if (id === "toggle3dmode")  return onToggle3DMode && onToggle3DMode();
     if (id === "ruler")         return setRulerOpen(p => !p);
     if (id === "save")          return handleSave();
     if (id === "load")          return handleLoad();
   };
 
   const hasAnything = drawings && (drawings.markers?.length || drawings.lines?.length || drawings.polygons?.length || gpsTrack?.length);
+
+  // Dynamic icon for 3D mode toggle
+  const getButtonIcon = (btn) => {
+    if (btn.id === "toggle3dmode") return use3DMode ? Square : Mountain;
+    return btn.icon;
+  };
 
   const visibleButtons = BUTTON_DEFS.filter(b => !hidden.includes(b.id));
 
@@ -239,7 +248,7 @@ export default function DesktopToolbar({
                        : btn.id === "save" && saving    ? Loader2
                        : btn.id === "save" && savedOk   ? Check
                        : btn.id === "load" && loadingDraw ? Loader2
-                       : btn.icon;
+                       : getButtonIcon(btn);
               const active = isActive(btn.id);
               const disabled = btn.id === "save" && !hasAnything && !savedOk;
 
@@ -272,32 +281,6 @@ export default function DesktopToolbar({
               );
             })}
           </TooltipProvider>
-
-          {/* 2D/3D mode toggle — only visible when 3D view is open */}
-          {is3DOpen && (
-            <>
-              <div className="w-6 h-px bg-slate-200 my-0.5" />
-              <TooltipProvider delayDuration={400}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={onToggle3DMode}
-                      style={use3DMode
-                        ? { backgroundColor: theme.buttonActiveBg, color: theme.buttonActiveText, borderColor: theme.buttonActiveBg }
-                        : { backgroundColor: theme.toolbarBg, color: theme.toolbarText, borderColor: "#e2e8f0" }
-                      }
-                      className="relative w-10 h-10 rounded-xl flex items-center justify-center border shadow-md hover:shadow-lg transition-all duration-150 cursor-pointer hover:scale-105"
-                    >
-                      {use3DMode ? <Mountain className="w-4 h-4" /> : <Square className="w-4 h-4" />}
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="left" className="z-[9999]" sideOffset={6}>
-                    <p className="text-xs font-medium">{use3DMode ? "Preklopi na 2D rotacijo" : "Preklopi na 3D terrain"}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </>
-          )}
 
           {/* Divider + Settings + Theme buttons */}
           <div className="w-6 h-px bg-slate-200 my-1" />
