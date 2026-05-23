@@ -327,22 +327,28 @@ export function useMapLibreLayers(mapRef, mapReadyRef, {
     const map = mapRef.current;
     if (!map || !mapReadyRef.current || mapReady === 0) return;
 
-    // Re-add custom GeoJSON layers that were removed during style switch
-    const layers = customLayersRef.current || [];
-    const visible = customVisibleRef.current || {};
-    const opacities = customOpacitiesRef.current || {};
+    // Small delay to ensure style is fully loaded
+    setTimeout(() => {
+      // Re-add custom GeoJSON layers that were removed during style switch
+      const layers = customLayersRef.current || [];
+      const visible = customVisibleRef.current || {};
+      const opacities = customOpacitiesRef.current || {};
 
-    for (const layer of layers) {
-      const id = layer.id;
-      const isVisible = visible[id] !== false;
-      const opacity = opacities[id] ?? layer.opacity ?? 0.8;
-      const mlId = `ml-${id}`;
-      const srcId = `src-${id}`;
+      for (const layer of layers) {
+        const id = layer.id;
+        const isVisible = visible[id] !== false;
+        const opacity = opacities[id] ?? layer.opacity ?? 0.8;
+        const mlId = `ml-${id}`;
+        const srcId = `src-${id}`;
 
-      if (!isVisible || !layer.features || !Array.isArray(layer.features)) continue;
+        if (!isVisible || !layer.features || !Array.isArray(layer.features)) continue;
 
-      // Check if source exists, if not re-add
-      if (!map.getSource(srcId)) {
+        // Remove any existing layers/sources first to avoid conflicts
+        if (map.getLayer(`${mlId}-points`)) try { map.removeLayer(`${mlId}-points`); } catch {}
+        if (map.getLayer(`${mlId}-lines`)) try { map.removeLayer(`${mlId}-lines`); } catch {}
+        if (map.getLayer(`${mlId}-polygons`)) try { map.removeLayer(`${mlId}-polygons`); } catch {}
+        if (map.getSource(srcId)) try { map.removeSource(srcId); } catch {}
+
         // Convert features to GeoJSON
         const geojsonFeatures = layer.features.map(f => {
           if (f.type === "Point") {
@@ -363,60 +369,60 @@ export function useMapLibreLayers(mapRef, mapReadyRef, {
 
         const geojson = { type: "FeatureCollection", features: geojsonFeatures };
         map.addSource(srcId, { type: "geojson", data: geojson });
+
+        // Add appropriate layer type based on geometry - ALWAYS on top
+        const hasPoints = geojsonFeatures.some(f => f.geometry.type === "Point");
+        const hasLines = geojsonFeatures.some(f => f.geometry.type === "LineString");
+        const hasPolygons = geojsonFeatures.some(f => f.geometry.type === "Polygon");
+
+        // Get the topmost layer ID to add custom layers on top
+        const allLayers = map.getStyle().layers || [];
+        const topLayerId = allLayers.length > 0 ? allLayers[allLayers.length - 1].id : undefined;
+
+        if (hasPoints) {
+          map.addLayer({
+            id: `${mlId}-points`,
+            type: "circle",
+            source: srcId,
+            filter: ["==", "$type", "Point"],
+            paint: {
+              "circle-radius": 6,
+              "circle-color": layer.color || "#1d9bf0",
+              "circle-opacity": opacity,
+              "circle-stroke-width": 2,
+              "circle-stroke-color": "#ffffff"
+            }
+          }, topLayerId);
+        }
+
+        if (hasLines) {
+          map.addLayer({
+            id: `${mlId}-lines`,
+            type: "line",
+            source: srcId,
+            filter: ["==", "$type", "LineString"],
+            paint: {
+              "line-width": 3,
+              "line-color": layer.color || "#1d9bf0",
+              "line-opacity": opacity
+            }
+          }, topLayerId);
+        }
+
+        if (hasPolygons) {
+          map.addLayer({
+            id: `${mlId}-polygons`,
+            type: "fill",
+            source: srcId,
+            filter: ["==", "$type", "Polygon"],
+            paint: {
+              "fill-color": layer.color || "#1d9bf0",
+              "fill-opacity": opacity * 0.6
+            }
+          }, topLayerId);
+        }
       }
-
-      // Re-add layers if they don't exist
-      const hasPoints = (layer.features || []).some(f => f.type === "Point");
-      const hasLines = (layer.features || []).some(f => f.type === "LineString");
-      const hasPolygons = (layer.features || []).some(f => f.type === "Polygon");
-
-      // Get the topmost layer ID to add custom layers on top
-      const allLayers = map.getStyle().layers || [];
-      const topLayerId = allLayers.length > 0 ? allLayers[allLayers.length - 1].id : undefined;
-
-      if (hasPoints && !map.getLayer(`${mlId}-points`)) {
-        map.addLayer({
-          id: `${mlId}-points`,
-          type: "circle",
-          source: srcId,
-          filter: ["==", "$type", "Point"],
-          paint: {
-            "circle-radius": 6,
-            "circle-color": layer.color || "#1d9bf0",
-            "circle-opacity": opacity,
-            "circle-stroke-width": 2,
-            "circle-stroke-color": "#ffffff"
-          }
-        }, topLayerId);
-      }
-
-      if (hasLines && !map.getLayer(`${mlId}-lines`)) {
-        map.addLayer({
-          id: `${mlId}-lines`,
-          type: "line",
-          source: srcId,
-          filter: ["==", "$type", "LineString"],
-          paint: {
-            "line-width": 3,
-            "line-color": layer.color || "#1d9bf0",
-            "line-opacity": opacity
-          }
-        }, topLayerId);
-      }
-
-      if (hasPolygons && !map.getLayer(`${mlId}-polygons`)) {
-        map.addLayer({
-          id: `${mlId}-polygons`,
-          type: "fill",
-          source: srcId,
-          filter: ["==", "$type", "Polygon"],
-          paint: {
-            "fill-color": layer.color || "#1d9bf0",
-            "fill-opacity": opacity * 0.6
-          }
-        }, topLayerId);
-      }
-    }
+    }, 50);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapReady]); // Re-run when mapReady increments (after style load)
 }
