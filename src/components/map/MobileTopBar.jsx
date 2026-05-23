@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Layers, Locate, LoaderCircle, Plus, Minus, Ruler, MapPin, Trash2, MousePointer2, Navigation, Settings, Route, WifiOff, Brain } from "lucide-react";
+import { Layers, Locate, LoaderCircle, Plus, Minus, Ruler, MapPin, Trash2, MousePointer2, Navigation, Settings, Route, WifiOff, Brain, TrendingUp } from "lucide-react";
 import { useMap } from "react-leaflet";
 import { createPortal } from "react-dom";
 import SearchBar from "./SearchBar";
@@ -23,6 +23,7 @@ function MobileTopBarInner({
   onLocationSelect, isGpsTracking, onGpsToggle,
   onShowTracks, gpsTrack, onLoadTrack,
   onRouteResult, isAIOpen, onAIToggle,
+  isTrackAnalyzerOpen, onTrackAnalyzerToggle,
   measurements, mapCenter,
   onAddCustomLayer, onRemoveCustomLayer,
   activeSearchLayers, onSearchLayersChange,
@@ -95,6 +96,11 @@ function MobileTopBarInner({
     if (id === "ai") return (
       <button key="ai" onClick={onAIToggle} style={isAIOpen ? btnActiveStyle : btnStyle} className={btnBase}>
         <Brain style={iconStyle} />
+      </button>
+    );
+    if (id === "trackanalyzer") return (
+      <button key="trackanalyzer" onClick={onTrackAnalyzerToggle} style={isTrackAnalyzerOpen ? btnActiveStyle : btnStyle} className={btnBase}>
+        <TrendingUp style={iconStyle} />
       </button>
     );
     return null;

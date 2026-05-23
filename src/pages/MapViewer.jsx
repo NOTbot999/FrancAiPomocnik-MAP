@@ -295,6 +295,8 @@ export default function MapViewer() {
           onRouteResult: handleRouteResult,
           isAIOpen,
           onAIToggle: () => setIsAIOpen(p => !p),
+          isTrackAnalyzerOpen,
+          onTrackAnalyzerToggle: () => setIsTrackAnalyzerOpen(p => !p),
           measurements,
           onAddCustomLayer: handleAddCustomLayer,
           onRemoveCustomLayer: handleRemoveCustomLayer,
@@ -448,6 +450,16 @@ export default function MapViewer() {
             Klikni na karto za izbiro točke analize
             <button onClick={() => setIsPinPicking(false)} className="ml-3 text-slate-400 hover:text-white">✕</button>
           </div>
+        </div>
+      )}
+
+      {/* TrackAnalyzer panel (mobile) */}
+      {isMobile && isTrackAnalyzerOpen && (
+        <div className="absolute bottom-16 right-12 z-[960]">
+          <TrackAnalyzer
+            gpsTrack={gpsTrack}
+            onClose={() => setIsTrackAnalyzerOpen(false)}
+          />
         </div>
       )}
 
