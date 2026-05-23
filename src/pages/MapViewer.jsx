@@ -705,7 +705,6 @@ export default function MapViewer() {
 
       {/* Mobile 3D Menu */}
       <Mobile3DMenu
-        isOpen={isMobile3DMenuOpen}
         onClose={() => setIsMobile3DMenuOpen(false)}
         isPanelOpen={isPanelOpen}
         onTogglePanel={() => setIsPanelOpen(p => !p)}
@@ -726,6 +725,9 @@ export default function MapViewer() {
         gpsTrack={gpsTrack}
         showMyTracks={showMyTracks}
         onShowMyTracks={() => setShowMyTracks(p => !p)}
+        onLoadTrack={handleLoadTrack}
+        is3DOpen={is3DOpen}
+        on3DToggle={() => { setIs3DOpen(p => !p); setMapLibreEverOpened(true); }}
       />
     </div>
   );
