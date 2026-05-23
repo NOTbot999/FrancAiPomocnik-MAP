@@ -279,6 +279,10 @@ export default function MapViewer() {
           baseLayerOpacities={Object.fromEntries(Object.entries(activeBaseLayers).map(([id, v]) => [id, v?.opacity ?? 1]))}
           activeMLBase={activeMLBase}
           onMLBaseChange={(id) => { setActiveMLBase(id); }}
+          customLayers={customLayers}
+          customLayerVisible={customLayerVisible}
+          customLayerOpacities={customLayerOpacities}
+          onPinPicked={isPinPicking ? (latlng) => { setPinnedLocation([latlng.lat, latlng.lng]); setIsPinPicking(false); } : null}
         />
       </div>
 
@@ -504,9 +508,9 @@ export default function MapViewer() {
         </div>
       )}
 
-      {/* Pin picking overlay */}
+      {/* Pin picking overlay — works both on Leaflet and MapLibre */}
       {isPinPicking && (
-        <div className="absolute inset-0 z-[970] pointer-events-none flex items-center justify-center">
+        <div className="absolute inset-0 z-[970] pointer-events-none flex items-center justify-center" style={{ cursor: "crosshair" }}>
           <div className="absolute top-20 left-1/2 -translate-x-1/2 bg-slate-900/90 text-white text-xs px-4 py-2 rounded-xl shadow-xl pointer-events-auto">
             Klikni na karto za izbiro točke analize
             <button onClick={() => setIsPinPicking(false)} className="ml-3 text-slate-400 hover:text-white">✕</button>

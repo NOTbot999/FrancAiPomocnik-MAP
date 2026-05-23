@@ -17,6 +17,8 @@ const Map3DView = forwardRef(function Map3DView({
   activeBaseLayers = {}, activeLayers = {},
   layerOpacities = {}, baseLayerOpacities = {},
   activeMLBase, onMLBaseChange,
+  customLayers = [], customLayerVisible = {}, customLayerOpacities = {},
+  onPinPicked,
 }, ref) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
@@ -29,7 +31,8 @@ const Map3DView = forwardRef(function Map3DView({
   const autoRotate = useRef(null);
   const [isAutoRotating, setIsAutoRotating] = useState(false);
   const mapReadyRef = useRef(false);
-  const [mapReady, setMapReady] = useState(false);
+  // Use a counter so incrementing triggers re-sync without a false→true flip delay
+  const [mapReady, setMapReady] = useState(0);
 
   // Sync LayerPanel layers into MapLibre
   useMapLibreLayers(mapRef, mapReadyRef, {
@@ -38,6 +41,9 @@ const Map3DView = forwardRef(function Map3DView({
     layerOpacities,
     baseLayerOpacities,
     mapReady,
+    customLayers,
+    customLayerVisible,
+    customLayerOpacities,
   });
 
   const setupTerrain = useCallback((map, key) => {
@@ -113,7 +119,7 @@ const Map3DView = forwardRef(function Map3DView({
           if (cancelled) return;
           if (is3D) setupTerrain(map, apiKey);
           mapReadyRef.current = true;
-          setMapReady(true);
+          setMapReady(c => c + 1);
           setLoading(false);
         });
 
@@ -150,9 +156,7 @@ const Map3DView = forwardRef(function Map3DView({
     map.once("style.load", () => {
       if (is3D) setupTerrain(map, apiKey);
       mapReadyRef.current = true;
-      // Force re-sync of layers by toggling mapReady
-      setMapReady(false);
-      setTimeout(() => setMapReady(true), 50);
+      setMapReady(c => c + 1);
     });
   }, [setupTerrain, is3D]);
 
@@ -199,15 +203,29 @@ const Map3DView = forwardRef(function Map3DView({
     return () => { if (autoRotate.current) clearInterval(autoRotate.current); };
   }, []);
 
-  // Expose switchBase to parent via ref
-  useImperativeHandle(ref, () => ({ switchBase }), [switchBase]);
+  // Expose switchBase + jumpTo to parent via ref
+  useImperativeHandle(ref, () => ({
+    switchBase,
+    jumpTo: (lat, lng, z) => {
+      const map = mapRef.current;
+      if (!map || !mapReadyRef.current) return;
+      try { map.jumpTo({ center: [lng, lat], zoom: z ?? map.getZoom() }); } catch {}
+    },
+  }), [switchBase]);
 
-  // Trigger resize when map becomes visible
+  // Trigger resize + sync location when map becomes visible
   useEffect(() => {
     if (!isVisible) return;
     const map = mapRef.current;
     if (!map || !mapReadyRef.current) return;
-    setTimeout(() => { try { map.resize(); } catch {} }, 50);
+    setTimeout(() => {
+      try { map.resize(); } catch {}
+      // Sync to current Leaflet view position (center is [lat,lng])
+      if (center && !isNaN(center[0]) && !isNaN(center[1])) {
+        try { map.jumpTo({ center: [center[1], center[0]], zoom: zoom ?? map.getZoom() }); } catch {}
+      }
+    }, 60);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isVisible]);
 
   // React to is3D prop changes without full re-init
@@ -226,8 +244,23 @@ const Map3DView = forwardRef(function Map3DView({
     }
   }, [is3D, setupTerrain]);
 
+  // Pin picking: attach/detach click handler on map when onPinPicked is set
+  const isPinPickingRef = useRef(false);
+  isPinPickingRef.current = !!onPinPicked;
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapReadyRef.current) return;
+    const handler = (e) => {
+      if (!isPinPickingRef.current) return;
+      onPinPicked && onPinPicked({ lat: e.lngLat.lat, lng: e.lngLat.lng });
+    };
+    map.on("click", handler);
+    return () => { try { map.off("click", handler); } catch {} };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mapReady]);
+
   return (
-    <div className="absolute inset-0" style={{ zIndex: 1 }}>
+    <div className="absolute inset-0" style={{ zIndex: 1, cursor: onPinPicked ? "crosshair" : undefined }}>
       {/* Map container */}
       <div ref={containerRef} className="w-full h-full" />
 

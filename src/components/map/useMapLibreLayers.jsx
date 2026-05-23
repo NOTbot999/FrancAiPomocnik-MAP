@@ -25,6 +25,8 @@ function wmsUrl(layer) {
 }
 
 // Build an ArcGIS export tile URL for MapLibre
+// Always request bbox in EPSG:3857 (MapLibre native) but let ArcGIS reproject output to imageSR.
+// Using imageSR=3857 ensures ArcGIS returns tiles already in web mercator — no client reprojection.
 function arcgisUrl(layer) {
   const base = layer.url || layer.arcgisUrl;
   if (!base) return null;
@@ -33,7 +35,7 @@ function arcgisUrl(layer) {
     "?bbox={bbox-epsg-3857}" +
     "&bboxSR=3857&imageSR=3857" +
     "&size=256,256&f=image" +
-    `&format=${layer.format || "png32"}` +
+    `&format=${layer.format || "jpg"}` +
     `&transparent=${layer.transparent !== false}`
   );
 }
@@ -88,6 +90,7 @@ function addLayerToMap(map, layerId, config, opacity = 1) {
     paint: {
       "raster-opacity": opacity,
       "raster-fade-duration": 0,
+      "raster-resampling": "linear",
     },
   });
 }
@@ -101,15 +104,18 @@ function removeLayerFromMap(map, layerId) {
 }
 
 /**
- * Hook that syncs activeBaseLayers + activeLayers from the LayerPanel into a MapLibre map instance.
- * Pass mapReady (boolean state) so React re-runs effects when map becomes ready.
+ * Hook that syncs activeBaseLayers + activeLayers + customLayers from LayerPanel into MapLibre.
+ * mapReady (number) increments on each style-load so effects re-fire.
  */
 export function useMapLibreLayers(mapRef, mapReadyRef, {
   activeBaseLayers = {},
   activeLayers = {},
   layerOpacities = {},
   baseLayerOpacities = {},
-  mapReady = false,
+  mapReady = 0,
+  customLayers = [],
+  customLayerVisible = {},
+  customLayerOpacities = {},
 }) {
   // Sync base layers
   useEffect(() => {
@@ -117,17 +123,14 @@ export function useMapLibreLayers(mapRef, mapReadyRef, {
     if (!map || !mapReadyRef.current) return;
 
     for (const [id, active] of Object.entries(activeBaseLayers)) {
-      if (!active) {
-        removeLayerFromMap(map, id);
-        continue;
-      }
+      if (!active) { removeLayerFromMap(map, id); continue; }
       const config = getLayerConfig(id);
       if (!config) continue;
       const opacity = baseLayerOpacities[id] ?? config.opacity ?? 1;
       if (!map.getLayer(`ml-${id}`)) {
         addLayerToMap(map, id, config, opacity);
       } else {
-        map.setPaintProperty(`ml-${id}`, "raster-opacity", opacity);
+        try { map.setPaintProperty(`ml-${id}`, "raster-opacity", opacity); } catch {}
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -139,19 +142,53 @@ export function useMapLibreLayers(mapRef, mapReadyRef, {
     if (!map || !mapReadyRef.current) return;
 
     for (const [id, active] of Object.entries(activeLayers)) {
-      if (!active) {
-        removeLayerFromMap(map, id);
-        continue;
-      }
+      if (!active) { removeLayerFromMap(map, id); continue; }
       const config = getLayerConfig(id);
       if (!config) continue;
       const opacity = layerOpacities[id] ?? config.opacity ?? 1;
       if (!map.getLayer(`ml-${id}`)) {
         addLayerToMap(map, id, config, opacity);
       } else {
-        map.setPaintProperty(`ml-${id}`, "raster-opacity", opacity);
+        try { map.setPaintProperty(`ml-${id}`, "raster-opacity", opacity); } catch {}
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeLayers, layerOpacities, mapReady]);
+
+  // Sync custom (AI) layers
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapReadyRef.current) return;
+
+    for (const layer of customLayers) {
+      const id = layer.id;
+      const visible = customLayerVisible[id] !== false;
+      const opacity = customLayerOpacities[id] ?? layer.opacity ?? 0.8;
+      const mlId = `ml-${id}`;
+      const srcId = `src-${id}`;
+
+      if (!visible) {
+        if (map.getLayer(mlId)) try { map.removeLayer(mlId); } catch {}
+        if (map.getSource(srcId)) try { map.removeSource(srcId); } catch {}
+        continue;
+      }
+
+      // Build tile URL from custom layer (tile or wms type)
+      let tileUrl = null;
+      if (layer.type === "wms") tileUrl = wmsUrl(layer);
+      else if (layer.tileUrl) tileUrl = layer.tileUrl;
+      else if (layer.url) tileUrl = resolveTileUrl(layer.url);
+      if (!tileUrl) continue;
+
+      if (!map.getLayer(mlId)) {
+        if (!map.getSource(srcId)) {
+          map.addSource(srcId, { type: "raster", tiles: [tileUrl], tileSize: 256, minzoom: 0, maxzoom: 19 });
+        }
+        map.addLayer({ id: mlId, type: "raster", source: srcId, paint: { "raster-opacity": opacity, "raster-fade-duration": 0 } });
+      } else {
+        try { map.setPaintProperty(mlId, "raster-opacity", opacity); } catch {}
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customLayers, customLayerVisible, customLayerOpacities, mapReady]);
 }
