@@ -275,6 +275,11 @@ export default function SearchBar({ onLocationSelect, autoFocus, onAddCustomLaye
         onAddCustomLayer({ ...layer, id: layerId, _searchCat: cat.id });
         setActiveLayers(prev => ({ ...prev, [cat.id]: layerId }));
       }
+    } catch {
+      // Overpass/network failure — show empty layer with friendly label so UI doesn't break
+      const layerId = `search_${cat.id}`;
+      onAddCustomLayer({ id: layerId, name: `${cat.emoji} ${cat.label}`, color: cat.color, features: [], _searchCat: cat.id });
+      setActiveLayers(prev => ({ ...prev, [cat.id]: layerId }));
     } finally {
       setLoadingCat(null);
       setShowCategories(false);
