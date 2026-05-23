@@ -41,29 +41,24 @@ function BaseMapGrid({ activeBaseLayers, onSelectBaseLayer, is3DOpen, activeMLBa
         })}
       </div>
 
-      {/* 3D / MapLibre style selector — samo kadar je 3D pogled aktiven */}
+      {/* 3D / MapLibre style selector — inline pod 2D gumbom, brez ločenega naslova */}
       {is3DOpen && (
-        <div className="mt-3 pt-2 border-t border-slate-700/40">
-          <div className="flex items-center gap-1.5 mb-2">
-            <Mountain className="w-3 h-3 text-emerald-400" />
-            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">3D ozadje</p>
-          </div>
-          <div className="grid grid-cols-5 gap-1">
-            {ML_BASE_STYLES.map(style => {
-              const isActive = activeMLBase === style.id;
-              return (
-                <button
-                  key={style.id}
-                  onClick={() => onMLBaseChange && onMLBaseChange(style.id)}
-                  className={`px-1.5 py-1.5 rounded-lg text-[9px] font-medium transition-all ${
-                    isActive ? "bg-emerald-500 text-white" : "bg-slate-700/60 hover:bg-slate-600/60 text-slate-300"
-                  }`}
-                >
-                  {style.label}
-                </button>
-              );
-            })}
-          </div>
+        <div className="mt-2.5 grid grid-cols-5 gap-1">
+          {ML_BASE_STYLES.map(style => {
+            const isActive = activeMLBase === style.id;
+            return (
+              <button
+                key={style.id}
+                onClick={() => onMLBaseChange && onMLBaseChange(style.id)}
+                className={`flex items-center justify-center gap-1 px-1 py-1.5 rounded-lg text-[9px] font-medium transition-all ${
+                  isActive ? "bg-emerald-500 text-white ring-1 ring-emerald-400" : "bg-slate-700/60 hover:bg-slate-600/60 text-slate-300"
+                }`}
+              >
+                <Mountain className="w-2.5 h-2.5 shrink-0 opacity-60" />
+                {style.label}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
