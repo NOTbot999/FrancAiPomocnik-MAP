@@ -146,8 +146,26 @@ export default function MapViewer() {
     setShowMyTracks(false);
   }, []);
 
+  // Built-in custom marker layers — always present
+  const BUILTIN_CUSTOM_LAYERS = [
+    {
+      id: "builtin_striptiz_psi",
+      name: "🐶🦮💃 striptiz bar za pse",
+      color: "#e11d48",
+      _builtin: true,
+      features: [
+        { type: "Point", coords: [46.27760, 15.00911], label: "🐶🦮💃 striptiz bar za pse" }
+      ]
+    }
+  ];
+
   // Custom layers: session + favorites persisted; each has a `visible` flag for ON/OFF
-  const [customLayers, setCustomLayers] = useState(() => scopedGet("savedCustomLayers") || []);
+  const [customLayers, setCustomLayers] = useState(() => {
+    const saved = scopedGet("savedCustomLayers") || [];
+    // Merge: built-in always included, not duplicated
+    const filtered = saved.filter(l => !BUILTIN_CUSTOM_LAYERS.find(b => b.id === l.id));
+    return [...BUILTIN_CUSTOM_LAYERS, ...filtered];
+  });
   const [favoritedCustomLayerIds, setFavoritedCustomLayerIds] = useState(() => scopedGet("favCustomLayerIds") || []);
   const [customLayerOpacities, setCustomLayerOpacities] = useState(() => scopedGet("customLayerOpacities") || {});
   const [customLayerVisible, setCustomLayerVisible] = useState(() => scopedGet("customLayerVisible") || {});

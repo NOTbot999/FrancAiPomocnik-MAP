@@ -664,6 +664,15 @@ export const OVERLAY_CATEGORIES = [
   }
 ];
 
+export const CUSTOM_MARKERS = [
+  {
+    id: "custom_striptiz_psi",
+    name: "🐶🦮💃 striptiz bar za pse",
+    lat: 46.27760,
+    lng: 15.00911,
+  }
+];
+
 export const SLOVENIA_CENTER = [46.1512, 14.9955];
 export const SLOVENIA_BOUNDS = [[45.42, 13.37], [46.88, 16.62]];
 export const DEFAULT_ZOOM = 9;
