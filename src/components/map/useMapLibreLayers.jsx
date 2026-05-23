@@ -121,6 +121,17 @@ export function useMapLibreLayers(mapRef, mapReadyRef, {
   customLayerVisible = {},
   customLayerOpacities = {},
 }) {
+  // Store custom layer state in refs so they persist across style changes
+  const customLayersRef = useRef([]);
+  const customVisibleRef = useRef({});
+  const customOpacitiesRef = useRef({});
+
+  // Update refs when custom layers change
+  useEffect(() => {
+    customLayersRef.current = customLayers;
+    customVisibleRef.current = customLayerVisible;
+    customOpacitiesRef.current = customLayerOpacities;
+  }, [customLayers, customLayerVisible, customLayerOpacities]);
   // Sync base layers
   useEffect(() => {
     const map = mapRef.current;
@@ -311,14 +322,97 @@ export function useMapLibreLayers(mapRef, mapReadyRef, {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [customLayers, customLayerVisible, customLayerOpacities, mapReady]);
 
-  // Cleanup removed custom layers
+  // Re-add custom layers after style change (MapLibre removes all layers when setStyle is called)
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !mapReadyRef.current) return;
+    if (!map || !mapReadyRef.current || mapReady === 0) return;
 
-    const customIds = customLayers.map(l => l.id);
-    // Find and remove layers that are no longer in customLayers array
-    // This is handled by the main effect when layers are removed from the array
+    // Re-add custom GeoJSON layers that were removed during style switch
+    const layers = customLayersRef.current || [];
+    const visible = customVisibleRef.current || {};
+    const opacities = customOpacitiesRef.current || {};
+
+    for (const layer of layers) {
+      const id = layer.id;
+      const isVisible = visible[id] !== false;
+      const opacity = opacities[id] ?? layer.opacity ?? 0.8;
+      const mlId = `ml-${id}`;
+      const srcId = `src-${id}`;
+
+      if (!isVisible || !layer.features || !Array.isArray(layer.features)) continue;
+
+      // Check if source exists, if not re-add
+      if (!map.getSource(srcId)) {
+        // Convert features to GeoJSON
+        const geojsonFeatures = layer.features.map(f => {
+          if (f.type === "Point") {
+            return {
+              type: "Feature",
+              geometry: { type: "Point", coordinates: [f.coords[1], f.coords[0]] },
+              properties: { label: f.label || "" }
+            };
+          } else if (f.type === "LineString" || f.type === "Polygon") {
+            return {
+              type: "Feature",
+              geometry: { type: f.type, coordinates: f.coords.map(c => [c[1], c[0]]) },
+              properties: { label: f.label || "" }
+            };
+          }
+          return null;
+        }).filter(Boolean);
+
+        const geojson = { type: "FeatureCollection", features: geojsonFeatures };
+        map.addSource(srcId, { type: "geojson", data: geojson });
+      }
+
+      // Re-add layers if they don't exist
+      const hasPoints = (layer.features || []).some(f => f.type === "Point");
+      const hasLines = (layer.features || []).some(f => f.type === "LineString");
+      const hasPolygons = (layer.features || []).some(f => f.type === "Polygon");
+
+      if (hasPoints && !map.getLayer(`${mlId}-points`)) {
+        map.addLayer({
+          id: `${mlId}-points`,
+          type: "circle",
+          source: srcId,
+          filter: ["==", "$type", "Point"],
+          paint: {
+            "circle-radius": 6,
+            "circle-color": layer.color || "#1d9bf0",
+            "circle-opacity": opacity,
+            "circle-stroke-width": 2,
+            "circle-stroke-color": "#ffffff"
+          }
+        });
+      }
+
+      if (hasLines && !map.getLayer(`${mlId}-lines`)) {
+        map.addLayer({
+          id: `${mlId}-lines`,
+          type: "line",
+          source: srcId,
+          filter: ["==", "$type", "LineString"],
+          paint: {
+            "line-width": 3,
+            "line-color": layer.color || "#1d9bf0",
+            "line-opacity": opacity
+          }
+        });
+      }
+
+      if (hasPolygons && !map.getLayer(`${mlId}-polygons`)) {
+        map.addLayer({
+          id: `${mlId}-polygons`,
+          type: "fill",
+          source: srcId,
+          filter: ["==", "$type", "Polygon"],
+          paint: {
+            "fill-color": layer.color || "#1d9bf0",
+            "fill-opacity": opacity * 0.6
+          }
+        });
+      }
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [customLayers]);
+  }, [mapReady]); // Re-run when mapReady increments (after style load)
 }
