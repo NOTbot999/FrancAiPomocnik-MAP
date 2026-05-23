@@ -5,7 +5,7 @@ import { usePrefetchCategories } from "@/hooks/usePrefetchCategories";
 import { base44 } from "@/api/base44Client";
 
 // ── All categories — each toggles a full-Slovenia layer ───────────────────────
-const CATEGORIES = [
+export const CATEGORIES = [
   { id: "castle",        label: "Gradovi",        emoji: "🏰", color: "#b45309", query: `[out:json][timeout:30];(node["historic"="castle"](45.4,13.4,46.9,16.6);way["historic"="castle"](45.4,13.4,46.9,16.6););out center;` },
   { id: "peak",          label: "Vrhovi",         emoji: "⛰️", color: "#6b7280", query: `[out:json][timeout:30];node["natural"="peak"](45.4,13.4,46.9,16.6);out;` },
   { id: "waterfall",     label: "Slapovi",        emoji: "💧", color: "#0ea5e9", query: `[out:json][timeout:30];node["waterway"="waterfall"](45.4,13.4,46.9,16.6);out;` },
@@ -94,7 +94,7 @@ async function fetchOverpass(query) {
   throw new Error("Vsi Overpass strežniki so nedosegljivi");
 }
 
-async function fetchFullSloveniaLayer(cat) {
+export async function fetchFullSloveniaLayer(cat) {
   // 1. In-memory cache
   if (layerCache[cat.id]) return layerCache[cat.id];
   // 2. localStorage cache

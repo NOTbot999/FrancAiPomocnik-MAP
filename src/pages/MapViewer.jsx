@@ -697,6 +697,10 @@ export default function MapViewer() {
           onLoadTrack={handleLoadTrack}
           is3DOpen={is3DOpen}
           on3DToggle={() => { setIs3DOpen(p => !p); setMapLibreEverOpened(true); }}
+          onAddCustomLayer={handleAddCustomLayer}
+          onRemoveCustomLayer={handleRemoveCustomLayer}
+          activeSearchLayers={activeSearchLayers}
+          onSearchLayersChange={setActiveSearchLayers}
         />
       )}
     </div>

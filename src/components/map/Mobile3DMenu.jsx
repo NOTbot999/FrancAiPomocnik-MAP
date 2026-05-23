@@ -1,11 +1,12 @@
 import React, { useState, useCallback, useRef } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { GripVertical, Navigation, Route, X, Link2, ChevronDown, ChevronUp, Layers, WifiOff, Palette, Brain, AlertTriangle, TrendingUp, Box, Locate } from "lucide-react";
+import { GripVertical, Navigation, Route, X, Link2, ChevronDown, ChevronUp, Layers, WifiOff, Palette, Brain, AlertTriangle, TrendingUp, Box, Locate, Loader2 } from "lucide-react";
 import LagReportModal from "@/components/map/LagReportModal";
 import { Slider } from "@/components/ui/slider";
 import MyTracks from "./MyTracks";
 import DeviceLink from "./DeviceLink";
 import ThemeCustomizer, { loadTheme } from "@/components/map/ThemeCustomizer";
+import { CATEGORIES, fetchFullSloveniaLayer } from "./SearchBar";
 
 
 const DEFAULT_BUTTONS = [
@@ -74,20 +75,71 @@ export default function Mobile3DMenu({
   onLoadTrack,
   is3DOpen,
   on3DToggle,
+  onAddCustomLayer,
+  onRemoveCustomLayer,
+  activeSearchLayers,
+  onSearchLayersChange,
 }) {
   const [prefs, setPrefsState] = useState(loadPrefs);
   const [showTracks, setShowTracks] = useState(false);
   const [showDeviceLink, setShowDeviceLink] = useState(false);
   const [showTheme, setShowTheme] = useState(false);
   const [showLagReport, setShowLagReport] = useState(false);
+  const [showMapMarkings, setShowMapMarkings] = useState(false);
   const [theme, setTheme] = useState(loadTheme);
+  const [loadingCat, setLoadingCat] = useState(null);
   const username = localStorage.getItem("userUsername") || null;
   const deviceId = getDeviceId();
+  
+  // Use controlled state from parent if provided, otherwise local fallback
+  const [localActiveLayers, setLocalActiveLayers] = useState({});
+  const activeLayers = activeSearchLayers ?? localActiveLayers;
+  const setActiveLayers = (updater) => {
+    const next = typeof updater === "function" ? updater(activeLayers) : updater;
+    if (onSearchLayersChange) onSearchLayersChange(next);
+    else setLocalActiveLayers(next);
+  };
 
   const setPrefs = useCallback((next) => {
     setPrefsState(next);
     savePrefs(next);
   }, []);
+
+  const handleCategoryClick = async (cat) => {
+    if (!onAddCustomLayer) return;
+
+    // Toggle off if already active
+    if (activeLayers[cat.id]) {
+      if (onRemoveCustomLayer) onRemoveCustomLayer(activeLayers[cat.id]);
+      setActiveLayers(prev => { const n = { ...prev }; delete n[cat.id]; return n; });
+      return;
+    }
+
+    // Municipality layer — special polygon layer, no Overpass fetch needed
+    if (cat._municipalityLayer) {
+      const layerId = `search_municipality`;
+      onAddCustomLayer({ id: layerId, name: "🏘️ Občine", color: "#b45309", features: [], _searchCat: cat.id, _municipalityLayer: true });
+      setActiveLayers(prev => ({ ...prev, [cat.id]: layerId }));
+      return;
+    }
+
+    // Start loading
+    setLoadingCat(cat.id);
+    try {
+      const layer = await fetchFullSloveniaLayer(cat);
+      if (layer) {
+        const layerId = `search_${cat.id}`;
+        onAddCustomLayer({ ...layer, id: layerId, _searchCat: cat.id });
+        setActiveLayers(prev => ({ ...prev, [cat.id]: layerId }));
+      }
+    } catch {
+      const layerId = `search_${cat.id}`;
+      onAddCustomLayer({ id: layerId, name: `${cat.emoji} ${cat.label}`, color: cat.color, features: [], _searchCat: cat.id });
+      setActiveLayers(prev => ({ ...prev, [cat.id]: layerId }));
+    } finally {
+      setLoadingCat(null);
+    }
+  };
 
   const orderedButtons = prefs.order
     .map(id => DEFAULT_BUTTONS.find(b => b.id === id))
@@ -334,6 +386,66 @@ export default function Mobile3DMenu({
         {showDeviceLink && (
           <div className="mt-1 bg-white rounded-xl overflow-hidden border border-slate-200 p-3">
             <DeviceLink deviceId={deviceId} onClose={() => setShowDeviceLink(false)} />
+          </div>
+        )}
+      </div>
+
+      {/* Map Markings section */}
+      <div className="px-2 pb-1">
+        <button
+          onClick={() => setShowMapMarkings(p => !p)}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-slate-50 hover:bg-white transition-all text-slate-700"
+        >
+          <span className="text-base leading-none">🗺️</span>
+          <span className="flex-1 text-xs font-medium text-left">Označi na karti</span>
+          {showMapMarkings ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+        </button>
+        {showMapMarkings && (
+          <div className="mt-1 bg-white rounded-xl overflow-hidden border border-slate-200 p-2.5">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Celotna Slovenija</p>
+              {Object.keys(activeLayers).length > 0 && (
+                <button
+                  onClick={() => {
+                    Object.values(activeLayers).forEach(lid => onRemoveCustomLayer && onRemoveCustomLayer(lid));
+                    setActiveLayers({});
+                  }}
+                  className="text-[10px] text-red-400 hover:text-red-600 transition-colors font-medium"
+                >
+                  Počisti
+                </button>
+              )}
+            </div>
+            <div className="grid grid-cols-5 gap-1">
+              {CATEGORIES.map(cat => {
+                const isActive = !!activeLayers[cat.id];
+                const isLoading = loadingCat === cat.id;
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => handleCategoryClick(cat)}
+                    disabled={isLoading}
+                    className={`relative flex flex-col items-center gap-0.5 px-1 py-2 rounded-lg text-center transition-all ${
+                      isActive
+                        ? "ring-2 text-emerald-700"
+                        : isLoading
+                        ? "bg-slate-100 text-slate-400 cursor-wait"
+                        : "hover:bg-slate-50 text-slate-600"
+                    }`}
+                    style={isActive ? { backgroundColor: cat.color + "15", ringColor: cat.color } : {}}
+                  >
+                    {isLoading
+                      ? <Loader2 className="w-4 h-4 animate-spin" />
+                      : <span className="text-lg leading-none">{cat.emoji}</span>
+                    }
+                    <span className="text-[9px] leading-tight text-center w-full truncate">{cat.label}</span>
+                    {isActive && (
+                      <span className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full" style={{ backgroundColor: cat.color }} />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>
