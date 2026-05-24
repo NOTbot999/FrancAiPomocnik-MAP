@@ -57,6 +57,21 @@ function getLayerConfig(id) {
   return null;
 }
 
+// Returns the id of the first custom/search layer currently on the map,
+// so that base/overlay rasters are always inserted BELOW custom layers.
+function getFirstCustomLayerId(map) {
+  const layers = map.getStyle()?.layers || [];
+  for (const l of layers) {
+    if (
+      l.id.startsWith("ml-custom_") ||
+      l.id.startsWith("ml-search_") ||
+      l.id.startsWith("search_cat_") ||
+      l.id.startsWith("ml-gps")
+    ) return l.id;
+  }
+  return undefined; // no custom layers → add on top
+}
+
 function addLayerToMap(map, layerId, config, opacity = 1) {
   if (!map || !config) return;
 
@@ -87,6 +102,8 @@ function addLayerToMap(map, layerId, config, opacity = 1) {
     });
   }
 
+  // Insert below any custom/GPS layers so they always stay on top
+  const beforeId = getFirstCustomLayerId(map);
   map.addLayer({
     id: mlLayerId,
     type: "raster",
@@ -96,7 +113,7 @@ function addLayerToMap(map, layerId, config, opacity = 1) {
       "raster-fade-duration": 0,
       "raster-resampling": "linear",
     },
-  });
+  }, beforeId);
 }
 
 function removeLayerFromMap(map, layerId) {
@@ -228,79 +245,35 @@ export function useMapLibreLayers(mapRef, mapReadyRef, {
         // Remove old raster layer if exists
         if (map.getLayer(mlId)) try { map.removeLayer(mlId); } catch {}
 
-        // Add appropriate layer type based on geometry
+        // Add appropriate layer type based on geometry — no beforeId, custom layers go on top
         const hasPoints = geojsonFeatures.some(f => f.geometry.type === "Point");
         const hasLines = geojsonFeatures.some(f => f.geometry.type === "LineString");
         const hasPolygons = geojsonFeatures.some(f => f.geometry.type === "Polygon");
 
-        // Get all existing layer IDs to find the topmost one
-        const allLayers = map.getStyle().layers || [];
-        const topLayerId = allLayers.length > 0 ? allLayers[allLayers.length - 1].id : null;
-
         if (hasPoints) {
           const pointLayerId = `${mlId}-points`;
           if (!map.getLayer(pointLayerId)) {
-            map.addLayer({
-              id: pointLayerId,
-              type: "circle",
-              source: srcId,
-              filter: ["==", "$type", "Point"],
-              paint: {
-                "circle-radius": 6,
-                "circle-color": layer.color || "#1d9bf0",
-                "circle-opacity": opacity,
-                "circle-stroke-width": 2,
-                "circle-stroke-color": "#ffffff"
-              }
-            }, topLayerId || undefined);
+            map.addLayer({ id: pointLayerId, type: "circle", source: srcId, filter: ["==", "$type", "Point"], paint: { "circle-radius": 6, "circle-color": layer.color || "#1d9bf0", "circle-opacity": opacity, "circle-stroke-width": 2, "circle-stroke-color": "#ffffff" } });
           } else {
-            try {
-              map.setPaintProperty(pointLayerId, "circle-opacity", opacity);
-              map.setPaintProperty(pointLayerId, "circle-color", layer.color || "#1d9bf0");
-            } catch {}
+            try { map.setPaintProperty(pointLayerId, "circle-opacity", opacity); map.setPaintProperty(pointLayerId, "circle-color", layer.color || "#1d9bf0"); } catch {}
           }
         }
 
         if (hasLines) {
           const lineLayerId = `${mlId}-lines`;
           if (!map.getLayer(lineLayerId)) {
-            map.addLayer({
-              id: lineLayerId,
-              type: "line",
-              source: srcId,
-              filter: ["==", "$type", "LineString"],
-              paint: {
-                "line-width": 3,
-                "line-color": layer.color || "#1d9bf0",
-                "line-opacity": opacity
-              }
-            }, topLayerId || undefined);
+            map.addLayer({ id: lineLayerId, type: "line", source: srcId, filter: ["==", "$type", "LineString"], paint: { "line-width": 3, "line-color": layer.color || "#1d9bf0", "line-opacity": opacity } });
           } else {
-            try {
-              map.setPaintProperty(lineLayerId, "line-opacity", opacity);
-              map.setPaintProperty(lineLayerId, "line-color", layer.color || "#1d9bf0");
-            } catch {}
+            try { map.setPaintProperty(lineLayerId, "line-opacity", opacity); map.setPaintProperty(lineLayerId, "line-color", layer.color || "#1d9bf0"); } catch {}
           }
         }
 
         if (hasPolygons) {
           const polygonLayerId = `${mlId}-polygons`;
           if (!map.getLayer(polygonLayerId)) {
-            map.addLayer({
-              id: polygonLayerId,
-              type: "fill",
-              source: srcId,
-              filter: ["==", "$type", "Polygon"],
-              paint: {
-                "fill-color": layer.color || "#1d9bf0",
-                "fill-opacity": opacity * 0.6
-              }
-            }, topLayerId || undefined);
+            map.addLayer({ id: polygonLayerId, type: "fill", source: srcId, filter: ["==", "$type", "Polygon"], paint: { "fill-color": layer.color || "#1d9bf0", "fill-opacity": opacity * 0.6 } });
           } else {
-            try {
-              map.setPaintProperty(polygonLayerId, "fill-opacity", opacity * 0.6);
-              map.setPaintProperty(polygonLayerId, "fill-color", layer.color || "#1d9bf0");
-            } catch {}
+            try { map.setPaintProperty(polygonLayerId, "fill-opacity", opacity * 0.6); map.setPaintProperty(polygonLayerId, "fill-color", layer.color || "#1d9bf0"); } catch {}
           }
         }
 
@@ -318,6 +291,7 @@ export function useMapLibreLayers(mapRef, mapReadyRef, {
         if (!map.getSource(srcId)) {
           map.addSource(srcId, { type: "raster", tiles: [tileUrl], tileSize: 256, minzoom: 0, maxzoom: 19 });
         }
+        // Custom raster tile layers also go on top (no beforeId)
         map.addLayer({ id: mlId, type: "raster", source: srcId, paint: { "raster-opacity": opacity, "raster-fade-duration": 0 } });
       } else {
         try { map.setPaintProperty(mlId, "raster-opacity", opacity); } catch {}
@@ -374,56 +348,19 @@ export function useMapLibreLayers(mapRef, mapReadyRef, {
         const geojson = { type: "FeatureCollection", features: geojsonFeatures };
         map.addSource(srcId, { type: "geojson", data: geojson });
 
-        // Add appropriate layer type based on geometry - ALWAYS on top
+        // Add appropriate layer type based on geometry — no beforeId, on top
         const hasPoints = geojsonFeatures.some(f => f.geometry.type === "Point");
         const hasLines = geojsonFeatures.some(f => f.geometry.type === "LineString");
         const hasPolygons = geojsonFeatures.some(f => f.geometry.type === "Polygon");
 
-        // Get the topmost layer ID to add custom layers on top
-        const allLayers = map.getStyle().layers || [];
-        const topLayerId = allLayers.length > 0 ? allLayers[allLayers.length - 1].id : undefined;
-
         if (hasPoints) {
-          map.addLayer({
-            id: `${mlId}-points`,
-            type: "circle",
-            source: srcId,
-            filter: ["==", "$type", "Point"],
-            paint: {
-              "circle-radius": 6,
-              "circle-color": layer.color || "#1d9bf0",
-              "circle-opacity": opacity,
-              "circle-stroke-width": 2,
-              "circle-stroke-color": "#ffffff"
-            }
-          }, topLayerId);
+          map.addLayer({ id: `${mlId}-points`, type: "circle", source: srcId, filter: ["==", "$type", "Point"], paint: { "circle-radius": 6, "circle-color": layer.color || "#1d9bf0", "circle-opacity": opacity, "circle-stroke-width": 2, "circle-stroke-color": "#ffffff" } });
         }
-
         if (hasLines) {
-          map.addLayer({
-            id: `${mlId}-lines`,
-            type: "line",
-            source: srcId,
-            filter: ["==", "$type", "LineString"],
-            paint: {
-              "line-width": 3,
-              "line-color": layer.color || "#1d9bf0",
-              "line-opacity": opacity
-            }
-          }, topLayerId);
+          map.addLayer({ id: `${mlId}-lines`, type: "line", source: srcId, filter: ["==", "$type", "LineString"], paint: { "line-width": 3, "line-color": layer.color || "#1d9bf0", "line-opacity": opacity } });
         }
-
         if (hasPolygons) {
-          map.addLayer({
-            id: `${mlId}-polygons`,
-            type: "fill",
-            source: srcId,
-            filter: ["==", "$type", "Polygon"],
-            paint: {
-              "fill-color": layer.color || "#1d9bf0",
-              "fill-opacity": opacity * 0.6
-            }
-          }, topLayerId);
+          map.addLayer({ id: `${mlId}-polygons`, type: "fill", source: srcId, filter: ["==", "$type", "Polygon"], paint: { "fill-color": layer.color || "#1d9bf0", "fill-opacity": opacity * 0.6 } });
         }
       }
     }, 50);
@@ -458,10 +395,7 @@ export function useMapLibreLayers(mapRef, mapReadyRef, {
 
       map.addSource(gpsSourceId, { type: "geojson", data: geojson });
 
-      // Get topmost layer for z-index
-      const allLayers = map.getStyle().layers || [];
-      const topLayerId = allLayers.length > 0 ? allLayers[allLayers.length - 1].id : undefined;
-
+      // GPS track goes on top (no beforeId)
       map.addLayer({
         id: gpsLayerId,
         type: "line",
@@ -472,7 +406,7 @@ export function useMapLibreLayers(mapRef, mapReadyRef, {
           "line-opacity": 0.9,
           "line-dasharray": [2, 2]
         }
-      }, topLayerId);
+      });
 
       // Add start/end markers
       const startMarkerId = "ml-gps-start";
@@ -502,7 +436,7 @@ export function useMapLibreLayers(mapRef, mapReadyRef, {
           "circle-stroke-width": 2,
           "circle-stroke-color": "#ffffff"
         }
-      }, topLayerId);
+      });
 
       // End marker (red)
       const endPt = gpsTrack[gpsTrack.length - 1];
@@ -524,7 +458,7 @@ export function useMapLibreLayers(mapRef, mapReadyRef, {
           "circle-stroke-width": 2,
           "circle-stroke-color": "#ffffff"
         }
-      }, topLayerId);
+      });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gpsTrack, mapReady]);
