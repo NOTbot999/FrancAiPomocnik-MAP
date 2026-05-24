@@ -95,8 +95,6 @@ const Map3DView = forwardRef(function Map3DView({
         }
 
         if (!map.getLayer(layerId)) {
-          const allLayers = map.getStyle().layers || [];
-          const topLayerId = allLayers.length > 0 ? allLayers[allLayers.length - 1].id : undefined;
           map.addLayer({
             id: layerId,
             type: "symbol",
@@ -119,7 +117,7 @@ const Map3DView = forwardRef(function Map3DView({
               "text-halo-blur": 1,
               "text-opacity": catLayer.opacity ?? 0.9,
             }
-          }, topLayerId);
+          });
         } else {
           try {
             map.setPaintProperty(layerId, "text-opacity", catLayer.opacity ?? 0.9);
