@@ -38,7 +38,10 @@ Deno.serve(async (req) => {
       errors += batch.length;
       console.error(`Batch error at ${skip + i}:`, e.message);
     }
+
+    // Small delay to avoid rate limiting
+    await new Promise(r => setTimeout(r, 300));
   }
 
-  return Response.json({ inserted, errors, total: caves.length, skip });
+  return Response.json({ inserted, errors, total: allCaves.length, skip });
 });

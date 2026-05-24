@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
     const limit = parseInt(body.limit ?? 2000);
 
     // Use service role to bypass RLS issues for public cave data
-    const caves = await base44.asServiceRole.entities.Cave.list("-depth_m", limit, skip);
+    const caves = await base44.asServiceRole.entities.Cave.list(null, limit, skip);
 
     return Response.json({ caves, count: caves.length });
   } catch (error) {
