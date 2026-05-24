@@ -9,15 +9,17 @@ Deno.serve(async (req) => {
 
   const body = await req.json().catch(() => ({}));
   const offset = body.offset || 0;
-  const batchLimit = body.batchLimit || 500;
+  const batchLimit = body.batchLimit || 200;
 
   const FILE_URL = 'https://media.base44.com/files/public/69ad3ce309822f8e71f66838/9cc867130_kataster_jame_13344.json';
 
   const response = await fetch(FILE_URL);
   const allCaves = await response.json();
+  const total = allCaves.length;
+  
   const caves = allCaves.slice(offset, offset + batchLimit);
 
-  const BATCH_SIZE = 50;
+  const BATCH_SIZE = 20;
   let inserted = 0;
   let errors = 0;
 
@@ -35,18 +37,15 @@ Deno.serve(async (req) => {
     try {
       const results = await base44.asServiceRole.entities.Cave.bulkCreate(batch);
       inserted += batch.length;
-      console.log(`[OK] Batch ${offset + i}-${offset + i + batch.length}, inserted: ${inserted}, first_id: ${results?.[0]?.id}`);
+      console.log(`[OK] Batch ${offset + i}-${offset + i + batch.length}, inserted: ${inserted}`);
     } catch (e) {
       errors += batch.length;
       console.error(`[ERR] Batch at ${offset + i}:`, e.message);
     }
 
-    await new Promise(r => setTimeout(r, 800));
+    // Longer delay to avoid rate limiting
+    await new Promise(r => setTimeout(r, 2000));
   }
 
-  // Verify by reading back
-  const verify = await base44.asServiceRole.entities.Cave.list('-created_date', 3);
-  console.log(`[VERIFY] Total sample from DB after insert:`, JSON.stringify(verify?.slice(0,2)));
-
-  return Response.json({ inserted, errors, total: allCaves.length, offset, processed: caves.length, db_count_sample: verify?.length });
+  return Response.json({ inserted, errors, total, offset, processed: caves.length });
 });
