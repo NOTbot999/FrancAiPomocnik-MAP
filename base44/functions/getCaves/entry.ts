@@ -4,13 +4,11 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     
-    const url = new URL(req.url);
     const body = await req.json().catch(() => ({}));
     const skip = parseInt(body.skip ?? 0);
     const limit = parseInt(body.limit ?? 2000);
 
-    // Use service role to bypass RLS issues for public cave data
-    const caves = await base44.asServiceRole.entities.Cave.list(null, limit, skip);
+    const caves = await base44.asServiceRole.entities.Cave.filter({}, '-created_date', limit, skip);
 
     return Response.json({ caves, count: caves.length });
   } catch (error) {
