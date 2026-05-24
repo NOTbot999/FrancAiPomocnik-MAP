@@ -35,13 +35,13 @@
     "name"
   ],
   "rls": {
+    "read": {
+      "everyone": true
+    },
     "create": {
       "user_condition": {
         "role": "admin"
       }
-    },
-    "read": {
-      "everyone": true
     },
     "update": {
       "user_condition": {
