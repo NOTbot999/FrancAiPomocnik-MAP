@@ -8,7 +8,7 @@ Deno.serve(async (req) => {
     const skip = parseInt(body.skip ?? 0);
     const limit = parseInt(body.limit ?? 2000);
 
-    const caves = await base44.asServiceRole.entities.Cave.filter({}, '-created_date', limit, skip);
+    const caves = await base44.asServiceRole.entities.Cave.list('-created_date', limit, skip);
 
     return Response.json({ caves, count: caves.length });
   } catch (error) {
