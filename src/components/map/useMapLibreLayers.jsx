@@ -171,7 +171,7 @@ export function useMapLibreLayers(mapRef, mapReadyRef, {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeLayers, layerOpacities, mapReady]);
 
-  // Sync custom (AI) layers
+  // Sync custom (AI) layers - INCLUDING search category layers ("OZNAČI NA KARTI")
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !mapReadyRef.current) return;
@@ -182,6 +182,9 @@ export function useMapLibreLayers(mapRef, mapReadyRef, {
       const opacity = customLayerOpacities[id] ?? layer.opacity ?? 0.8;
       const mlId = `ml-${id}`;
       const srcId = `src-${id}`;
+
+      // Skip search category layers - handled separately in Map3DView
+      if (layer._searchCat || layer._caveDbLayer || layer._municipalityLayer) continue;
 
       if (!visible) {
         // Remove GeoJSON layers (points, lines, polygons)

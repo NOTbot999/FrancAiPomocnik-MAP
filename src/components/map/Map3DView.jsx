@@ -37,7 +37,7 @@ const Map3DView = forwardRef(function Map3DView({
   // Use a counter so incrementing triggers re-sync without a false→true flip delay
   const [mapReady, setMapReady] = useState(0);
 
-  // Sync LayerPanel layers into MapLibre
+  // Sync LayerPanel layers into MapLibre (base layers, overlays, custom layers, GPS tracks)
   useMapLibreLayers(mapRef, mapReadyRef, {
     activeBaseLayers,
     activeLayers,
@@ -49,6 +49,91 @@ const Map3DView = forwardRef(function Map3DView({
     customLayerOpacities,
     gpsTrack,
   });
+
+  // Also sync search category layers (from "OZNAČI NA KARTI") into MapLibre as emoji symbols
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapReadyRef.current || mapReady === 0) return;
+
+    // Emoji mapping for categories
+    const EMOJI_MAP = {
+      castle: "🏰", peak: "⛰️", waterfall: "💧", church: "⛪", museum: "🏛️",
+      viewpoint: "👁️", cave: "🕳️", caves_db: "🕳️", bridge: "🌉", monument: "🗿",
+      lake: "🏞️", river: "🌊", forest: "🌲", vineyard: "🍇", municipality: "🏘️",
+    };
+
+    // Process each search category layer
+    searchCategoryLayers.forEach(catLayer => {
+      const catId = catLayer._searchCat || Object.keys(EMOJI_MAP).find(k => catLayer.name?.toLowerCase().includes(k));
+      const sourceId = `search_cat_${catId || catLayer.id}`;
+      const layerId = `search_cat_symbol_${catId || catLayer.id}`;
+      const isVisible = catLayer.visible !== false;
+      const emoji = EMOJI_MAP[catId] || "📍";
+
+      if (!isVisible) {
+        // Remove if not visible
+        if (map.getLayer(layerId)) try { map.removeLayer(layerId); } catch {}
+        if (map.getSource(sourceId)) try { map.removeSource(sourceId); } catch {}
+        return;
+      }
+
+      // Convert features to GeoJSON with emoji property
+      const geojsonFeatures = (catLayer.features || [])
+        .filter(f => f.type === "Point" && f.coords && f.coords.length >= 2)
+        .map(f => ({
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [f.coords[1], f.coords[0]] },
+          properties: { label: f.label || "", emoji }
+        }));
+
+      if (geojsonFeatures.length === 0) return;
+
+      const geojson = { type: "FeatureCollection", features: geojsonFeatures };
+
+      // Add/update source
+      if (!map.getSource(sourceId)) {
+        map.addSource(sourceId, { type: "geojson", data: geojson, cluster: false });
+      } else {
+        map.getSource(sourceId).setData(geojson);
+      }
+
+      // Add symbol layer with emoji on top
+      if (!map.getLayer(layerId)) {
+        const allLayers = map.getStyle().layers || [];
+        const topLayerId = allLayers.length > 0 ? allLayers[allLayers.length - 1].id : undefined;
+        
+        map.addLayer({
+          id: layerId,
+          type: "symbol",
+          source: sourceId,
+          layout: {
+            "text-field": ["get", "emoji"],
+            "text-size": 24,
+            "text-offset": [0, -1.2],
+            "text-anchor": "bottom",
+            "text-allow-overlap": true,
+            "text-ignore-placement": false,
+            "text-pitch-alignment": "viewport",
+            "text-max-width": 1,
+            "icon-allow-overlap": true,
+          },
+          paint: {
+            "text-color": catLayer.color || "#e11d48",
+            "text-halo-color": "#ffffff",
+            "text-halo-width": 2,
+            "text-halo-blur": 1,
+            "text-opacity": catLayer.opacity ?? 0.9,
+          }
+        }, topLayerId);
+      } else {
+        try {
+          map.setPaintProperty(layerId, "text-opacity", catLayer.opacity ?? 0.9);
+          map.setPaintProperty(layerId, "text-color", catLayer.color || "#e11d48");
+        } catch {}
+      }
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchCategoryLayers, mapReady]);
 
   const setupTerrain = useCallback((map, key) => {
     if (!map.getSource("terrain-dem")) {
@@ -293,15 +378,7 @@ const Map3DView = forwardRef(function Map3DView({
         </div>
       )}
 
-      {/* Search category layers (3D emoji symbols) */}
-      {searchCategoryLayers.map(catLayer => (
-        <SearchCategory3DLayer
-          key={catLayer.id}
-          layer={catLayer}
-          map={mapRef.current}
-          mapReady={mapReadyRef.current}
-        />
-      ))}
+      {/* Search category layers (3D emoji symbols) - rendered via useEffect above for proper z-index */}
     </div>
   );
 });

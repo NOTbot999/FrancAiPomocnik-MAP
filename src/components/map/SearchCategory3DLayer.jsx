@@ -26,7 +26,7 @@ const DEFAULT_EMOJI = "📍";
  * Uses symbol layers with text-field for emoji display.
  * Always rendered above terrain in the symbol pane.
  */
-export default function SearchCategory3DLayer({ layer, map, mapReady }) {
+export default function SearchCategory3DLayer({ layer, map, mapReady, opacity }) {
   const layerIdRef = useRef(null);
 
   useEffect(() => {
@@ -59,8 +59,12 @@ export default function SearchCategory3DLayer({ layer, map, mapReady }) {
       });
     }
 
-    // Add symbol layer for emoji display
+    // Add symbol layer for emoji display - ALWAYS on top of everything
     if (!map.getLayer(layerId)) {
+      // Get the topmost layer ID to insert above all layers
+      const allLayers = map.getStyle().layers || [];
+      const topLayerId = allLayers.length > 0 ? allLayers[allLayers.length - 1].id : undefined;
+      
       map.addLayer({
         id: layerId,
         type: "symbol",
@@ -74,14 +78,17 @@ export default function SearchCategory3DLayer({ layer, map, mapReady }) {
           "text-ignore-placement": false,
           "text-pitch-alignment": "viewport",
           "text-max-width": 1,
+          "icon-allow-overlap": true,
+          "symbol-sort-key": ["get", "sortKey"],
         },
         paint: {
           "text-color": layer.color || "#e11d48",
           "text-halo-color": "#ffffff",
           "text-halo-width": 2,
           "text-halo-blur": 1,
+          "text-opacity": opacity !== undefined ? opacity : 1,
         },
-      }, "waterway-label"); // Insert below labels but above terrain
+      }, topLayerId); // Insert at the very top
     }
 
     return () => {

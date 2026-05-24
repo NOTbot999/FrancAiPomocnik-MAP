@@ -8,6 +8,7 @@ import MyTracks from "@/components/map/MyTracks";
 import NavigationPanel from "@/components/map/NavigationPanel";
 import OfflineManager from "@/components/map/OfflineManager";
 import { OVERLAY_CATEGORIES } from "@/components/map/layerConfig";
+import { CATEGORIES } from "@/components/map/SearchBar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import AIPanel from "@/components/map/AIPanel";
 import TrackAnalyzer from "@/components/map/TrackAnalyzer";
@@ -300,7 +301,19 @@ export default function MapViewer() {
           customLayers={customLayers}
           customLayerVisible={customLayerVisible}
           customLayerOpacities={customLayerOpacities}
-          searchCategoryLayers={Object.values(activeSearchLayers).map(layerId => customLayers.find(l => l.id === layerId)).filter(l => l && (l._searchCat || l._caveDbLayer))}
+          searchCategoryLayers={Object.entries(activeSearchLayers).map(([catId, layerId]) => {
+            const layer = customLayers.find(l => l.id === layerId);
+            if (!layer) return null;
+            const category = CATEGORIES.find(c => c.id === catId);
+            return {
+              ...layer,
+              _searchCat: layer._searchCat || catId,
+              _caveDbLayer: layer._caveDbLayer || category?._caveDbLayer,
+              _municipalityLayer: layer._municipalityLayer || category?._municipalityLayer,
+              opacity: customLayerOpacities[layerId] ?? layer.opacity ?? 0.8,
+              visible: customLayerVisible[layerId] !== false,
+            };
+          }).filter(Boolean)}
           gpsTrack={gpsTrack}
           onPinPicked={isPinPicking ? (latlng) => { setPinnedLocation([latlng.lat, latlng.lng]); setIsPinPicking(false); } : null}
         />
