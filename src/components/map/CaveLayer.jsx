@@ -5,17 +5,21 @@ let caveCache = null;
 
 export async function loadCaves() {
   if (caveCache) return caveCache;
-  // Load all caves in batches (13k+ records)
+
+  // Load all caves via backend function (bypasses RLS for public data)
   const batchSize = 2000;
   let all = [];
   let skip = 0;
+
   while (true) {
-    const batch = await base44.entities.Cave.list("-depth_m", batchSize, skip);
+    const res = await base44.functions.invoke('getCaves', { skip, limit: batchSize });
+    const batch = res.data?.caves || [];
     if (!batch || batch.length === 0) break;
     all = all.concat(batch);
     if (batch.length < batchSize) break;
     skip += batchSize;
   }
+
   caveCache = all.filter(c => c.latitude && c.longitude && parseFloat(c.latitude) !== 0 && parseFloat(c.longitude) !== 0);
   return caveCache;
 }
