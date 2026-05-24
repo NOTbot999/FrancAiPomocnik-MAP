@@ -54,6 +54,7 @@ const Map3DView = forwardRef(function Map3DView({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !mapReadyRef.current || mapReady === 0) return;
+    if (!searchCategoryLayers || searchCategoryLayers.length === 0) return;
 
     // Emoji mapping for categories
     const EMOJI_MAP = {
@@ -62,74 +63,86 @@ const Map3DView = forwardRef(function Map3DView({
       lake: "🏞️", river: "🌊", forest: "🌲", vineyard: "🍇", municipality: "🏘️",
     };
 
+    console.log("[Map3D] Syncing search category layers:", searchCategoryLayers.length);
+
     // Process each search category layer
     searchCategoryLayers.forEach(catLayer => {
-      const catId = catLayer._searchCat || Object.keys(EMOJI_MAP).find(k => catLayer.name?.toLowerCase().includes(k));
-      const sourceId = `search_cat_${catId || catLayer.id}`;
-      const layerId = `search_cat_symbol_${catId || catLayer.id}`;
-      const isVisible = catLayer.visible !== false;
-      const emoji = EMOJI_MAP[catId] || "📍";
+      try {
+        const catId = catLayer._searchCat || Object.keys(EMOJI_MAP).find(k => catLayer.name?.toLowerCase().includes(k));
+        const sourceId = `search_cat_${catId || catLayer.id}`;
+        const layerId = `search_cat_symbol_${catId || catLayer.id}`;
+        const isVisible = catLayer.visible !== false;
+        const emoji = EMOJI_MAP[catId] || "📍";
 
-      if (!isVisible) {
-        // Remove if not visible
-        if (map.getLayer(layerId)) try { map.removeLayer(layerId); } catch {}
-        if (map.getSource(sourceId)) try { map.removeSource(sourceId); } catch {}
-        return;
-      }
+        if (!isVisible) {
+          // Remove if not visible
+          if (map.getLayer(layerId)) try { map.removeLayer(layerId); } catch {}
+          if (map.getSource(sourceId)) try { map.removeSource(sourceId); } catch {}
+          return;
+        }
 
-      // Convert features to GeoJSON with emoji property
-      const geojsonFeatures = (catLayer.features || [])
-        .filter(f => f.type === "Point" && f.coords && f.coords.length >= 2)
-        .map(f => ({
-          type: "Feature",
-          geometry: { type: "Point", coordinates: [f.coords[1], f.coords[0]] },
-          properties: { label: f.label || "", emoji }
-        }));
+        // Convert features to GeoJSON with emoji property
+        const geojsonFeatures = (catLayer.features || [])
+          .filter(f => f?.type === "Point" && f?.coords && Array.isArray(f.coords) && f.coords.length >= 2)
+          .map(f => ({
+            type: "Feature",
+            geometry: { type: "Point", coordinates: [f.coords[1], f.coords[0]] },
+            properties: { label: f.label || "", emoji }
+          }));
 
-      if (geojsonFeatures.length === 0) return;
+        if (geojsonFeatures.length === 0) {
+          console.log("[Map3D] No valid features for layer:", catLayer.id);
+          return;
+        }
 
-      const geojson = { type: "FeatureCollection", features: geojsonFeatures };
+        const geojson = { type: "FeatureCollection", features: geojsonFeatures };
 
-      // Add/update source
-      if (!map.getSource(sourceId)) {
-        map.addSource(sourceId, { type: "geojson", data: geojson, cluster: false });
-      } else {
-        map.getSource(sourceId).setData(geojson);
-      }
+        // Add/update source
+        if (!map.getSource(sourceId)) {
+          map.addSource(sourceId, { type: "geojson", data: geojson, cluster: false });
+          console.log("[Map3D] Added source:", sourceId);
+        } else {
+          map.getSource(sourceId).setData(geojson);
+          console.log("[Map3D] Updated source:", sourceId);
+        }
 
-      // Add symbol layer with emoji on top
-      if (!map.getLayer(layerId)) {
-        const allLayers = map.getStyle().layers || [];
-        const topLayerId = allLayers.length > 0 ? allLayers[allLayers.length - 1].id : undefined;
-        
-        map.addLayer({
-          id: layerId,
-          type: "symbol",
-          source: sourceId,
-          layout: {
-            "text-field": ["get", "emoji"],
-            "text-size": 24,
-            "text-offset": [0, -1.2],
-            "text-anchor": "bottom",
-            "text-allow-overlap": true,
-            "text-ignore-placement": false,
-            "text-pitch-alignment": "viewport",
-            "text-max-width": 1,
-            "icon-allow-overlap": true,
-          },
-          paint: {
-            "text-color": catLayer.color || "#e11d48",
-            "text-halo-color": "#ffffff",
-            "text-halo-width": 2,
-            "text-halo-blur": 1,
-            "text-opacity": catLayer.opacity ?? 0.9,
-          }
-        }, topLayerId);
-      } else {
-        try {
-          map.setPaintProperty(layerId, "text-opacity", catLayer.opacity ?? 0.9);
-          map.setPaintProperty(layerId, "text-color", catLayer.color || "#e11d48");
-        } catch {}
+        // Add symbol layer with emoji on top
+        if (!map.getLayer(layerId)) {
+          const allLayers = map.getStyle().layers || [];
+          const topLayerId = allLayers.length > 0 ? allLayers[allLayers.length - 1].id : undefined;
+          
+          map.addLayer({
+            id: layerId,
+            type: "symbol",
+            source: sourceId,
+            layout: {
+              "text-field": ["get", "emoji"],
+              "text-size": 24,
+              "text-offset": [0, -1.2],
+              "text-anchor": "bottom",
+              "text-allow-overlap": true,
+              "text-ignore-placement": false,
+              "text-pitch-alignment": "viewport",
+              "text-max-width": 1,
+              "icon-allow-overlap": true,
+            },
+            paint: {
+              "text-color": catLayer.color || "#e11d48",
+              "text-halo-color": "#ffffff",
+              "text-halo-width": 2,
+              "text-halo-blur": 1,
+              "text-opacity": catLayer.opacity ?? 0.9,
+            }
+          }, topLayerId);
+          console.log("[Map3D] Added layer:", layerId);
+        } else {
+          try {
+            map.setPaintProperty(layerId, "text-opacity", catLayer.opacity ?? 0.9);
+            map.setPaintProperty(layerId, "text-color", catLayer.color || "#e11d48");
+          } catch {}
+        }
+      } catch (err) {
+        console.error("Error processing search category layer:", catLayer?.id, err);
       }
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -245,7 +258,9 @@ const Map3DView = forwardRef(function Map3DView({
     map.once("style.load", () => {
       if (is3D) setupTerrain(map, apiKey);
       mapReadyRef.current = true;
+      // Increment mapReady counter to trigger layer re-sync
       setMapReady(c => c + 1);
+      console.log("[Map3D] Style loaded, re-syncing layers");
     });
   }, [setupTerrain, is3D]);
 
