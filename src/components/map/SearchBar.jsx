@@ -11,7 +11,7 @@ export const CATEGORIES = [
   { id: "peak",          label: "Vrhovi",         emoji: "⛰️", color: "#6b7280", query: `[out:json][timeout:30];node["natural"="peak"](45.4,13.4,46.9,16.6);out;` },
   { id: "waterfall",     label: "Slapovi",        emoji: "💧", color: "#0ea5e9", query: `[out:json][timeout:30];node["waterway"="waterfall"](45.4,13.4,46.9,16.6);out;` },
   { id: "viewpoint",     label: "Razglediš.",     emoji: "👁️", color: "#8b5cf6", query: `[out:json][timeout:30];node["tourism"="viewpoint"](45.4,13.4,46.9,16.6);out;` },
-  { id: "cave",          label: "Jame",           emoji: "🕳️", color: "#78716c", query: `[out:json][timeout:30];node["natural"="cave_entrance"](45.4,13.4,46.9,16.6);out;` },
+  { id: "cave",          label: "Jame",           emoji: "🕳️", color: "#78716c", _caveDbLayer: true, query: `` },
   { id: "museum",        label: "Muzeji",         emoji: "🏛️", color: "#a855f7", query: `[out:json][timeout:30];(node["tourism"="museum"](45.4,13.4,46.9,16.6);way["tourism"="museum"](45.4,13.4,46.9,16.6););out center;` },
   { id: "ruins",         label: "Ruševine",       emoji: "🗿", color: "#92400e", query: `[out:json][timeout:30];(node["historic"="ruins"](45.4,13.4,46.9,16.6);way["historic"="ruins"](45.4,13.4,46.9,16.6););out center;` },
   { id: "spring",        label: "Izviri",         emoji: "💦", color: "#06b6d4", query: `[out:json][timeout:30];node["natural"="spring"](45.4,13.4,46.9,16.6);out;` },
@@ -37,7 +37,7 @@ export const CATEGORIES = [
   { id: "cemetery",      label: "Pokopališča",    emoji: "⚰️", color: "#6b7280", query: `[out:json][timeout:30];(node["landuse"="cemetery"](45.4,13.4,46.9,16.6);way["landuse"="cemetery"](45.4,13.4,46.9,16.6););out center;` },
   { id: "municipality",  label: "Občine",         emoji: "🏘️", color: "#b45309", _municipalityLayer: true, query: `` },
   { id: "motorway_jct",  label: "AC uvozi",       emoji: "🛣️", color: "#64748b", query: `[out:json][timeout:30];node["highway"="motorway_junction"](45.4,13.4,46.9,16.6);out;` },
-  { id: "caves_db",     label: "Jame (baza)",    emoji: "🕳️", color: "#78716c", _caveDbLayer: true, query: `` },
+
 ];
 
 // Invalidate old cache for improved queries
@@ -274,8 +274,8 @@ export default function SearchBar({ onLocationSelect, autoFocus, onAddCustomLaye
       try {
         const caves = await loadCaves();
         const features = cavesToLayerFeatures(caves);
-        const layerId = `search_caves_db`;
-        onAddCustomLayer({ id: layerId, name: "🕳️ Jame (baza)", color: "#78716c", features, _searchCat: cat.id, _caveDbLayer: true });
+        const layerId = `search_${cat.id}`;
+        onAddCustomLayer({ id: layerId, name: "🕳️ Jame", color: "#78716c", features, _searchCat: cat.id, _caveDbLayer: true });
         setActiveLayers(prev => ({ ...prev, [cat.id]: layerId }));
       } finally {
         setLoadingCat(null);

@@ -5,8 +5,17 @@ let caveCache = null;
 
 export async function loadCaves() {
   if (caveCache) return caveCache;
-  // Load all caves with valid coordinates
-  const all = await base44.entities.Cave.list("-depth_m", 5000);
+  // Load all caves in batches (13k+ records)
+  const batchSize = 2000;
+  let all = [];
+  let skip = 0;
+  while (true) {
+    const batch = await base44.entities.Cave.list("-depth_m", batchSize, skip);
+    if (!batch || batch.length === 0) break;
+    all = all.concat(batch);
+    if (batch.length < batchSize) break;
+    skip += batchSize;
+  }
   caveCache = all.filter(c => c.latitude && c.longitude && parseFloat(c.latitude) !== 0 && parseFloat(c.longitude) !== 0);
   return caveCache;
 }
