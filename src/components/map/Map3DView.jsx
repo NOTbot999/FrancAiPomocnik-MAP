@@ -183,6 +183,131 @@ const Map3DView = forwardRef(function Map3DView({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchCategoryLayers, mapReady]);
 
+  // Sync custom layers (AI/user-generated) in MapLibre
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapReadyRef.current || mapReady === 0) return;
+
+    const syncCustomLayers = (layers) => {
+      if (!map || !map.isStyleLoaded()) return;
+
+      for (const layer of layers) {
+        const id = layer.id;
+        const visible = customLayerVisible[id] !== false;
+        const opacity = customLayerOpacities[id] ?? layer.opacity ?? 0.8;
+        const mlId = `ml-${id}`;
+        const srcId = `src-${id}`;
+
+        // Skip search category layers - handled separately
+        if (layer._searchCat || layer._caveDbLayer || layer._municipalityLayer) continue;
+
+        if (!visible) {
+          if (map.getLayer(`${mlId}-points`)) try { map.removeLayer(`${mlId}-points`); } catch {}
+          if (map.getLayer(`${mlId}-lines`)) try { map.removeLayer(`${mlId}-lines`); } catch {}
+          if (map.getLayer(`${mlId}-polygons`)) try { map.removeLayer(`${mlId}-polygons`); } catch {}
+          if (map.getLayer(mlId)) try { map.removeLayer(mlId); } catch {}
+          if (map.getSource(srcId)) try { map.removeSource(srcId); } catch {}
+          continue;
+        }
+
+        // GeoJSON custom layer (has features array)
+        if (layer.features && Array.isArray(layer.features)) {
+          const geojsonFeatures = layer.features.map(f => {
+            if (f.type === "Point") {
+              return {
+                type: "Feature",
+                geometry: { type: "Point", coordinates: [f.coords[1], f.coords[0]] },
+                properties: { label: f.label || "" }
+              };
+            } else if (f.type === "LineString" || f.type === "Polygon") {
+              return {
+                type: "Feature",
+                geometry: { type: f.type, coordinates: f.coords.map(c => [c[1], c[0]]) },
+                properties: { label: f.label || "" }
+              };
+            }
+            return null;
+          }).filter(Boolean);
+
+          const geojson = { type: "FeatureCollection", features: geojsonFeatures };
+
+          if (!map.getSource(srcId)) {
+            map.addSource(srcId, { type: "geojson", data: geojson });
+          } else {
+            map.getSource(srcId).setData(geojson);
+          }
+
+          if (map.getLayer(mlId)) try { map.removeLayer(mlId); } catch {}
+
+          const hasPoints = geojsonFeatures.some(f => f.geometry.type === "Point");
+          const hasLines = geojsonFeatures.some(f => f.geometry.type === "LineString");
+          const hasPolygons = geojsonFeatures.some(f => f.geometry.type === "Polygon");
+
+          if (hasPoints) {
+            const pointLayerId = `${mlId}-points`;
+            if (!map.getLayer(pointLayerId)) {
+              map.addLayer({ id: pointLayerId, type: "circle", source: srcId, filter: ["==", "$type", "Point"], paint: { "circle-radius": 6, "circle-color": layer.color || "#1d9bf0", "circle-opacity": opacity, "circle-stroke-width": 2, "circle-stroke-color": "#ffffff" } });
+            } else {
+              try { map.setPaintProperty(pointLayerId, "circle-opacity", opacity); map.setPaintProperty(pointLayerId, "circle-color", layer.color || "#1d9bf0"); } catch {}
+            }
+            try { map.moveLayer(pointLayerId); } catch {}
+          }
+
+          if (hasLines) {
+            const lineLayerId = `${mlId}-lines`;
+            if (!map.getLayer(lineLayerId)) {
+              map.addLayer({ id: lineLayerId, type: "line", source: srcId, filter: ["==", "$type", "LineString"], paint: { "line-width": 3, "line-color": layer.color || "#1d9bf0", "line-opacity": opacity } });
+            } else {
+              try { map.setPaintProperty(lineLayerId, "line-opacity", opacity); map.setPaintProperty(lineLayerId, "line-color", layer.color || "#1d9bf0"); } catch {}
+            }
+            try { map.moveLayer(lineLayerId); } catch {}
+          }
+
+          if (hasPolygons) {
+            const polygonLayerId = `${mlId}-polygons`;
+            if (!map.getLayer(polygonLayerId)) {
+              map.addLayer({ id: polygonLayerId, type: "fill", source: srcId, filter: ["==", "$type", "Polygon"], paint: { "fill-color": layer.color || "#1d9bf0", "fill-opacity": opacity * 0.6 } });
+            } else {
+              try { map.setPaintProperty(polygonLayerId, "fill-opacity", opacity * 0.6); map.setPaintProperty(polygonLayerId, "fill-color", layer.color || "#1d9bf0"); } catch {}
+            }
+            try { map.moveLayer(polygonLayerId); } catch {}
+          }
+          continue;
+        }
+
+        // Tile-based custom layer
+        let tileUrl = null;
+        if (layer.type === "wms") {
+          const parts = [
+            `service=WMS`, `request=GetMap`, `version=${layer.version || "1.1.1"}`,
+            `layers=${encodeURIComponent(layer.layers)}`, `styles=`, `format=${encodeURIComponent(layer.format || "image/png")}`,
+            `transparent=${layer.transparent !== false ? "true" : "false"}`, `width=256`, `height=256`,
+            `${layer.version?.startsWith("1.3") ? "crs" : "srs"}=EPSG:3857`, `bbox={bbox-epsg-3857}`
+          ];
+          tileUrl = `${layer.url}?${parts.join("&")}`;
+        } else if (layer.tileUrl) {
+          tileUrl = layer.tileUrl;
+        } else if (layer.url) {
+          tileUrl = layer.url.replace("{s}", "a").replace("{r}", "");
+        }
+        if (!tileUrl) continue;
+
+        if (!map.getLayer(mlId)) {
+          if (!map.getSource(srcId)) {
+            map.addSource(srcId, { type: "raster", tiles: [tileUrl], tileSize: 256, minzoom: 0, maxzoom: 19 });
+          }
+          map.addLayer({ id: mlId, type: "raster", source: srcId, paint: { "raster-opacity": opacity, "raster-fade-duration": 0 } });
+          try { map.moveLayer(mlId); } catch {}
+        } else {
+          try { map.setPaintProperty(mlId, "raster-opacity", opacity); } catch {}
+        }
+      }
+    };
+
+    syncCustomLayers(customLayers);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customLayers, customLayerVisible, customLayerOpacities, mapReady]);
+
   const setupTerrain = useCallback((map, key) => {
     if (!map.getSource("terrain-dem")) {
       map.addSource("terrain-dem", {
