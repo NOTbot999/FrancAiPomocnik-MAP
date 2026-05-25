@@ -8,7 +8,7 @@
     },
     "email": {
       "type": "string",
-      "description": "Email address (optional, used for login and premium)"
+      "description": "Email address"
     },
     "password": {
       "type": "string",
@@ -68,6 +68,11 @@
       "type": "string",
       "format": "date-time",
       "description": "Premium expiry date (null = lifetime)"
+    },
+    "is_base44_user": {
+      "type": "boolean",
+      "default": false,
+      "description": "True if registered via Base44 OAuth"
     },
     "map_settings": {
       "type": "object",
