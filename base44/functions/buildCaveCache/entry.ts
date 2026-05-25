@@ -10,19 +10,19 @@ Deno.serve(async (req) => {
 
     console.log("Fetcham jame iz DB...");
     const batchSize = 2000;
-    let all = [];
+    let allCaves = [];
     let skip = 0;
 
     while (true) {
       const batch = await base44.asServiceRole.entities.Cave.list(null, batchSize, skip);
       if (!batch || batch.length === 0) break;
-      all = all.concat(batch);
-      console.log(`Zbral ${all.length} jam...`);
+      allCaves = allCaves.concat(batch);
+      console.log(`Zbral ${allCaves.length} jam...`);
       if (batch.length < batchSize) break;
       skip += batchSize;
     }
 
-    const features = all
+    const caveFeatures = allCaves
       .filter(c => c.latitude && c.longitude && parseFloat(c.latitude) !== 0 && parseFloat(c.longitude) !== 0)
       .map(c => ({
         type: "Point",
@@ -32,26 +32,26 @@ Deno.serve(async (req) => {
         length_m: c.length_m || null,
       }));
 
-    console.log(`Filtrirano: ${features.length} jam z koordinatami`);
+    console.log(`Filtrirano: ${caveFeatures.length} jam z koordinatami`);
 
     // Save to CachedLayer
     const existing = await base44.asServiceRole.entities.CachedLayer.filter({ category_id: "cave" });
     if (existing && existing.length > 0) {
       await base44.asServiceRole.entities.CachedLayer.update(existing[0].id, {
-        features,
-        feature_count: features.length,
+        features: caveFeatures,
+        feature_count: caveFeatures.length,
         built_at: new Date().toISOString(),
       });
     } else {
       await base44.asServiceRole.entities.CachedLayer.create({
         category_id: "cave",
-        features,
-        feature_count: features.length,
+        features: caveFeatures,
+        feature_count: caveFeatures.length,
         built_at: new Date().toISOString(),
       });
     }
 
-    return Response.json({ ok: true, count: features.length, total_caves: all.length });
+    return Response.json({ ok: true, count: caveFeatures.length, total_caves: allCaves.length });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
