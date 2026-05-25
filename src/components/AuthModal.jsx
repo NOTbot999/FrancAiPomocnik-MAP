@@ -4,9 +4,11 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { X, User, Mail, Lock, Loader2, AlertCircle, Map } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import SetupAccountModal from '@/components/SetupAccountModal';
 
 export default function AuthModal({ onClose, onSuccess }) {
   const [isLogin, setIsLogin] = useState(true);
+  const [setupAccount, setSetupAccount] = useState(null);
   const [identifier, setIdentifier] = useState('');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -29,6 +31,14 @@ export default function AuthModal({ onClose, onSuccess }) {
       const byEmail = identifier.includes('@') ? await base44.entities.UserAccount.filter({ email: identifier }) : [];
       const account = (byUsername.length > 0 ? byUsername : byEmail)[0];
       if (!account) { setError('Uporabnik ne obstaja'); setLoading(false); return; }
+
+      // Admin pre-created account: no password set yet → force setup
+      if (!account.password && !account.password_hash) {
+        setLoading(false);
+        setSetupAccount(account);
+        return;
+      }
+
       if (account.password !== password && account.password_hash !== password) {
         setError('Napačno geslo'); setLoading(false); return;
       }
@@ -63,6 +73,19 @@ export default function AuthModal({ onClose, onSuccess }) {
       setError('Registracija ni uspela');
     } finally { setLoading(false); }
   };
+
+  if (setupAccount) {
+    return (
+      <SetupAccountModal
+        account={setupAccount}
+        onComplete={(updatedAccount) => {
+          setSetupAccount(null);
+          onSuccess?.(updatedAccount);
+          if (updatedAccount.role === 'admin') window.location.href = '/admin';
+        }}
+      />
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4">
