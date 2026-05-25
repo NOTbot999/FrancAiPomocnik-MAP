@@ -58,8 +58,9 @@ const Map3DView = forwardRef(function Map3DView({
   const syncSearchCategoryLayers = useCallback((map, layers) => {
     if (!map || !map.isStyleLoaded()) return;
 
-    console.log("[Map3D] Sync search layers:", layers?.length, "layers");
-    console.log("[Map3D] Layer data:", layers);
+    console.log("[Map3D] === Sync search layers ===");
+    console.log("[Map3D] Count:", layers?.length);
+    console.log("[Map3D] Layers:", JSON.stringify(layers, null, 2));
 
     // Build the set of layer IDs that SHOULD exist right now
     const desiredIds = new Set(
@@ -165,6 +166,8 @@ const Map3DView = forwardRef(function Map3DView({
   // Sync search category layers whenever they change OR map becomes ready
   useEffect(() => {
     const map = mapRef.current;
+    console.log("[Map3D] searchCategoryLayers changed:", searchCategoryLayers?.length, "layers");
+    console.log("[Map3D] Layer details:", searchCategoryLayers);
     if (!map || !mapReadyRef.current || mapReady === 0) return;
     const t = setTimeout(() => syncSearchCategoryLayers(map, searchCategoryLayersRef.current), 100);
     return () => clearTimeout(t);
@@ -737,7 +740,13 @@ const Map3DView = forwardRef(function Map3DView({
         </div>
       )}
 
-      {/* Search category layers (3D emoji symbols) - rendered via useEffect above for proper z-index */}
+      {/* Debug info */}
+      {!loading && !error && (
+        <div className="absolute top-4 left-4 z-[500] bg-black/60 backdrop-blur text-white text-xs px-3 py-2 rounded-lg">
+          <div>Search layers: {searchCategoryLayers?.length || 0}</div>
+          <div>Active cat IDs: {activeCatLayerIds.current.size}</div>
+        </div>
+      )}
     </div>
   );
 });
