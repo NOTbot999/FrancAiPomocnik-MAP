@@ -12,11 +12,11 @@
     },
     "password": {
       "type": "string",
-      "description": "User password (plaintext, visible to admin only)"
+      "description": "User password (plaintext, legacy)"
     },
     "password_hash": {
       "type": "string",
-      "description": "Hashed password (legacy)"
+      "description": "Hashed password (base64)"
     },
     "login_method": {
       "type": "string",
@@ -104,12 +104,20 @@
     }
   },
   "required": [
-    "username",
-    "password"
+    "username"
   ],
   "rls": {
     "create": {
-      "everyone": true
+      "$or": [
+        {
+          "everyone": true
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
     },
     "read": {
       "$or": [
