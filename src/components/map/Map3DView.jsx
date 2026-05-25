@@ -145,7 +145,9 @@ const Map3DView = forwardRef(function Map3DView({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !mapReadyRef.current || mapReady === 0) return;
-    syncSearchCategoryLayers(map, searchCategoryLayers);
+    // Small delay to ensure style is fully loaded before adding layers
+    const t = setTimeout(() => syncSearchCategoryLayers(map, searchCategoryLayersRef.current), 50);
+    return () => clearTimeout(t);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchCategoryLayers, mapReady, syncSearchCategoryLayers]);
 
@@ -327,15 +329,20 @@ const Map3DView = forwardRef(function Map3DView({
     if (!map || !mapReadyRef.current) return;
     setTimeout(() => {
       try { map.resize(); } catch {}
-      // Sync to current Leaflet view position (center is [lat,lng])
       if (center && !isNaN(center[0]) && !isNaN(center[1])) {
         try { map.jumpTo({ center: [center[1], center[0]], zoom: zoom ?? map.getZoom() }); } catch {}
       }
-      // Re-trigger layer sync when 3D becomes visible (layers may have been added while hidden)
       if (mapReadyRef.current) setMapReady(c => c + 1);
     }, 150);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isVisible]);
+
+  // When searchCategoryLayers change while 3D is already visible and ready, force immediate sync
+  useEffect(() => {
+    if (!isVisible || !mapReadyRef.current) return;
+    syncSearchCategoryLayers(mapRef.current, searchCategoryLayers);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchCategoryLayers]);
 
   // React to is3D prop changes without full re-init
   useEffect(() => {
