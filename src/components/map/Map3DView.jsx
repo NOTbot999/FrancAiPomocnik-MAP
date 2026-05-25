@@ -70,6 +70,9 @@ const Map3DView = forwardRef(function Map3DView({
   const syncSearchCategoryLayers = useCallback((map, layers) => {
     if (!map || !map.isStyleLoaded()) return;
 
+    console.log("[Map3D] Sync search layers:", layers?.length, "layers");
+    console.log("[Map3D] Layer data:", layers);
+
     // Build the set of layer IDs that SHOULD exist right now
     const desiredIds = new Set(
       (layers || []).map(catLayer => {
@@ -96,6 +99,8 @@ const Map3DView = forwardRef(function Map3DView({
         const layerId = `search_cat_symbol_${catId || catLayer.id}`;
         const emoji = EMOJI_MAP[catId] || "📍";
 
+        console.log(`[Map3D] Processing layer: ${catLayer.id}, catId: ${catId}, features: ${catLayer.features?.length}`);
+
         const geojsonFeatures = (catLayer.features || [])
           .filter(f => f?.type === "Point" && f?.coords && Array.isArray(f.coords) && f.coords.length >= 2)
           .map(f => {
@@ -109,19 +114,28 @@ const Map3DView = forwardRef(function Map3DView({
             };
           });
 
-        if (geojsonFeatures.length === 0) return;
+        console.log(`[Map3D] GeoJSON features: ${geojsonFeatures.length}`);
+
+        if (geojsonFeatures.length === 0) {
+          console.warn(`[Map3D] No valid features for layer ${catLayer.id}`);
+          return;
+        }
 
         const geojson = { type: "FeatureCollection", features: geojsonFeatures };
+        console.log(`[Map3D] GeoJSON data: ${JSON.stringify(geojson.features.slice(0, 2))}`);
 
         if (!map.getSource(sourceId)) {
           map.addSource(sourceId, { type: "geojson", data: geojson, cluster: false });
+          console.log(`[Map3D] Added source: ${sourceId}`);
         } else {
           map.getSource(sourceId).setData(geojson);
+          console.log(`[Map3D] Updated source: ${sourceId}`);
         }
 
         if (!map.getLayer(layerId)) {
           const allLayers = map.getStyle()?.layers || [];
           const topLayerId = allLayers.length > 0 ? allLayers[allLayers.length - 1].id : undefined;
+          console.log(`[Map3D] Adding layer: ${layerId} on top of ${topLayerId}`);
           map.addLayer({
             id: layerId,
             type: "symbol",
@@ -148,8 +162,10 @@ const Map3DView = forwardRef(function Map3DView({
             }
           }, topLayerId);
           activeCatLayerIds.current.add(layerId);
+          console.log(`[Map3D] Layer added successfully: ${layerId}`);
         } else {
           try { map.setPaintProperty(layerId, "text-opacity", catLayer.opacity ?? 1); } catch {}
+          console.log(`[Map3D] Layer already exists, updated opacity: ${layerId}`);
         }
       } catch (err) {
         console.error("[Map3D] Error syncing search layer:", catLayer?.id, err);
