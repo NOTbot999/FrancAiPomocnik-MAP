@@ -8,8 +8,8 @@ Deno.serve(async (req) => {
     const skip = parseInt(body.skip ?? 0);
     const limit = parseInt(body.limit ?? 2000);
 
-    // Cave RLS allows everyone to read — no auth needed
-    const caves = await base44.entities.Cave.list('-created_date', limit, skip);
+    // Use service role to ensure caves are always readable (RLS: everyone can read)
+    const caves = await base44.asServiceRole.entities.Cave.list('-created_date', limit, skip);
 
     return Response.json({ caves, count: caves.length });
   } catch (error) {
