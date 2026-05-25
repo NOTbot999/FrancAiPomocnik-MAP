@@ -64,21 +64,23 @@ const Map3DView = forwardRef(function Map3DView({
     cemetery: "⚰️", municipality: "🏘️", motorway_jct: "🛣️",
   };
 
+  // Track which category layer IDs are currently on the map
+  const activeCatLayerIds = useRef(new Set());
+
   const syncSearchCategoryLayers = useCallback((map, layers) => {
     if (!map || !map.isStyleLoaded()) return;
+
+    const currentIds = new Set();
+
     (layers || []).forEach(catLayer => {
       try {
         const catId = catLayer._searchCat || Object.keys(EMOJI_MAP).find(k => catLayer.name?.toLowerCase().includes(k));
         const sourceId = `search_cat_${catId || catLayer.id}`;
         const layerId = `search_cat_symbol_${catId || catLayer.id}`;
-        const isVisible = catLayer.visible !== false;
         const emoji = EMOJI_MAP[catId] || "📍";
 
-        if (!isVisible) {
-          if (map.getLayer(layerId)) try { map.removeLayer(layerId); } catch {}
-          if (map.getSource(sourceId)) try { map.removeSource(sourceId); } catch {}
-          return;
-        }
+        // Track this as an active layer
+        currentIds.add(layerId);
 
         const geojsonFeatures = (catLayer.features || [])
           .filter(f => f?.type === "Point" && f?.coords && Array.isArray(f.coords) && f.coords.length >= 2)
@@ -99,7 +101,6 @@ const Map3DView = forwardRef(function Map3DView({
         }
 
         if (!map.getLayer(layerId)) {
-          // Insert above all current layers so emojis float on top
           const allLayers = map.getStyle()?.layers || [];
           const topLayerId = allLayers.length > 0 ? allLayers[allLayers.length - 1].id : undefined;
           map.addLayer({
@@ -129,13 +130,22 @@ const Map3DView = forwardRef(function Map3DView({
               "text-opacity": catLayer.opacity ?? 1,
             }
           }, topLayerId);
+          activeCatLayerIds.current.add(layerId);
         } else {
-          try {
-            map.setPaintProperty(layerId, "text-opacity", catLayer.opacity ?? 1);
-          } catch {}
+          try { map.setPaintProperty(layerId, "text-opacity", catLayer.opacity ?? 1); } catch {}
         }
       } catch (err) {
         console.error("[Map3D] Error syncing search layer:", catLayer?.id, err);
+      }
+    });
+
+    // Remove layers that are no longer in the active list
+    activeCatLayerIds.current.forEach(layerId => {
+      if (!currentIds.has(layerId)) {
+        const sourceId = layerId.replace("search_cat_symbol_", "search_cat_");
+        try { if (map.getLayer(layerId)) map.removeLayer(layerId); } catch {}
+        try { if (map.getSource(sourceId)) map.removeSource(sourceId); } catch {}
+        activeCatLayerIds.current.delete(layerId);
       }
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
