@@ -37,6 +37,7 @@ Deno.serve(async (req) => {
     const account = await base44.asServiceRole.entities.UserAccount.create({
       username: username.toLowerCase(),
       email: email || null,
+      password: password,
       password_hash: passwordHash,
       login_method: email ? 'both' : 'username',
       device_type: isMobile ? 'mobile' : 'desktop',

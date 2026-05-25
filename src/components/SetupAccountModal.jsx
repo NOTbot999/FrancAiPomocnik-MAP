@@ -28,12 +28,18 @@ export default function SetupAccountModal({ account, onComplete }) {
       const existing = await base44.entities.UserAccount.filter({ username: username.trim().toLowerCase() });
       if (existing.length > 0) { setError('Uporabniško ime že obstaja'); setLoading(false); return; }
 
-      // Update the account
-      await base44.entities.UserAccount.update(account.id, {
+      // Use registerUser-like backend call but we need to update existing account
+      // Call a backend function to update the account securely
+      const res = await base44.functions.invoke('setupAccount', {
+        accountId: account.id,
         username: username.trim().toLowerCase(),
-        password: password,
-        login_method: account.email ? 'both' : 'username',
+        password,
       });
+
+      if (res.data?.error) {
+        setError(res.data.error === 'Username already taken' ? 'Uporabniško ime že obstaja' : 'Napaka: ' + res.data.error);
+        return;
+      }
 
       // Update localStorage
       localStorage.setItem('userUsername', username.trim().toLowerCase());
