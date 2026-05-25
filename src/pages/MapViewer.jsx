@@ -220,12 +220,6 @@ export default function MapViewer() {
     });
     setCustomLayerVisible(prev => { const next = { ...prev }; delete next[layerId]; scopedSet("customLayerVisible", next); return next; });
     setCustomLayerOpacities(prev => { const next = { ...prev }; delete next[layerId]; scopedSet("customLayerOpacities", next); return next; });
-    // Also remove from activeSearchLayers if this was a search category layer
-    setActiveSearchLayers(prev => {
-      const next = { ...prev };
-      Object.entries(next).forEach(([catId, lid]) => { if (lid === layerId) delete next[catId]; });
-      return next;
-    });
   }, []);
 
   // Shared search category active layers — lifted up so both mobile and desktop SearchBar share state
@@ -307,19 +301,13 @@ export default function MapViewer() {
           customLayers={customLayers}
           customLayerVisible={customLayerVisible}
           customLayerOpacities={customLayerOpacities}
-          searchCategoryLayers={Object.entries(activeSearchLayers).map(([catId, layerId]) => {
-            const layer = customLayers.find(l => l.id === layerId);
-            if (!layer) return null;
-            const category = CATEGORIES.find(c => c.id === catId);
-            return {
+          searchCategoryLayers={customLayers
+            .filter(l => l._searchCat && !l._municipalityLayer)
+            .map(layer => ({
               ...layer,
-              _searchCat: layer._searchCat || catId,
-              _caveDbLayer: layer._caveDbLayer || category?._caveDbLayer,
-              _municipalityLayer: layer._municipalityLayer || category?._municipalityLayer,
-              opacity: customLayerOpacities[layerId] ?? layer.opacity ?? 0.8,
-              visible: customLayerVisible[layerId] !== false,
-            };
-          }).filter(Boolean)}
+              opacity: customLayerOpacities[layer.id] ?? layer.opacity ?? 0.8,
+              visible: customLayerVisible[layer.id] !== false,
+            }))}
           gpsTrack={gpsTrack}
           onPinPicked={isPinPicking ? (latlng) => { setPinnedLocation([latlng.lat, latlng.lng]); setIsPinPicking(false); } : null}
         />
