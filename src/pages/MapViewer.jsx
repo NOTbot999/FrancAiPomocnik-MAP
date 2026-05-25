@@ -301,7 +301,7 @@ export default function MapViewer() {
     <div className="relative w-full h-screen overflow-hidden" style={{ backgroundColor: "#e8ede8", backgroundImage: "url('https://media.base44.com/images/public/69ad3ce309822f8e71f66838/b15473e19_5992128811794894233.jpg')", backgroundSize: "contain", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>
 
       {/* MapLibre 3D/2D-rotatable map — kept mounted once initialized to avoid re-init on toggle */}
-      <div style={{ position: "absolute", inset: 0, visibility: is3DOpen ? "visible" : "hidden", pointerEvents: is3DOpen ? "auto" : "none", display: mapLibreEverOpened ? undefined : "none" }}>
+      <div style={{ position: "absolute", inset: 0, zIndex: isPinPicking && is3DOpen ? 980 : undefined, visibility: is3DOpen ? "visible" : "hidden", pointerEvents: is3DOpen ? "auto" : "none", display: mapLibreEverOpened ? undefined : "none" }}>
         <Map3DView
           ref={map3DRef}
           center={mapCenter}
@@ -584,7 +584,7 @@ export default function MapViewer() {
 
       {/* Pin picking overlay — works both on Leaflet and MapLibre */}
       {isPinPicking && (
-        <div className="absolute inset-0 z-[970] pointer-events-none flex items-center justify-center" style={{ cursor: "crosshair" }}>
+        <div className="absolute inset-0 pointer-events-none flex items-center justify-center" style={{ zIndex: 969, cursor: "crosshair" }}>
           <div className="absolute top-20 left-1/2 -translate-x-1/2 bg-slate-900/90 text-white text-xs px-4 py-2 rounded-xl shadow-xl pointer-events-auto">
             Klikni na karto za izbiro točke analize
             <button onClick={() => setIsPinPicking(false)} className="ml-3 text-slate-400 hover:text-white">✕</button>
