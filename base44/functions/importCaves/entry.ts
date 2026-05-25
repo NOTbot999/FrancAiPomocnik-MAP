@@ -8,6 +8,13 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Admin only' }, { status: 403 });
     }
 
+    // Check if caves already exist
+    const existingCount = await base44.asServiceRole.entities.Cave.list(null, 1, 0);
+    if (existingCount && existingCount.length > 0) {
+      console.log('[WARN] Caves already exist, skipping import');
+      return Response.json({ total: 0, inserted: 0, errors: 0, done: true, message: 'Caves already imported' });
+    }
+
     const FILE_URL = 'https://media.base44.com/files/public/69ad3ce309822f8e71f66838/9cc867130_kataster_jame_13344.json';
     console.log('[INFO] Fetching cave data...');
     
