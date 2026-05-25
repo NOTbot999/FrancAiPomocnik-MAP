@@ -14,7 +14,7 @@ Deno.serve(async (req) => {
     let skip = 0;
 
     while (true) {
-      const batch = await base44.asServiceRole.entities.Cave.list('-created_date', batchSize, skip);
+      const batch = await base44.asServiceRole.entities.Cave.list(null, batchSize, skip);
       if (!batch || batch.length === 0) break;
       all = all.concat(batch);
       console.log(`Zbral ${all.length} jam...`);

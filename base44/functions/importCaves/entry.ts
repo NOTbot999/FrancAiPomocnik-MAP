@@ -37,6 +37,7 @@ Deno.serve(async (req) => {
       errors += batch.length;
       console.error(`[ERR] Batch at ${offset + i}:`, e.message);
     }
+    await new Promise(r => setTimeout(r, 1000));
   }
 
   console.log(`[DONE] offset=${offset}, inserted=${inserted}, errors=${errors}`);
