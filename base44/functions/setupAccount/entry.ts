@@ -16,17 +16,16 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Verify account exists and has no password yet (prevent overwrite attacks)
-    const account = await base44.asServiceRole.entities.UserAccount.get(accountId);
+    const account = await base44.asServiceRole.entities.User.get(accountId);
     if (!account) {
       return Response.json({ error: 'Account not found' }, { status: 404 });
     }
-    if (account.password || account.password_hash) {
+    if (account.password_hash) {
       return Response.json({ error: 'Account already has a password' }, { status: 403 });
     }
 
     // Check username uniqueness
-    const existing = await base44.asServiceRole.entities.UserAccount.filter({
+    const existing = await base44.asServiceRole.entities.User.filter({
       username: username.toLowerCase()
     });
     if (existing.length > 0) {
@@ -35,7 +34,7 @@ Deno.serve(async (req) => {
 
     const passwordHash = encode(password);
 
-    await base44.asServiceRole.entities.UserAccount.update(accountId, {
+    await base44.asServiceRole.entities.User.update(accountId, {
       username: username.toLowerCase(),
       password_hash: passwordHash,
       login_method: account.email ? 'both' : 'username',

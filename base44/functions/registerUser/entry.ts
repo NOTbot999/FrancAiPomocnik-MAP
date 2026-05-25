@@ -15,8 +15,8 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Username and password required' }, { status: 400 });
     }
 
-    // Check if username exists
-    const existing = await base44.asServiceRole.entities.UserAccount.filter({
+    // Check if username already exists
+    const existing = await base44.asServiceRole.entities.User.filter({
       username: username.toLowerCase()
     });
 
@@ -24,25 +24,22 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Username already taken' }, { status: 409 });
     }
 
-    // Hash password using base64 (in production, use proper bcrypt)
     const passwordHash = encode(password);
 
-    // Detect device from user-agent
     const ua = req.headers.get('user-agent') || '';
     const isMobile = /Mobile|Android|iPhone|iPad/.test(ua);
     const os = /Windows/.test(ua) ? 'Windows' : /Mac/.test(ua) ? 'macOS' : /Android/.test(ua) ? 'Android' : /iPhone|iPad/.test(ua) ? 'iOS' : /Linux/.test(ua) ? 'Linux' : 'unknown';
     const browser = /Chrome/.test(ua) ? 'Chrome' : /Firefox/.test(ua) ? 'Firefox' : /Safari/.test(ua) ? 'Safari' : /Edge/.test(ua) ? 'Edge' : 'unknown';
 
-    // Create account
-    const account = await base44.asServiceRole.entities.UserAccount.create({
+    const account = await base44.asServiceRole.entities.User.create({
       username: username.toLowerCase(),
       email: email || null,
-      password: password,
       password_hash: passwordHash,
       login_method: email ? 'both' : 'username',
       device_type: isMobile ? 'mobile' : 'desktop',
       os,
-      browser
+      browser,
+      is_base44_user: false
     });
 
     return Response.json({ success: true, accountId: account.id });

@@ -7,8 +7,8 @@ Deno.serve(async (req) => {
 
     const base44 = createClientFromRequest(req);
 
-    const accounts = await base44.asServiceRole.entities.UserAccount.filter({ username });
-    const account = accounts?.[0];
+    const users = await base44.asServiceRole.entities.User.filter({ username });
+    const account = users?.[0];
     return Response.json({ is_premium: account?.is_premium === true });
   } catch (error) {
     return Response.json({ is_premium: false });

@@ -9,7 +9,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
 
-    const accounts = await base44.asServiceRole.entities.UserAccount.list('-created_date', 500);
+    const accounts = await base44.asServiceRole.entities.User.list('-created_date', 500);
     return Response.json({ accounts });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });

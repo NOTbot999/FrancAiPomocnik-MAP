@@ -15,48 +15,38 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Login and password required' }, { status: 400 });
     }
 
-    // Find account by username or email (try both)
     const loginLower = login.toLowerCase();
-    const [byUsername, byEmail] = await Promise.all([
-      base44.asServiceRole.entities.UserAccount.filter({ username: loginLower }),
-      base44.asServiceRole.entities.UserAccount.filter({ email: loginLower })
-    ]);
-    const accounts = byUsername.length > 0 ? byUsername : byEmail;
 
-    if (accounts.length === 0) {
+    // Find user by username or email
+    const [byUsername, byEmail] = await Promise.all([
+      base44.asServiceRole.entities.User.filter({ username: loginLower }),
+      base44.asServiceRole.entities.User.filter({ email: loginLower })
+    ]);
+    const users = byUsername.length > 0 ? byUsername : byEmail;
+
+    if (users.length === 0) {
       return Response.json({ error: 'Invalid credentials' }, { status: 401 });
     }
 
-    const account = accounts[0];
+    const account = users[0];
 
     // Admin pre-created account with no password → needs setup
-    if (!account.password && !account.password_hash) {
+    if (!account.password_hash) {
       return Response.json({ needsSetup: true, accountId: account.id });
     }
 
-    // Support both: plain password field (legacy admin-set) and password_hash (base64)
     const passwordHash = encode(password);
-    const plainMatch = account.password && account.password === password;
-    const hashMatch = account.password_hash && account.password_hash === passwordHash;
-
-    if (!plainMatch && !hashMatch) {
+    if (account.password_hash !== passwordHash) {
       return Response.json({ error: 'Invalid credentials' }, { status: 401 });
     }
 
-    // If account was using plain password, migrate to hash
-    if (plainMatch && !account.password_hash) {
-      await base44.asServiceRole.entities.UserAccount.update(account.id, {
-        password_hash: passwordHash,
-      });
-    }
-
-    // Update last login + device info from headers
+    // Update last login + device info
     const ua = req.headers.get('user-agent') || '';
     const isMobile = /Mobile|Android|iPhone|iPad/.test(ua);
     const os = /Windows/.test(ua) ? 'Windows' : /Mac/.test(ua) ? 'macOS' : /Android/.test(ua) ? 'Android' : /iPhone|iPad/.test(ua) ? 'iOS' : /Linux/.test(ua) ? 'Linux' : 'unknown';
     const browser = /Chrome/.test(ua) ? 'Chrome' : /Firefox/.test(ua) ? 'Firefox' : /Safari/.test(ua) ? 'Safari' : /Edge/.test(ua) ? 'Edge' : 'unknown';
 
-    await base44.asServiceRole.entities.UserAccount.update(account.id, {
+    await base44.asServiceRole.entities.User.update(account.id, {
       last_login: new Date().toISOString(),
       device_type: isMobile ? 'mobile' : 'desktop',
       os,

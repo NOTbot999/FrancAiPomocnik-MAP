@@ -14,7 +14,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Missing accountId' }, { status: 400 });
     }
 
-    await base44.asServiceRole.entities.UserAccount.update(accountId, {
+    await base44.asServiceRole.entities.User.update(accountId, {
       is_premium: isPremium,
       premium_since: isPremium ? new Date().toISOString() : null,
       premium_until: null,
