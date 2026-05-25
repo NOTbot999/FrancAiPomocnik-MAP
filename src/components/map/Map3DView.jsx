@@ -158,7 +158,7 @@ const Map3DView = forwardRef(function Map3DView({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !mapReadyRef.current || mapReady === 0) return;
-    const t = setTimeout(() => syncSearchCategoryLayers(map, searchCategoryLayersRef.current), 50);
+    const t = setTimeout(() => syncSearchCategoryLayers(map, searchCategoryLayersRef.current), 100);
     return () => clearTimeout(t);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchCategoryLayers, mapReady]);
@@ -275,7 +275,20 @@ const Map3DView = forwardRef(function Map3DView({
         // Reset tracked IDs since all layers were wiped by the style switch
         activeCatLayerIds.current = new Set();
         setMapReady(c => c + 1);
-        setTimeout(() => syncSearchCategoryLayers(map, searchCategoryLayersRef.current), 150);
+        // Re-sync ALL layer types after style change
+        setTimeout(() => {
+          syncSearchCategoryLayers(map, searchCategoryLayersRef.current);
+          // Move all custom/search/GPS layers to top of z-order
+          try {
+            const allLayers = map.getStyle()?.layers || [];
+            allLayers.forEach(l => {
+              if (l.id.startsWith("ml-custom_") || l.id.startsWith("ml-search_") || 
+                  l.id.startsWith("search_cat_") || l.id.startsWith("ml-gps")) {
+                try { map.moveLayer(l.id); } catch {}
+              }
+            });
+          } catch {}
+        }, 150);
       });
     }, 50);
   }, [setupTerrain, is3D, syncSearchCategoryLayers]);
