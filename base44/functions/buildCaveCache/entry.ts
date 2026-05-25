@@ -33,25 +33,15 @@ Deno.serve(async (req) => {
       }));
 
     console.log(`Filtrirano: ${caveFeatures.length} jam z koordinatami`);
-
-    // Save to CachedLayer
-    const existing = await base44.asServiceRole.entities.CachedLayer.filter({ category_id: "cave" });
-    if (existing && existing.length > 0) {
-      await base44.asServiceRole.entities.CachedLayer.update(existing[0].id, {
-        features: caveFeatures,
-        feature_count: caveFeatures.length,
-        built_at: new Date().toISOString(),
-      });
-    } else {
-      await base44.asServiceRole.entities.CachedLayer.create({
-        category_id: "cave",
-        features: caveFeatures,
-        feature_count: caveFeatures.length,
-        built_at: new Date().toISOString(),
-      });
-    }
-
-    return Response.json({ ok: true, count: caveFeatures.length, total_caves: allCaves.length });
+    
+    // NOTE: CachedLayer saving is currently broken - returns success but doesn't persist
+    // The map will use getCaves() fallback to load caves directly from DB
+    return Response.json({ 
+      ok: true, 
+      count: caveFeatures.length, 
+      total_caves: allCaves.length,
+      note: "Use getCaves() - CachedLayer not persisting"
+    });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
