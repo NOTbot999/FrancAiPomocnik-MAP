@@ -98,11 +98,16 @@ const Map3DView = forwardRef(function Map3DView({
 
         const geojsonFeatures = (catLayer.features || [])
           .filter(f => f?.type === "Point" && f?.coords && Array.isArray(f.coords) && f.coords.length >= 2)
-          .map(f => ({
-            type: "Feature",
-            geometry: { type: "Point", coordinates: [f.coords[1], f.coords[0]] },
-            properties: { label: f.label || "", emoji }
-          }));
+          .map(f => {
+            // coords is [lat, lng], GeoJSON needs [lng, lat]
+            const lat = f.coords[0];
+            const lng = f.coords[1];
+            return {
+              type: "Feature",
+              geometry: { type: "Point", coordinates: [lng, lat] },
+              properties: { label: f.label || "", emoji }
+            };
+          });
 
         if (geojsonFeatures.length === 0) return;
 
