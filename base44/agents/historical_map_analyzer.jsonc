@@ -11,16 +11,5 @@
   ],
   "whatsapp_greeting": "\u017divjo! Sem zgodovinski kartograf. Po\u0161lji mi svoje risane to\u010dke na zemljevidu in razlo\u017eil vam bom, kako se je ta obmo\u010dje spremenilo skozi zgodovino. Kaj vas zanima?",
   "telegram_greeting": "\u017divjo! Sem zgodovinski kartograf. Po\u0161lji mi svoje risane to\u010dke na zemljevidu in razlo\u017eil vam bom, kako se je ta obmo\u010dje spremenilo skozi zgodovino. Kaj vas zanima?",
-  "context_files": [],
-  "app_user_connector_configs": [],
-  "selected_skill_names": [],
-  "selected_workspace_skill_ids": [],
-  "model": "automatic",
-  "line_greeting": "",
-  "memory_config": {
-    "enabled": true,
-    "scope": "both",
-    "instructions": null
-  },
   "name": "historical_map_analyzer"
 }
