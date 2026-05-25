@@ -273,8 +273,9 @@ const Map3DView = forwardRef(function Map3DView({
     map.once("style.load", () => {
       if (is3D) setupTerrain(map, apiKey);
       mapReadyRef.current = true;
+      // Reset tracked IDs since all layers were wiped by the style switch
+      activeCatLayerIds.current = new Set();
       setMapReady(c => c + 1);
-      // Also immediately re-sync search category layers (they are removed on style switch)
       setTimeout(() => syncSearchCategoryLayers(map, searchCategoryLayersRef.current), 100);
     });
   }, [setupTerrain, is3D, syncSearchCategoryLayers]);

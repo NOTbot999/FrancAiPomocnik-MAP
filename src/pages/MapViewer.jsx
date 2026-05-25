@@ -220,6 +220,12 @@ export default function MapViewer() {
     });
     setCustomLayerVisible(prev => { const next = { ...prev }; delete next[layerId]; scopedSet("customLayerVisible", next); return next; });
     setCustomLayerOpacities(prev => { const next = { ...prev }; delete next[layerId]; scopedSet("customLayerOpacities", next); return next; });
+    // Also remove from activeSearchLayers if this was a search category layer
+    setActiveSearchLayers(prev => {
+      const next = { ...prev };
+      Object.entries(next).forEach(([catId, lid]) => { if (lid === layerId) delete next[catId]; });
+      return next;
+    });
   }, []);
 
   // Shared search category active layers — lifted up so both mobile and desktop SearchBar share state
