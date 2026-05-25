@@ -29,8 +29,8 @@ function wmsUrl(layer) {
 }
 
 // Build an ArcGIS export tile URL for MapLibre
-// Always request bbox in EPSG:3857 (MapLibre native) but let ArcGIS reproject output to imageSR.
-// Using imageSR=3857 ensures ArcGIS returns tiles already in web mercator — no client reprojection.
+// MapLibre always requests tiles in EPSG:3857 bbox.
+// We always use bboxSR=3857 and imageSR=3857 so ArcGIS reprojects output — no client reprojection needed.
 function arcgisUrl(layer) {
   const base = layer.url || layer.arcgisUrl;
   if (!base) return null;
@@ -92,36 +92,42 @@ function addLayerToMap(map, layerId, config, opacity = 1) {
 
   if (!tileUrl) return;
 
-  if (!map.getSource(sourceId)) {
-    map.addSource(sourceId, {
-      type: "raster",
-      tiles: [tileUrl],
-      tileSize: config.tileSize || 256,
-      minzoom: 0,
-      maxzoom: 19,
-    });
-  }
+  try {
+    if (!map.getSource(sourceId)) {
+      // ArcGIS export servers typically cap at zoom 18; WMS at 19
+      const maxzoom = config.type === "arcgis_export" ? 18 : 19;
+      map.addSource(sourceId, {
+        type: "raster",
+        tiles: [tileUrl],
+        tileSize: config.tileSize || 256,
+        minzoom: 0,
+        maxzoom,
+      });
+    }
 
-  // Insert below any custom/GPS layers so they always stay on top
-  const beforeId = getFirstCustomLayerId(map);
-  map.addLayer({
-    id: mlLayerId,
-    type: "raster",
-    source: sourceId,
-    paint: {
-      "raster-opacity": opacity,
-      "raster-fade-duration": 0,
-      "raster-resampling": "linear",
-    },
-  }, beforeId);
+    // Insert below any custom/GPS layers so they always stay on top
+    const beforeId = getFirstCustomLayerId(map);
+    map.addLayer({
+      id: mlLayerId,
+      type: "raster",
+      source: sourceId,
+      paint: {
+        "raster-opacity": opacity,
+        "raster-fade-duration": 0,
+        "raster-resampling": "linear",
+      },
+    }, beforeId);
+  } catch (err) {
+    console.warn(`[MapLibre] addLayerToMap failed for ${layerId}:`, err.message);
+  }
 }
 
 function removeLayerFromMap(map, layerId) {
   if (!map) return;
   const mlLayerId = `ml-${layerId}`;
   const sourceId = `src-${layerId}`;
-  if (map.getLayer(mlLayerId)) map.removeLayer(mlLayerId);
-  if (map.getSource(sourceId)) map.removeSource(sourceId);
+  try { if (map.getLayer(mlLayerId)) map.removeLayer(mlLayerId); } catch {}
+  try { if (map.getSource(sourceId)) map.removeSource(sourceId); } catch {}
 }
 
 /**
@@ -187,6 +193,9 @@ export function useMapLibreLayers(mapRef, mapReadyRef, {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeLayers, layerOpacities, mapReady]);
+
+  // Sync base layers (also handles lidar_hillshade base layer)
+  // Note: raba_farmland and gurs_lidar are overlay layers — handled above
 
   // Sync custom (AI) layers - INCLUDING search category layers ("OZNAČI NA KARTI")
   useEffect(() => {

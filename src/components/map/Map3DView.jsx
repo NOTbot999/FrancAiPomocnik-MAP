@@ -242,7 +242,12 @@ const Map3DView = forwardRef(function Map3DView({
           setTimeout(() => syncSearchCategoryLayers(map, searchCategoryLayersRef.current), 100);
         });
 
-        map.on("error", (e) => console.error("MapLibre error:", e));
+        // Swallow tile/source errors (404s, CORS, ArcGIS errors) — these must not crash the map
+        map.on("error", (e) => {
+          const msg = e?.error?.message || "";
+          if (msg.includes("Source") || msg.includes("tile") || msg.includes("404") || msg.includes("Failed to fetch")) return;
+          console.warn("MapLibre error:", msg);
+        });
         map.on("pitchend", () => setPitch(Math.round(map.getPitch())));
         map.on("rotateend", () => setBearing(Math.round(map.getBearing())));
 
@@ -268,18 +273,22 @@ const Map3DView = forwardRef(function Map3DView({
     if (!styleDef) return;
     setActiveBase(styleId);
     if (onMLBaseChange) onMLBaseChange(styleId);
-    // Stop any in-flight camera animation before switching style to prevent NaN unproject errors
+    // Stop ALL in-flight camera animations + tile requests before style switch
     try { map.stop(); } catch {}
+    // Abort any pending tile loads by cancelling requests
     mapReadyRef.current = false;
-    map.setStyle(styleDef.style(apiKey));
-    map.once("style.load", () => {
-      if (is3D) setupTerrain(map, apiKey);
-      mapReadyRef.current = true;
-      // Reset tracked IDs since all layers were wiped by the style switch
-      activeCatLayerIds.current = new Set();
-      setMapReady(c => c + 1);
-      setTimeout(() => syncSearchCategoryLayers(map, searchCategoryLayersRef.current), 100);
-    });
+    // Small delay so in-flight renders finish before we swap style
+    setTimeout(() => {
+      try { map.setStyle(styleDef.style(apiKey)); } catch (e) { console.warn("setStyle error:", e.message); return; }
+      map.once("style.load", () => {
+        if (is3D) setupTerrain(map, apiKey);
+        mapReadyRef.current = true;
+        // Reset tracked IDs since all layers were wiped by the style switch
+        activeCatLayerIds.current = new Set();
+        setMapReady(c => c + 1);
+        setTimeout(() => syncSearchCategoryLayers(map, searchCategoryLayersRef.current), 150);
+      });
+    }, 50);
   }, [setupTerrain, is3D, syncSearchCategoryLayers]);
 
   const rotateTo = useCallback((delta) => {
@@ -345,7 +354,6 @@ const Map3DView = forwardRef(function Map3DView({
       if (center && !isNaN(center[0]) && !isNaN(center[1])) {
         try { map.jumpTo({ center: [center[1], center[0]], zoom: zoom ?? map.getZoom() }); } catch {}
       }
-      if (mapReadyRef.current) setMapReady(c => c + 1);
     }, 150);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isVisible]);
