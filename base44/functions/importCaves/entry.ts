@@ -5,7 +5,7 @@ Deno.serve(async (req) => {
 
   const body = await req.json().catch(() => ({}));
   const offset = body.offset || 0;
-  const batchLimit = body.batchLimit || 200;
+  const batchLimit = body.batchLimit || 500;
 
   const FILE_URL = 'https://media.base44.com/files/public/69ad3ce309822f8e71f66838/9cc867130_kataster_jame_13344.json';
 
@@ -15,7 +15,7 @@ Deno.serve(async (req) => {
   
   const caves = allCaves.slice(offset, offset + batchLimit);
 
-  const BATCH_SIZE = 20;
+  const BATCH_SIZE = 50;
   let inserted = 0;
   let errors = 0;
 
@@ -33,14 +33,12 @@ Deno.serve(async (req) => {
     try {
       await base44.asServiceRole.entities.Cave.bulkCreate(batch);
       inserted += batch.length;
-      console.log(`[OK] Batch ${offset + i}-${offset + i + batch.length}, inserted: ${inserted}`);
     } catch (e) {
       errors += batch.length;
       console.error(`[ERR] Batch at ${offset + i}:`, e.message);
     }
-
-    await new Promise(r => setTimeout(r, 2000));
   }
 
+  console.log(`[DONE] offset=${offset}, inserted=${inserted}, errors=${errors}`);
   return Response.json({ inserted, errors, total, offset, processed: caves.length });
 });
