@@ -1,8 +1,7 @@
-import React, { useEffect, useRef, useState, useCallback, useImperativeHandle, forwardRef } from "react";
+import React, { useEffect, useRef, useState, useCallback, useImperativeHandle, forwardRef, useMemo } from "react";
 import { RotateCcw, RotateCw, Compass, ChevronUp, ChevronDown, Mountain, Square } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import { useMapLibreLayers } from "./useMapLibreLayers";
-import SearchCategory3DLayer from "./SearchCategory3DLayer";
+import { BASE_LAYERS, OVERLAY_CATEGORIES } from "./layerConfig";
 
 // MapLibre base map styles
 export const ML_BASE_STYLES = [
@@ -37,18 +36,7 @@ const Map3DView = forwardRef(function Map3DView({
   // Use a counter so incrementing triggers re-sync without a false→true flip delay
   const [mapReady, setMapReady] = useState(0);
 
-  // Sync LayerPanel layers into MapLibre (base layers, overlays, custom layers, GPS tracks)
-  useMapLibreLayers(mapRef, mapReadyRef, {
-    activeBaseLayers,
-    activeLayers,
-    layerOpacities,
-    baseLayerOpacities,
-    mapReady,
-    customLayers,
-    customLayerVisible,
-    customLayerOpacities,
-    gpsTrack,
-  });
+
 
   // Keep a ref to searchCategoryLayers so the map load callback can access latest value
   const searchCategoryLayersRef = useRef(searchCategoryLayers);
@@ -183,6 +171,173 @@ const Map3DView = forwardRef(function Map3DView({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchCategoryLayers, mapReady]);
 
+  // Helper to resolve tile URL
+  const resolveTileUrl = (url) => url.replace("{s}", "a").replace("{r}", "");
+
+  // Helper to build WMS URL
+  const buildWmsUrl = (layer) => {
+    const version = layer.version || "1.1.1";
+    const srsKey = version.startsWith("1.3") ? "crs" : "srs";
+    return `${layer.url}?service=WMS&request=GetMap&version=${version}&layers=${encodeURIComponent(layer.layers)}&styles=&format=${encodeURIComponent(layer.format || "image/png")}&transparent=${layer.transparent !== false ? "true" : "false"}&width=256&height=256&${srsKey}=EPSG:3857&bbox={bbox-epsg-3857}`;
+  };
+
+  // Helper to build ArcGIS export URL
+  const buildArcgisUrl = (layer) => {
+    const base = layer.url || layer.arcgisUrl;
+    if (!base) return null;
+    return `${base}?bbox={bbox-epsg-3857}&bboxSR=3857&imageSR=3857&size=256,256&f=image&format=${layer.format || "jpg"}&transparent=${layer.transparent !== false}`;
+  };
+
+  // Get layer config by ID
+  const getLayerConfig = useCallback((id) => {
+    for (const bl of BASE_LAYERS) {
+      if (bl.id === id) return bl;
+    }
+    for (const cat of OVERLAY_CATEGORIES) {
+      for (const l of cat.layers) {
+        if (l.id === id) return l;
+      }
+    }
+    return null;
+  }, []);
+
+  // Sync base layers
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapReadyRef.current || mapReady === 0) return;
+
+    for (const [id, active] of Object.entries(activeBaseLayers)) {
+      const mlId = `ml-${id}`;
+      const srcId = `src-${id}`;
+      if (!active) {
+        if (map.getLayer(mlId)) try { map.removeLayer(mlId); } catch {}
+        if (map.getSource(srcId)) try { map.removeSource(srcId); } catch {}
+        continue;
+      }
+      const config = getLayerConfig(id);
+      if (!config) continue;
+      const opacity = baseLayerOpacities[id] ?? config.opacity ?? 1;
+      let tileUrl = null;
+      if (config.type === "tile") tileUrl = resolveTileUrl(config.url);
+      else if (config.type === "wms") tileUrl = buildWmsUrl(config);
+      else if (config.type === "arcgis_export") tileUrl = buildArcgisUrl(config);
+      if (!tileUrl) continue;
+      if (!map.getSource(srcId)) {
+        const maxzoom = config.type === "arcgis_export" ? 18 : 19;
+        map.addSource(srcId, { type: "raster", tiles: [tileUrl], tileSize: config.tileSize || 256, minzoom: 0, maxzoom });
+      }
+      if (!map.getLayer(mlId)) {
+        map.addLayer({ id: mlId, type: "raster", source: srcId, paint: { "raster-opacity": opacity, "raster-fade-duration": 0 } });
+      } else {
+        try { map.setPaintProperty(mlId, "raster-opacity", opacity); } catch {}
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeBaseLayers, baseLayerOpacities, mapReady, getLayerConfig]);
+
+  // Sync overlay layers
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapReadyRef.current || mapReady === 0) return;
+
+    for (const [id, active] of Object.entries(activeLayers)) {
+      const mlId = `ml-${id}`;
+      const srcId = `src-${id}`;
+      if (!active) {
+        if (map.getLayer(mlId)) try { map.removeLayer(mlId); } catch {}
+        if (map.getSource(srcId)) try { map.removeSource(srcId); } catch {}
+        continue;
+      }
+      const config = getLayerConfig(id);
+      if (!config) continue;
+      const opacity = layerOpacities[id] ?? config.opacity ?? 1;
+      let tileUrl = null;
+      if (config.type === "tile") tileUrl = resolveTileUrl(config.url);
+      else if (config.type === "wms") tileUrl = buildWmsUrl(config);
+      else if (config.type === "arcgis_export") tileUrl = buildArcgisUrl(config);
+      if (!tileUrl) continue;
+      if (!map.getSource(srcId)) {
+        const maxzoom = config.type === "arcgis_export" ? 18 : 19;
+        map.addSource(srcId, { type: "raster", tiles: [tileUrl], tileSize: config.tileSize || 256, minzoom: 0, maxzoom });
+      }
+      if (!map.getLayer(mlId)) {
+        map.addLayer({ id: mlId, type: "raster", source: srcId, paint: { "raster-opacity": opacity, "raster-fade-duration": 0 } });
+      } else {
+        try { map.setPaintProperty(mlId, "raster-opacity", opacity); } catch {}
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeLayers, layerOpacities, mapReady, getLayerConfig]);
+
+  // Sync GPS track
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapReadyRef.current || mapReady === 0) return;
+
+    const gpsSourceId = "src-gps-track";
+    const gpsLayerId = "ml-gps-track";
+    const startMarkerId = "ml-gps-start";
+    const endMarkerId = "ml-gps-end";
+
+    // Remove existing
+    if (map.getLayer(gpsLayerId)) try { map.removeLayer(gpsLayerId); } catch {}
+    if (map.getSource(gpsSourceId)) try { map.removeSource(gpsSourceId); } catch {}
+    if (map.getLayer(startMarkerId)) try { map.removeLayer(startMarkerId); } catch {}
+    if (map.getLayer(endMarkerId)) try { map.removeLayer(endMarkerId); } catch {}
+    if (map.getSource("src-gps-start")) try { map.removeSource("src-gps-start"); } catch {}
+    if (map.getSource("src-gps-end")) try { map.removeSource("src-gps-end"); } catch {}
+
+    // Add new track if has points
+    if (gpsTrack && gpsTrack.length > 1) {
+      const geojson = {
+        type: "FeatureCollection",
+        features: [{
+          type: "Feature",
+          geometry: {
+            type: "LineString",
+            coordinates: gpsTrack.map(pt => [pt[1] || pt.lng, pt[0] || pt.lat])
+          },
+          properties: {}
+        }]
+      };
+
+      map.addSource(gpsSourceId, { type: "geojson", data: geojson });
+      map.addLayer({
+        id: gpsLayerId,
+        type: "line",
+        source: gpsSourceId,
+        paint: { "line-width": 4, "line-color": "#10b981", "line-opacity": 0.9, "line-dasharray": [2, 2] }
+      });
+
+      // Start marker (green)
+      const startPt = gpsTrack[0];
+      map.addSource("src-gps-start", {
+        type: "geojson",
+        data: { type: "Feature", geometry: { type: "Point", coordinates: [startPt[1] || startPt.lng, startPt[0] || startPt.lat] }, properties: {} }
+      });
+      map.addLayer({
+        id: startMarkerId,
+        type: "circle",
+        source: "src-gps-start",
+        paint: { "circle-radius": 6, "circle-color": "#10b981", "circle-stroke-width": 2, "circle-stroke-color": "#ffffff" }
+      });
+
+      // End marker (red)
+      const endPt = gpsTrack[gpsTrack.length - 1];
+      map.addSource("src-gps-end", {
+        type: "geojson",
+        data: { type: "Feature", geometry: { type: "Point", coordinates: [endPt[1] || endPt.lng, endPt[0] || endPt.lat] }, properties: {} }
+      });
+      map.addLayer({
+        id: endMarkerId,
+        type: "circle",
+        source: "src-gps-end",
+        paint: { "circle-radius": 6, "circle-color": "#ef4444", "circle-stroke-width": 2, "circle-stroke-color": "#ffffff" }
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gpsTrack, mapReady]);
+
   // Sync custom layers (AI/user-generated) in MapLibre
   useEffect(() => {
     const map = mapRef.current;
@@ -233,8 +388,10 @@ const Map3DView = forwardRef(function Map3DView({
 
           if (!map.getSource(srcId)) {
             map.addSource(srcId, { type: "geojson", data: geojson });
+            console.log(`[Map3D] Added custom source: ${srcId}`);
           } else {
             map.getSource(srcId).setData(geojson);
+            console.log(`[Map3D] Updated custom source: ${srcId}`);
           }
 
           if (map.getLayer(mlId)) try { map.removeLayer(mlId); } catch {}
@@ -247,6 +404,7 @@ const Map3DView = forwardRef(function Map3DView({
             const pointLayerId = `${mlId}-points`;
             if (!map.getLayer(pointLayerId)) {
               map.addLayer({ id: pointLayerId, type: "circle", source: srcId, filter: ["==", "$type", "Point"], paint: { "circle-radius": 6, "circle-color": layer.color || "#1d9bf0", "circle-opacity": opacity, "circle-stroke-width": 2, "circle-stroke-color": "#ffffff" } });
+              console.log(`[Map3D] Added custom points layer: ${pointLayerId}`);
             } else {
               try { map.setPaintProperty(pointLayerId, "circle-opacity", opacity); map.setPaintProperty(pointLayerId, "circle-color", layer.color || "#1d9bf0"); } catch {}
             }
@@ -257,6 +415,7 @@ const Map3DView = forwardRef(function Map3DView({
             const lineLayerId = `${mlId}-lines`;
             if (!map.getLayer(lineLayerId)) {
               map.addLayer({ id: lineLayerId, type: "line", source: srcId, filter: ["==", "$type", "LineString"], paint: { "line-width": 3, "line-color": layer.color || "#1d9bf0", "line-opacity": opacity } });
+              console.log(`[Map3D] Added custom lines layer: ${lineLayerId}`);
             } else {
               try { map.setPaintProperty(lineLayerId, "line-opacity", opacity); map.setPaintProperty(lineLayerId, "line-color", layer.color || "#1d9bf0"); } catch {}
             }
@@ -267,6 +426,7 @@ const Map3DView = forwardRef(function Map3DView({
             const polygonLayerId = `${mlId}-polygons`;
             if (!map.getLayer(polygonLayerId)) {
               map.addLayer({ id: polygonLayerId, type: "fill", source: srcId, filter: ["==", "$type", "Polygon"], paint: { "fill-color": layer.color || "#1d9bf0", "fill-opacity": opacity * 0.6 } });
+              console.log(`[Map3D] Added custom polygons layer: ${polygonLayerId}`);
             } else {
               try { map.setPaintProperty(polygonLayerId, "fill-opacity", opacity * 0.6); map.setPaintProperty(polygonLayerId, "fill-color", layer.color || "#1d9bf0"); } catch {}
             }
@@ -297,6 +457,7 @@ const Map3DView = forwardRef(function Map3DView({
             map.addSource(srcId, { type: "raster", tiles: [tileUrl], tileSize: 256, minzoom: 0, maxzoom: 19 });
           }
           map.addLayer({ id: mlId, type: "raster", source: srcId, paint: { "raster-opacity": opacity, "raster-fade-duration": 0 } });
+          console.log(`[Map3D] Added custom raster layer: ${mlId}`);
           try { map.moveLayer(mlId); } catch {}
         } else {
           try { map.setPaintProperty(mlId, "raster-opacity", opacity); } catch {}
