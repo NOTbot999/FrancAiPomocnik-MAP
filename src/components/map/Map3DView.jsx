@@ -70,17 +70,31 @@ const Map3DView = forwardRef(function Map3DView({
   const syncSearchCategoryLayers = useCallback((map, layers) => {
     if (!map || !map.isStyleLoaded()) return;
 
-    const currentIds = new Set();
+    // Build the set of layer IDs that SHOULD exist right now
+    const desiredIds = new Set(
+      (layers || []).map(catLayer => {
+        const catId = catLayer._searchCat || Object.keys(EMOJI_MAP).find(k => catLayer.name?.toLowerCase().includes(k));
+        return `search_cat_symbol_${catId || catLayer.id}`;
+      })
+    );
 
+    // Remove layers that are no longer desired
+    activeCatLayerIds.current.forEach(layerId => {
+      if (!desiredIds.has(layerId)) {
+        const sourceId = layerId.replace("search_cat_symbol_", "search_cat_");
+        try { if (map.getLayer(layerId)) map.removeLayer(layerId); } catch {}
+        try { if (map.getSource(sourceId)) map.removeSource(sourceId); } catch {}
+        activeCatLayerIds.current.delete(layerId);
+      }
+    });
+
+    // Add or update desired layers
     (layers || []).forEach(catLayer => {
       try {
         const catId = catLayer._searchCat || Object.keys(EMOJI_MAP).find(k => catLayer.name?.toLowerCase().includes(k));
         const sourceId = `search_cat_${catId || catLayer.id}`;
         const layerId = `search_cat_symbol_${catId || catLayer.id}`;
         const emoji = EMOJI_MAP[catId] || "📍";
-
-        // Track this as an active layer
-        currentIds.add(layerId);
 
         const geojsonFeatures = (catLayer.features || [])
           .filter(f => f?.type === "Point" && f?.coords && Array.isArray(f.coords) && f.coords.length >= 2)
@@ -110,7 +124,6 @@ const Map3DView = forwardRef(function Map3DView({
             layout: {
               "text-field": ["get", "emoji"],
               "text-size": 26,
-              "text-offset": [0, 0],
               "text-anchor": "center",
               "text-allow-overlap": true,
               "text-ignore-placement": true,
@@ -138,16 +151,6 @@ const Map3DView = forwardRef(function Map3DView({
         console.error("[Map3D] Error syncing search layer:", catLayer?.id, err);
       }
     });
-
-    // Remove layers that are no longer in the active list
-    activeCatLayerIds.current.forEach(layerId => {
-      if (!currentIds.has(layerId)) {
-        const sourceId = layerId.replace("search_cat_symbol_", "search_cat_");
-        try { if (map.getLayer(layerId)) map.removeLayer(layerId); } catch {}
-        try { if (map.getSource(sourceId)) map.removeSource(sourceId); } catch {}
-        activeCatLayerIds.current.delete(layerId);
-      }
-    });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -155,11 +158,10 @@ const Map3DView = forwardRef(function Map3DView({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !mapReadyRef.current || mapReady === 0) return;
-    // Small delay to ensure style is fully loaded before adding layers
     const t = setTimeout(() => syncSearchCategoryLayers(map, searchCategoryLayersRef.current), 50);
     return () => clearTimeout(t);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchCategoryLayers, mapReady, syncSearchCategoryLayers]);
+  }, [searchCategoryLayers, mapReady]);
 
   const setupTerrain = useCallback((map, key) => {
     if (!map.getSource("terrain-dem")) {
@@ -348,12 +350,7 @@ const Map3DView = forwardRef(function Map3DView({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isVisible]);
 
-  // When searchCategoryLayers change while 3D is already visible and ready, force immediate sync
-  useEffect(() => {
-    if (!isVisible || !mapReadyRef.current) return;
-    syncSearchCategoryLayers(mapRef.current, searchCategoryLayers);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchCategoryLayers]);
+
 
   // React to is3D prop changes without full re-init
   useEffect(() => {
