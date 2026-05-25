@@ -222,8 +222,25 @@ export default function MapViewer() {
     setCustomLayerOpacities(prev => { const next = { ...prev }; delete next[layerId]; scopedSet("customLayerOpacities", next); return next; });
   }, []);
 
-  // Shared search category active layers — lifted up so both mobile and desktop SearchBar share state
+  // Shared search category active layers — derived from customLayers so it's always in sync
+  // Maps catId → layerId, e.g. { castle: "search_castle" }
   const [activeSearchLayers, setActiveSearchLayers] = useState({});
+
+  // Keep activeSearchLayers in sync with customLayers — if a layer is removed, remove it from here too
+  useEffect(() => {
+    setActiveSearchLayers(prev => {
+      const customLayerIds = new Set(customLayers.map(l => l.id));
+      const next = { ...prev };
+      let changed = false;
+      Object.entries(next).forEach(([catId, layerId]) => {
+        if (!customLayerIds.has(layerId)) {
+          delete next[catId];
+          changed = true;
+        }
+      });
+      return changed ? next : prev;
+    });
+  }, [customLayers]);
 
   const [routePolyline, setRoutePolyline] = useState(null);
   const [aiRoutePolyline, setAiRoutePolyline] = useState(null);
