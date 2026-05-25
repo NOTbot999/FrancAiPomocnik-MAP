@@ -55,9 +55,13 @@ const Map3DView = forwardRef(function Map3DView({
   useEffect(() => { searchCategoryLayersRef.current = searchCategoryLayers; }, [searchCategoryLayers]);
 
   const EMOJI_MAP = {
-    castle: "🏰", peak: "⛰️", waterfall: "💧", church: "⛪", museum: "🏛️",
-    viewpoint: "👁️", cave: "🕳️", caves_db: "🕳️", bridge: "🌉", monument: "🗿",
-    lake: "🏞️", river: "🌊", forest: "🌲", vineyard: "🍇", municipality: "🏘️",
+    castle: "🏰", peak: "⛰️", waterfall: "💧", viewpoint: "👁️", cave: "🕳️",
+    caves_db: "🕳️", museum: "🏛️", ruins: "🗿", spring: "💦", lake: "🌊",
+    park: "🌳", chapel: "⛪", church: "🕌", fuel: "⛽", parking: "🅿️",
+    supermarket: "🛒", atm: "💳", hospital: "🏥", clinic: "🩺", dentist: "🦷",
+    pharmacy: "💊", fire_station: "🚒", police: "🚔", pipe: "🚰",
+    bus_station: "🚌", train_station: "🚂", camp: "🏕️", aerodrome: "✈️",
+    cemetery: "⚰️", municipality: "🏘️", motorway_jct: "🛣️",
   };
 
   const syncSearchCategoryLayers = useCallback((map, layers) => {
@@ -95,33 +99,39 @@ const Map3DView = forwardRef(function Map3DView({
         }
 
         if (!map.getLayer(layerId)) {
+          // Insert above all current layers so emojis float on top
+          const allLayers = map.getStyle()?.layers || [];
+          const topLayerId = allLayers.length > 0 ? allLayers[allLayers.length - 1].id : undefined;
           map.addLayer({
             id: layerId,
             type: "symbol",
             source: sourceId,
             layout: {
               "text-field": ["get", "emoji"],
-              "text-size": 24,
-              "text-offset": [0, -1.2],
-              "text-anchor": "bottom",
+              "text-size": 26,
+              "text-offset": [0, 0],
+              "text-anchor": "center",
               "text-allow-overlap": true,
-              "text-ignore-placement": false,
+              "text-ignore-placement": true,
               "text-pitch-alignment": "viewport",
+              "text-rotation-alignment": "viewport",
               "text-max-width": 1,
               "icon-allow-overlap": true,
+              "symbol-z-elevate": true,
             },
             paint: {
-              "text-color": catLayer.color || "#e11d48",
-              "text-halo-color": "#ffffff",
-              "text-halo-width": 2,
-              "text-halo-blur": 1,
-              "text-opacity": catLayer.opacity ?? 0.9,
+              "text-color": "#ffffff",
+              "text-halo-color": "#000000",
+              "text-halo-width": 1,
+              "text-halo-blur": 0.5,
+              "text-translate": [0, -18],
+              "text-translate-anchor": "viewport",
+              "text-opacity": catLayer.opacity ?? 1,
             }
-          });
+          }, topLayerId);
         } else {
           try {
-            map.setPaintProperty(layerId, "text-opacity", catLayer.opacity ?? 0.9);
-            map.setPaintProperty(layerId, "text-color", catLayer.color || "#e11d48");
+            map.setPaintProperty(layerId, "text-opacity", catLayer.opacity ?? 1);
           } catch {}
         }
       } catch (err) {
