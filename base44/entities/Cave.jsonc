@@ -3,7 +3,7 @@
   "type": "object",
   "properties": {
     "cave_id": {
-      "type": "string",
+      "type": "number",
       "description": "Original cave ID from the registry"
     },
     "name": {
