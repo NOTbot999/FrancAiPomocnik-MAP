@@ -131,7 +131,6 @@ const Map3DView = forwardRef(function Map3DView({
               "text-rotation-alignment": "viewport",
               "text-max-width": 1,
               "icon-allow-overlap": true,
-              "symbol-z-elevate": true,
             },
             paint: {
               "text-color": "#ffffff",
