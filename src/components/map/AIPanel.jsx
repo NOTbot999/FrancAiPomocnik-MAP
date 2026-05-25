@@ -224,6 +224,10 @@ function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme, messag
     if (customMatch) {
       try {
         const customLayer = JSON.parse(customMatch[1]);
+        // Ensure layer always has a unique id — without it MapLibre crashes
+        if (!customLayer.id) {
+          customLayer.id = `franc_${Date.now()}`;
+        }
         if (onAddCustomLayer) onAddCustomLayer(customLayer);
         cleanText += `\n\n🎨 Custom layer: ${customLayer.name}`;
       } catch {}
@@ -243,6 +247,7 @@ function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme, messag
         cleanText += `\n\n🔍 Iščem podatke v OSM bazi...`;
         setMessages(prev => [...prev, { role: "assistant", content: cleanText }]);
         const customLayer = await executeOverpassQuery(queryBody, layerName, layerColor, bbox);
+        if (!customLayer.id) customLayer.id = `franc_overpass_${Date.now()}`;
         if (onAddCustomLayer) onAddCustomLayer(customLayer);
         setMessages(prev => {
           const updated = [...prev];

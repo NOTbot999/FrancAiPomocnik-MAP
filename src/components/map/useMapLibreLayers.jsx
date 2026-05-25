@@ -145,17 +145,26 @@ export function useMapLibreLayers(mapRef, mapReadyRef, {
   customLayerOpacities = {},
   gpsTrack = [],
 }) {
-  // Store custom layer state in refs so they persist across style changes
+  // Store all layer state in refs so they persist across style changes
   const customLayersRef = useRef([]);
   const customVisibleRef = useRef({});
   const customOpacitiesRef = useRef({});
+  const activeLayersRef = useRef({});
+  const activeBLayersRef = useRef({});
+  const layerOpacitiesRef = useRef({});
+  const baseLayerOpacitiesRef = useRef({});
 
-  // Update refs when custom layers change
+  // Update refs when any layer state changes
   useEffect(() => {
     customLayersRef.current = customLayers;
     customVisibleRef.current = customLayerVisible;
     customOpacitiesRef.current = customLayerOpacities;
   }, [customLayers, customLayerVisible, customLayerOpacities]);
+
+  useEffect(() => { activeLayersRef.current = activeLayers; }, [activeLayers]);
+  useEffect(() => { activeBLayersRef.current = activeBaseLayers; }, [activeBaseLayers]);
+  useEffect(() => { layerOpacitiesRef.current = layerOpacities; }, [layerOpacities]);
+  useEffect(() => { baseLayerOpacitiesRef.current = baseLayerOpacities; }, [baseLayerOpacities]);
   // Sync base layers
   useEffect(() => {
     const map = mapRef.current;
@@ -309,13 +318,31 @@ export function useMapLibreLayers(mapRef, mapReadyRef, {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [customLayers, customLayerVisible, customLayerOpacities, mapReady]);
 
-  // Re-add custom layers after style change (MapLibre removes all layers when setStyle is called)
+  // Re-add ALL layers after style change (MapLibre removes all layers when setStyle is called)
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !mapReadyRef.current || mapReady === 0) return;
 
     // Small delay to ensure style is fully loaded
     setTimeout(() => {
+      // Re-add base layers
+      for (const [id, active] of Object.entries(activeBLayersRef.current || {})) {
+        if (!active) continue;
+        const config = getLayerConfig(id);
+        if (!config) continue;
+        const opacity = (baseLayerOpacitiesRef.current || {})[id] ?? config.opacity ?? 1;
+        if (!map.getLayer(`ml-${id}`)) addLayerToMap(map, id, config, opacity);
+      }
+
+      // Re-add overlay layers
+      for (const [id, active] of Object.entries(activeLayersRef.current || {})) {
+        if (!active) continue;
+        const config = getLayerConfig(id);
+        if (!config) continue;
+        const opacity = (layerOpacitiesRef.current || {})[id] ?? config.opacity ?? 1;
+        if (!map.getLayer(`ml-${id}`)) addLayerToMap(map, id, config, opacity);
+      }
+
       // Re-add custom GeoJSON layers that were removed during style switch
       const layers = customLayersRef.current || [];
       const visible = customVisibleRef.current || {};
