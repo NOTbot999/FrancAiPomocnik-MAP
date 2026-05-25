@@ -4,7 +4,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Shield, Crown, User, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, Shield, Crown, User, RefreshCw, ChevronDown, ChevronUp, Database } from 'lucide-react';
 import { format } from 'date-fns';
 
 const COLS = [
@@ -53,6 +53,21 @@ export default function AdminDashboard() {
   const [sortKey, setSortKey] = useState('username');
   const [sortAsc, setSortAsc] = useState(true);
   const [error, setError] = useState('');
+  const [buildingCache, setBuildingCache] = useState(false);
+  const [cacheMsg, setCacheMsg] = useState('');
+
+  const buildCaveCache = async () => {
+    setBuildingCache(true);
+    setCacheMsg('');
+    try {
+      const res = await base44.functions.invoke('buildCaveCache', {});
+      setCacheMsg(`✓ Cache zgrajen: ${res.data?.count ?? 0} jam`);
+    } catch (e) {
+      setCacheMsg('✗ Napaka: ' + e.message);
+    } finally {
+      setBuildingCache(false);
+    }
+  };
 
   const isAdmin = user?.role === 'admin';
 
@@ -130,6 +145,16 @@ export default function AdminDashboard() {
           <Button size="sm" variant="ghost" onClick={fetchAccounts} className="text-slate-400 hover:text-white">
             <RefreshCw className="w-4 h-4" />
           </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={buildCaveCache}
+            disabled={buildingCache}
+            className="border-emerald-700 text-emerald-300 text-xs gap-1"
+          >
+            <Database className="w-3.5 h-3.5" />
+            {buildingCache ? 'Gradim...' : 'Zgradi cache jam'}
+          </Button>
           <Button size="sm" variant="outline" onClick={() => window.location.href = '/'} className="border-slate-700 text-slate-300 text-xs">
             ← Karta
           </Button>
@@ -151,6 +176,9 @@ export default function AdminDashboard() {
 
       {error && (
         <div className="mx-6 mb-4 p-3 bg-red-900/30 border border-red-800 rounded-lg text-red-300 text-sm">{error}</div>
+      )}
+      {cacheMsg && (
+        <div className={`mx-6 mb-4 p-3 border rounded-lg text-sm ${cacheMsg.startsWith('✓') ? 'bg-emerald-900/30 border-emerald-800 text-emerald-300' : 'bg-red-900/30 border-red-800 text-red-300'}`}>{cacheMsg}</div>
       )}
 
       {/* Table */}
