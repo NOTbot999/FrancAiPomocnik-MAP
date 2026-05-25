@@ -21,7 +21,7 @@ Deno.serve(async (req) => {
 
   for (let i = 0; i < caves.length; i += BATCH_SIZE) {
     const batch = caves.slice(i, i + BATCH_SIZE).map(c => ({
-      cave_id: String(c.cave_id),
+      cave_id: c.cave_id ? parseFloat(c.cave_id) : null,
       name: c.name || 'Neznana jama',
       latitude: c.latitude ? parseFloat(c.latitude) : null,
       longitude: c.longitude ? parseFloat(c.longitude) : null,
