@@ -6,7 +6,25 @@ let caveCache = null;
 export async function loadCaves() {
   if (caveCache) return caveCache;
 
-  // Load all caves via backend function (bypasses RLS for public data)
+  // 1. Try server-side CachedLayer first (fastest)
+  try {
+    const serverData = await base44.entities.CachedLayer.filter({ category_id: "cave" });
+    if (serverData && serverData.length > 0 && serverData[0].features?.length > 0) {
+      const features = serverData[0].features;
+      // Convert back to cave-like objects for cavesToLayerFeatures
+      caveCache = features.map(f => ({
+        latitude: f.coords[0],
+        longitude: f.coords[1],
+        name: f.label || "",
+        depth_m: f.depth_m || null,
+        length_m: f.length_m || null,
+        _fromCache: true,
+      }));
+      return caveCache;
+    }
+  } catch { /* fallback to DB */ }
+
+  // 2. Fallback: Load from Cave entity via backend function
   const batchSize = 2000;
   let all = [];
   let skip = 0;

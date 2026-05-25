@@ -1,5 +1,7 @@
-// Background prefetcher — pre-warms the Overpass cache for all search categories
+// Background prefetcher — pre-warms the layer cache for all search categories
+// Priority order: 1. localStorage, 2. CachedLayer (server), 3. Overpass (fallback)
 import { useEffect } from "react";
+import { base44 } from "@/api/base44Client";
 
 const LS_PREFIX = "slomapcat_";
 const CACHE_TTL = 7 * 24 * 60 * 60 * 1000;
@@ -19,7 +21,20 @@ function saveToCache(id, features) {
   } catch { /* quota */ }
 }
 
-async function fetchCategory(cat) {
+async function prefetchCategory(cat) {
+  if (!cat.query && !cat._caveDbLayer && !cat._municipalityLayer) return;
+  if (cat._municipalityLayer) return; // municipality uses a special polygon layer, skip
+
+  // Try server CachedLayer first
+  try {
+    const serverData = await base44.entities.CachedLayer.filter({ category_id: cat.id });
+    if (serverData && serverData.length > 0 && serverData[0].features?.length > 0) {
+      saveToCache(cat.id, serverData[0].features);
+      return;
+    }
+  } catch { /* fallback */ }
+
+  // Fallback to Overpass (only for categories with a query)
   if (!cat.query) return;
   const res = await fetch("https://overpass-api.de/api/interpreter", {
     method: "POST",
@@ -47,11 +62,11 @@ export function usePrefetchCategories(categories) {
     prefetchStarted = true;
 
     const run = async () => {
-      const toFetch = categories.filter(c => c.query && !isCached(c.id));
+      const toFetch = categories.filter(c => !isCached(c.id));
       for (const cat of toFetch) {
         try {
-          await fetchCategory(cat);
-          await new Promise(r => setTimeout(r, 1000));
+          await prefetchCategory(cat);
+          await new Promise(r => setTimeout(r, 500));
         } catch { /* silently ignore */ }
       }
     };

@@ -11,7 +11,6 @@ const CATEGORIES = [
   { id: "peak",          query: `[out:json][timeout:30];node["natural"="peak"](45.4,13.4,46.9,16.6);out;` },
   { id: "waterfall",     query: `[out:json][timeout:30];node["waterway"="waterfall"](45.4,13.4,46.9,16.6);out;` },
   { id: "viewpoint",     query: `[out:json][timeout:30];node["tourism"="viewpoint"](45.4,13.4,46.9,16.6);out;` },
-  { id: "cave",          query: `[out:json][timeout:30];node["natural"="cave_entrance"](45.4,13.4,46.9,16.6);out;` },
   { id: "museum",        query: `[out:json][timeout:30];(node["tourism"="museum"](45.4,13.4,46.9,16.6);way["tourism"="museum"](45.4,13.4,46.9,16.6););out center;` },
   { id: "ruins",         query: `[out:json][timeout:30];(node["historic"="ruins"](45.4,13.4,46.9,16.6);way["historic"="ruins"](45.4,13.4,46.9,16.6););out center;` },
   { id: "spring",        query: `[out:json][timeout:30];node["natural"="spring"](45.4,13.4,46.9,16.6);out;` },
@@ -69,6 +68,24 @@ function parseFeatures(data) {
   }).filter(Boolean);
 }
 
+async function saveCachedLayer(base44, catId, features) {
+  const existing = await base44.asServiceRole.entities.CachedLayer.filter({ category_id: catId });
+  if (existing && existing.length > 0) {
+    await base44.asServiceRole.entities.CachedLayer.update(existing[0].id, {
+      features,
+      feature_count: features.length,
+      built_at: new Date().toISOString(),
+    });
+  } else {
+    await base44.asServiceRole.entities.CachedLayer.create({
+      category_id: catId,
+      features,
+      feature_count: features.length,
+      built_at: new Date().toISOString(),
+    });
+  }
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -78,41 +95,55 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json().catch(() => ({}));
-    const targetId = body.category_id || null; // optional: rebuild only one
+    const targetId = body.category_id || null;
 
     const cats = targetId ? CATEGORIES.filter(c => c.id === targetId) : CATEGORIES;
-
     const results = [];
 
+    // --- 1. Overpass categories ---
     for (const cat of cats) {
       try {
         console.log(`Fetcham: ${cat.id}`);
         const data = await overpassFetch(cat.query);
         const features = parseFeatures(data);
-
-        // Check if record already exists
-        const existing = await base44.asServiceRole.entities.CachedLayer.filter({ category_id: cat.id });
-
-        if (existing && existing.length > 0) {
-          await base44.asServiceRole.entities.CachedLayer.update(existing[0].id, {
-            features,
-            feature_count: features.length,
-            built_at: new Date().toISOString(),
-          });
-        } else {
-          await base44.asServiceRole.entities.CachedLayer.create({
-            category_id: cat.id,
-            features,
-            feature_count: features.length,
-            built_at: new Date().toISOString(),
-          });
-        }
-
+        await saveCachedLayer(base44, cat.id, features);
         results.push({ id: cat.id, count: features.length, status: "ok" });
         console.log(`OK: ${cat.id} — ${features.length} točk`);
       } catch (err) {
         results.push({ id: cat.id, status: "error", error: err.message });
         console.error(`Napaka pri ${cat.id}: ${err.message}`);
+      }
+    }
+
+    // --- 2. Cave DB layer (only if building all, or specifically requested) ---
+    if (!targetId || targetId === "cave") {
+      try {
+        console.log("Fetcham jame iz DB...");
+        const batchSize = 2000;
+        let all = [];
+        let skip = 0;
+        while (true) {
+          const batch = await base44.asServiceRole.entities.Cave.list('-created_date', batchSize, skip);
+          if (!batch || batch.length === 0) break;
+          all = all.concat(batch);
+          if (batch.length < batchSize) break;
+          skip += batchSize;
+        }
+        const features = all
+          .filter(c => c.latitude && c.longitude && parseFloat(c.latitude) !== 0 && parseFloat(c.longitude) !== 0)
+          .map(c => ({
+            type: "Point",
+            coords: [parseFloat(c.latitude), parseFloat(c.longitude)],
+            label: c.name + (c.depth_m ? ` (${c.depth_m}m globoka)` : "") + (c.length_m ? `, ${c.length_m}m dolga` : ""),
+            depth_m: c.depth_m || null,
+            length_m: c.length_m || null,
+          }));
+        await saveCachedLayer(base44, "cave", features);
+        results.push({ id: "cave", count: features.length, status: "ok" });
+        console.log(`OK: cave — ${features.length} jam`);
+      } catch (err) {
+        results.push({ id: "cave", status: "error", error: err.message });
+        console.error(`Napaka pri cave: ${err.message}`);
       }
     }
 
