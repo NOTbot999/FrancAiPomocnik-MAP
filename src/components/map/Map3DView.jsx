@@ -338,7 +338,7 @@ const Map3DView = forwardRef(function Map3DView({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gpsTrack, mapReady]);
 
-  // Sync custom layers (AI/user-generated) in MapLibre
+  // Sync custom layers (AI/user-generated + cave/municipality) in MapLibre
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !mapReadyRef.current || mapReady === 0) return;
@@ -353,8 +353,8 @@ const Map3DView = forwardRef(function Map3DView({
         const mlId = `ml-${id}`;
         const srcId = `src-${id}`;
 
-        // Skip search category layers - handled separately
-        if (layer._searchCat || layer._caveDbLayer || layer._municipalityLayer) continue;
+        // Skip search category layers - handled separately (but NOT cave_db or municipality)
+        if (layer._searchCat && !layer._caveDbLayer && !layer._municipalityLayer) continue;
 
         if (!visible) {
           if (map.getLayer(`${mlId}-points`)) try { map.removeLayer(`${mlId}-points`); } catch {}
@@ -365,8 +365,10 @@ const Map3DView = forwardRef(function Map3DView({
           continue;
         }
 
-        // GeoJSON custom layer (has features array)
+        // GeoJSON custom layer (has features array) - includes cave_db, municipality, AI layers
         if (layer.features && Array.isArray(layer.features)) {
+          console.log(`[Map3D] Syncing custom GeoJSON layer: ${id}, features: ${layer.features.length}, visible: ${visible}`);
+          
           const geojsonFeatures = layer.features.map(f => {
             if (f.type === "Point") {
               return {
@@ -385,6 +387,7 @@ const Map3DView = forwardRef(function Map3DView({
           }).filter(Boolean);
 
           const geojson = { type: "FeatureCollection", features: geojsonFeatures };
+          console.log(`[Map3D] GeoJSON for ${id}: ${geojsonFeatures.length} valid features`);
 
           if (!map.getSource(srcId)) {
             map.addSource(srcId, { type: "geojson", data: geojson });
@@ -435,7 +438,12 @@ const Map3DView = forwardRef(function Map3DView({
           continue;
         }
 
-        // Tile-based custom layer
+        // Tile-based custom layer (WMS, ArcGIS, standard tiles)
+        if (layer.features && layer.features.length === 0 && !layer.type && !layer.url && !layer.tileUrl) {
+          console.log(`[Map3D] Skipping empty GeoJSON layer ${id} with no tile source`);
+          continue;
+        }
+        
         let tileUrl = null;
         if (layer.type === "wms") {
           const parts = [

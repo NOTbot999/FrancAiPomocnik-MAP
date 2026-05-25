@@ -25,7 +25,7 @@ async function prefetchCategory(cat) {
   if (!cat.query && !cat._caveDbLayer && !cat._municipalityLayer) return;
   if (cat._municipalityLayer) return; // municipality uses a special polygon layer, skip
 
-  // Try server CachedLayer first
+  // Try server CachedLayer first (works for cave and regular categories)
   try {
     const serverData = await base44.entities.CachedLayer.filter({ category_id: cat.id });
     if (serverData && serverData.length > 0 && serverData[0].features?.length > 0) {
