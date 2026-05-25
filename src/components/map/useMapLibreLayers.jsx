@@ -275,6 +275,8 @@ export function useMapLibreLayers(mapRef, mapReadyRef, {
           } else {
             try { map.setPaintProperty(pointLayerId, "circle-opacity", opacity); map.setPaintProperty(pointLayerId, "circle-color", layer.color || "#1d9bf0"); } catch {}
           }
+          // Ensure it's at the top
+          try { map.moveLayer(pointLayerId); } catch {}
         }
 
         if (hasLines) {
@@ -284,6 +286,8 @@ export function useMapLibreLayers(mapRef, mapReadyRef, {
           } else {
             try { map.setPaintProperty(lineLayerId, "line-opacity", opacity); map.setPaintProperty(lineLayerId, "line-color", layer.color || "#1d9bf0"); } catch {}
           }
+          // Ensure it's at the top
+          try { map.moveLayer(lineLayerId); } catch {}
         }
 
         if (hasPolygons) {
@@ -293,6 +297,8 @@ export function useMapLibreLayers(mapRef, mapReadyRef, {
           } else {
             try { map.setPaintProperty(polygonLayerId, "fill-opacity", opacity * 0.6); map.setPaintProperty(polygonLayerId, "fill-color", layer.color || "#1d9bf0"); } catch {}
           }
+          // Ensure it's at the top
+          try { map.moveLayer(polygonLayerId); } catch {}
         }
 
         continue;
@@ -311,6 +317,8 @@ export function useMapLibreLayers(mapRef, mapReadyRef, {
         }
         // Custom raster tile layers also go on top (no beforeId)
         map.addLayer({ id: mlId, type: "raster", source: srcId, paint: { "raster-opacity": opacity, "raster-fade-duration": 0 } });
+        // Ensure it's at the top
+        try { map.moveLayer(mlId); } catch {}
       } else {
         try { map.setPaintProperty(mlId, "raster-opacity", opacity); } catch {}
       }
@@ -355,6 +363,9 @@ export function useMapLibreLayers(mapRef, mapReadyRef, {
         const mlId = `ml-${id}`;
         const srcId = `src-${id}`;
 
+        // Skip search category layers - they're handled by Map3DView
+        if (layer._searchCat || layer._caveDbLayer || layer._municipalityLayer) continue;
+
         if (!isVisible || !layer.features || !Array.isArray(layer.features)) continue;
 
         // Remove any existing layers/sources first to avoid conflicts
@@ -397,6 +408,28 @@ export function useMapLibreLayers(mapRef, mapReadyRef, {
         }
         if (hasPolygons) {
           map.addLayer({ id: `${mlId}-polygons`, type: "fill", source: srcId, filter: ["==", "$type", "Polygon"], paint: { "fill-color": layer.color || "#1d9bf0", "fill-opacity": opacity * 0.6 } });
+        }
+      }
+
+      // Re-order ALL custom layers to be at the very top of the z-order
+      const allLayers = map.getStyle()?.layers || [];
+      for (const layer of layers) {
+        const id = layer.id;
+        const mlId = `ml-${id}`;
+        const isVisible = visible[id] !== false;
+        if (!isVisible) continue;
+
+        // Move all sublayers (points, lines, polygons) to top
+        for (const suffix of ['-points', '-lines', '-polygons']) {
+          const layerId = `${mlId}${suffix}`;
+          if (map.getLayer(layerId)) {
+            try { map.moveLayer(layerId); } catch {}
+          }
+        }
+
+        // If it's a raster layer, move it to top
+        if (map.getLayer(mlId)) {
+          try { map.moveLayer(mlId); } catch {}
         }
       }
     }, 50);
