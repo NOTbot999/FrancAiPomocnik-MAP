@@ -121,11 +121,29 @@ function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme, messag
     const bboxOverpass = `${south},${west},${north},${east}`;
     const finalQuery = queryStr.replace(/\{\{bbox\}\}/g, bboxOverpass);
 
-    const res = await fetch("https://overpass-api.de/api/interpreter", {
-      method: "POST",
-      body: "data=" + encodeURIComponent(finalQuery),
-    });
-    const data = await res.json();
+    const MIRRORS = [
+      "https://overpass.kumi.systems/api/interpreter",
+      "https://overpass-api.de/api/interpreter",
+      "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
+    ];
+
+    let data = null;
+    let lastErr = null;
+    for (const mirror of MIRRORS) {
+      try {
+        const res = await fetch(mirror, {
+          method: "POST",
+          body: "data=" + encodeURIComponent(finalQuery),
+          signal: AbortSignal.timeout(20000),
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        data = await res.json();
+        break;
+      } catch (e) {
+        lastErr = e;
+      }
+    }
+    if (!data) throw new Error(lastErr?.message || "Vsi Overpass strežniki so nedosegljivi");
 
     const features = [];
     for (const el of (data.elements || [])) {
@@ -270,8 +288,8 @@ function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme, messag
         });
         setLoading(false);
         return;
-      } catch {
-        cleanText += `\n\n❌ Napaka pri pridobivanju OSM podatkov.`;
+      } catch (err) {
+        cleanText += `\n\n❌ Napaka pri pridobivanju OSM podatkov: ${err.message}`;
       }
     }
 
