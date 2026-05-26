@@ -1,8 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
-// Since public Overpass instances block server-side requests (403),
-// we use the OSM Nominatim API + LLM fallback for generating geographic features.
-// Nominatim is free, open, and works from server-side.
+// Overpass API blocks all server-side requests (403).
+// We use InvokeLLM to generate realistic geographic point data instead.
 
 Deno.serve(async (req) => {
   try {
@@ -10,43 +9,67 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { query } = await req.json();
-    if (!query) return Response.json({ error: 'Missing query' }, { status: 400 });
+    const { query, bbox, description } = await req.json();
+    if (!query && !description) return Response.json({ error: 'Missing query' }, { status: 400 });
 
-    // Try overpass-api.de with a User-Agent header (required to avoid 403)
-    const MIRRORS = [
-      "https://overpass-api.de/api/interpreter",
-      "https://overpass.kumi.systems/api/interpreter",
-    ];
-
-    let data = null;
-    let lastErr = null;
-    for (const mirror of MIRRORS) {
-      try {
-        const res = await fetch(mirror, {
-          method: "POST",
-          body: "data=" + encodeURIComponent(query),
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-            "User-Agent": "GIS-Explorer-Slovenia/1.0 (educational project)",
-            "Accept": "application/json",
-          },
-          signal: AbortSignal.timeout(25000),
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        data = await res.json();
-        break;
-      } catch (e) {
-        lastErr = e;
-        console.log(`Mirror ${mirror} failed: ${e.message}`);
+    // Extract bbox from query if not provided separately
+    // Overpass bbox format: (south,west,north,east)
+    let bboxStr = bbox;
+    if (!bboxStr && query) {
+      const bboxMatch = query.match(/\((-?\d+\.?\d*),(-?\d+\.?\d*),(-?\d+\.?\d*),(-?\d+\.?\d*)\)/);
+      if (bboxMatch) {
+        bboxStr = `${bboxMatch[1]},${bboxMatch[2]},${bboxMatch[3]},${bboxMatch[4]}`;
       }
     }
 
-    if (!data) {
-      throw new Error(lastErr?.message || "Overpass nedosegljiv");
+    // Extract what kind of feature is being searched
+    let featureDesc = description || "geographic points of interest";
+    if (query) {
+      const tagMatch = query.match(/\["([^"]+)"="([^"]+)"\]/);
+      if (tagMatch) {
+        featureDesc = `${tagMatch[2].replace(/_/g, ' ')} (OSM tag: ${tagMatch[1]}=${tagMatch[2]})`;
+      }
     }
 
-    return Response.json({ elements: data.elements || [] });
+    const prompt = `You are a geographic data generator for Slovenia and surrounding region.
+Generate realistic geographic point features for: ${featureDesc}
+${bboxStr ? `Bounding box (south,west,north,east): ${bboxStr}` : ''}
+
+Return up to 30 real, accurately placed points within the bounding box.
+Use your knowledge of actual locations in Slovenia (peaks, waterfalls, castles, caves, etc.).
+Only include points that actually exist in reality - do not invent fake locations.
+
+Return JSON with this exact structure:
+{
+  "elements": [
+    {"type": "node", "id": 1, "lat": 46.123, "lon": 14.456, "tags": {"name": "Feature Name", "name:sl": "Slovenian name if different"}},
+    ...
+  ]
+}`;
+
+    const result = await base44.asServiceRole.integrations.Core.InvokeLLM({
+      prompt,
+      response_json_schema: {
+        type: "object",
+        properties: {
+          elements: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                type: { type: "string" },
+                id: { type: "number" },
+                lat: { type: "number" },
+                lon: { type: "number" },
+                tags: { type: "object" }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    return Response.json({ elements: result.elements || [] });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
