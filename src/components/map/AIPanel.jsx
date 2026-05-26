@@ -265,17 +265,28 @@ function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme, messag
         setMessages(prev => [...prev, { role: "assistant", content: cleanText }]);
         const customLayer = await executeOverpassQuery(queryBody, layerName, layerColor, bbox);
         if (!customLayer.id) customLayer.id = `franc_overpass_${Date.now()}`;
-        if (onAddCustomLayer) onAddCustomLayer(customLayer);
+        if (onAddCustomLayer && customLayer.features.length > 0) onAddCustomLayer(customLayer);
+        const resultMsg = customLayer.features.length > 0
+          ? `🗺️ Narisano ${customLayer.features.length} elementov: **${layerName}**`
+          : `ℹ️ OSM baza ni vrnila rezultatov za **${layerName}** v tem območju.`;
         setMessages(prev => {
           const updated = [...prev];
           const lastIdx = updated.length - 1;
-          updated[lastIdx] = { ...updated[lastIdx], content: updated[lastIdx].content.replace("🔍 Iščem podatke v OSM bazi...", `🗺️ Narisano ${customLayer.features.length} elementov: **${layerName}**`) };
+          updated[lastIdx] = { ...updated[lastIdx], content: updated[lastIdx].content.replace("🔍 Iščem podatke v OSM bazi...", resultMsg) };
           return updated;
         });
         setLoading(false);
         return;
       } catch (err) {
-        cleanText += `\n\n❌ Napaka pri pridobivanju OSM podatkov: ${err.message}`;
+        // OSM/overpass unavailable — continue with text response only
+        setMessages(prev => {
+          const updated = [...prev];
+          const lastIdx = updated.length - 1;
+          updated[lastIdx] = { ...updated[lastIdx], content: updated[lastIdx].content.replace("🔍 Iščem podatke v OSM bazi...", `ℹ️ OSM podatki trenutno niso dosegljivi. ${cleanText.includes("Aktivirano") ? "" : "Poskusite znova čez trenutek."}`) };
+          return updated;
+        });
+        setLoading(false);
+        return;
       }
     }
 
