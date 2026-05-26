@@ -94,6 +94,12 @@
   visibility: hidden !important;
 }
 
+/* Prevent accidental text selection on interactive elements during map gestures */
+button, a, [role="button"], svg, .leaflet-container {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;

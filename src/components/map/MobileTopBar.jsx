@@ -53,7 +53,8 @@ function MobileTopBarInner({
 
   const theme = loadTheme();
   const scale = prefs.buttonScale ?? 1.0;
-  const btnPx = Math.round(10 * scale);
+  // Enforce minimum 44px touch target (iOS HIG)
+  const btnPx = Math.max(Math.round(10 * scale), Math.round((44 - Math.round(20 * scale)) / 2));
   const iconPx = Math.round(20 * scale);
   const btnStyle = { padding: `${btnPx}px`, gap: `${Math.round(4 * scale)}px`, backgroundColor: theme.toolbarBg, color: theme.toolbarText, borderColor: "#e2e8f0" };
   const btnActiveStyle = { padding: `${btnPx}px`, gap: `${Math.round(4 * scale)}px`, backgroundColor: theme.buttonActiveBg, color: theme.buttonActiveText, borderColor: theme.buttonActiveBg };

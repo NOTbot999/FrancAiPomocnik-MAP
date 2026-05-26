@@ -130,19 +130,26 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-slate-950 text-white">
       {/* Header */}
-      <div className="bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between">
+      <div className="bg-slate-900 border-b border-slate-800 px-4 py-3 flex items-center justify-between" style={{ paddingTop: `calc(env(safe-area-inset-top) + 12px)` }}>
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => window.location.href = '/'}
+            className="flex items-center justify-center w-11 h-11 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition mr-1"
+            title="Nazaj na karto"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+          </button>
           <div className="w-9 h-9 bg-emerald-500/20 rounded-xl flex items-center justify-center">
             <Shield className="w-5 h-5 text-emerald-400" />
           </div>
           <div>
             <h1 className="text-base font-bold text-white">Admin Panel</h1>
-            <p className="text-xs text-slate-400">Upravljanje uporabnikov</p>
+            <p className="text-xs text-slate-400 hidden sm:block">Upravljanje uporabnikov</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-500">{filtered.length} / {accounts.length} uporabnikov</span>
-          <Button size="sm" variant="ghost" onClick={fetchAccounts} className="text-slate-400 hover:text-white">
+          <span className="text-xs text-slate-500 hidden sm:block">{filtered.length} / {accounts.length} uporabnikov</span>
+          <Button size="sm" variant="ghost" onClick={fetchAccounts} className="text-slate-400 hover:text-white w-11 h-11">
             <RefreshCw className="w-4 h-4" />
           </Button>
           <Button
@@ -150,13 +157,10 @@ export default function AdminDashboard() {
             variant="outline"
             onClick={buildCaveCache}
             disabled={buildingCache}
-            className="border-emerald-700 text-emerald-300 text-xs gap-1"
+            className="border-emerald-700 text-emerald-300 text-xs gap-1 hidden sm:flex"
           >
             <Database className="w-3.5 h-3.5" />
             {buildingCache ? 'Gradim...' : 'Zgradi cache jam'}
-          </Button>
-          <Button size="sm" variant="outline" onClick={() => window.location.href = '/'} className="border-slate-700 text-slate-300 text-xs">
-            ← Karta
           </Button>
         </div>
       </div>

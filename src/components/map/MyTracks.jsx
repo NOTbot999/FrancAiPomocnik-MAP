@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { Save, FolderOpen, Trash2, X, Loader2, Check, Route, Link2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -44,6 +44,10 @@ export default function MyTracks({ gpsTrack, onLoadTrack, onClose, inline }) {
   const [saved, setSaved] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
   const [showDeviceLink, setShowDeviceLink] = useState(false);
+  const [pullY, setPullY] = useState(0);
+  const [isPulling, setIsPulling] = useState(false);
+  const pullStartY = useRef(null);
+  const listRef = useRef(null);
   const deviceId = getDeviceId();
 
   const loadSessions = async () => {
@@ -54,6 +58,36 @@ export default function MyTracks({ gpsTrack, onLoadTrack, onClose, inline }) {
   };
 
   useEffect(() => { loadSessions(); }, []);
+
+  // Pull-to-refresh handlers
+  const handleTouchStart = (e) => {
+    const el = listRef.current;
+    if (el && el.scrollTop === 0) {
+      pullStartY.current = e.touches[0].clientY;
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (pullStartY.current === null) return;
+    const dy = e.touches[0].clientY - pullStartY.current;
+    if (dy > 0) {
+      setPullY(Math.min(dy * 0.4, 60));
+      setIsPulling(dy > 50);
+    }
+  };
+
+  const handleTouchEnd = async () => {
+    if (isPulling) {
+      setPullY(0);
+      setIsPulling(false);
+      pullStartY.current = null;
+      await loadSessions();
+    } else {
+      setPullY(0);
+      setIsPulling(false);
+      pullStartY.current = null;
+    }
+  };
 
   const handleSave = async () => {
     if (gpsTrack.length < 2) return;
@@ -131,8 +165,20 @@ export default function MyTracks({ gpsTrack, onLoadTrack, onClose, inline }) {
         </button>
       </div>
 
-      {/* Saved sessions list */}
-      <div className="max-h-64 overflow-y-auto">
+      {/* Saved sessions list — with pull-to-refresh */}
+      <div
+        ref={listRef}
+        className="max-h-64 overflow-y-auto"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        {/* Pull indicator */}
+        {pullY > 0 && (
+          <div className="flex items-center justify-center transition-all" style={{ height: pullY }}>
+            <span className="text-[10px] text-slate-400">{isPulling ? "↑ Spusti za osvežitev" : "↓ Povleci za osvežitev"}</span>
+          </div>
+        )}
         {loading ? (
           <div className="flex justify-center py-6">
             <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
