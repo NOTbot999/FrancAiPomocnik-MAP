@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.30';
 
 Deno.serve(async (req) => {
   try {
@@ -9,7 +9,8 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Description is required' }, { status: 400 });
     }
 
-    const report = await base44.asServiceRole.entities.LagReport.create({
+    // LagReport RLS has create: everyone — use plain entity call (no service role needed)
+    const report = await base44.entities.LagReport.create({
       username: username || "gost",
       description: description.trim(),
       user_agent: user_agent || "",
