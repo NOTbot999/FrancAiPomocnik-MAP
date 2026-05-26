@@ -121,29 +121,9 @@ function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme, messag
     const bboxOverpass = `${south},${west},${north},${east}`;
     const finalQuery = queryStr.replace(/\{\{bbox\}\}/g, bboxOverpass);
 
-    const MIRRORS = [
-      "https://overpass.kumi.systems/api/interpreter",
-      "https://overpass-api.de/api/interpreter",
-      "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
-    ];
-
-    let data = null;
-    let lastErr = null;
-    for (const mirror of MIRRORS) {
-      try {
-        const res = await fetch(mirror, {
-          method: "POST",
-          body: "data=" + encodeURIComponent(finalQuery),
-          signal: AbortSignal.timeout(20000),
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        data = await res.json();
-        break;
-      } catch (e) {
-        lastErr = e;
-      }
-    }
-    if (!data) throw new Error(lastErr?.message || "Vsi Overpass strežniki so nedosegljivi");
+    const response = await base44.functions.invoke("overpassProxy", { query: finalQuery });
+    const data = response.data;
+    if (data.error) throw new Error(data.error);
 
     const features = [];
     for (const el of (data.elements || [])) {
@@ -238,8 +218,8 @@ function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme, messag
     }
     if (activated.length > 0) cleanText += `\n\n✅ Aktivirano: ${activated.join(", ")}`;
 
-    // Add static custom layer
-    if (customMatch) {
+    // Add static custom layer — skip if overpass_query is also present (AI sometimes generates both)
+    if (customMatch && !overpassMatch) {
       try {
         const customLayer = JSON.parse(customMatch[1]);
         // Ensure layer always has a unique id — without it MapLibre crashes
