@@ -23,7 +23,6 @@ export default function MobileBottomNav({ activeTab, onTabChange }) {
       style={{
         backgroundColor: theme.toolbarBg,
         borderColor: `${theme.toolbarText}22`,
-        paddingBottom: "env(safe-area-inset-bottom)",
       }}
     >
       {TABS.map(({ id, Icon, label }) => {
@@ -32,7 +31,7 @@ export default function MobileBottomNav({ activeTab, onTabChange }) {
           <button
             key={id}
             onClick={() => onTabChange(id)}
-            className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 transition-all"
+            className="relative flex-1 flex flex-col items-center justify-center gap-0.5 py-2 transition-all"
             style={{
               color: isActive ? theme.buttonActiveBg : theme.toolbarText,
               opacity: isActive ? 1 : 0.55,
