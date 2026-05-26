@@ -1,19 +1,16 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 // Overpass API blocks all server-side requests (403).
-// We use InvokeLLM to generate realistic geographic point data instead.
+// We use InvokeLLM via service role to generate realistic geographic data instead.
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
     const { query, bbox, description } = await req.json();
     if (!query && !description) return Response.json({ error: 'Missing query' }, { status: 400 });
 
     // Extract bbox from query if not provided separately
-    // Overpass bbox format: (south,west,north,east)
     let bboxStr = bbox;
     if (!bboxStr && query) {
       const bboxMatch = query.match(/\((-?\d+\.?\d*),(-?\d+\.?\d*),(-?\d+\.?\d*),(-?\d+\.?\d*)\)/);
@@ -25,24 +22,26 @@ Deno.serve(async (req) => {
     // Extract what kind of feature is being searched
     let featureDesc = description || "geographic points of interest";
     if (query) {
-      const tagMatch = query.match(/\["([^"]+)"="([^"]+)"\]/);
-      if (tagMatch) {
-        featureDesc = `${tagMatch[2].replace(/_/g, ' ')} (OSM tag: ${tagMatch[1]}=${tagMatch[2]})`;
+      // Try to extract multiple tags
+      const tagMatches = [...query.matchAll(/\["([^"]+)"="([^"]+)"\]/g)];
+      if (tagMatches.length > 0) {
+        featureDesc = tagMatches.map(m => `${m[2].replace(/_/g, ' ')} (${m[1]}=${m[2]})`).join(', ');
       }
     }
 
-    const prompt = `You are a geographic data generator for Slovenia and surrounding region.
+    const prompt = `You are a geographic data generator for Slovenia.
 Generate realistic geographic point features for: ${featureDesc}
-${bboxStr ? `Bounding box (south,west,north,east): ${bboxStr}` : ''}
+${bboxStr ? `Bounding box (south,west,north,east): ${bboxStr}` : 'Focus on Slovenia (lat 45.4-46.9, lng 13.4-16.6)'}
 
-Return up to 30 real, accurately placed points within the bounding box.
-Use your knowledge of actual locations in Slovenia (peaks, waterfalls, castles, caves, etc.).
-Only include points that actually exist in reality - do not invent fake locations.
+Return up to 30 REAL, accurately placed points within the bounding box.
+Use your knowledge of actual named locations in Slovenia.
+Only include points that actually exist - do not invent locations.
+Include Slovenian names where known.
 
-Return JSON with this exact structure:
+Return JSON:
 {
   "elements": [
-    {"type": "node", "id": 1, "lat": 46.123, "lon": 14.456, "tags": {"name": "Feature Name", "name:sl": "Slovenian name if different"}},
+    {"type": "node", "id": 1, "lat": 46.123, "lon": 14.456, "tags": {"name": "Feature Name", "name:sl": "Slovensko ime"}},
     ...
   ]
 }`;
