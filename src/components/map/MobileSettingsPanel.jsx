@@ -1,11 +1,12 @@
 import React, { useState, useCallback, useRef } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { GripVertical, Search, Locate, Navigation, Route, Ruler, X, Link2, ChevronDown, ChevronUp, Layers, Plus, WifiOff, Palette, Brain, AlertTriangle, TrendingUp, Box } from "lucide-react";
+import { GripVertical, Search, Locate, Navigation, Route, Ruler, X, Link2, ChevronDown, ChevronUp, Layers, Plus, WifiOff, Palette, Brain, AlertTriangle, TrendingUp, Box, Trash2 } from "lucide-react";
 import LagReportModal from "@/components/map/LagReportModal";
 import { Slider } from "@/components/ui/slider";
 import MyTracks from "./MyTracks";
 import DeviceLink from "./DeviceLink";
 import ThemeCustomizer, { loadTheme } from "@/components/map/ThemeCustomizer";
+import { base44 } from "@/api/base44Client";
 
 
 
@@ -71,9 +72,25 @@ export default function MobileSettingsPanel({ onClose, prefs, setPrefs, gpsTrack
   const [showDeviceLink, setShowDeviceLink] = useState(false);
   const [showTheme, setShowTheme] = useState(false);
   const [showLagReport, setShowLagReport] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
   const [theme, setTheme] = useState(loadTheme);
   const username = localStorage.getItem("userUsername") || null;
+  const accountId = localStorage.getItem("userAccountId") || null;
   const deviceId = getDeviceId();
+
+  const handleDeleteAccount = async () => {
+    if (!accountId) return;
+    setDeletingAccount(true);
+    try {
+      await base44.entities.UserAccount.delete(accountId);
+      localStorage.clear();
+      window.location.reload();
+    } catch (err) {
+      setDeletingAccount(false);
+      alert("Napaka pri brisanju računa: " + err.message);
+    }
+  };
 
   const orderedButtons = prefs.order
     .map(id => DEFAULT_BUTTONS.find(b => b.id === id))
@@ -320,6 +337,44 @@ export default function MobileSettingsPanel({ onClose, prefs, setPrefs, gpsTrack
           <span className="flex-1 text-xs font-medium text-left">Poročaj o zaostanku</span>
         </button>
       </div>
+
+      {/* Delete Account */}
+      {accountId && (
+        <>
+          <div className="mx-4 border-t border-slate-200 my-2" />
+          <div className="px-2 pb-3">
+            {!showDeleteConfirm ? (
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-red-50 hover:bg-red-100 transition-all text-red-700 border border-red-200"
+              >
+                <Trash2 className="w-4 h-4 text-red-500" />
+                <span className="flex-1 text-xs font-medium text-left">Izbriši račun</span>
+              </button>
+            ) : (
+              <div className="p-3 rounded-xl bg-red-50 border border-red-200">
+                <p className="text-xs font-semibold text-red-700 mb-1">Ste prepričani?</p>
+                <p className="text-[10px] text-red-500 mb-3">Ta dejanje je nepovratno. Vsi vaši podatki bodo izgubljeni.</p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowDeleteConfirm(false)}
+                    className="flex-1 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-medium text-slate-600"
+                  >
+                    Prekliči
+                  </button>
+                  <button
+                    onClick={handleDeleteAccount}
+                    disabled={deletingAccount}
+                    className="flex-1 py-1.5 rounded-lg bg-red-600 text-white text-xs font-semibold disabled:opacity-60"
+                  >
+                    {deletingAccount ? "Brišem..." : "Izbriši"}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </>
+      )}
 
       {showLagReport && (
         <LagReportModal username={username} onClose={() => setShowLagReport(false)} />

@@ -157,7 +157,7 @@ function MobileTopBarInner({
       )}
 
       {/* Right column */}
-      <div style={{ pointerEvents: "auto", gap: `${Math.round(8 * scale)}px`, paddingTop: "12px", paddingRight: "8px", paddingLeft: "8px" }} className="absolute top-0 right-0 bottom-0 flex flex-col items-center overflow-y-auto">
+      <div style={{ pointerEvents: "auto", gap: `${Math.round(8 * scale)}px`, paddingTop: `calc(env(safe-area-inset-top) + 12px)`, paddingRight: `calc(env(safe-area-inset-right) + 8px)`, paddingLeft: "8px", paddingBottom: `calc(env(safe-area-inset-bottom) + 8px)` }} className="absolute top-0 right-0 bottom-0 flex flex-col items-center overflow-y-auto">
         {/* Settings button — always on top */}
         <button onClick={() => setShowSettings(p => !p)} style={showSettings ? btnActiveStyle : btnStyle} className={btnBase}>
           <Settings style={iconStyle} />
