@@ -114,7 +114,7 @@ function MobileTopBarInner({
 
   const searchAlwaysVisible = isVisible("search");
 
-  const anyMenuOpen = showSettings || showOffline || showRuler || showSearch;
+  const anyMenuOpen = showSettings || showOffline || showSearch;
 
   return createPortal(
     <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, zIndex: 950, pointerEvents: "none" }}>
