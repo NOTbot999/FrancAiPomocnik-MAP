@@ -275,7 +275,7 @@ export default function SearchBar({ onLocationSelect, autoFocus, onAddCustomLaye
         const caves = await loadCaves();
         const features = cavesToLayerFeatures(caves);
         const layerId = `search_${cat.id}`;
-        onAddCustomLayer({ id: layerId, name: "🕳️ Jame", color: "#78716c", features, _searchCat: cat.id, _caveDbLayer: true });
+        onAddCustomLayer({ id: layerId, name: "🕳️ Jame (EPO + baza)", color: "#78716c", features, _searchCat: cat.id, _caveDbLayer: true });
         setActiveLayers(prev => ({ ...prev, [cat.id]: layerId }));
       } finally {
         setLoadingCat(null);
