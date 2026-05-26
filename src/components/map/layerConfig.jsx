@@ -76,30 +76,6 @@ export const BASE_LAYERS = [
     attribution: "&copy; ARSO",
     thumbnail: "https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=80&h=60&fit=crop"
   },
-  {
-    id: "esri_hillshade",
-    name: "Hillshade (ESRI Global)",
-    type: "tile",
-    url: "https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}",
-    attribution: "&copy; Esri, USGS, NGA, NASA",
-    thumbnail: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=80&h=60&fit=crop"
-  },
-  {
-    id: "esri_hillshade_dark",
-    name: "Hillshade Dark (ESRI)",
-    type: "tile",
-    url: "https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade_Dark/MapServer/tile/{z}/{y}/{x}",
-    attribution: "&copy; Esri, USGS, NGA, NASA",
-    thumbnail: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=80&h=60&fit=crop"
-  },
-  {
-    id: "thunderforest_outdoors",
-    name: "Outdoors / Topo (Thunderforest)",
-    type: "tile",
-    url: "https://tile.thunderforest.com/outdoors/{z}/{x}/{y}.png?apikey=a5dd6a2f1c934394b9fed7e4e54c7158",
-    attribution: "&copy; Thunderforest, &copy; OpenStreetMap",
-    thumbnail: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=80&h=60&fit=crop"
-  }
 ];
 
 // 3 skupne kategorije namesto 8
@@ -531,14 +507,14 @@ export const OVERLAY_CATEGORIES = [
         description: "ESRI temno senčenje reliefa kot prekrivni sloj"
       },
       {
-        id: "ol_thunderforest_outdoors",
-        name: "Outdoors / Topo (Thunderforest)",
+        id: "ol_stadia_outdoors",
+        name: "Outdoors / Topo (Stadia)",
         type: "tile",
-        url: "https://tile.thunderforest.com/outdoors/{z}/{x}/{y}.png?apikey=a5dd6a2f1c934394b9fed7e4e54c7158",
-        attribution: "&copy; Thunderforest, &copy; OpenStreetMap",
+        url: "https://tiles.stadiamaps.com/tiles/outdoors/{z}/{x}/{y}{r}.png",
+        attribution: "&copy; Stadia Maps, &copy; OpenStreetMap",
         opacity: 0.9,
         thumbnail: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=80&h=60&fit=crop",
-        description: "Thunderforest Outdoors/Topo karta kot prekrivni sloj"
+        description: "Stadia Outdoors topo karta z višinskimi plastnicami in potmi"
       }
     ]
   },
