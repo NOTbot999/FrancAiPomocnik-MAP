@@ -9,6 +9,19 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import Auth from './pages/Auth';
 import AdminImport from './pages/AdminImport';
 import AdminDashboard from './pages/AdminDashboard';
+import { useEffect } from 'react';
+
+// Global system dark mode listener — applies 'dark' class to <html> automatically
+function SystemThemeProvider({ children }) {
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const apply = (e) => document.documentElement.classList.toggle('dark', e.matches);
+    apply(mq);
+    mq.addEventListener('change', apply);
+    return () => mq.removeEventListener('change', apply);
+  }, []);
+  return children;
+}
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -81,14 +94,16 @@ const AuthenticatedApp = () => {
 function App() {
 
   return (
-    <AuthProvider>
-      <QueryClientProvider client={queryClientInstance}>
-        <Router>
-          <AuthenticatedApp />
-        </Router>
-        <Toaster />
-      </QueryClientProvider>
-    </AuthProvider>
+    <SystemThemeProvider>
+      <AuthProvider>
+        <QueryClientProvider client={queryClientInstance}>
+          <Router>
+            <AuthenticatedApp />
+          </Router>
+          <Toaster />
+        </QueryClientProvider>
+      </AuthProvider>
+    </SystemThemeProvider>
   )
 }
 

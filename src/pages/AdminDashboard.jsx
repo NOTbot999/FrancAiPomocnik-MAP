@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
 import { Badge } from '@/components/ui/badge';
@@ -55,6 +55,25 @@ export default function AdminDashboard() {
   const [error, setError] = useState('');
   const [buildingCache, setBuildingCache] = useState(false);
   const [cacheMsg, setCacheMsg] = useState('');
+
+  // Pull-to-refresh state
+  const [pullY, setPullY] = useState(0);
+  const [isPulling, setIsPulling] = useState(false);
+  const pullStartY = useRef(null);
+  const scrollRef = useRef(null);
+
+  const handleTouchStart = (e) => {
+    if (scrollRef.current?.scrollTop === 0) pullStartY.current = e.touches[0].clientY;
+  };
+  const handleTouchMove = (e) => {
+    if (pullStartY.current === null) return;
+    const dy = e.touches[0].clientY - pullStartY.current;
+    if (dy > 0) { setPullY(Math.min(dy * 0.4, 60)); setIsPulling(dy > 50); }
+  };
+  const handleTouchEnd = async () => {
+    if (isPulling) { setPullY(0); setIsPulling(false); pullStartY.current = null; await fetchAccounts(); }
+    else { setPullY(0); setIsPulling(false); pullStartY.current = null; }
+  };
 
   const buildCaveCache = async () => {
     setBuildingCache(true);
@@ -185,8 +204,19 @@ export default function AdminDashboard() {
         <div className={`mx-6 mb-4 p-3 border rounded-lg text-sm ${cacheMsg.startsWith('✓') ? 'bg-emerald-900/30 border-emerald-800 text-emerald-300' : 'bg-red-900/30 border-red-800 text-red-300'}`}>{cacheMsg}</div>
       )}
 
-      {/* Table */}
-      <div className="px-6 pb-8 overflow-x-auto">
+      {/* Table — with pull-to-refresh on mobile */}
+      <div
+        ref={scrollRef}
+        className="px-6 pb-8 overflow-x-auto"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        {pullY > 0 && (
+          <div className="flex items-center justify-center text-slate-500 text-xs transition-all" style={{ height: pullY }}>
+            {isPulling ? "↑ Spusti za osvežitev" : "↓ Povleci za osvežitev"}
+          </div>
+        )}
         <div className="rounded-xl border border-slate-800 overflow-hidden">
           <table className="w-full text-xs">
             <thead>

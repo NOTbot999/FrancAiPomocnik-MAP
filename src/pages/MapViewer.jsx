@@ -19,6 +19,7 @@ import { useUserSettings } from "@/hooks/useUserSettings";
 import { base44 } from "@/api/base44Client";
 import { scopedGet, scopedSet } from "@/lib/userPrefs";
 import Mobile3DMenu from "@/components/map/Mobile3DMenu";
+import MobileBottomNav from "@/components/map/MobileBottomNav";
 import { Layers, Locate, Navigation, Route, WifiOff, Brain, TrendingUp, Box } from "lucide-react";
 
 
@@ -256,6 +257,8 @@ export default function MapViewer() {
   const [mapCenter, setMapCenter] = useState([46.1512, 14.9955]);
   const [mapZoom, setMapZoom] = useState(9);
   const [isMobile3DMenuOpen, setIsMobile3DMenuOpen] = useState(false);
+  const [mobileNavTab, setMobileNavTab] = useState("map");
+
   const [mobileButtonPrefs, setMobileButtonPrefs] = useState(() => {
     try {
       const saved = localStorage.getItem("mobileButtonPrefs");
@@ -677,6 +680,19 @@ export default function MapViewer() {
             🔑 Prijava
           </button>
         </div>
+      )}
+
+      {/* Mobile Bottom Nav */}
+      {isMobile && !is3DOpen && (
+        <MobileBottomNav
+          activeTab={mobileNavTab}
+          onTabChange={(tab) => {
+            setMobileNavTab(tab);
+            if (tab === "layers") setIsPanelOpen(true);
+            else if (tab === "tracks") setShowMyTracks(p => !p);
+            else if (tab === "settings") { /* settings panel opens via MobileTopBar gear icon */ }
+          }}
+        />
       )}
 
       {showAuthModal && (
