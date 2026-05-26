@@ -430,7 +430,18 @@ export default function AIPanel({
   };
 
   useEffect(() => {
-    localStorage.setItem(FRANC_CHAT_STORAGE_KEY, JSON.stringify(messages));
+    try {
+      localStorage.setItem(FRANC_CHAT_STORAGE_KEY, JSON.stringify(messages));
+    } catch {
+      // localStorage quota exceeded — trim oldest messages and retry
+      try {
+        const trimmed = messages.slice(-10);
+        localStorage.setItem(FRANC_CHAT_STORAGE_KEY, JSON.stringify(trimmed));
+      } catch {
+        // If still failing, clear old chat to free space
+        localStorage.removeItem(FRANC_CHAT_STORAGE_KEY);
+      }
+    }
   }, [messages]);
 
   useEffect(() => {
