@@ -682,19 +682,6 @@ export default function MapViewer() {
         </div>
       )}
 
-      {/* Mobile Bottom Nav */}
-      {isMobile && !is3DOpen && (
-        <MobileBottomNav
-          activeTab={mobileNavTab}
-          onTabChange={(tab) => {
-            setMobileNavTab(tab);
-            if (tab === "layers") setIsPanelOpen(true);
-            else if (tab === "tracks") setShowMyTracks(p => !p);
-            else if (tab === "settings") { /* settings panel opens via MobileTopBar gear icon */ }
-          }}
-        />
-      )}
-
       {showAuthModal && (
         <AuthModal
           onClose={() => {
