@@ -133,8 +133,8 @@ function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme, messag
       if (el.type === "node" && el.lat != null) {
         features.push({ type: "Point", coords: [el.lat, el.lon], label });
       } else if (el.type === "way" && el.geometry) {
-        const coords = el.geometry.map(p => [p.lat, p.lon]);
-        if (coords.length > 0) {
+        const coords = el.geometry.filter(p => p.lat != null && p.lon != null).map(p => [p.lat, p.lon]);
+        if (coords.length >= 2) {
           // Close polygon if natural=water / waterway area
           const isArea = el.tags?.natural === "water" || el.tags?.landuse === "reservoir";
           features.push({ type: isArea ? "Polygon" : "LineString", coords, label });
@@ -166,7 +166,7 @@ function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme, messag
       add_context_from_internet: true, model: "gemini_3_flash"
     });
 
-    const text = typeof res === "string" ? res : res?.content || JSON.stringify(res);
+    const text = typeof res === "string" ? res : (res?.text || res?.content || JSON.stringify(res));
 
     const layerMatch = text.match(/<activate_layers>(.*?)<\/activate_layers>/s);
     const customMatch = text.match(/<custom_layer>(.*?)<\/custom_layer>/s);
@@ -228,9 +228,22 @@ function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme, messag
         if (!customLayer.id) {
           customLayer.id = `franc_${Date.now()}`;
         }
+        // Validate and filter features — bad coords crash Leaflet
+        customLayer.features = (customLayer.features || []).filter(f => {
+          if (!f || !Array.isArray(f.coords)) return false;
+          if (f.type === "Point") {
+            const [lat, lng] = f.coords;
+            return typeof lat === "number" && typeof lng === "number" &&
+              lat >= 45.0 && lat <= 47.5 && lng >= 13.0 && lng <= 17.0;
+          }
+          // LineString / Polygon — coords is array of [lat, lng]
+          return f.coords.length >= 2 && f.coords.every(c => Array.isArray(c) && c.length === 2);
+        });
         if (onAddCustomLayer) onAddCustomLayer(customLayer);
-        cleanText += `\n\n🎨 Custom layer: ${customLayer.name}`;
-      } catch {}
+        cleanText += `\n\n🎨 Custom layer: ${customLayer.name} (${customLayer.features.length} elementov)`;
+      } catch (err) {
+        cleanText += `\n\n❌ Napaka pri ustvarjanju layerja: ${err.message}`;
+      }
     }
 
     // Execute Overpass query
