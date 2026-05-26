@@ -320,7 +320,20 @@ export const OVERLAY_CATEGORIES = [
         thumbnail: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=80&h=60&fit=crop",
         description: "Raba kmetijskih zemljišč iz MKGP RABA registra"
       },
-
+      // Jame
+      {
+        id: "arso_jame_epo",
+        name: "Lokacije jam (EPO_PNT)",
+        type: "wms",
+        url: ARSO_WMS,
+        layers: "ARSO:EPO_PNT",
+        format: "image/png",
+        transparent: true,
+        version: "1.1.1",
+        opacity: 0.8,
+        thumbnail: "https://images.unsplash.com/photo-1519904981063-b0cf448d479e?w=80&h=60&fit=crop",
+        description: "Ekološko pomembne jamske točke iz registra ARSO"
+      },
       {
         id: "arso_epo_plg",
         name: "Kraška območja (EPO_PLG)",
