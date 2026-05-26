@@ -507,14 +507,15 @@ export const OVERLAY_CATEGORIES = [
         description: "ESRI temno senčenje reliefa kot prekrivni sloj"
       },
       {
-        id: "ol_stadia_outdoors",
-        name: "Outdoors / Topo (Stadia)",
+        id: "ol_waymarked_slopes",
+        name: "Smučišča & Tereni (WaymarkedTrails)",
         type: "tile",
-        url: "https://tiles.stadiamaps.com/tiles/outdoors/{z}/{x}/{y}{r}.png",
-        attribution: "&copy; Stadia Maps, &copy; OpenStreetMap",
+        url: "https://tile.waymarkedtrails.org/slopes/{z}/{x}/{y}.png",
+        attribution: "&copy; WaymarkedTrails, &copy; OpenStreetMap",
         opacity: 0.9,
+        transparent: true,
         thumbnail: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=80&h=60&fit=crop",
-        description: "Stadia Outdoors topo karta z višinskimi plastnicami in potmi"
+        description: "Smučišča in terenski tereni iz WaymarkedTrails"
       }
     ]
   },
@@ -662,11 +663,11 @@ export const OVERLAY_CATEGORIES = [
         id: "stamen_toner",
         name: "Toner (visok kontrast)",
         type: "tile",
-        // Stamen CDN je mrtev — nadomestek je Stadia Maps (Stamen naslednik)
-        url: "https://tiles.stadiamaps.com/tiles/stamen_toner/{z}/{x}/{y}{r}.png",
+        url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+        attribution: "&copy; CartoDB, &copy; OpenStreetMap",
         opacity: 0.85,
         thumbnail: "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=80&h=60&fit=crop",
-        description: "Visokokontrastna B/W karta — izpostavi ceste in zgradbe ki niso na navadni karti"
+        description: "Visokokontrastna svetla karta — izpostavi ceste in zgradbe"
       },
       {
         id: "lidar_overlay",
