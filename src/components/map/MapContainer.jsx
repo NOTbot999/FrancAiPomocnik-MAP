@@ -547,26 +547,26 @@ export default function MapContainerComponent({
         const pane = "overlayPane";
 
         // MapTiler tile layer (requires API key)
-        if (layer.type === "maptiler_tile") {
-          if (!maptilerKey) return null;
-          const resolvedUrl = layer.urlTemplate.replace("{key}", maptilerKey);
-          return (
-            <TileLayer
-              key={layerId}
-              url={resolvedUrl}
-              opacity={opacity}
-              tileSize={256}
-              maxZoom={22}
-              maxNativeZoom={19}
-              attribution={layer.attribution || ""}
-              keepBuffer={4}
-              updateWhenIdle={false}
-              updateWhenZooming={false}
-              pane={pane}
-              zIndex={400 + index}
-            />
-          );
-        }
+                 if (layer.type === "maptiler_tile") {
+                   if (!maptilerKey) return null;
+                   const resolvedUrl = layer.urlTemplate.replace("{key}", maptilerKey);
+                   return (
+                     <TileLayer
+                       key={`${layerId}-${maptilerKey}`}
+                       url={resolvedUrl}
+                       opacity={opacity}
+                       tileSize={256}
+                       maxZoom={22}
+                       maxNativeZoom={layer.maxNativeZoom || 12}
+                       attribution={layer.attribution || ""}
+                       keepBuffer={4}
+                       updateWhenIdle={false}
+                       updateWhenZooming={false}
+                       pane={pane}
+                       zIndex={400 + index}
+                     />
+                   );
+                 }
 
         // Standard tile layer
         if (layer.type === "tile") {

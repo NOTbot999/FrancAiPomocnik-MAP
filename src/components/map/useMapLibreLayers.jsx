@@ -31,6 +31,7 @@ function wmsUrl(layer) {
 // Build an ArcGIS export tile URL for MapLibre
 // MapLibre always requests tiles in EPSG:3857 bbox.
 // We always use bboxSR=3857 and imageSR=3857 so ArcGIS reprojects output — no client reprojection needed.
+// NOTE: bboxSR/imageSR from layer config are intentionally IGNORED here — MapLibre only speaks 3857.
 function arcgisUrl(layer) {
   const base = layer.url || layer.arcgisUrl;
   if (!base) return null;
@@ -86,7 +87,7 @@ function addLayerToMap(map, layerId, config, opacity = 1) {
     tileUrl = resolveTileUrl(config.url);
   } else if (config.type === "maptiler_tile") {
     const key = window.__maptilerKey;
-    if (!key) return; // key not yet available — will retry when mapReady increments
+    if (!key) return; // key not yet available — Map3DView sets window.__maptilerKey on init
     tileUrl = config.urlTemplate.replace("{key}", key);
   } else if (config.type === "wms") {
     tileUrl = wmsUrl(config);

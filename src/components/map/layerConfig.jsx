@@ -237,23 +237,26 @@ export const OVERLAY_CATEGORIES = [
       },
       {
         id: "openinframap_power",
-        name: "Daljnovodi",
+        name: "Daljnovodi (OSM Energy)",
         type: "tile",
-        url: "https://tiles.openinframap.org/power/{z}/{x}/{y}.png",
-        transparent: true,
-        opacity: 0.9,
+        url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+        transparent: false,
+        opacity: 0.8,
         thumbnail: "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=80&h=60&fit=crop",
-        description: "Električni daljnovodi in transformatorji"
+        description: "OSM standardna karta (daljnovodi vidni pri zoom 14+)"
       },
       {
         id: "openinframap_water",
         name: "Vodovod & Kanalizacija",
-        type: "tile",
-        url: "https://tiles.openinframap.org/water/{z}/{x}/{y}.png",
+        type: "wms",
+        url: "https://gis.arso.gov.si/geoserver/ARSO/wms",
+        layers: "ARSO:PV_VOD",
+        format: "image/png",
         transparent: true,
+        version: "1.1.1",
         opacity: 0.8,
         thumbnail: "https://images.unsplash.com/photo-1559825481-12a05cc00344?w=80&h=60&fit=crop",
-        description: "Vodovod, kanalizacijske linije in pipe"
+        description: "Vodotoki iz ARSO registra voda"
       }
     ]
   },
@@ -508,13 +511,14 @@ export const OVERLAY_CATEGORIES = [
       },
       {
         id: "ol_maptiler_hillshade",
-        name: "Hillshade v2 (MapTiler)",
+        name: "Hillshade (MapTiler)",
         type: "maptiler_tile",
-        urlTemplate: "https://api.maptiler.com/tiles/hillshading-v2/{z}/{x}/{y}.webp?key={key}",
-        attribution: "&copy; MapTiler, &copy; SRTM",
+        urlTemplate: "https://api.maptiler.com/tiles/hillshade/{z}/{x}/{y}.webp?key={key}",
+        attribution: "&copy; MapTiler, &copy; OpenStreetMap contributors",
         opacity: 0.75,
+        maxNativeZoom: 12,
         thumbnail: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=80&h=60&fit=crop",
-        description: "Najdetajlnejše hillshade za Evropo — MapTiler v2, temelji na Copernicus DEM + LIDAR (2024)"
+        description: "Globalno senčenje reliefa — MapTiler, transparentni webp sloj (do zoom 12)"
       },
       {
         id: "ol_waymarked_slopes",
@@ -694,13 +698,13 @@ export const OVERLAY_CATEGORIES = [
       },
       {
         id: "openinframap",
-        name: "Infrastruktura (OpenInfraMap)",
+        name: "Energetska infrastruktura (OSM)",
         type: "tile",
-        url: "https://tiles.openinframap.org/power/{z}/{x}/{y}.png",
+        url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
         opacity: 0.8,
-        transparent: true,
+        transparent: false,
         thumbnail: "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=80&h=60&fit=crop",
-        description: "Električna infrastruktura — daljnovodi, transformatorji"
+        description: "OSM karta — električna infrastruktura vidna pri zoom 14+"
       }
     ]
   }
