@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { Layers, X, ExternalLink, ChevronDown, BookOpen, GripVertical, Mountain } from "lucide-react";
+import { Layers, X, ExternalLink, ChevronDown, GripVertical, Mountain } from "lucide-react";
 import { ML_BASE_STYLES } from "./Map3DView";
 import { base44 } from "@/api/base44Client";
 import { Slider } from "@/components/ui/slider";
@@ -479,7 +479,7 @@ export default function LayerPanel({
   }, [activeLayers, onToggleLayer]);
 
   const theme = loadTheme();
-  const [showLegend, setShowLegend] = useState(false);
+  const [showLegend] = useState(false);
   // savedCustomLayers = favorited custom layers persisted in localStorage
   const savedCustomLayers = (favoritedCustomLayerIds || [])
     .map(id => customLayers?.find(l => l.id === id))
@@ -547,14 +547,6 @@ export default function LayerPanel({
                   <h2 className="text-sm font-semibold tracking-tight" style={{ color: panelText }}>Sloji</h2>
                 </div>
                 <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => setShowLegend(p => !p)}
-                    className="p-1.5 rounded-xl transition-all"
-                    style={showLegend ? { backgroundColor: accentColor, color: "#fff" } : { color: panelText, opacity: 0.6 }}
-                    title="Legenda"
-                  >
-                    <BookOpen className="w-3.5 h-3.5" />
-                  </button>
                   <button onClick={onClose} className="p-1.5 rounded-xl transition-colors hover:bg-white/10" style={{ color: panelText, opacity: 0.6 }}>
                     <X className="w-4 h-4" />
                   </button>
@@ -596,17 +588,6 @@ export default function LayerPanel({
               </div>
               <div className="flex items-center gap-1">
                 <button
-                  onClick={() => setShowLegend(p => !p)}
-                  className="p-1.5 rounded-xl transition-all text-xs font-medium flex items-center gap-1"
-                  style={showLegend
-                    ? { backgroundColor: accentColor, color: "#fff" }
-                    : { backgroundColor: "rgba(255,255,255,0.06)", color: panelText, opacity: 0.7 }
-                  }
-                  title="Legenda"
-                >
-                  <BookOpen className="w-3.5 h-3.5" />
-                </button>
-                <button
                   onClick={onClose}
                   className="p-1.5 rounded-xl hover:bg-white/10 transition-colors"
                   style={{ color: panelText, opacity: 0.6 }}
@@ -647,21 +628,7 @@ export default function LayerPanel({
         )}
       </AnimatePresence>
 
-      {/* Legend panel — floats next to the layer panel */}
-      <AnimatePresence>
-        {isOpen && showLegend && (
-          <motion.div
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -10 }}
-            transition={{ type: "spring", damping: 28, stiffness: 320 }}
-            className="absolute top-16 z-[901]"
-            style={{ left: 332 }}
-          >
-            <LayerLegend isOpen={showLegend} onClose={() => setShowLegend(false)} theme={theme} />
-          </motion.div>
-        )}
-      </AnimatePresence>
+
     </>
   );
 }
