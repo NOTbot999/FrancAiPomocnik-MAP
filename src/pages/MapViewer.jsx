@@ -303,8 +303,8 @@ export default function MapViewer() {
   return (
     <div className="relative w-full h-screen overflow-hidden" style={{ backgroundColor: "#e8ede8", backgroundImage: "url('https://media.base44.com/images/public/69ad3ce309822f8e71f66838/b15473e19_5992128811794894233.jpg')", backgroundSize: "contain", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>
 
-      {/* MapLibre 3D/2D-rotatable map — kept mounted once initialized to avoid re-init on toggle */}
-      <div style={{ position: "absolute", inset: 0, zIndex: isPinPicking && is3DOpen ? 980 : undefined, visibility: is3DOpen ? "visible" : "hidden", pointerEvents: is3DOpen ? "auto" : "none", display: mapLibreEverOpened ? undefined : "none" }}>
+      {/* MapLibre 3D/2D-rotatable map — only mount when first opened to ensure container has dimensions */}
+      {mapLibreEverOpened && <div style={{ position: "absolute", inset: 0, zIndex: isPinPicking && is3DOpen ? 980 : undefined, visibility: is3DOpen ? "visible" : "hidden", pointerEvents: is3DOpen ? "auto" : "none" }}>
         <Map3DView
           ref={map3DRef}
           center={mapCenter}
@@ -331,7 +331,7 @@ export default function MapViewer() {
           gpsTrack={gpsTrack}
           onPinPicked={isPinPicking ? (latlng) => { setPinnedLocation([latlng.lat, latlng.lng]); setIsPinPicking(false); } : null}
         />
-      </div>
+      </div>}
 
       {/* Leaflet 2D map — hidden (not unmounted) when 3D is active to preserve state */}
       <div style={{ position: "absolute", inset: 0, visibility: is3DOpen ? "hidden" : "visible", pointerEvents: is3DOpen ? "none" : "auto" }}>

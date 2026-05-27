@@ -375,12 +375,13 @@ export function useMapLibreLayers(mapRef, mapReadyRef, {
         const mlId = `ml-${id}`;
         const srcId = `src-${id}`;
 
-        // Always clean up first
-        if (map.getLayer(`${mlId}-points`)) try { map.removeLayer(`${mlId}-points`); } catch {}
-        if (map.getLayer(`${mlId}-lines`)) try { map.removeLayer(`${mlId}-lines`); } catch {}
-        if (map.getLayer(`${mlId}-polygons`)) try { map.removeLayer(`${mlId}-polygons`); } catch {}
-        if (map.getLayer(mlId)) try { map.removeLayer(mlId); } catch {}
-        if (map.getSource(srcId)) try { map.removeSource(srcId); } catch {}
+        // After a real style switch everything is gone; after a visibility toggle layers may still exist.
+        // Cleanly remove whatever is there before re-adding.
+        try { if (map.getLayer(`${mlId}-points`)) map.removeLayer(`${mlId}-points`); } catch {}
+        try { if (map.getLayer(`${mlId}-lines`)) map.removeLayer(`${mlId}-lines`); } catch {}
+        try { if (map.getLayer(`${mlId}-polygons`)) map.removeLayer(`${mlId}-polygons`); } catch {}
+        try { if (map.getLayer(mlId)) map.removeLayer(mlId); } catch {}
+        try { if (map.getSource(srcId)) map.removeSource(srcId); } catch {}
 
         // Don't re-add if not visible or no features
         if (!isVisible || !layer.features || !Array.isArray(layer.features)) continue;
