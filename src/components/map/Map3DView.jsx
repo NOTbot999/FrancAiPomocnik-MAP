@@ -354,7 +354,9 @@ const Map3DView = forwardRef(function Map3DView({
       if (center && !isNaN(center[0]) && !isNaN(center[1])) {
         try { map.jumpTo({ center: [center[1], center[0]], zoom: zoom ?? map.getZoom() }); } catch {}
       }
-    }, 150);
+      // Re-sync layers when 3D view becomes visible (custom layers may have been added while hidden)
+      setMapReady(c => c + 1);
+    }, 200);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isVisible]);
 
@@ -374,6 +376,8 @@ const Map3DView = forwardRef(function Map3DView({
     } else {
       try { map.setTerrain(null); } catch {}
     }
+    // Re-sync all layers after terrain toggle so custom layers remain visible
+    setTimeout(() => { setMapReady(c => c + 1); }, 200);
   }, [is3D, setupTerrain]);
 
   // Pin picking: attach/detach click handler on map when onPinPicked is set

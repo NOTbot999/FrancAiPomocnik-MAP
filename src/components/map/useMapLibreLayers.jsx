@@ -271,7 +271,7 @@ export function useMapLibreLayers(mapRef, mapReadyRef, {
         if (hasPoints) {
           const pointLayerId = `${mlId}-points`;
           if (!map.getLayer(pointLayerId)) {
-            map.addLayer({ id: pointLayerId, type: "circle", source: srcId, filter: ["==", "$type", "Point"], paint: { "circle-radius": 6, "circle-color": layer.color || "#1d9bf0", "circle-opacity": opacity, "circle-stroke-width": 2, "circle-stroke-color": "#ffffff" } });
+            map.addLayer({ id: pointLayerId, type: "circle", source: srcId, filter: ["==", "$type", "Point"], paint: { "circle-radius": 6, "circle-color": layer.color || "#1d9bf0", "circle-opacity": opacity, "circle-stroke-width": 2, "circle-stroke-color": "#ffffff", "circle-pitch-alignment": "map", "circle-pitch-scale": "map" } });
           } else {
             try { map.setPaintProperty(pointLayerId, "circle-opacity", opacity); map.setPaintProperty(pointLayerId, "circle-color", layer.color || "#1d9bf0"); } catch {}
           }
@@ -280,7 +280,7 @@ export function useMapLibreLayers(mapRef, mapReadyRef, {
         if (hasLines) {
           const lineLayerId = `${mlId}-lines`;
           if (!map.getLayer(lineLayerId)) {
-            map.addLayer({ id: lineLayerId, type: "line", source: srcId, filter: ["==", "$type", "LineString"], paint: { "line-width": 3, "line-color": layer.color || "#1d9bf0", "line-opacity": opacity } });
+            map.addLayer({ id: lineLayerId, type: "line", source: srcId, filter: ["==", "$type", "LineString"], layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-width": 3, "line-color": layer.color || "#1d9bf0", "line-opacity": opacity } });
           } else {
             try { map.setPaintProperty(lineLayerId, "line-opacity", opacity); map.setPaintProperty(lineLayerId, "line-color", layer.color || "#1d9bf0"); } catch {}
           }
