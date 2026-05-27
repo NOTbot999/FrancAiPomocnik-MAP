@@ -471,6 +471,20 @@ function PinPickHandler({ onPinPicked }) {
   return null;
 }
 
+// Fetch MapTiler key once and cache globally
+let _maptilerKeyCache = null;
+async function getMaptilerKeyOnce() {
+  if (_maptilerKeyCache) return _maptilerKeyCache;
+  if (window.__maptilerKey) { _maptilerKeyCache = window.__maptilerKey; return _maptilerKeyCache; }
+  try {
+    const { base44 } = await import("@/api/base44Client");
+    const res = await base44.functions.invoke("getMaptilerKey", {});
+    _maptilerKeyCache = res.data?.key || null;
+    if (_maptilerKeyCache) window.__maptilerKey = _maptilerKeyCache;
+  } catch {}
+  return _maptilerKeyCache;
+}
+
 export default function MapContainerComponent({
   activeBaseLayers,
   activeLayers,
@@ -497,6 +511,11 @@ export default function MapContainerComponent({
   customLayerVisible,
   onRemoveCustomLayer,
 }) {
+  const [maptilerKey, setMaptilerKey] = useState(window.__maptilerKey || null);
+  useEffect(() => {
+    if (!maptilerKey) getMaptilerKeyOnce().then(k => { if (k) setMaptilerKey(k); });
+  }, []);
+
   const allLayers = getAllLayersFlat();
   const activeBaseLayerEntries = activeBaseLayers && Object.keys(activeBaseLayers).length > 0
     ? Object.entries(activeBaseLayers)
@@ -527,8 +546,30 @@ export default function MapContainerComponent({
         // Use overlayPane (z-index 400 in Leaflet) — always above tilePane (z-index 200)
         const pane = "overlayPane";
 
+        // MapTiler tile layer (requires API key)
+        if (layer.type === "maptiler_tile") {
+          if (!maptilerKey) return null;
+          const resolvedUrl = layer.urlTemplate.replace("{key}", maptilerKey);
+          return (
+            <TileLayer
+              key={layerId}
+              url={resolvedUrl}
+              opacity={opacity}
+              tileSize={256}
+              maxZoom={22}
+              maxNativeZoom={19}
+              attribution={layer.attribution || ""}
+              keepBuffer={4}
+              updateWhenIdle={false}
+              updateWhenZooming={false}
+              pane={pane}
+              zIndex={400 + index}
+            />
+          );
+        }
+
         // Standard tile layer
-         if (layer.type === "tile") {
+        if (layer.type === "tile") {
            return (
              <TileLayer
                key={layerId}

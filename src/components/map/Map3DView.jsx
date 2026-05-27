@@ -213,6 +213,7 @@ const Map3DView = forwardRef(function Map3DView({
         const apiKey = res.data?.key;
         if (!apiKey) throw new Error("No API key");
         apiKeyRef.current = apiKey;
+        window.__maptilerKey = apiKey; // share with useMapLibreLayers and MapContainer
 
         if (cancelled || !containerRef.current) return;
 

@@ -507,6 +507,16 @@ export const OVERLAY_CATEGORIES = [
         description: "ESRI temno senčenje reliefa kot prekrivni sloj"
       },
       {
+        id: "ol_maptiler_hillshade",
+        name: "Hillshade v2 (MapTiler)",
+        type: "maptiler_tile",
+        urlTemplate: "https://api.maptiler.com/tiles/hillshading-v2/{z}/{x}/{y}.webp?key={key}",
+        attribution: "&copy; MapTiler, &copy; SRTM",
+        opacity: 0.75,
+        thumbnail: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=80&h=60&fit=crop",
+        description: "Najdetajlnejše hillshade za Evropo — MapTiler v2, temelji na Copernicus DEM + LIDAR (2024)"
+      },
+      {
         id: "ol_waymarked_slopes",
         name: "Smučišča & Tereni (WaymarkedTrails)",
         type: "tile",

@@ -84,6 +84,10 @@ function addLayerToMap(map, layerId, config, opacity = 1) {
   let tileUrl = null;
   if (config.type === "tile") {
     tileUrl = resolveTileUrl(config.url);
+  } else if (config.type === "maptiler_tile") {
+    const key = window.__maptilerKey;
+    if (!key) return; // key not yet available — will retry when mapReady increments
+    tileUrl = config.urlTemplate.replace("{key}", key);
   } else if (config.type === "wms") {
     tileUrl = wmsUrl(config);
   } else if (config.type === "arcgis_export") {
