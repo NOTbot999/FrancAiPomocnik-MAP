@@ -154,17 +154,14 @@ export function useMapLibreLayers(mapRef, mapReadyRef, {
   const layerOpacitiesRef = useRef({});
   const baseLayerOpacitiesRef = useRef({});
 
-  // Update refs when any layer state changes
-  useEffect(() => {
-    customLayersRef.current = customLayers;
-    customVisibleRef.current = customLayerVisible;
-    customOpacitiesRef.current = customLayerOpacities;
-  }, [customLayers, customLayerVisible, customLayerOpacities]);
-
-  useEffect(() => { activeLayersRef.current = activeLayers; }, [activeLayers]);
-  useEffect(() => { activeBLayersRef.current = activeBaseLayers; }, [activeBaseLayers]);
-  useEffect(() => { layerOpacitiesRef.current = layerOpacities; }, [layerOpacities]);
-  useEffect(() => { baseLayerOpacitiesRef.current = baseLayerOpacities; }, [baseLayerOpacities]);
+  // Update refs synchronously on every render so setTimeout callbacks always see latest state
+  customLayersRef.current = customLayers;
+  customVisibleRef.current = customLayerVisible;
+  customOpacitiesRef.current = customLayerOpacities;
+  activeLayersRef.current = activeLayers;
+  activeBLayersRef.current = activeBaseLayers;
+  layerOpacitiesRef.current = layerOpacities;
+  baseLayerOpacitiesRef.current = baseLayerOpacities;
   // Sync base layers
   useEffect(() => {
     const map = mapRef.current;
@@ -207,9 +204,27 @@ export function useMapLibreLayers(mapRef, mapReadyRef, {
   // Note: raba_farmland and gurs_lidar are overlay layers — handled above
 
   // Sync custom (AI) layers - INCLUDING search category layers ("OZNAČI NA KARTI")
+  // Track which custom layer IDs are currently on the map
+  const mountedCustomIdsRef = useRef(new Set());
+
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !mapReadyRef.current) return;
+
+    // Remove layers that are no longer in customLayers
+    const currentIds = new Set(customLayers.map(l => l.id));
+    mountedCustomIdsRef.current.forEach(id => {
+      if (!currentIds.has(id)) {
+        const mlId = `ml-${id}`;
+        const srcId = `src-${id}`;
+        if (map.getLayer(`${mlId}-points`)) try { map.removeLayer(`${mlId}-points`); } catch {}
+        if (map.getLayer(`${mlId}-lines`)) try { map.removeLayer(`${mlId}-lines`); } catch {}
+        if (map.getLayer(`${mlId}-polygons`)) try { map.removeLayer(`${mlId}-polygons`); } catch {}
+        if (map.getLayer(mlId)) try { map.removeLayer(mlId); } catch {}
+        if (map.getSource(srcId)) try { map.removeSource(srcId); } catch {}
+        mountedCustomIdsRef.current.delete(id);
+      }
+    });
 
     for (const layer of customLayers) {
       const id = layer.id;
@@ -295,6 +310,7 @@ export function useMapLibreLayers(mapRef, mapReadyRef, {
           }
         }
 
+        mountedCustomIdsRef.current.add(id);
         continue;
       }
 
@@ -311,6 +327,7 @@ export function useMapLibreLayers(mapRef, mapReadyRef, {
         }
         // Custom raster tile layers also go on top (no beforeId)
         map.addLayer({ id: mlId, type: "raster", source: srcId, paint: { "raster-opacity": opacity, "raster-fade-duration": 0 } });
+        mountedCustomIdsRef.current.add(id);
       } else {
         try { map.setPaintProperty(mlId, "raster-opacity", opacity); } catch {}
       }
@@ -343,48 +360,46 @@ export function useMapLibreLayers(mapRef, mapReadyRef, {
         if (!map.getLayer(`ml-${id}`)) addLayerToMap(map, id, config, opacity);
       }
 
-      // Re-add custom GeoJSON layers that were removed during style switch
+      // Re-sync custom GeoJSON layers (re-add visible, remove hidden/deleted)
       const layers = customLayersRef.current || [];
       const visible = customVisibleRef.current || {};
       const opacities = customOpacitiesRef.current || {};
+      // After style switch all layers are gone — reset tracking
+      mountedCustomIdsRef.current = new Set();
 
       for (const layer of layers) {
+        if (layer._searchCat || layer._caveDbLayer || layer._municipalityLayer) continue;
         const id = layer.id;
         const isVisible = visible[id] !== false;
         const opacity = opacities[id] ?? layer.opacity ?? 0.8;
         const mlId = `ml-${id}`;
         const srcId = `src-${id}`;
 
-        if (!isVisible || !layer.features || !Array.isArray(layer.features)) continue;
-
-        // Remove any existing layers/sources first to avoid conflicts
+        // Always clean up first
         if (map.getLayer(`${mlId}-points`)) try { map.removeLayer(`${mlId}-points`); } catch {}
         if (map.getLayer(`${mlId}-lines`)) try { map.removeLayer(`${mlId}-lines`); } catch {}
         if (map.getLayer(`${mlId}-polygons`)) try { map.removeLayer(`${mlId}-polygons`); } catch {}
+        if (map.getLayer(mlId)) try { map.removeLayer(mlId); } catch {}
         if (map.getSource(srcId)) try { map.removeSource(srcId); } catch {}
+
+        // Don't re-add if not visible or no features
+        if (!isVisible || !layer.features || !Array.isArray(layer.features)) continue;
 
         // Convert features to GeoJSON
         const geojsonFeatures = layer.features.map(f => {
           if (f.type === "Point") {
-            return {
-              type: "Feature",
-              geometry: { type: "Point", coordinates: [f.coords[1], f.coords[0]] },
-              properties: { label: f.label || "" }
-            };
+            return { type: "Feature", geometry: { type: "Point", coordinates: [f.coords[1], f.coords[0]] }, properties: { label: f.label || "" } };
           } else if (f.type === "LineString" || f.type === "Polygon") {
-            return {
-              type: "Feature",
-              geometry: { type: f.type, coordinates: f.coords.map(c => [c[1], c[0]]) },
-              properties: { label: f.label || "" }
-            };
+            return { type: "Feature", geometry: { type: f.type, coordinates: f.coords.map(c => [c[1], c[0]]) }, properties: { label: f.label || "" } };
           }
           return null;
         }).filter(Boolean);
 
+        if (geojsonFeatures.length === 0) continue;
+
         const geojson = { type: "FeatureCollection", features: geojsonFeatures };
         map.addSource(srcId, { type: "geojson", data: geojson });
 
-        // Add appropriate layer type based on geometry — no beforeId, on top
         const hasPoints = geojsonFeatures.some(f => f.geometry.type === "Point");
         const hasLines = geojsonFeatures.some(f => f.geometry.type === "LineString");
         const hasPolygons = geojsonFeatures.some(f => f.geometry.type === "Polygon");
@@ -393,11 +408,12 @@ export function useMapLibreLayers(mapRef, mapReadyRef, {
           map.addLayer({ id: `${mlId}-points`, type: "circle", source: srcId, filter: ["==", "$type", "Point"], paint: { "circle-radius": 6, "circle-color": layer.color || "#1d9bf0", "circle-opacity": opacity, "circle-stroke-width": 2, "circle-stroke-color": "#ffffff" } });
         }
         if (hasLines) {
-          map.addLayer({ id: `${mlId}-lines`, type: "line", source: srcId, filter: ["==", "$type", "LineString"], paint: { "line-width": 3, "line-color": layer.color || "#1d9bf0", "line-opacity": opacity } });
+          map.addLayer({ id: `${mlId}-lines`, type: "line", source: srcId, filter: ["==", "$type", "LineString"], layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-width": 3, "line-color": layer.color || "#1d9bf0", "line-opacity": opacity } });
         }
         if (hasPolygons) {
           map.addLayer({ id: `${mlId}-polygons`, type: "fill", source: srcId, filter: ["==", "$type", "Polygon"], paint: { "fill-color": layer.color || "#1d9bf0", "fill-opacity": opacity * 0.6 } });
         }
+        mountedCustomIdsRef.current.add(id);
       }
     }, 50);
   // eslint-disable-next-line react-hooks/exhaustive-deps
