@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { Layers, X, ExternalLink, ChevronDown, GripVertical, Mountain } from "lucide-react";
+import { Layers, X, ExternalLink, ChevronDown, GripVertical, Mountain, Search } from "lucide-react";
 import { ML_BASE_STYLES } from "./Map3DView";
 import { base44 } from "@/api/base44Client";
 import { Slider } from "@/components/ui/slider";
@@ -315,7 +315,7 @@ function CustomLayersSection({ customLayers, onRemoveCustomLayer, favoritedIds, 
 
 
 
-function PanelContent({ activeBaseLayers, onSelectBaseLayer, activeLayers, onToggleLayer, onOpacityChange, favorites, onToggleFavorite, layerOrder, onLayerReorder, customLayers, onRemoveCustomLayer, favoritedCustomLayerIds, onFavoriteCustomLayer, savedCustomLayers, customLayerVisible, onToggleCustomLayerVisible, customLayerOpacities, onCustomLayerOpacity, is3DOpen, activeMLBase, onMLBaseChange }) {
+function PanelContent({ activeBaseLayers, onSelectBaseLayer, activeLayers, onToggleLayer, onOpacityChange, favorites, onToggleFavorite, layerOrder, onLayerReorder, customLayers, onRemoveCustomLayer, favoritedCustomLayerIds, onFavoriteCustomLayer, savedCustomLayers, customLayerVisible, onToggleCustomLayerVisible, customLayerOpacities, onCustomLayerOpacity, is3DOpen, activeMLBase, onMLBaseChange, layerSearch, onLayerSearchChange }) {
   const activeLayerCount = Object.keys(activeLayers).length;
 
   // Category order — persisted in localStorage
@@ -339,6 +339,14 @@ function PanelContent({ activeBaseLayers, onSelectBaseLayer, activeLayers, onTog
     setCategoryOrder(newOrder);
     scopedSet("categoryOrder", newOrder);
   };
+
+  // Filter all categories by search
+  const filteredCategories = layerSearch
+    ? orderedCategories.map(cat => ({
+        ...cat,
+        layers: cat.layers.filter(l => l.name?.toLowerCase().includes(layerSearch.toLowerCase()))
+      })).filter(cat => cat.layers.length > 0)
+    : orderedCategories;
 
   return (
     <div className="pt-2 pb-4">
@@ -399,7 +407,7 @@ function PanelContent({ activeBaseLayers, onSelectBaseLayer, activeLayers, onTog
         <Droppable droppableId="categories">
           {(provided) => (
             <div {...provided.droppableProps} ref={provided.innerRef}>
-              {orderedCategories.map((category, index) => (
+              {filteredCategories.map((category, index) => (
                 <Draggable key={category.id} draggableId={`cat-${category.id}`} index={index}>
                   {(drag, snapshot) => (
                     <div
@@ -480,12 +488,13 @@ export default function LayerPanel({
 
   const theme = loadTheme();
   const [showLegend] = useState(false);
+  const [layerSearch, setLayerSearch] = useState("");
   // savedCustomLayers = favorited custom layers persisted in localStorage
   const savedCustomLayers = (favoritedCustomLayerIds || [])
     .map(id => customLayers?.find(l => l.id === id))
     .filter(Boolean);
 
-  const panelProps = { activeBaseLayers, onSelectBaseLayer: handleSelectBaseLayer, activeLayers, onToggleLayer: trackedToggleLayer, onOpacityChange, favorites, onToggleFavorite: handleToggleFavorite, layerOrder, onLayerReorder, customLayers, onRemoveCustomLayer, favoritedCustomLayerIds, onFavoriteCustomLayer, savedCustomLayers, customLayerVisible, onToggleCustomLayerVisible, customLayerOpacities, onCustomLayerOpacity, is3DOpen, activeMLBase, onMLBaseChange };
+  const panelProps = { activeBaseLayers, onSelectBaseLayer: handleSelectBaseLayer, activeLayers, onToggleLayer: trackedToggleLayer, onOpacityChange, favorites, onToggleFavorite: handleToggleFavorite, layerOrder, onLayerReorder, customLayers, onRemoveCustomLayer, favoritedCustomLayerIds, onFavoriteCustomLayer, savedCustomLayers, customLayerVisible, onToggleCustomLayerVisible, customLayerOpacities, onCustomLayerOpacity, is3DOpen, activeMLBase, onMLBaseChange, layerSearch, onLayerSearchChange: setLayerSearch };
 
   const panelBg = theme.panelBg || "#0f172a";
   const panelText = theme.panelText || "#e2e8f0";
@@ -539,17 +548,33 @@ export default function LayerPanel({
               >
                 <div className="w-10 h-1 rounded-full" style={{ backgroundColor: accentColor + "80" }} />
               </div>
-              <div className="flex items-center justify-between px-5 py-2.5 border-b border-white/8 shrink-0">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-xl flex items-center justify-center" style={{ backgroundColor: accentColor + "20" }}>
-                    <Layers className="w-4 h-4" style={{ color: accentColor }} />
+              <div className="px-5 pt-2.5 pb-2 border-b border-white/8 shrink-0">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-xl flex items-center justify-center" style={{ backgroundColor: accentColor + "20" }}>
+                      <Layers className="w-4 h-4" style={{ color: accentColor }} />
+                    </div>
+                    <h2 className="text-sm font-semibold tracking-tight" style={{ color: panelText }}>Sloji</h2>
                   </div>
-                  <h2 className="text-sm font-semibold tracking-tight" style={{ color: panelText }}>Sloji</h2>
-                </div>
-                <div className="flex items-center gap-1">
                   <button onClick={onClose} className="p-1.5 rounded-xl transition-colors hover:bg-white/10" style={{ color: panelText, opacity: 0.6 }}>
                     <X className="w-4 h-4" />
                   </button>
+                </div>
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style={{ color: panelText, opacity: 0.4 }} />
+                  <input
+                    type="text"
+                    value={layerSearch}
+                    onChange={e => setLayerSearch(e.target.value)}
+                    placeholder="Išči sloje…"
+                    className="w-full rounded-lg pl-7 pr-3 py-1.5 text-xs outline-none border border-white/10 focus:border-emerald-500/60"
+                    style={{ backgroundColor: "rgba(255,255,255,0.07)", color: panelText }}
+                  />
+                  {layerSearch && (
+                    <button onClick={() => setLayerSearch("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
                 </div>
               </div>
               <ScrollArea className="flex-1 min-h-0">
@@ -576,24 +601,34 @@ export default function LayerPanel({
             style={{ backgroundColor: panelBg + "f8", backdropFilter: "blur(24px)", color: panelText }}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3.5 border-b border-white/8">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ backgroundColor: accentColor + "22" }}>
-                  <Layers className="w-4.5 h-4.5" style={{ color: accentColor }} />
+            <div className="px-4 pt-3.5 pb-2 border-b border-white/8">
+              <div className="flex items-center justify-between mb-2.5">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ backgroundColor: accentColor + "22" }}>
+                    <Layers className="w-4 h-4" style={{ color: accentColor }} />
+                  </div>
+                  <h2 className="text-sm font-bold tracking-tight" style={{ color: panelText }}>Sloji karte</h2>
                 </div>
-                <div>
-                  <h2 className="text-sm font-bold tracking-tight leading-none" style={{ color: panelText }}>Sloji karte</h2>
-                  <p className="text-[10px] mt-0.5" style={{ color: panelText, opacity: 0.4 }}>Slovenia Map Viewer</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={onClose}
-                  className="p-1.5 rounded-xl hover:bg-white/10 transition-colors"
-                  style={{ color: panelText, opacity: 0.6 }}
-                >
+                <button onClick={onClose} className="p-1.5 rounded-xl hover:bg-white/10 transition-colors" style={{ color: panelText, opacity: 0.6 }}>
                   <X className="w-4 h-4" />
                 </button>
+              </div>
+              {/* Search bar */}
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style={{ color: panelText, opacity: 0.4 }} />
+                <input
+                  type="text"
+                  value={layerSearch}
+                  onChange={e => setLayerSearch(e.target.value)}
+                  placeholder="Išči sloje…"
+                  className="w-full rounded-lg pl-7 pr-3 py-1.5 text-xs outline-none border border-white/10 focus:border-emerald-500/60"
+                  style={{ backgroundColor: "rgba(255,255,255,0.07)", color: panelText }}
+                />
+                {layerSearch && (
+                  <button onClick={() => setLayerSearch("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
               </div>
             </div>
 

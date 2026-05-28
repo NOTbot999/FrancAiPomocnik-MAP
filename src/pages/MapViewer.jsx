@@ -692,55 +692,47 @@ export default function MapViewer() {
       />
 
 
-      {/* User badge — top left on desktop */}
-      {!isMobile && currentUser && (
-        <div className="absolute top-4 left-4 z-[940] flex items-center gap-2">
+      {/* User badge — top left on desktop, always single pill, does NOT overlap LayerPanel */}
+      {!isMobile && (
+        <div className="absolute top-4 z-[940] flex items-center" style={{ left: isPanelOpen ? "336px" : "16px", transition: "left 0.3s" }}>
           <div className="flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-xl px-3 py-1.5 shadow-md border border-slate-200/60">
-            <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
-              <span className="text-[9px] font-bold text-white">{currentUser.charAt(0).toUpperCase()}</span>
-            </div>
-            <span className="text-xs font-medium text-slate-700">{currentUser}</span>
-            {isPremium && <span className="text-[9px] bg-amber-100 text-amber-600 font-bold px-1.5 py-0.5 rounded-full">PRO</span>}
+            {currentUser ? (
+              <>
+                <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
+                  <span className="text-[9px] font-bold text-white">{currentUser.charAt(0).toUpperCase()}</span>
+                </div>
+                <span className="text-xs font-medium text-slate-700">{currentUser}</span>
+                {isPremium && <span className="text-[9px] bg-amber-100 text-amber-600 font-bold px-1.5 py-0.5 rounded-full">PRO</span>}
+              </>
+            ) : (
+              <button
+                onClick={() => setShowAuthModal(true)}
+                className="flex items-center gap-1.5 text-xs font-medium text-slate-700 hover:text-emerald-600 transition"
+              >
+                🔑 Prijava
+              </button>
+            )}
+            <div className="w-px h-4 bg-slate-200 mx-0.5" />
             <button
               onClick={() => {
                 localStorage.removeItem("desktopToolbarPos");
                 localStorage.removeItem("desktopToolbarHidden");
                 window.location.reload();
               }}
-              className="text-[10px] text-slate-400 hover:text-amber-500 transition"
+              className="text-[10px] text-slate-400 hover:text-amber-500 transition flex items-center gap-1"
               title="Ponastavi orodna vrstica"
-            >🔧</button>
-            <button
-              onClick={() => {
-                localStorage.clear();
-                window.location.href = '/auth';
-              }}
-              className="text-[10px] text-slate-400 hover:text-red-500 transition ml-1"
-              title="Odjava"
-            >✕</button>
+            >🔧 Reset</button>
+            {currentUser && (
+              <>
+                <div className="w-px h-4 bg-slate-200 mx-0.5" />
+                <button
+                  onClick={() => { localStorage.clear(); window.location.href = '/auth'; }}
+                  className="text-[10px] text-slate-400 hover:text-red-500 transition"
+                  title="Odjava"
+                >✕</button>
+              </>
+            )}
           </div>
-        </div>
-      )}
-
-      {!isMobile && !currentUser && (
-        <div className="absolute top-4 left-4 z-[940] flex items-center gap-2">
-          <button
-            onClick={() => setShowAuthModal(true)}
-            className="flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-xl px-3 py-1.5 shadow-md border border-slate-200/60 text-xs font-medium text-slate-700 hover:bg-white transition"
-          >
-            🔑 Prijava
-          </button>
-          <button
-            onClick={() => {
-              localStorage.removeItem("desktopToolbarPos");
-              localStorage.removeItem("desktopToolbarHidden");
-              window.location.reload();
-            }}
-            className="flex items-center gap-1.5 bg-white/80 backdrop-blur-sm rounded-xl px-2.5 py-1.5 shadow-md border border-slate-200/60 text-[10px] font-medium text-slate-500 hover:bg-white hover:text-slate-700 transition"
-            title="Ponastavi orodna vrstica"
-          >
-            🔧 Reset toolbar
-          </button>
         </div>
       )}
 
