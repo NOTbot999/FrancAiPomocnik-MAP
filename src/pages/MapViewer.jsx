@@ -393,6 +393,8 @@ export default function MapViewer() {
           onSearchLayersChange: setActiveSearchLayers,
           is3DOpen,
           on3DToggle: () => { setIs3DOpen(p => !p); setMapLibreEverOpened(true); },
+          isLidarOpen,
+          onLidarToggle: () => setIsLidarOpen(p => !p),
         } : null}
         isPinPicking={isPinPicking}
         onPinPicked={(latlng) => { setPinnedLocation([latlng.lat, latlng.lng]); setIsPinPicking(false); }}
@@ -610,15 +612,15 @@ export default function MapViewer() {
       )}
 
       {/* LIDAR Panel — mobile */}
-      {isMobile && mobileNavTab === "lidar" && (
-        <div className="absolute bottom-16 left-3 right-3 z-[960] flex justify-center">
+      {isMobile && isLidarOpen && (
+        <div className="absolute top-16 left-3 right-3 z-[960] flex justify-center">
           <LidarTerrainPanel
-            onClose={() => setMobileNavTab("map")}
+            onClose={() => setIsLidarOpen(false)}
             isLidarActive={lidarActive}
             activeLidarId={lidarConfig?.layerId}
             onActivateLidar={(cfg) => { setLidarConfig(cfg); setLidarActive(true); }}
             onDeactivateLidar={() => { setLidarActive(false); setLidarConfig(null); }}
-            on3DOpen={() => { setIs3DOpen(true); setMapLibreEverOpened(true); setMobileNavTab("map"); }}
+            on3DOpen={() => { setIs3DOpen(true); setMapLibreEverOpened(true); setIsLidarOpen(false); }}
           />
         </div>
       )}
