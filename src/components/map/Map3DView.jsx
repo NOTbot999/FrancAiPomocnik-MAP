@@ -162,6 +162,51 @@ const Map3DView = forwardRef(function Map3DView({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchCategoryLayers, mapReady]);
 
+  const [skyColor, setSkyColor] = useState({ top: "#1a3a5c", bottom: "#87ceeb" });
+
+  // Fetch current weather sky color based on map center
+  useEffect(() => {
+    const fetchWeatherSky = async () => {
+      const lat = (center && !isNaN(center[0])) ? center[0] : 46.1512;
+      const lng = (center && !isNaN(center[1])) ? center[1] : 14.9955;
+      try {
+        const res = await fetch(
+          `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&appid=9de243494c0b295cca9337e1e96b00e2`
+        );
+        const data = await res.json();
+        const id = data?.weather?.[0]?.id ?? 800;
+        const hour = new Date().getHours();
+        const isNight = hour < 6 || hour > 20;
+        if (isNight) {
+          setSkyColor({ top: "#0a0a1a", bottom: "#1a1a3a" });
+        } else if (id >= 200 && id < 600) {
+          // Rain / storm / snow
+          setSkyColor({ top: "#2d3436", bottom: "#636e72" });
+        } else if (id >= 600 && id < 700) {
+          // Snow
+          setSkyColor({ top: "#b2bec3", bottom: "#dfe6e9" });
+        } else if (id >= 700 && id < 800) {
+          // Fog / mist
+          setSkyColor({ top: "#636e72", bottom: "#b2bec3" });
+        } else if (id === 800) {
+          // Clear sky
+          setSkyColor({ top: "#0e4d92", bottom: "#87ceeb" });
+        } else if (id > 800) {
+          // Cloudy
+          setSkyColor({ top: "#555f6b", bottom: "#a4b0be" });
+        }
+      } catch {
+        // fallback — clear blue
+        setSkyColor({ top: "#0e4d92", bottom: "#87ceeb" });
+      }
+    };
+    fetchWeatherSky();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const skyColorRef = useRef(skyColor);
+  useEffect(() => { skyColorRef.current = skyColor; }, [skyColor]);
+
   const setupTerrain = useCallback((map, key) => {
     if (!map.getSource("terrain-dem")) {
       map.addSource("terrain-dem", {
@@ -171,16 +216,53 @@ const Map3DView = forwardRef(function Map3DView({
       });
     }
     map.setTerrain({ source: "terrain-dem", exaggeration: 1.0 });
+    // Sky layer
     if (!map.getLayer("sky")) {
+      const sc = skyColorRef.current;
       map.addLayer({
         id: "sky",
         type: "sky",
         paint: {
-          "sky-type": "atmosphere",
-          "sky-atmosphere-sun": [0.0, 90.0],
-          "sky-atmosphere-sun-intensity": 15,
+          "sky-type": "gradient",
+          "sky-gradient": ["interpolate", ["linear"], ["sky-radial-progress"],
+            0.0, sc.bottom,
+            1.0, sc.top
+          ],
+          "sky-gradient-center": [0, 0],
+          "sky-gradient-radius": 90,
+          "sky-opacity": 1.0,
         },
       });
+    }
+    // 3D Buildings
+    if (!map.getLayer("3d-buildings")) {
+      try {
+        const layers = map.getStyle()?.layers || [];
+        // Find the first symbol layer to insert buildings below labels
+        const labelLayerId = layers.find(l => l.type === "symbol" && l.layout?.["text-field"])?.id;
+        map.addLayer({
+          id: "3d-buildings",
+          source: "composite",
+          "source-layer": "building",
+          filter: ["==", "extrude", "true"],
+          type: "fill-extrusion",
+          minzoom: 13,
+          paint: {
+            "fill-extrusion-color": [
+              "interpolate", ["linear"], ["get", "height"],
+              0, "#c8d6e5",
+              50, "#8395a7",
+              200, "#576574"
+            ],
+            "fill-extrusion-height": ["interpolate", ["linear"], ["zoom"], 13, 0, 14, ["get", "height"]],
+            "fill-extrusion-base": ["interpolate", ["linear"], ["zoom"], 13, 0, 14, ["get", "min_height"]],
+            "fill-extrusion-opacity": 0.85,
+          }
+        }, labelLayerId);
+      } catch (e) {
+        // source may not exist on all base styles — silently ignore
+        console.warn("[Map3D] 3d-buildings layer skipped:", e.message);
+      }
     }
   }, []);
 
@@ -234,6 +316,8 @@ const Map3DView = forwardRef(function Map3DView({
 
         map.on("load", () => {
           if (cancelled) return;
+          // Force resize so map fills the container after first render
+          try { map.resize(); } catch {}
           if (is3D) setupTerrain(map, apiKey);
           mapReadyRef.current = true;
           setMapReady(c => c + 1);
@@ -399,9 +483,9 @@ const Map3DView = forwardRef(function Map3DView({
 
 
   return (
-    <div className="absolute inset-0" style={{ zIndex: 1, cursor: onPinPicked ? "crosshair" : undefined }}>
+    <div className="absolute inset-0" style={{ zIndex: 1, cursor: onPinPicked ? "crosshair" : undefined, width: "100%", height: "100%" }}>
       {/* Map container */}
-      <div ref={containerRef} className="w-full h-full" />
+      <div ref={containerRef} style={{ width: "100%", height: "100%", position: "absolute", inset: 0 }} />
 
       {/* Loading overlay */}
       {loading && (
