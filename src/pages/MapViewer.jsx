@@ -305,7 +305,7 @@ export default function MapViewer() {
   }, []);
 
   return (
-    <div className="relative w-full h-screen overflow-hidden" style={{ backgroundColor: "#e8ede8", backgroundImage: "url('https://media.base44.com/images/public/69ad3ce309822f8e71f66838/b15473e19_5992128811794894233.jpg')", backgroundSize: "contain", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>
+    <div className="relative w-full h-screen overflow-hidden" style={{ backgroundColor: is3DOpen ? "#000" : "#e8ede8", backgroundImage: is3DOpen ? "none" : "url('https://media.base44.com/images/public/69ad3ce309822f8e71f66838/b15473e19_5992128811794894233.jpg')", backgroundSize: "contain", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>
 
       {/* MapLibre 3D/2D-rotatable map — only mount when first opened to ensure container has dimensions */}
       {mapLibreEverOpened && <div style={{ position: "absolute", inset: 0, zIndex: isPinPicking && is3DOpen ? 980 : undefined, visibility: is3DOpen ? "visible" : "hidden", pointerEvents: is3DOpen ? "auto" : "none" }}>
