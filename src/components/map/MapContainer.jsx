@@ -434,11 +434,23 @@ function ArcGISExportLayer({ url, opacity, layerIds, maxZoom, maxNativeZoom, bbo
     };
 
     arcLayer.addTo(map);
-    // Apply CSS image-rendering + filter for sharper hillshade
+    // Apply CSS image-rendering + SVG unsharp-mask filter for sharper LIDAR hillshade
     if (enhance) {
+      // Inject SVG unsharp-mask filter once
+      if (!document.getElementById("lidar-sharpen-svg")) {
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svg.id = "lidar-sharpen-svg";
+        svg.setAttribute("style", "position:absolute;width:0;height:0;overflow:hidden");
+        svg.innerHTML = `<defs>
+          <filter id="lidar-sharpen" color-interpolation-filters="linearRGB">
+            <feConvolveMatrix order="3" kernelMatrix="0 -0.5 0  -0.5 3 -0.5  0 -0.5 0" preserveAlpha="true"/>
+          </filter>
+        </defs>`;
+        document.body.appendChild(svg);
+      }
       arcLayer.on("tileload", (e) => {
         e.tile.style.imageRendering = "crisp-edges";
-        e.tile.style.filter = "contrast(1.25) brightness(1.05)";
+        e.tile.style.filter = "contrast(1.35) brightness(1.05) url(#lidar-sharpen)";
       });
     }
     layerRef.current = arcLayer;
