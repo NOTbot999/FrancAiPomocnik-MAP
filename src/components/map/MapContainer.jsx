@@ -391,7 +391,7 @@ function getAllLayersFlat() {
 
 // ArcGIS MapServer export as a Leaflet TileLayer (dynamic tiles via /export endpoint)
 // bboxSR=4326 works best with ARSO D96TM cached services; bboxSR=3857 for dynamic services like LIDAR
-function ArcGISExportLayer({ url, opacity, layerIds, maxZoom, bboxSR, imageSR, transparent, format, pane, zIndex }) {
+function ArcGISExportLayer({ url, opacity, layerIds, maxZoom, maxNativeZoom, bboxSR, imageSR, transparent, format, pane, zIndex }) {
    const map = useMap();
    const layerRef = useRef(null);
    const useBboxSR = bboxSR || 3857;
@@ -404,7 +404,7 @@ function ArcGISExportLayer({ url, opacity, layerIds, maxZoom, bboxSR, imageSR, t
        tileSize: 256,
        opacity,
        maxZoom: maxZoom || 22,
-       maxNativeZoom: 19,
+       maxNativeZoom: maxNativeZoom || 19,
        bounds: [[45.3, 13.3], [46.9, 16.8]],
        keepBuffer: 2,
        updateWhenIdle: true,
@@ -592,12 +592,13 @@ export default function MapContainerComponent({
          if (layer.type === "arcgis_export") {
            return (
              <ArcGISExportLayer
-               key={layerId}
-               url={layer.url}
-               opacity={opacity}
-               layerIds={layer.layerIds}
-               maxZoom={22}
-               bboxSR={layer.bboxSR}
+              key={layerId}
+              url={layer.url}
+              opacity={opacity}
+              layerIds={layer.layerIds}
+              maxZoom={22}
+              maxNativeZoom={layer.maxNativeZoom}
+              bboxSR={layer.bboxSR}
                transparent={layer.transparent}
                format={layer.format}
                pane={pane}

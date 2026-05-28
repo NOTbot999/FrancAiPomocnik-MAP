@@ -63,6 +63,7 @@ export const BASE_LAYERS = [
     url: "https://gis.arso.gov.si/arcgis/rest/services/Lidar_hillshade_D96TM/MapServer/export",
     bboxSR: 3857,
     imageSR: 3857,
+    maxNativeZoom: 19,
     attribution: "&copy; ARSO LIDAR",
     thumbnail: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=80&h=60&fit=crop"
   },
@@ -118,12 +119,13 @@ export const OVERLAY_CATEGORIES = [
       // LIDAR
       {
         id: "gurs_lidar",
-        name: "LIDAR Senčenje (1 m)",
+        name: "LIDAR Senčenje (<1 m)",
         type: "arcgis_export",
         url: "https://gis.arso.gov.si/arcgis/rest/services/Lidar_hillshade_D96TM/MapServer/export",
         opacity: 0.85,
         bboxSR: 3857,
         imageSR: 3857,
+        maxNativeZoom: 19,
         transparent: false,
         format: "jpg",
         thumbnail: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=80&h=60&fit=crop",
@@ -471,6 +473,7 @@ export const OVERLAY_CATEGORIES = [
         opacity: 0.8,
         bboxSR: 3857,
         imageSR: 3857,
+        maxNativeZoom: 19,
         transparent: false,
         format: "jpg",
         thumbnail: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=80&h=60&fit=crop",
@@ -691,6 +694,7 @@ export const OVERLAY_CATEGORIES = [
         opacity: 0.7,
         bboxSR: 3857,
         imageSR: 3857,
+        maxNativeZoom: 19,
         transparent: false,
         format: "jpg",
         thumbnail: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=80&h=60&fit=crop",
