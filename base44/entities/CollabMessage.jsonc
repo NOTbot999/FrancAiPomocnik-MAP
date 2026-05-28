@@ -1,0 +1,52 @@
+{
+  "name": "CollabMessage",
+  "type": "object",
+  "properties": {
+    "session_id": {
+      "type": "string",
+      "description": "ID of the CollabSession"
+    },
+    "username": {
+      "type": "string",
+      "description": "Sender username"
+    },
+    "text": {
+      "type": "string",
+      "description": "Message content"
+    },
+    "pin_ref": {
+      "type": "object",
+      "description": "Optional reference to a map pin",
+      "properties": {
+        "lat": {
+          "type": "number"
+        },
+        "lng": {
+          "type": "number"
+        },
+        "label": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "required": [
+    "session_id",
+    "username",
+    "text"
+  ],
+  "rls": {
+    "create": {
+      "everyone": true
+    },
+    "read": {
+      "everyone": true
+    },
+    "update": {
+      "everyone": true
+    },
+    "delete": {
+      "everyone": true
+    }
+  }
+}

@@ -20,6 +20,7 @@ import MyLocationDot from "./MyLocationDot";
 import OfflineManager from "./OfflineManager";
 import SearchCategoryLayer from "./SearchCategoryLayer";
 import MunicipalityLayer from "./MunicipalityLayer";
+import CollabPinsLayer from "./CollabPinsLayer";
 
 function OfflineManagerPortal({ onClose }) {
   const map = useMap();
@@ -529,6 +530,7 @@ export default function MapContainerComponent({
   customLayerOpacities,
   customLayerVisible,
   onRemoveCustomLayer,
+  collabPins,
 }) {
   const [maptilerKey, setMaptilerKey] = useState(window.__maptilerKey || null);
   useEffect(() => {
@@ -732,6 +734,8 @@ export default function MapContainerComponent({
           </React.Fragment>
         );
       })}
+      {/* Collaborative session pins */}
+      <CollabPinsLayer pins={collabPins || []} />
       <FlyToLocation location={flyToLocation} />
       <CoordsDisplay onMapMove={onMapMove} />
       <RightClickHandler onLocationSummary={onLocationSummary} />

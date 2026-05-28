@@ -20,7 +20,9 @@ import { base44 } from "@/api/base44Client";
 import { scopedGet, scopedSet } from "@/lib/userPrefs";
 import Mobile3DMenu from "@/components/map/Mobile3DMenu";
 import MobileBottomNav from "@/components/map/MobileBottomNav";
-import { Layers, Locate, Navigation, Route, WifiOff, Brain, TrendingUp, Box } from "lucide-react";
+import { Layers, Locate, Navigation, Route, WifiOff, Brain, TrendingUp, Box, Users } from "lucide-react";
+import CollabPanel from "@/components/map/CollabPanel";
+import CollabPinsLayer from "@/components/map/CollabPinsLayer";
 
 
 export default function MapViewer() {
@@ -258,6 +260,8 @@ export default function MapViewer() {
   const [mapZoom, setMapZoom] = useState(9);
   const [isMobile3DMenuOpen, setIsMobile3DMenuOpen] = useState(false);
   const [mobileNavTab, setMobileNavTab] = useState("map");
+  const [isCollabOpen, setIsCollabOpen] = useState(false);
+  const [collabPins, setCollabPins] = useState([]);
 
   const [mobileButtonPrefs, setMobileButtonPrefs] = useState(() => {
     try {
@@ -352,6 +356,7 @@ export default function MapViewer() {
         onRemoveCustomLayer={handleRemoveCustomLayer}
         offlineOpen={isOfflineOpen}
         onOfflineClose={() => setIsOfflineOpen(false)}
+        collabPins={collabPins}
         showZoomControls={!isMobile}
         onLocationSummary={(latlng) => setLocationSummary({ latlng })}
         onMapMove={(center, zoom) => { setMapCenter(center); setMapZoom(zoom); }}
@@ -453,6 +458,17 @@ export default function MapViewer() {
               />
             </div>
           )}
+          {/* Collab Panel — desktop */}
+          {isCollabOpen && (
+            <div className="absolute right-20 top-20 z-[960]">
+              <CollabPanel
+                onClose={() => setIsCollabOpen(false)}
+                onDropPin={(pins) => setCollabPins(pins)}
+                onFlyTo={(loc) => handleLocate(loc)}
+              />
+            </div>
+          )}
+
           {locationSummary && (
             <div className="absolute left-1/2 top-20 -translate-x-1/2 z-[960]">
               <LocationSummarizer
@@ -490,6 +506,8 @@ export default function MapViewer() {
             on3DToggle={() => { setIs3DOpen(p => !p); setMapLibreEverOpened(true); }}
             use3DMode={use3DMode}
             onToggle3DMode={() => { setUse3DMode(p => !p); setIs3DOpen(true); setMapLibreEverOpened(true); }}
+            isCollabOpen={isCollabOpen}
+            onCollabToggle={() => setIsCollabOpen(p => !p)}
           />
         </>
       )}
@@ -529,6 +547,7 @@ export default function MapViewer() {
                 ai: { Icon: Brain, label: "AI Asistent", onClick: () => setIsAIOpen(p => !p), isActive: isAIOpen },
                 trackanalyzer: { Icon: TrendingUp, label: "Analiza sledi", onClick: () => setIsTrackAnalyzerOpen(p => !p), isActive: isTrackAnalyzerOpen },
                 view3d: { Icon: Box, label: "3D Pogled", onClick: () => { setIs3DOpen(p => !p); setMapLibreEverOpened(true); }, isActive: is3DOpen },
+                collab: { Icon: Users, label: "Skupno delo", onClick: () => setIsCollabOpen(p => !p), isActive: isCollabOpen },
               };
               
               const config = buttonConfigs[btnId];
@@ -549,6 +568,18 @@ export default function MapViewer() {
             })}
           </div>
         </>
+      )}
+
+      {/* Collab Panel — mobile */}
+      {isMobile && isCollabOpen && (
+        <div className="absolute bottom-16 left-3 right-3 z-[960] flex justify-center">
+          <CollabPanel
+            isMobile
+            onClose={() => setIsCollabOpen(false)}
+            onDropPin={(pins) => setCollabPins(pins)}
+            onFlyTo={(loc) => handleLocate(loc)}
+          />
+        </div>
       )}
 
       {/* AI Panel — mobile */}

@@ -1,0 +1,49 @@
+{
+  "name": "CollabSession",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Session name"
+    },
+    "invite_code": {
+      "type": "string",
+      "description": "Short invite code to share with others"
+    },
+    "owner_username": {
+      "type": "string",
+      "description": "Username of the session creator"
+    },
+    "member_usernames": {
+      "type": "array",
+      "description": "List of usernames who joined",
+      "items": {
+        "type": "string"
+      }
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether the session is still open"
+    }
+  },
+  "required": [
+    "name",
+    "invite_code",
+    "owner_username"
+  ],
+  "rls": {
+    "create": {
+      "everyone": true
+    },
+    "read": {
+      "everyone": true
+    },
+    "update": {
+      "everyone": true
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

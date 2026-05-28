@@ -4,7 +4,7 @@ import {
   Navigation, Route, X,
   Map, Settings, Eye, EyeOff, Save, FolderOpen,
   Loader2, Check, GripVertical, Palette, Brain, TrendingUp,
-  AlertTriangle, Box, Mountain, Square
+  AlertTriangle, Box, Mountain, Square, Users
 } from "lucide-react";
 import LagReportModal from "@/components/map/LagReportModal";
 
@@ -28,6 +28,7 @@ const BUTTON_DEFS = [
   { id: "trackanalyzer",   icon: TrendingUp,    label: "Analiza sledi (AI)",   color: "blue" },
   { id: "view3d",          icon: Box,           label: "3D Pogled",            color: "violet" },
   { id: "toggle3dmode",    icon: Mountain,      label: "3D Terrain / 2D Rotacija", color: "slate" },
+  { id: "collab",          icon: Users,         label: "Skupno delo",           color: "teal" },
 ];
 
 const RULER_TOOLS = [
@@ -85,6 +86,7 @@ export default function DesktopToolbar({
   drawings, gpsTrack, onLoadDrawings,
   is3DOpen, on3DToggle,
   use3DMode, onToggle3DMode,
+  isCollabOpen, onCollabToggle,
 }) {
   const [pos, setPos] = useState(loadPos);
   const [hidden, setHidden] = useState(loadHidden);
@@ -193,6 +195,7 @@ export default function DesktopToolbar({
     if (id === "trackanalyzer") return isTrackAnalyzerOpen;
     if (id === "view3d")        return is3DOpen;
     if (id === "toggle3dmode")  return use3DMode;
+    if (id === "collab")        return isCollabOpen;
     if (id === "ruler")         return rulerOpen || ["distance","area","marker"].includes(activeTool);
     if (id === "save")          return savedOk;
     return false;
@@ -208,6 +211,7 @@ export default function DesktopToolbar({
     if (id === "trackanalyzer") { if (!isTrackAnalyzerOpen) base44.analytics.track({ eventName: "track_analyzer_opened" }); return onTrackAnalyzerToggle(); }
     if (id === "view3d")        return on3DToggle && on3DToggle();
     if (id === "toggle3dmode")  return onToggle3DMode && onToggle3DMode();
+    if (id === "collab")        return onCollabToggle && onCollabToggle();
     if (id === "ruler")         return setRulerOpen(p => !p);
     if (id === "save")          return handleSave();
     if (id === "load")          return handleLoad();
