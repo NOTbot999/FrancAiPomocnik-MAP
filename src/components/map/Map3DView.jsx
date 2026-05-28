@@ -10,29 +10,29 @@ export const ML_BASE_STYLES = [
   { id: "outdoor",   label: "Outdoor",     style: (key) => `https://api.maptiler.com/maps/outdoor-v2/style.json?key=${key}` },
   { id: "osm",       label: "OSM",         style: (key) => `https://api.maptiler.com/maps/openstreetmap/style.json?key=${key}` },
   { id: "hybrid",    label: "Hibrid",      style: (key) => `https://api.maptiler.com/maps/hybrid/style.json?key=${key}` },
-  { id: "cesium",    label: "Cesium",      style: null, isCesium: true },
+  { id: "arcgis",    label: "ArcGIS",      style: null, isArcGIS: true },
 ];
 
-// Build a minimal MapLibre style that uses Cesium Ion World Imagery tiles
-function buildCesiumStyle(cesiumToken) {
+// Build a minimal MapLibre style using ArcGIS World Imagery (free, no API key needed)
+function buildArcGISStyle() {
   return {
     version: 8,
     sources: {
-      "cesium-imagery": {
+      "arcgis-imagery": {
         type: "raster",
         tiles: [
-          `https://assets.ion.cesium.com/1/tiles/{z}/{x}/{y}.jpg?access_token=${cesiumToken}`
+          "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
         ],
         tileSize: 256,
-        attribution: "© Cesium Ion / Maxar",
-        maxzoom: 20,
+        attribution: "© Esri, Maxar, Earthstar Geographics",
+        maxzoom: 19,
       }
     },
     layers: [
       {
-        id: "cesium-imagery-layer",
+        id: "arcgis-imagery-layer",
         type: "raster",
-        source: "cesium-imagery",
+        source: "arcgis-imagery",
         paint: { "raster-opacity": 1 }
       }
     ]
@@ -52,7 +52,7 @@ const Map3DView = forwardRef(function Map3DView({
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   const apiKeyRef = useRef(null);
-  const cesiumTokenRef = useRef(null);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [pitch, setPitch] = useState(is3D ? 60 : 0);
@@ -324,25 +324,21 @@ const Map3DView = forwardRef(function Map3DView({
         apiKeyRef.current = apiKey;
         window.__maptilerKey = apiKey; // share with useMapLibreLayers and MapContainer
 
-        // Fetch Cesium token (non-blocking — silently fail if unavailable)
-        try {
-          const cesRes = await base44.functions.invoke("getCesiumToken", {});
-          if (cesRes.data?.token) cesiumTokenRef.current = cesRes.data.token;
-        } catch {}
 
-        // Fetch Cesium token in parallel (non-blocking — failure is OK)
-        base44.functions.invoke("getCesiumToken", {}).then(r => {
-          if (r.data?.token) cesiumTokenRef.current = r.data.token;
-        }).catch(() => {});
 
         if (cancelled || !containerRef.current) return;
+
+        // Determine initial style — respect activeMLBase prop
+        const initialStyleId = activeMLBase || "satellite";
+        const initialStyleDef = ML_BASE_STYLES.find(s => s.id === initialStyleId) || ML_BASE_STYLES[0];
+        const initialStyle = initialStyleDef.isArcGIS ? buildArcGISStyle() : initialStyleDef.style(apiKey);
 
         const maplibre = window.maplibregl;
         const safeLng = (center && !isNaN(center[1])) ? center[1] : 14.9955;
         const safeLat = (center && !isNaN(center[0])) ? center[0] : 46.1512;
         map = new maplibre.Map({
           container: containerRef.current,
-          style: ML_BASE_STYLES[0].style(apiKey),
+          style: initialStyle,
           center: [safeLng, safeLat],
           zoom: zoom ?? 11,
           pitch: is3D ? 60 : 0,
@@ -410,18 +406,9 @@ const Map3DView = forwardRef(function Map3DView({
       });
     };
 
-    setTimeout(async () => {
-      if (styleDef.isCesium) {
-        let token = cesiumTokenRef.current;
-        if (!token) {
-          try {
-            const cesRes = await base44.functions.invoke("getCesiumToken", {});
-            token = cesRes.data?.token;
-            cesiumTokenRef.current = token;
-          } catch {}
-        }
-        if (!token) { console.warn("No Cesium token"); mapReadyRef.current = true; return; }
-        applyStyle(buildCesiumStyle(token));
+    setTimeout(() => {
+      if (styleDef.isArcGIS) {
+        applyStyle(buildArcGISStyle());
       } else {
         applyStyle(styleDef.style(apiKey));
       }
