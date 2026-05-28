@@ -536,6 +536,21 @@ export default function MapViewer() {
         </>
       )}
 
+      {/* Mobile bottom nav */}
+      {isMobile && !is3DOpen && (
+        <MobileBottomNav
+          activeTab={mobileNavTab}
+          onTabChange={(tab) => {
+            if (tab === "lidar") {
+              setMobileNavTab(prev => prev === "lidar" ? "map" : "lidar");
+            } else {
+              setMobileNavTab(tab);
+              if (tab === "layers") setIsPanelOpen(true);
+            }
+          }}
+        />
+      )}
+
       {/* Mobile 3D overlay controls — visible on top of MapLibre when 3D is active */}
       {isMobile && is3DOpen && (
         <>
@@ -592,6 +607,20 @@ export default function MapViewer() {
             })}
           </div>
         </>
+      )}
+
+      {/* LIDAR Panel — mobile */}
+      {isMobile && mobileNavTab === "lidar" && (
+        <div className="absolute bottom-16 left-3 right-3 z-[960] flex justify-center">
+          <LidarTerrainPanel
+            onClose={() => setMobileNavTab("map")}
+            isLidarActive={lidarActive}
+            activeLidarId={lidarConfig?.layerId}
+            onActivateLidar={(cfg) => { setLidarConfig(cfg); setLidarActive(true); }}
+            onDeactivateLidar={() => { setLidarActive(false); setLidarConfig(null); }}
+            on3DOpen={() => { setIs3DOpen(true); setMapLibreEverOpened(true); setMobileNavTab("map"); }}
+          />
+        </div>
       )}
 
       {/* Collab Panel — mobile */}

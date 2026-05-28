@@ -4,13 +4,14 @@
  * Rendered outside the Leaflet portal so it sits above the map.
  */
 import React from "react";
-import { Map, Layers, Route, Settings } from "lucide-react";
+import { Map, Layers, Route, Settings, Mountain } from "lucide-react";
 import { loadTheme } from "@/components/map/ThemeCustomizer";
 
 const TABS = [
   { id: "map",      Icon: Map,      label: "Karta" },
   { id: "layers",   Icon: Layers,   label: "Sloji" },
   { id: "tracks",   Icon: Route,    label: "Sledi" },
+  { id: "lidar",    Icon: Mountain, label: "LIDAR" },
   { id: "settings", Icon: Settings, label: "Nastavitve" },
 ];
 
