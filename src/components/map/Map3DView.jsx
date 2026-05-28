@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState, useCallback, useImperativeHandle, forwardRef } from "react";
-import { RotateCcw, RotateCw, Compass, ChevronUp, ChevronDown, Mountain, Square } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useMapLibreLayers } from "./useMapLibreLayers";
 import SearchCategory3DLayer from "./SearchCategory3DLayer";
@@ -22,7 +21,6 @@ const Map3DView = forwardRef(function Map3DView({
   searchCategoryLayers = [],
   gpsTrack = [],
   onPinPicked,
-  lidarConfig = null,
 }, ref) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
@@ -172,7 +170,7 @@ const Map3DView = forwardRef(function Map3DView({
         tileSize: 256,
       });
     }
-    map.setTerrain({ source: "terrain-dem", exaggeration: 1.5 });
+    map.setTerrain({ source: "terrain-dem", exaggeration: 1.0 });
     if (!map.getLayer("sky")) {
       map.addLayer({
         id: "sky",
@@ -378,6 +376,7 @@ const Map3DView = forwardRef(function Map3DView({
     } else {
       try { map.setTerrain(null); } catch {}
     }
+
     // Re-sync all layers after terrain toggle so custom layers remain visible
     setTimeout(() => { setMapReady(c => c + 1); }, 200);
   }, [is3D, setupTerrain]);
@@ -397,70 +396,7 @@ const Map3DView = forwardRef(function Map3DView({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapReady]);
 
-  // Apply LIDAR overlay and terrain exaggeration when lidarConfig changes
-  useEffect(() => {
-    const map = mapRef.current;
-    const apiKey = apiKeyRef.current;
-    if (!map || !mapReadyRef.current) return;
 
-    const LIDAR_SOURCE_ID = "lidar-dem-overlay";
-    const LIDAR_LAYER_ID  = "lidar-hillshade";
-
-    // Remove old LIDAR layers first
-    try { if (map.getLayer(LIDAR_LAYER_ID))  map.removeLayer(LIDAR_LAYER_ID); }  catch {}
-    try { if (map.getSource(LIDAR_SOURCE_ID)) map.removeSource(LIDAR_SOURCE_ID); } catch {}
-
-    if (!lidarConfig) {
-      // Reset terrain exaggeration to default
-      try { map.setTerrain({ source: "terrain-dem", exaggeration: 1.5 }); } catch {}
-      return;
-    }
-
-    // Apply vertical exaggeration
-    try {
-      if (!map.getSource("terrain-dem") && apiKey) {
-        map.addSource("terrain-dem", {
-          type: "raster-dem",
-          url: `https://api.maptiler.com/tiles/terrain-rgb-v2/tiles.json?key=${apiKey}`,
-          tileSize: 256,
-        });
-      }
-      map.setTerrain({ source: "terrain-dem", exaggeration: lidarConfig.exaggeration ?? 1.5 });
-    } catch {}
-
-    // Add ARSO LIDAR as a raster tile source using the ArcGIS export endpoint
-    try {
-      const bounds = map.getBounds();
-      const sw = bounds.getSouthWest();
-      const ne = bounds.getNorthEast();
-      // Build a dynamic WMS-style tile URL template for the ArcGIS export
-      // We use a static snapshot for the current view as a raster overlay
-      const size = 512;
-      const bbox = `${sw.lng},${sw.lat},${ne.lng},${ne.lat}`;
-      const imageUrl = `${lidarConfig.url}?bbox=${bbox}&bboxSR=4326&imageSR=3857&size=${size},${size}&f=image&format=png32&transparent=true`;
-
-      map.addSource(LIDAR_SOURCE_ID, {
-        type: "image",
-        url: imageUrl,
-        coordinates: [
-          [sw.lng, ne.lat],
-          [ne.lng, ne.lat],
-          [ne.lng, sw.lat],
-          [sw.lng, sw.lat],
-        ],
-      });
-
-      map.addLayer({
-        id: LIDAR_LAYER_ID,
-        type: "raster",
-        source: LIDAR_SOURCE_ID,
-        paint: { "raster-opacity": 0.65, "raster-color-mix": [255, 255, 255, 0] },
-      });
-    } catch (e) {
-      console.warn("[LIDAR] Failed to add overlay:", e.message);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lidarConfig, mapReady]);
 
   return (
     <div className="absolute inset-0" style={{ zIndex: 1, cursor: onPinPicked ? "crosshair" : undefined }}>

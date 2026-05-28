@@ -23,7 +23,6 @@ import MobileBottomNav from "@/components/map/MobileBottomNav";
 import { Layers, Locate, Navigation, Route, WifiOff, Brain, TrendingUp, Box, Users } from "lucide-react";
 import CollabPanel from "@/components/map/CollabPanel";
 import CollabPinsLayer from "@/components/map/CollabPinsLayer";
-import LidarTerrainPanel from "@/components/map/LidarTerrainPanel";
 import { AnimatePresence } from "framer-motion";
 
 
@@ -264,9 +263,6 @@ export default function MapViewer() {
   const [mobileNavTab, setMobileNavTab] = useState("map");
   const [isCollabOpen, setIsCollabOpen] = useState(false);
   const [collabPins, setCollabPins] = useState([]);
-  const [isLidarOpen, setIsLidarOpen] = useState(false);
-  const [lidarActive, setLidarActive] = useState(false);
-  const [lidarConfig, setLidarConfig] = useState(null); // { layerId, url, bboxSR, exaggeration }
 
   const [mobileButtonPrefs, setMobileButtonPrefs] = useState(() => {
     try {
@@ -339,7 +335,7 @@ export default function MapViewer() {
             }))}
           gpsTrack={gpsTrack}
           onPinPicked={isPinPicking ? (latlng) => { setPinnedLocation([latlng.lat, latlng.lng]); setIsPinPicking(false); } : null}
-          lidarConfig={lidarActive ? lidarConfig : null}
+
         />
       </div>}
 
@@ -393,8 +389,7 @@ export default function MapViewer() {
           onSearchLayersChange: setActiveSearchLayers,
           is3DOpen,
           on3DToggle: () => { setIs3DOpen(p => !p); setMapLibreEverOpened(true); },
-          isLidarOpen,
-          onLidarToggle: () => setIsLidarOpen(p => !p),
+
         } : null}
         isPinPicking={isPinPicking}
         onPinPicked={(latlng) => { setPinnedLocation([latlng.lat, latlng.lng]); setIsPinPicking(false); }}
@@ -466,22 +461,6 @@ export default function MapViewer() {
               />
             </div>
           )}
-          {/* LIDAR Terrain Panel — desktop */}
-          <AnimatePresence>
-            {isLidarOpen && (
-              <div className="absolute right-20 top-20 z-[960]">
-                <LidarTerrainPanel
-                  onClose={() => setIsLidarOpen(false)}
-                  isLidarActive={lidarActive}
-                  activeLidarId={lidarConfig?.layerId}
-                  onActivateLidar={(cfg) => { setLidarConfig(cfg); setLidarActive(true); }}
-                  onDeactivateLidar={() => { setLidarActive(false); setLidarConfig(null); }}
-                  on3DOpen={() => { setIs3DOpen(true); setMapLibreEverOpened(true); }}
-                />
-              </div>
-            )}
-          </AnimatePresence>
-
           {/* Collab Panel — desktop */}
           {isCollabOpen && (
             <div className="absolute right-20 top-20 z-[960]">
@@ -532,8 +511,7 @@ export default function MapViewer() {
             onToggle3DMode={() => { setUse3DMode(p => !p); setIs3DOpen(true); setMapLibreEverOpened(true); }}
             isCollabOpen={isCollabOpen}
             onCollabToggle={() => setIsCollabOpen(p => !p)}
-            isLidarOpen={isLidarOpen}
-            onLidarToggle={() => setIsLidarOpen(p => !p)}
+
           />
         </>
       )}
@@ -609,20 +587,6 @@ export default function MapViewer() {
             })}
           </div>
         </>
-      )}
-
-      {/* LIDAR Panel — mobile */}
-      {isMobile && isLidarOpen && (
-        <div className="absolute top-16 left-3 right-3 z-[960] flex justify-center">
-          <LidarTerrainPanel
-            onClose={() => setIsLidarOpen(false)}
-            isLidarActive={lidarActive}
-            activeLidarId={lidarConfig?.layerId}
-            onActivateLidar={(cfg) => { setLidarConfig(cfg); setLidarActive(true); }}
-            onDeactivateLidar={() => { setLidarActive(false); setLidarConfig(null); }}
-            on3DOpen={() => { setIs3DOpen(true); setMapLibreEverOpened(true); setIsLidarOpen(false); }}
-          />
-        </div>
       )}
 
       {/* Collab Panel — mobile */}
