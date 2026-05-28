@@ -10,29 +10,37 @@ export const ML_BASE_STYLES = [
   { id: "outdoor",   label: "Outdoor",     style: (key) => `https://api.maptiler.com/maps/outdoor-v2/style.json?key=${key}` },
   { id: "osm",       label: "OSM",         style: (key) => `https://api.maptiler.com/maps/openstreetmap/style.json?key=${key}` },
   { id: "hybrid",    label: "Hibrid",      style: (key) => `https://api.maptiler.com/maps/hybrid/style.json?key=${key}` },
-  { id: "arcgis",    label: "ArcGIS",      style: null, isArcGIS: true },
+  { id: "cesium",    label: "Cesium",      style: null, isCesium: true },
 ];
 
-// Build a minimal MapLibre style using ArcGIS World Imagery (free, no API key needed)
-function buildArcGISStyle() {
+// Fetch Cesium Ion asset endpoint and build a MapLibre raster style
+async function buildCesiumStyle(cesiumToken) {
+  // Asset 1 = Cesium World Imagery (high-res satellite)
+  const endpointRes = await fetch(
+    `https://api.cesium.com/v1/assets/1/endpoint?access_token=${cesiumToken}`
+  );
+  if (!endpointRes.ok) throw new Error("Cesium endpoint fetch failed: " + endpointRes.status);
+  const endpoint = await endpointRes.json();
+  // endpoint.url is like "https://assets.cesium.com/1/{z}/{x}/{y}.jpg"
+  // endpoint.accessToken may be a short-lived token
+  const tileUrl = endpoint.url + "?access_token=" + (endpoint.accessToken || cesiumToken);
+
   return {
     version: 8,
     sources: {
-      "arcgis-imagery": {
+      "cesium-imagery": {
         type: "raster",
-        tiles: [
-          "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-        ],
+        tiles: [tileUrl],
         tileSize: 256,
-        attribution: "© Esri, Maxar, Earthstar Geographics",
-        maxzoom: 19,
+        attribution: endpoint.attributions?.[0]?.html || "© Cesium Ion / Maxar",
+        maxzoom: 20,
       }
     },
     layers: [
       {
-        id: "arcgis-imagery-layer",
+        id: "cesium-imagery-layer",
         type: "raster",
-        source: "arcgis-imagery",
+        source: "cesium-imagery",
         paint: { "raster-opacity": 1 }
       }
     ]
@@ -52,7 +60,6 @@ const Map3DView = forwardRef(function Map3DView({
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   const apiKeyRef = useRef(null);
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [pitch, setPitch] = useState(is3D ? 60 : 0);
@@ -324,14 +331,36 @@ const Map3DView = forwardRef(function Map3DView({
         apiKeyRef.current = apiKey;
         window.__maptilerKey = apiKey; // share with useMapLibreLayers and MapContainer
 
-
+        // Fetch Cesium token (non-blocking — silently fail if unavailable)
+        base44.functions.invoke("getCesiumToken", {}).then(r => {
+          if (r.data?.token) {
+            window.__cesiumToken = r.data.token; // eslint-disable-line
+          }
+        }).catch(() => {});
 
         if (cancelled || !containerRef.current) return;
 
         // Determine initial style — respect activeMLBase prop
         const initialStyleId = activeMLBase || "satellite";
         const initialStyleDef = ML_BASE_STYLES.find(s => s.id === initialStyleId) || ML_BASE_STYLES[0];
-        const initialStyle = initialStyleDef.isArcGIS ? buildArcGISStyle() : initialStyleDef.style(apiKey);
+        let initialStyle;
+        if (initialStyleDef.isCesium) {
+          let cesToken = window.__cesiumToken || null;
+          if (!cesToken) {
+            try {
+              const cesRes = await base44.functions.invoke("getCesiumToken", {});
+              cesToken = cesRes.data?.token;
+              window.__cesiumToken = cesToken;
+            } catch {}
+          }
+          try {
+            initialStyle = cesToken ? await buildCesiumStyle(cesToken) : ML_BASE_STYLES[0].style(apiKey);
+          } catch {
+            initialStyle = ML_BASE_STYLES[0].style(apiKey);
+          }
+        } else {
+          initialStyle = initialStyleDef.style(apiKey);
+        }
 
         const maplibre = window.maplibregl;
         const safeLng = (center && !isNaN(center[1])) ? center[1] : 14.9955;
@@ -406,9 +435,24 @@ const Map3DView = forwardRef(function Map3DView({
       });
     };
 
-    setTimeout(() => {
-      if (styleDef.isArcGIS) {
-        applyStyle(buildArcGISStyle());
+    setTimeout(async () => {
+      if (styleDef.isCesium) {
+        let token = window.__cesiumToken || null;
+        if (!token) {
+          try {
+            const cesRes = await base44.functions.invoke("getCesiumToken", {});
+            token = cesRes.data?.token;
+            window.__cesiumToken = token;
+          } catch {}
+        }
+        if (!token) { console.warn("No Cesium token"); mapReadyRef.current = true; return; }
+        try {
+          const cesiumStyle = await buildCesiumStyle(token);
+          applyStyle(cesiumStyle);
+        } catch (e) {
+          console.warn("Cesium style build failed:", e.message);
+          mapReadyRef.current = true;
+        }
       } else {
         applyStyle(styleDef.style(apiKey));
       }
