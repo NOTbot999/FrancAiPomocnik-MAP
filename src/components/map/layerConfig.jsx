@@ -540,6 +540,108 @@ export const OVERLAY_CATEGORIES = [
     ]
   },
 
+  // ── ARHEOLOGIJA & KULTURNA DEDIŠČINA ────────────────────────
+  {
+    id: "dediscina",
+    name: "Arheologija & Dediščina",
+    icon: "Landmark",
+    thumbnail: "https://images.unsplash.com/photo-1548013146-72479768bada?w=80&h=60&fit=crop",
+    description: "Kulturna dediščina, arheološka najdišča, register nepremičnin kulturne dediščine",
+    layers: [
+      {
+        id: "rnkd_obmocja",
+        name: "Enote kulturne dediščine (območja)",
+        type: "wms",
+        url: "https://gis.gov.si/ows/wms?",
+        layers: "RPE:RPE_OBMOCJA_ESD",
+        format: "image/png",
+        transparent: true,
+        version: "1.1.1",
+        opacity: 0.6,
+        thumbnail: "https://images.unsplash.com/photo-1548013146-72479768bada?w=80&h=60&fit=crop",
+        description: "Območja enot kulturne dediščine iz registra ZVKDS"
+      },
+      {
+        id: "rnkd_tocke",
+        name: "Enote kulturne dediščine (točke)",
+        type: "wms",
+        url: "https://gis.gov.si/ows/wms?",
+        layers: "RPE:RPE_TOCKE_ESD",
+        format: "image/png",
+        transparent: true,
+        version: "1.1.1",
+        opacity: 0.8,
+        thumbnail: "https://images.unsplash.com/photo-1548013146-72479768bada?w=80&h=60&fit=crop",
+        description: "Točkovne lokacije enot kulturne dediščine"
+      },
+      {
+        id: "arso_varstvena_obmocja",
+        name: "Varstvena območja narave",
+        type: "wms",
+        url: "https://gis.arso.gov.si/geoserver/ARSO/wms",
+        layers: "ARSO:ZO_PLG",
+        format: "image/png",
+        transparent: true,
+        version: "1.1.1",
+        opacity: 0.5,
+        thumbnail: "https://images.unsplash.com/photo-1448375240586-882707db888b?w=80&h=60&fit=crop",
+        description: "Zavarovana območja — narodni parki, naravni rezervati, krajinski parki"
+      },
+      {
+        id: "arso_natura2000",
+        name: "Natura 2000",
+        type: "wms",
+        url: "https://gis.arso.gov.si/geoserver/ARSO/wms",
+        layers: "ARSO:NA2000",
+        format: "image/png",
+        transparent: true,
+        version: "1.1.1",
+        opacity: 0.5,
+        thumbnail: "https://images.unsplash.com/photo-1448375240586-882707db888b?w=80&h=60&fit=crop",
+        description: "Območja Natura 2000 — habitats in birds direktive EU"
+      },
+      {
+        id: "arso_ekoremediacije",
+        name: "Naravne vrednote (točke)",
+        type: "wms",
+        url: "https://gis.arso.gov.si/geoserver/ARSO/wms",
+        layers: "ARSO:NV_PNT",
+        format: "image/png",
+        transparent: true,
+        version: "1.1.1",
+        opacity: 0.8,
+        thumbnail: "https://images.unsplash.com/photo-1519904981063-b0cf448d479e?w=80&h=60&fit=crop",
+        description: "Točkovne naravne vrednote — jame, izviri, drevesa, geotopi"
+      },
+      {
+        id: "eprostor_ded_tocke",
+        name: "Kulturna dediščina (e-Prostor)",
+        type: "wms",
+        url: "https://ipi.eprostor.gov.si/wms-si-zvkds/ows",
+        layers: "SI.ZVKDS.RKND:ESD",
+        format: "image/png",
+        transparent: true,
+        version: "1.1.1",
+        opacity: 0.8,
+        thumbnail: "https://images.unsplash.com/photo-1548013146-72479768bada?w=80&h=60&fit=crop",
+        description: "Register nepremičnin kulturne dediščine ZVKDS — arheološka najdišča, gradovi, sakralni objekti"
+      },
+      {
+        id: "eprostor_ded_obmocja",
+        name: "Dediščina — varstvena območja",
+        type: "wms",
+        url: "https://ipi.eprostor.gov.si/wms-si-zvkds/ows",
+        layers: "SI.ZVKDS.RKND:ESD_OBM",
+        format: "image/png",
+        transparent: true,
+        version: "1.1.1",
+        opacity: 0.5,
+        thumbnail: "https://images.unsplash.com/photo-1548013146-72479768bada?w=80&h=60&fit=crop",
+        description: "Varstvena območja kulturne dediščine — cone z omejitvami posegov"
+      },
+    ]
+  },
+
   // ── ZGODOVINSKI & URBEX ──────────────────────────────────────
   {
     id: "zgodovinski",
