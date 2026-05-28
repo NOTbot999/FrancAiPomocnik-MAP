@@ -10,7 +10,34 @@ export const ML_BASE_STYLES = [
   { id: "outdoor",   label: "Outdoor",     style: (key) => `https://api.maptiler.com/maps/outdoor-v2/style.json?key=${key}` },
   { id: "osm",       label: "OSM",         style: (key) => `https://api.maptiler.com/maps/openstreetmap/style.json?key=${key}` },
   { id: "hybrid",    label: "Hibrid",      style: (key) => `https://api.maptiler.com/maps/hybrid/style.json?key=${key}` },
+  { id: "cesium",    label: "Cesium",      style: null, isCesium: true },
 ];
+
+// Build a minimal MapLibre style that uses Cesium Ion World Imagery tiles
+function buildCesiumStyle(cesiumToken) {
+  return {
+    version: 8,
+    sources: {
+      "cesium-imagery": {
+        type: "raster",
+        tiles: [
+          `https://assets.ion.cesium.com/1/tiles/{z}/{x}/{y}.jpg?access_token=${cesiumToken}`
+        ],
+        tileSize: 256,
+        attribution: "© Cesium Ion / Maxar",
+        maxzoom: 20,
+      }
+    },
+    layers: [
+      {
+        id: "cesium-imagery-layer",
+        type: "raster",
+        source: "cesium-imagery",
+        paint: { "raster-opacity": 1 }
+      }
+    ]
+  };
+}
 
 const Map3DView = forwardRef(function Map3DView({
   center, zoom, onClose, is3D = true, isVisible = true,
@@ -25,6 +52,7 @@ const Map3DView = forwardRef(function Map3DView({
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   const apiKeyRef = useRef(null);
+  const cesiumTokenRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [pitch, setPitch] = useState(is3D ? 60 : 0);
@@ -296,6 +324,11 @@ const Map3DView = forwardRef(function Map3DView({
         apiKeyRef.current = apiKey;
         window.__maptilerKey = apiKey; // share with useMapLibreLayers and MapContainer
 
+        // Fetch Cesium token in parallel (non-blocking — failure is OK)
+        base44.functions.invoke("getCesiumToken", {}).then(r => {
+          if (r.data?.token) cesiumTokenRef.current = r.data.token;
+        }).catch(() => {});
+
         if (cancelled || !containerRef.current) return;
 
         const maplibre = window.maplibregl;
@@ -357,21 +390,36 @@ const Map3DView = forwardRef(function Map3DView({
     if (!styleDef) return;
     setActiveBase(styleId);
     if (onMLBaseChange) onMLBaseChange(styleId);
-    // Stop ALL in-flight camera animations + tile requests before style switch
     try { map.stop(); } catch {}
-    // Abort any pending tile loads by cancelling requests
     mapReadyRef.current = false;
-    // Small delay so in-flight renders finish before we swap style
-    setTimeout(() => {
-      try { map.setStyle(styleDef.style(apiKey)); } catch (e) { console.warn("setStyle error:", e.message); return; }
+
+    const applyStyle = (style) => {
+      try { map.setStyle(style); } catch (e) { console.warn("setStyle error:", e.message); return; }
       map.once("style.load", () => {
         if (is3D) setupTerrain(map, apiKey);
         mapReadyRef.current = true;
-        // Reset tracked IDs since all layers were wiped by the style switch
         activeCatLayerIds.current = new Set();
         setMapReady(c => c + 1);
         setTimeout(() => syncSearchCategoryLayers(map, searchCategoryLayersRef.current), 150);
       });
+    };
+
+    setTimeout(() => {
+      if (styleDef.isCesium) {
+        const doApply = (token) => applyStyle(buildCesiumStyle(token));
+        if (cesiumTokenRef.current) {
+          doApply(cesiumTokenRef.current);
+        } else {
+          base44.functions.invoke("getCesiumToken", {}).then(r => {
+            const token = r.data?.token;
+            if (!token) { console.warn("No Cesium token"); mapReadyRef.current = true; return; }
+            cesiumTokenRef.current = token;
+            doApply(token);
+          }).catch(e => { console.warn("Cesium token fetch failed:", e.message); mapReadyRef.current = true; });
+        }
+      } else {
+        applyStyle(styleDef.style(apiKey));
+      }
     }, 50);
   }, [setupTerrain, is3D, syncSearchCategoryLayers]);
 
