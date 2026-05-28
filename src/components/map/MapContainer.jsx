@@ -391,7 +391,7 @@ function getAllLayersFlat() {
 
 // ArcGIS MapServer export as a Leaflet TileLayer (dynamic tiles via /export endpoint)
 // bboxSR=4326 works best with ARSO D96TM cached services; bboxSR=3857 for dynamic services like LIDAR
-function ArcGISExportLayer({ url, opacity, layerIds, maxZoom, maxNativeZoom, bboxSR, imageSR, transparent, format, pane, zIndex }) {
+function ArcGISExportLayer({ url, opacity, layerIds, maxZoom, maxNativeZoom, bboxSR, imageSR, transparent, format, pane, zIndex, enhance }) {
    const map = useMap();
    const layerRef = useRef(null);
    const useBboxSR = bboxSR || 3857;
@@ -434,9 +434,16 @@ function ArcGISExportLayer({ url, opacity, layerIds, maxZoom, maxNativeZoom, bbo
     };
 
     arcLayer.addTo(map);
+    // Apply CSS image-rendering + filter for sharper hillshade
+    if (enhance) {
+      arcLayer.on("tileload", (e) => {
+        e.tile.style.imageRendering = "crisp-edges";
+        e.tile.style.filter = "contrast(1.25) brightness(1.05)";
+      });
+    }
     layerRef.current = arcLayer;
     return () => { arcLayer.remove(); };
-  }, [url, opacity, layerIds, map, useBboxSR, useImageSR, useFormat, useTransparent]);
+    }, [url, opacity, layerIds, map, useBboxSR, useImageSR, useFormat, useTransparent, enhance]);
 
   // Update opacity
   useEffect(() => {
@@ -599,10 +606,11 @@ export default function MapContainerComponent({
               maxZoom={22}
               maxNativeZoom={layer.maxNativeZoom}
               bboxSR={layer.bboxSR}
-               transparent={layer.transparent}
-               format={layer.format}
-               pane={pane}
-               zIndex={400 + index}
+              transparent={layer.transparent}
+              format={layer.format}
+              pane={pane}
+              zIndex={400 + index}
+              enhance={layer.enhance}
              />
            );
          }
