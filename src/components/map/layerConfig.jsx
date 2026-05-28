@@ -549,34 +549,34 @@ export const OVERLAY_CATEGORIES = [
     description: "Kulturna dediščina, arheološka najdišča, register nepremičnin kulturne dediščine",
     layers: [
       {
-        id: "rnkd_obmocja",
-        name: "Enote kulturne dediščine (območja)",
+        id: "zvkds_rkd_tocke",
+        name: "Kulturna dediščina — enote (točke)",
         type: "wms",
-        url: "https://gis.gov.si/ows/wms?",
-        layers: "RPE:RPE_OBMOCJA_ESD",
+        url: "https://gis.arso.gov.si/geoserver/ARSO/wms",
+        layers: "ARSO:KD_PNT",
         format: "image/png",
         transparent: true,
         version: "1.1.1",
-        opacity: 0.6,
+        opacity: 0.9,
         thumbnail: "https://images.unsplash.com/photo-1548013146-72479768bada?w=80&h=60&fit=crop",
-        description: "Območja enot kulturne dediščine iz registra ZVKDS"
+        description: "Točke kulturne dediščine iz ARSO geoportala"
       },
       {
-        id: "rnkd_tocke",
-        name: "Enote kulturne dediščine (točke)",
+        id: "zvkds_rkd_obmocja",
+        name: "Kulturna dediščina — območja",
         type: "wms",
-        url: "https://gis.gov.si/ows/wms?",
-        layers: "RPE:RPE_TOCKE_ESD",
+        url: "https://gis.arso.gov.si/geoserver/ARSO/wms",
+        layers: "ARSO:KD_PLG",
         format: "image/png",
         transparent: true,
         version: "1.1.1",
-        opacity: 0.8,
+        opacity: 0.5,
         thumbnail: "https://images.unsplash.com/photo-1548013146-72479768bada?w=80&h=60&fit=crop",
-        description: "Točkovne lokacije enot kulturne dediščine"
+        description: "Območja kulturne dediščine iz ARSO geoportala"
       },
       {
-        id: "arso_varstvena_obmocja",
-        name: "Varstvena območja narave",
+        id: "arso_zavarovana_obmocja",
+        name: "Zavarovana območja narave",
         type: "wms",
         url: "https://gis.arso.gov.si/geoserver/ARSO/wms",
         layers: "ARSO:ZO_PLG",
@@ -585,23 +585,23 @@ export const OVERLAY_CATEGORIES = [
         version: "1.1.1",
         opacity: 0.5,
         thumbnail: "https://images.unsplash.com/photo-1448375240586-882707db888b?w=80&h=60&fit=crop",
-        description: "Zavarovana območja — narodni parki, naravni rezervati, krajinski parki"
+        description: "Narodni parki, naravni rezervati, krajinski parki"
       },
       {
-        id: "arso_natura2000",
-        name: "Natura 2000",
+        id: "arso_natura2000_plg",
+        name: "Natura 2000 območja",
         type: "wms",
         url: "https://gis.arso.gov.si/geoserver/ARSO/wms",
         layers: "ARSO:NA2000",
         format: "image/png",
         transparent: true,
         version: "1.1.1",
-        opacity: 0.5,
+        opacity: 0.45,
         thumbnail: "https://images.unsplash.com/photo-1448375240586-882707db888b?w=80&h=60&fit=crop",
-        description: "Območja Natura 2000 — habitats in birds direktive EU"
+        description: "Omrežje Natura 2000 — posebna varstvena območja EU"
       },
       {
-        id: "arso_ekoremediacije",
+        id: "arso_nv_tocke",
         name: "Naravne vrednote (točke)",
         type: "wms",
         url: "https://gis.arso.gov.si/geoserver/ARSO/wms",
@@ -609,35 +609,22 @@ export const OVERLAY_CATEGORIES = [
         format: "image/png",
         transparent: true,
         version: "1.1.1",
-        opacity: 0.8,
+        opacity: 0.85,
         thumbnail: "https://images.unsplash.com/photo-1519904981063-b0cf448d479e?w=80&h=60&fit=crop",
-        description: "Točkovne naravne vrednote — jame, izviri, drevesa, geotopi"
+        description: "Točkovne naravne vrednote — jame, izviri, posebna drevesa, geotopi"
       },
       {
-        id: "eprostor_ded_tocke",
-        name: "Kulturna dediščina (e-Prostor)",
+        id: "arso_nv_obmocja",
+        name: "Naravne vrednote (območja)",
         type: "wms",
-        url: "https://ipi.eprostor.gov.si/wms-si-zvkds/ows",
-        layers: "SI.ZVKDS.RKND:ESD",
+        url: "https://gis.arso.gov.si/geoserver/ARSO/wms",
+        layers: "ARSO:NV_PLG",
         format: "image/png",
         transparent: true,
         version: "1.1.1",
-        opacity: 0.8,
-        thumbnail: "https://images.unsplash.com/photo-1548013146-72479768bada?w=80&h=60&fit=crop",
-        description: "Register nepremičnin kulturne dediščine ZVKDS — arheološka najdišča, gradovi, sakralni objekti"
-      },
-      {
-        id: "eprostor_ded_obmocja",
-        name: "Dediščina — varstvena območja",
-        type: "wms",
-        url: "https://ipi.eprostor.gov.si/wms-si-zvkds/ows",
-        layers: "SI.ZVKDS.RKND:ESD_OBM",
-        format: "image/png",
-        transparent: true,
-        version: "1.1.1",
-        opacity: 0.5,
-        thumbnail: "https://images.unsplash.com/photo-1548013146-72479768bada?w=80&h=60&fit=crop",
-        description: "Varstvena območja kulturne dediščine — cone z omejitvami posegov"
+        opacity: 0.45,
+        thumbnail: "https://images.unsplash.com/photo-1519904981063-b0cf448d479e?w=80&h=60&fit=crop",
+        description: "Območja naravnih vrednot — reke, doline, kraški svet"
       },
     ]
   },
