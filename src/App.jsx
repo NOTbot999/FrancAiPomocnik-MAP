@@ -9,6 +9,7 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import Auth from './pages/Auth';
 import AdminImport from './pages/AdminImport';
 import AdminDashboard from './pages/AdminDashboard';
+import ARFieldExplorer from './pages/ARFieldExplorer';
 import { useEffect } from 'react';
 
 // Global system dark mode listener — applies 'dark' class to <html> automatically
@@ -69,6 +70,7 @@ const AuthenticatedApp = () => {
       <Route path="/auth" element={<Auth />} />
       <Route path="/admin-import" element={<AdminImport />} />
       <Route path="/admin" element={<AdminDashboard />} />
+      <Route path="/ar" element={<ARFieldExplorer />} />
       <Route path="/" element={
         <LayoutWrapper currentPageName={mainPageKey}>
           <MainPage />

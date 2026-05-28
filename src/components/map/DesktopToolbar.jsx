@@ -4,8 +4,9 @@ import {
   Navigation, Route, X,
   Map, Settings, Eye, EyeOff, Save, FolderOpen,
   Loader2, Check, GripVertical, Palette, Brain, TrendingUp,
-  AlertTriangle, Box, Mountain, Square, Users
+  AlertTriangle, Box, Mountain, Square, Users, Scan
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import LagReportModal from "@/components/map/LagReportModal";
 
 
@@ -29,6 +30,7 @@ const BUTTON_DEFS = [
   { id: "view3d",          icon: Box,           label: "3D Pogled",            color: "violet" },
   { id: "toggle3dmode",    icon: Mountain,      label: "3D Terrain / 2D Rotacija", color: "slate" },
   { id: "collab",          icon: Users,         label: "Skupno delo",           color: "teal" },
+  { id: "ar",              icon: Scan,          label: "AR Teren",              color: "violet" },
 ];
 
 const RULER_TOOLS = [
@@ -88,6 +90,7 @@ export default function DesktopToolbar({
   use3DMode, onToggle3DMode,
   isCollabOpen, onCollabToggle,
 }) {
+  const navigate = useNavigate();
   const [pos, setPos] = useState(loadPos);
   const [hidden, setHidden] = useState(loadHidden);
   const [showSettings, setShowSettings] = useState(false);
@@ -212,6 +215,7 @@ export default function DesktopToolbar({
     if (id === "view3d")        return on3DToggle && on3DToggle();
     if (id === "toggle3dmode")  return onToggle3DMode && onToggle3DMode();
     if (id === "collab")        return onCollabToggle && onCollabToggle();
+    if (id === "ar")            return navigate("/ar");
     if (id === "ruler")         return setRulerOpen(p => !p);
     if (id === "save")          return handleSave();
     if (id === "load")          return handleLoad();
