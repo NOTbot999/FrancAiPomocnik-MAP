@@ -4,7 +4,7 @@ import {
   Navigation, Route, X,
   Map, Settings, Eye, EyeOff, Save, FolderOpen,
   Loader2, Check, GripVertical, Palette, Brain, TrendingUp,
-  AlertTriangle, Box, Mountain, Square, Users, Scan
+  AlertTriangle, Box, Mountain, Square, Users, Scan, ScanLine
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import LagReportModal from "@/components/map/LagReportModal";
@@ -31,6 +31,7 @@ const BUTTON_DEFS = [
   { id: "toggle3dmode",    icon: Mountain,      label: "3D Terrain / 2D Rotacija", color: "slate" },
   { id: "collab",          icon: Users,         label: "Skupno delo",           color: "teal" },
   { id: "ar",              icon: Scan,          label: "AR Teren",              color: "violet" },
+  { id: "lidar",           icon: ScanLine,      label: "LIDAR Terrain View",    color: "violet" },
 ];
 
 const RULER_TOOLS = [
@@ -89,6 +90,7 @@ export default function DesktopToolbar({
   is3DOpen, on3DToggle,
   use3DMode, onToggle3DMode,
   isCollabOpen, onCollabToggle,
+  isLidarOpen, onLidarToggle,
 }) {
   const navigate = useNavigate();
   const [pos, setPos] = useState(loadPos);
@@ -199,6 +201,7 @@ export default function DesktopToolbar({
     if (id === "view3d")        return is3DOpen;
     if (id === "toggle3dmode")  return use3DMode;
     if (id === "collab")        return isCollabOpen;
+    if (id === "lidar")         return isLidarOpen;
     if (id === "ruler")         return rulerOpen || ["distance","area","marker"].includes(activeTool);
     if (id === "save")          return savedOk;
     return false;
@@ -215,6 +218,7 @@ export default function DesktopToolbar({
     if (id === "view3d")        return on3DToggle && on3DToggle();
     if (id === "toggle3dmode")  return onToggle3DMode && onToggle3DMode();
     if (id === "collab")        return onCollabToggle && onCollabToggle();
+    if (id === "lidar")         return onLidarToggle && onLidarToggle();
     if (id === "ar")            return navigate("/ar");
     if (id === "ruler")         return setRulerOpen(p => !p);
     if (id === "save")          return handleSave();
