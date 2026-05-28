@@ -324,6 +324,12 @@ const Map3DView = forwardRef(function Map3DView({
         apiKeyRef.current = apiKey;
         window.__maptilerKey = apiKey; // share with useMapLibreLayers and MapContainer
 
+        // Fetch Cesium token (non-blocking — silently fail if unavailable)
+        try {
+          const cesRes = await base44.functions.invoke("getCesiumToken", {});
+          if (cesRes.data?.token) cesiumTokenRef.current = cesRes.data.token;
+        } catch {}
+
         // Fetch Cesium token in parallel (non-blocking — failure is OK)
         base44.functions.invoke("getCesiumToken", {}).then(r => {
           if (r.data?.token) cesiumTokenRef.current = r.data.token;
@@ -385,7 +391,7 @@ const Map3DView = forwardRef(function Map3DView({
   const switchBase = useCallback((styleId) => {
     const map = mapRef.current;
     const apiKey = apiKeyRef.current;
-    if (!map || !apiKey || !mapReadyRef.current) return;
+    if (!map || !mapReadyRef.current) return;
     const styleDef = ML_BASE_STYLES.find(s => s.id === styleId);
     if (!styleDef) return;
     setActiveBase(styleId);
@@ -393,8 +399,8 @@ const Map3DView = forwardRef(function Map3DView({
     try { map.stop(); } catch {}
     mapReadyRef.current = false;
 
-    const applyStyle = (style) => {
-      try { map.setStyle(style); } catch (e) { console.warn("setStyle error:", e.message); return; }
+    const applyStyle = (styleObj) => {
+      try { map.setStyle(styleObj); } catch (e) { console.warn("setStyle error:", e.message); return; }
       map.once("style.load", () => {
         if (is3D) setupTerrain(map, apiKey);
         mapReadyRef.current = true;
@@ -404,19 +410,18 @@ const Map3DView = forwardRef(function Map3DView({
       });
     };
 
-    setTimeout(() => {
+    setTimeout(async () => {
       if (styleDef.isCesium) {
-        const doApply = (token) => applyStyle(buildCesiumStyle(token));
-        if (cesiumTokenRef.current) {
-          doApply(cesiumTokenRef.current);
-        } else {
-          base44.functions.invoke("getCesiumToken", {}).then(r => {
-            const token = r.data?.token;
-            if (!token) { console.warn("No Cesium token"); mapReadyRef.current = true; return; }
+        let token = cesiumTokenRef.current;
+        if (!token) {
+          try {
+            const cesRes = await base44.functions.invoke("getCesiumToken", {});
+            token = cesRes.data?.token;
             cesiumTokenRef.current = token;
-            doApply(token);
-          }).catch(e => { console.warn("Cesium token fetch failed:", e.message); mapReadyRef.current = true; });
+          } catch {}
         }
+        if (!token) { console.warn("No Cesium token"); mapReadyRef.current = true; return; }
+        applyStyle(buildCesiumStyle(token));
       } else {
         applyStyle(styleDef.style(apiKey));
       }
