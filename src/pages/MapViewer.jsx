@@ -512,16 +512,6 @@ export default function MapViewer() {
         </>
       )}
 
-      {/* Mobile bottom nav */}
-      {isMobile && !is3DOpen && (
-        <MobileBottomNav
-          activeTab={mobileNavTab}
-          onTabChange={(tab) => {
-            setMobileNavTab(tab);
-            if (tab === "layers") setIsPanelOpen(true);
-          }}
-        />
-      )}
 
       {/* Mobile 3D overlay controls — visible on top of MapLibre when 3D is active */}
       {isMobile && is3DOpen && (
@@ -583,7 +573,7 @@ export default function MapViewer() {
 
       {/* Collab Panel — mobile */}
       {isMobile && isCollabOpen && (
-        <div className="absolute bottom-16 left-3 right-3 z-[960] flex justify-center">
+        <div className="absolute bottom-4 left-3 right-3 z-[960] flex justify-center">
           <CollabPanel
             isMobile
             onClose={() => setIsCollabOpen(false)}
@@ -639,7 +629,7 @@ export default function MapViewer() {
 
       {/* TrackAnalyzer panel (mobile) */}
       {isMobile && isTrackAnalyzerOpen && (
-        <div className="absolute bottom-16 right-12 z-[960]">
+        <div className="absolute bottom-4 right-12 z-[960]">
           <TrackAnalyzer
             gpsTrack={gpsTrack}
             onClose={() => setIsTrackAnalyzerOpen(false)}
@@ -649,7 +639,7 @@ export default function MapViewer() {
 
       {/* My Tracks panel (mobile) */}
       {isMobile && showMyTracks && (
-        <div className="absolute bottom-16 right-12 z-[960]">
+        <div className="absolute bottom-4 right-12 z-[960]">
           <MyTracks
             gpsTrack={gpsTrack}
             onLoadTrack={handleLoadTrack}
