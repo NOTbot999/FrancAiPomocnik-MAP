@@ -25,8 +25,26 @@ import CollabPanel from "@/components/map/CollabPanel";
 import CollabPinsLayer from "@/components/map/CollabPinsLayer";
 
 
+// Fix iOS Safari 100vh bug — sets --vh CSS variable to actual visible viewport height
+function useViewportHeight() {
+  useEffect(() => {
+    const setVh = () => {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    };
+    setVh();
+    window.addEventListener('resize', setVh);
+    window.addEventListener('orientationchange', setVh);
+    return () => {
+      window.removeEventListener('resize', setVh);
+      window.removeEventListener('orientationchange', setVh);
+    };
+  }, []);
+}
+
 export default function MapViewer() {
   const { settings, updateSettings, isLoaded } = useUserSettings();
+  useViewportHeight();
 
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [activeBaseLayers, setActiveBaseLayers] = useState({ osm: { opacity: 1 } });
@@ -305,7 +323,7 @@ export default function MapViewer() {
   }, []);
 
   return (
-    <div className="relative w-full h-screen overflow-hidden" style={{ backgroundColor: is3DOpen ? "#000" : "#e8ede8", backgroundImage: is3DOpen ? "none" : "url('https://media.base44.com/images/public/69ad3ce309822f8e71f66838/b15473e19_5992128811794894233.jpg')", backgroundSize: "contain", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>
+    <div className="relative w-full overflow-hidden" style={{ height: "calc(var(--vh, 1vh) * 100)", backgroundColor: is3DOpen ? "#000" : "#e8ede8", backgroundImage: is3DOpen ? "none" : "url('https://media.base44.com/images/public/69ad3ce309822f8e71f66838/b15473e19_5992128811794894233.jpg')", backgroundSize: "contain", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>
 
       {/* MapLibre 3D/2D-rotatable map — only mount when first opened to ensure container has dimensions */}
       {mapLibreEverOpened && <div style={{ position: "absolute", inset: 0, zIndex: isPinPicking && is3DOpen ? 980 : undefined, visibility: is3DOpen ? "visible" : "hidden", pointerEvents: is3DOpen ? "auto" : "none" }}>
