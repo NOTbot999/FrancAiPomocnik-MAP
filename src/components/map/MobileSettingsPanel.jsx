@@ -36,9 +36,12 @@ function loadPrefs() {
       const allIds = DEFAULT_BUTTONS.map(b => b.id);
       const missingIds = allIds.filter(id => !p.order.includes(id));
       if (missingIds.length) {
-        p.order = [...missingIds, ...p.order];
-        p.hidden = [...p.hidden, ...missingIds];
+        p.order = [...p.order, ...missingIds];
+        // New buttons are visible by default (not added to hidden)
       }
+      // Ensure collab and ar are never auto-hidden (un-hide if they were auto-hidden before)
+      const autoUnhide = ["collab", "ar"];
+      p.hidden = p.hidden.filter(id => !autoUnhide.includes(id));
       return p;
     }
   } catch {}
