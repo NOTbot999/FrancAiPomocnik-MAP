@@ -17,6 +17,12 @@ function colorForUser(username) {
   return USER_COLORS[Math.abs(hash) % USER_COLORS.length];
 }
 
+async function collab(action, params) {
+  const res = await base44.functions.invoke("collabSession", { action, ...params });
+  if (res.data?.error) throw new Error(res.data.error);
+  return res.data;
+}
+
 export default function CollabPanel({ onClose, onDropPin, onFlyTo, isMobile }) {
   const theme = loadTheme();
   const username = localStorage.getItem("userUsername") || null;
@@ -31,7 +37,6 @@ export default function CollabPanel({ onClose, onDropPin, onFlyTo, isMobile }) {
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [isDropping, setIsDropping] = useState(false);
   const messagesEndRef = useRef(null);
   const pollRef = useRef(null);
 
@@ -50,16 +55,15 @@ export default function CollabPanel({ onClose, onDropPin, onFlyTo, isMobile }) {
 
   async function loadMessages() {
     if (!session) return;
-    const msgs = await base44.entities.CollabMessage.filter({ session_id: session.id }, "created_date", 50);
-    setMessages(msgs);
+    const { messages: msgs } = await collab("listMessages", { session_id: session.id });
+    setMessages(msgs || []);
   }
 
   async function loadPins() {
     if (!session) return;
-    const ps = await base44.entities.CollabPin.filter({ session_id: session.id });
-    setPins(ps);
-    // Notify map of updated pins
-    if (onDropPin) onDropPin(ps);
+    const { pins: ps } = await collab("listPins", { session_id: session.id });
+    setPins(ps || []);
+    if (onDropPin) onDropPin(ps || []);
   }
 
   async function createSession() {
@@ -68,17 +72,16 @@ export default function CollabPanel({ onClose, onDropPin, onFlyTo, isMobile }) {
     setLoading(true); setError("");
     try {
       const code = generateCode();
-      const sess = await base44.entities.CollabSession.create({
+      const { session: sess } = await collab("create", {
         name: sessionName.trim(),
         invite_code: code,
         owner_username: username,
         member_usernames: [username],
-        is_active: true,
       });
       setSession(sess);
       setView("session");
     } catch (err) {
-      setError("Napaka pri ustvarjanju seje: " + (err?.message || "Neznana napaka"));
+      setError("Napaka: " + (err?.message || "Neznana napaka"));
     } finally {
       setLoading(false);
     }
@@ -89,72 +92,50 @@ export default function CollabPanel({ onClose, onDropPin, onFlyTo, isMobile }) {
     if (!joinCode.trim()) { setError("Vnesite kodo seje."); return; }
     setLoading(true); setError("");
     try {
-      const results = await base44.entities.CollabSession.filter({ invite_code: joinCode.trim().toUpperCase() });
-      if (results.length === 0) { setError("Seja ni najdena."); return; }
-      const sess = results[0];
-      const members = sess.member_usernames || [];
-      if (!members.includes(username)) {
-        await base44.entities.CollabSession.update(sess.id, { member_usernames: [...members, username] });
-      }
-      const updated = { ...sess, member_usernames: members.includes(username) ? members : [...members, username] };
-      setSession(updated);
+      const { session: sess, error: err } = await collab("join", {
+        invite_code: joinCode.trim(),
+        username,
+      });
+      if (err) { setError(err); return; }
+      setSession(sess);
       setView("session");
     } catch (err) {
-      setError("Napaka pri pridružitvi: " + (err?.message || "Neznana napaka"));
+      setError("Napaka: " + (err?.message || "Neznana napaka"));
     } finally {
       setLoading(false);
     }
   }
 
-  async function sendMessage(pinRef = null) {
-    if (!msgText.trim() && !pinRef) return;
-    const text = msgText.trim() || (pinRef ? `📍 ${pinRef.label || "Nova oznaka"}` : "");
+  async function sendMessage() {
+    if (!msgText.trim()) return;
+    const text = msgText.trim();
     setMsgText("");
-    await base44.entities.CollabMessage.create({
-      session_id: session.id,
-      username,
-      text,
-      ...(pinRef ? { pin_ref: pinRef } : {}),
-    });
+    await collab("sendMessage", { session_id: session.id, username, text });
     await loadMessages();
   }
 
-  async function handleDropPin() {
-    setIsDropping(true);
-    onClose?.(); // close panel so user can click map
-  }
-
-  // Called from parent when user picks a location while isDropping
   async function placePin(lat, lng) {
     if (!session) return;
     const label = `${username || "Marker"} — ${new Date().toLocaleTimeString("sl-SI", { hour: "2-digit", minute: "2-digit" })}`;
-    const pin = await base44.entities.CollabPin.create({
+    await collab("addPin", {
       session_id: session.id,
       username,
-      lat, lng,
-      label,
+      lat, lng, label,
       color: colorForUser(username),
     });
     await loadPins();
-    await base44.entities.CollabMessage.create({
-      session_id: session.id,
-      username,
-      text: `📍 Dodal(-a) oznako`,
-      pin_ref: { lat, lng, label },
-    });
     await loadMessages();
   }
 
   async function removePin(pinId) {
-    await base44.entities.CollabPin.delete(pinId);
+    await collab("removePin", { pin_id: pinId });
     await loadPins();
   }
 
   async function leaveSession() {
     clearInterval(pollRef.current);
     if (session && username) {
-      const members = (session.member_usernames || []).filter(u => u !== username);
-      await base44.entities.CollabSession.update(session.id, { member_usernames: members });
+      await collab("leave", { session_id: session.id, username });
       if (onDropPin) onDropPin([]);
     }
     setSession(null);
@@ -283,12 +264,12 @@ export default function CollabPanel({ onClose, onDropPin, onFlyTo, isMobile }) {
               />
               <button
                 onClick={joinSession}
-                disabled={loading}
-                className="w-full flex items-center justify-center gap-2 py-2 rounded-xl text-sm font-medium transition border"
+                disabled={loading || !joinCode.trim()}
+                className="w-full flex items-center justify-center gap-2 py-2 rounded-xl text-sm font-medium transition border disabled:opacity-50"
                 style={{ borderColor: theme.buttonActiveBg, color: theme.buttonActiveBg }}
               >
                 <LogIn className="w-4 h-4" />
-                Pridruži se
+                {loading ? "Iščem..." : "Pridruži se"}
               </button>
             </div>
           </motion.div>
@@ -376,13 +357,11 @@ export default function CollabPanel({ onClose, onDropPin, onFlyTo, isMobile }) {
             {/* Input */}
             <div className="p-2 border-t flex items-center gap-1.5" style={{ borderColor: `${theme.menuText}18` }}>
               <button
-                onClick={async () => {
-                  // Signal parent to enter pin-drop mode
+                onClick={() => {
                   if (onDropPin) {
                     window._collabPanelPlacePin = async (lat, lng) => { await placePin(lat, lng); };
                   }
                   onClose?.();
-                  // Re-open after pin placed via _collabPanelPlacePin callback
                 }}
                 className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-xl border transition hover:scale-105"
                 style={{ borderColor: `${theme.menuText}22`, color: theme.menuText }}
