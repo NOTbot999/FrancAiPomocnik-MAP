@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Layers, Locate, LoaderCircle, Plus, Minus, Ruler, MapPin, Trash2, MousePointer2, Navigation, Settings, Route, WifiOff, Brain, TrendingUp, Box, X, RotateCcw, RotateCw, Mountain } from "lucide-react";
+import { Layers, Locate, LoaderCircle, Plus, Minus, Ruler, MapPin, Trash2, MousePointer2, Navigation, Settings, Route, WifiOff, Brain, TrendingUp, Box, X, RotateCcw, RotateCw, Mountain, Users, Camera } from "lucide-react";
 import { useMap } from "react-leaflet";
 import { createPortal } from "react-dom";
 import SearchBar from "./SearchBar";
@@ -29,6 +29,8 @@ function MobileTopBarInner({
   activeSearchLayers, onSearchLayersChange,
   is3DOpen, on3DToggle,
   isLidarOpen, onLidarToggle,
+  isCollabOpen, onCollabToggle,
+  onAROpen,
 }) {
   const map = useMap();
   const container = map.getContainer();
@@ -114,6 +116,16 @@ function MobileTopBarInner({
     if (id === "lidar") return (
       <button key="lidar" onClick={onLidarToggle} style={isLidarOpen ? btnActiveStyle : btnStyle} className={btnBase}>
         <Mountain style={iconStyle} />
+      </button>
+    );
+    if (id === "collab") return (
+      <button key="collab" onClick={onCollabToggle} style={isCollabOpen ? btnActiveStyle : btnStyle} className={btnBase}>
+        <Users style={iconStyle} />
+      </button>
+    );
+    if (id === "ar") return (
+      <button key="ar" onClick={onAROpen} style={btnStyle} className={btnBase}>
+        <Camera style={iconStyle} />
       </button>
     );
     return null;

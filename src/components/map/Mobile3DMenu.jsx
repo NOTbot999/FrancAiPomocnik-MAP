@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { GripVertical, Navigation, Route, X, Link2, ChevronDown, ChevronUp, Layers, WifiOff, Palette, Brain, AlertTriangle, TrendingUp, Box, Locate, Loader2 } from "lucide-react";
+import { GripVertical, Navigation, Route, X, Link2, ChevronDown, ChevronUp, Layers, WifiOff, Palette, Brain, AlertTriangle, TrendingUp, Box, Locate, Loader2, Users, Camera } from "lucide-react";
 import LagReportModal from "@/components/map/LagReportModal";
 import { Slider } from "@/components/ui/slider";
 import MyTracks from "./MyTracks";
@@ -19,6 +19,8 @@ const DEFAULT_BUTTONS = [
   { id: "ai",      label: "AI Asistent",    icon: Brain },
   { id: "trackanalyzer", label: "Analiza sledi",    icon: TrendingUp },
   { id: "view3d",        label: "3D Pogled",         icon: Box },
+  { id: "collab",        label: "Skupno delo",       icon: Users },
+  { id: "ar",            label: "AR Pogled",         icon: Camera },
 ];
 
 function loadPrefs() {
@@ -80,6 +82,9 @@ export default function Mobile3DMenu({
   onRemoveCustomLayer,
   activeSearchLayers,
   onSearchLayersChange,
+  isCollabOpen,
+  onCollabToggle,
+  onAROpen,
 }) {
   const [prefs, setPrefsState] = useState(loadPrefs);
   const [showTracks, setShowTracks] = useState(false);
@@ -194,6 +199,8 @@ export default function Mobile3DMenu({
       case "ai": onAIToggle(); break;
       case "trackanalyzer": onTrackAnalyzerToggle(); break;
       case "view3d": on3DToggle(); break;
+      case "collab": if (onCollabToggle) onCollabToggle(); break;
+      case "ar": if (onAROpen) onAROpen(); break;
       default: break;
     }
   };

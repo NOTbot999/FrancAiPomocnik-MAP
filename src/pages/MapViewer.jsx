@@ -20,7 +20,7 @@ import { base44 } from "@/api/base44Client";
 import { scopedGet, scopedSet } from "@/lib/userPrefs";
 import Mobile3DMenu from "@/components/map/Mobile3DMenu";
 import MobileBottomNav from "@/components/map/MobileBottomNav";
-import { Layers, Locate, Navigation, Route, WifiOff, Brain, TrendingUp, Box, Users } from "lucide-react";
+import { Layers, Locate, Navigation, Route, WifiOff, Brain, TrendingUp, Box, Users, Camera } from "lucide-react";
 import CollabPanel from "@/components/map/CollabPanel";
 import CollabPinsLayer from "@/components/map/CollabPinsLayer";
 
@@ -405,6 +405,9 @@ export default function MapViewer() {
           onSearchLayersChange: setActiveSearchLayers,
           is3DOpen,
           on3DToggle: () => { setIs3DOpen(p => !p); setMapLibreEverOpened(true); },
+          isCollabOpen,
+          onCollabToggle: () => setIsCollabOpen(p => !p),
+          onAROpen: () => { window.location.href = '/ar'; },
         } : null}
         isPinPicking={isPinPicking}
         onPinPicked={(latlng) => { setPinnedLocation([latlng.lat, latlng.lng]); setIsPinPicking(false); }}
@@ -567,6 +570,7 @@ export default function MapViewer() {
                 trackanalyzer: { Icon: TrendingUp, label: "Analiza sledi", onClick: () => setIsTrackAnalyzerOpen(p => !p), isActive: isTrackAnalyzerOpen },
                 view3d: { Icon: Box, label: "3D Pogled", onClick: () => { setIs3DOpen(p => !p); setMapLibreEverOpened(true); }, isActive: is3DOpen },
                 collab: { Icon: Users, label: "Skupno delo", onClick: () => setIsCollabOpen(p => !p), isActive: isCollabOpen },
+                ar: { Icon: Camera, label: "AR Pogled", onClick: () => { window.location.href = '/ar'; }, isActive: false },
               };
               
               const config = buttonConfigs[btnId];
@@ -791,6 +795,9 @@ export default function MapViewer() {
           onRemoveCustomLayer={handleRemoveCustomLayer}
           activeSearchLayers={activeSearchLayers}
           onSearchLayersChange={setActiveSearchLayers}
+          isCollabOpen={isCollabOpen}
+          onCollabToggle={() => { setIsCollabOpen(p => !p); setIsMobile3DMenuOpen(false); }}
+          onAROpen={() => { window.location.href = '/ar'; }}
         />
       )}
     </div>

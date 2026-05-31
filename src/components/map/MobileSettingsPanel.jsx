@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { GripVertical, Search, Locate, Navigation, Route, Ruler, X, Link2, ChevronDown, ChevronUp, Layers, Plus, WifiOff, Palette, Brain, AlertTriangle, TrendingUp, Box, Trash2, Mountain } from "lucide-react";
+import { GripVertical, Search, Locate, Navigation, Route, Ruler, X, Link2, ChevronDown, ChevronUp, Layers, Plus, WifiOff, Palette, Brain, AlertTriangle, TrendingUp, Box, Trash2, Mountain, Users, Camera } from "lucide-react";
 import LagReportModal from "@/components/map/LagReportModal";
 import { Slider } from "@/components/ui/slider";
 import MyTracks from "./MyTracks";
@@ -23,6 +23,8 @@ const DEFAULT_BUTTONS = [
   { id: "trackanalyzer", label: "Analiza sledi",    icon: TrendingUp },
   { id: "view3d",        label: "3D Pogled",         icon: Box },
   { id: "lidar",         label: "LIDAR Terrain",     icon: Mountain },
+  { id: "collab",        label: "Skupno delo",       icon: Users },
+  { id: "ar",            label: "AR Pogled",         icon: Camera },
 ];
 
 function loadPrefs() {
