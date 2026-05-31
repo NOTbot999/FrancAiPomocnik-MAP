@@ -407,8 +407,8 @@ function ArcGISExportLayer({ url, opacity, layerIds, maxZoom, maxNativeZoom, bbo
        maxZoom: maxZoom || 22,
        maxNativeZoom: maxNativeZoom || 19,
        bounds: [[45.3, 13.3], [46.9, 16.8]],
-       keepBuffer: 2,
-       updateWhenIdle: true,
+       keepBuffer: 4,
+       updateWhenIdle: false,
        updateWhenZooming: false,
        pane: pane || "overlayPane",
        zIndex: zIndex || 400,
@@ -456,7 +456,7 @@ function ArcGISExportLayer({ url, opacity, layerIds, maxZoom, maxNativeZoom, bbo
     }
     layerRef.current = arcLayer;
     return () => { arcLayer.remove(); };
-    }, [url, opacity, layerIds, map, useBboxSR, useImageSR, useFormat, useTransparent, enhance]);
+    }, [url, layerIds, map, useBboxSR, useImageSR, useFormat, useTransparent, enhance]);
 
   // Update opacity
   useEffect(() => {
@@ -640,14 +640,14 @@ export default function MapContainerComponent({
               layers={wmsLayers}
               format={layer.format || "image/png"}
               transparent={layer.transparent !== false}
-              version={layer.version || "1.1.1"}
-              opacity={opacity}
-              crs={L.CRS.EPSG3857}
-              tileSize={layer.tileSize || 512}
-              detectRetina={false}
-              keepBuffer={2}
-              updateWhenIdle={true}
-              updateWhenZooming={false}
+                version={layer.version || "1.1.1"}
+                opacity={opacity}
+                crs={L.CRS.EPSG3857}
+                tileSize={layer.tileSize || 256}
+                detectRetina={false}
+                keepBuffer={4}
+                updateWhenIdle={false}
+                updateWhenZooming={false}
               pane={pane}
               zIndex={400 + index}
             />
