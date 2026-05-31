@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Users, Plus, LogIn, Send, MapPin, Copy, Check, Trash2, LogOut } from "lucide-react";
+import { X, Users, Plus, LogIn, Send, MapPin, Copy, Check, Trash2, LogOut, AlertTriangle } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { loadTheme } from "@/components/map/ThemeCustomizer";
 
@@ -151,6 +151,18 @@ export default function CollabPanel({ onClose, onDropPin, onFlyTo, isMobile }) {
     setView("home");
   }
 
+  async function deleteSession(sess) {
+    if (!window.confirm(`Izbriši sejo "${sess.name}"? Tega ni mogoče razveljaviti.`)) return;
+    await collab("deleteSession", { session_id: sess.id, username });
+    if (session?.id === sess.id) {
+      clearInterval(pollRef.current);
+      setSession(null); setMessages([]); setPins([]);
+      if (onDropPin) onDropPin([]);
+      setView("home");
+    }
+    setMySessions(prev => prev.filter(s => s.id !== sess.id));
+  }
+
   async function copyCode() {
     if (!session) return;
     await navigator.clipboard.writeText(session.invite_code);
@@ -235,18 +247,29 @@ export default function CollabPanel({ onClose, onDropPin, onFlyTo, isMobile }) {
                 <p className="text-xs font-semibold uppercase opacity-50 tracking-wide">Moje seje</p>
                 <div className="flex flex-col gap-1.5">
                   {mySessions.map(s => (
-                    <button
-                      key={s.id}
-                      onClick={() => { setSession(s); setView("session"); }}
-                      className="w-full flex items-center justify-between px-3 py-2 rounded-xl border text-left transition hover:opacity-80"
-                      style={{ borderColor: `${theme.menuText}22`, backgroundColor: `${theme.menuText}06` }}
-                    >
-                      <div>
-                        <p className="text-sm font-medium">{s.name}</p>
-                        <p className="text-[10px] opacity-50">{(s.member_usernames || []).length} članov · koda: <span className="font-mono">{s.invite_code}</span></p>
-                      </div>
-                      <LogIn className="w-3.5 h-3.5 opacity-40 flex-shrink-0" />
-                    </button>
+                    <div key={s.id} className="flex items-center gap-1">
+                      <button
+                        onClick={() => { setSession(s); setView("session"); }}
+                        className="flex-1 flex items-center justify-between px-3 py-2 rounded-xl border text-left transition hover:opacity-80"
+                        style={{ borderColor: `${theme.menuText}22`, backgroundColor: `${theme.menuText}06` }}
+                      >
+                        <div>
+                          <p className="text-sm font-medium">{s.name}</p>
+                          <p className="text-[10px] opacity-50">{(s.member_usernames || []).length} članov · koda: <span className="font-mono">{s.invite_code}</span></p>
+                        </div>
+                        <LogIn className="w-3.5 h-3.5 opacity-40 flex-shrink-0" />
+                      </button>
+                      {s.owner_username === username && (
+                        <button
+                          onClick={() => deleteSession(s)}
+                          className="p-2 rounded-xl border transition hover:opacity-100 opacity-40 hover:text-red-400"
+                          style={{ borderColor: `${theme.menuText}22` }}
+                          title="Izbriši sejo"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
                   ))}
                 </div>
               </div>

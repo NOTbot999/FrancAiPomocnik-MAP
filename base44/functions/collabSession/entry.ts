@@ -77,6 +77,19 @@ Deno.serve(async (req) => {
       await base44.asServiceRole.entities.CollabPin.delete(pin_id);
       return Response.json({ ok: true });
 
+    } else if (action === "deleteSession") {
+      const { session_id, username } = body;
+      const sess = await base44.asServiceRole.entities.CollabSession.get(session_id);
+      if (!sess) return Response.json({ ok: true });
+      if (sess.owner_username !== username) return Response.json({ error: "Samo lastnik lahko izbriše sejo." }, { status: 403 });
+      // Delete all messages and pins
+      const msgs = await base44.asServiceRole.entities.CollabMessage.filter({ session_id });
+      for (const m of msgs) await base44.asServiceRole.entities.CollabMessage.delete(m.id);
+      const pins = await base44.asServiceRole.entities.CollabPin.filter({ session_id });
+      for (const p of pins) await base44.asServiceRole.entities.CollabPin.delete(p.id);
+      await base44.asServiceRole.entities.CollabSession.delete(session_id);
+      return Response.json({ ok: true });
+
     } else {
       return Response.json({ error: "Unknown action" }, { status: 400 });
     }
