@@ -110,32 +110,69 @@ export default function ARFieldExplorer() {
     return () => { if (watchIdRef.current) navigator.geolocation.clearWatch(watchIdRef.current); };
   }, []);
 
-  // Compass
+  // Compass — absolutna smer (deviceorientationabsolute) ima prednost, fallback na deviceorientation
+  const [needsCompassPermission, setNeedsCompassPermission] = useState(false);
+  const absoluteReceivedRef = useRef(false);
+
   useEffect(() => {
-    const handleOrientation = (e) => {
+    const handleAbsolute = (e) => {
+      absoluteReceivedRef.current = true;
+      // webkitCompassHeading = iOS, alpha na absolute eventu = Android
       if (e.webkitCompassHeading != null) {
         setHeading(e.webkitCompassHeading);
       } else if (e.alpha != null) {
-        setHeading((360 - e.alpha) % 360);
+        setHeading((360 - e.alpha + 360) % 360);
       }
     };
-    const requestPermission = async () => {
-      if (typeof DeviceOrientationEvent?.requestPermission === "function") {
-        try {
-          const perm = await DeviceOrientationEvent.requestPermission();
-          if (perm === "granted") window.addEventListener("deviceorientationabsolute", handleOrientation, true);
-        } catch {}
-      } else {
-        window.addEventListener("deviceorientationabsolute", handleOrientation, true);
-        window.addEventListener("deviceorientation", handleOrientation, true);
+
+    const handleRelative = (e) => {
+      // Only use relative if absolute event never fired
+      if (absoluteReceivedRef.current) return;
+      if (e.webkitCompassHeading != null) {
+        setHeading(e.webkitCompassHeading);
+      } else if (e.alpha != null) {
+        setHeading((360 - e.alpha + 360) % 360);
       }
     };
-    requestPermission();
+
+    const attach = () => {
+      window.addEventListener("deviceorientationabsolute", handleAbsolute, true);
+      window.addEventListener("deviceorientation", handleRelative, true);
+    };
+
+    if (typeof DeviceOrientationEvent?.requestPermission === "function") {
+      // iOS 13+ needs user gesture — show button
+      setNeedsCompassPermission(true);
+    } else {
+      attach();
+    }
+
     return () => {
-      window.removeEventListener("deviceorientationabsolute", handleOrientation, true);
-      window.removeEventListener("deviceorientation", handleOrientation, true);
+      window.removeEventListener("deviceorientationabsolute", handleAbsolute, true);
+      window.removeEventListener("deviceorientation", handleRelative, true);
     };
   }, []);
+
+  const requestCompassPermission = async () => {
+    try {
+      const perm = await DeviceOrientationEvent.requestPermission();
+      if (perm === "granted") {
+        setNeedsCompassPermission(false);
+        const handleAbsolute = (e) => {
+          absoluteReceivedRef.current = true;
+          if (e.webkitCompassHeading != null) setHeading(e.webkitCompassHeading);
+          else if (e.alpha != null) setHeading((360 - e.alpha + 360) % 360);
+        };
+        const handleRelative = (e) => {
+          if (absoluteReceivedRef.current) return;
+          if (e.webkitCompassHeading != null) setHeading(e.webkitCompassHeading);
+          else if (e.alpha != null) setHeading((360 - e.alpha + 360) % 360);
+        };
+        window.addEventListener("deviceorientationabsolute", handleAbsolute, true);
+        window.addEventListener("deviceorientation", handleRelative, true);
+      }
+    } catch {}
+  };
 
   // Fetch collab pins + caves
   useEffect(() => {
@@ -386,10 +423,20 @@ export default function ARFieldExplorer() {
           </div>
         </div>
       )}
-      {!error && streamReady && userPos && heading == null && (
+      {!error && streamReady && userPos && needsCompassPermission && (
+        <div className="absolute bottom-28 inset-x-4 flex justify-center" style={{ zIndex: 10 }}>
+          <button
+            onClick={requestCompassPermission}
+            className="bg-sky-500/95 backdrop-blur-md rounded-xl px-5 py-3 text-white text-sm font-semibold flex items-center gap-2 shadow-lg active:scale-95 transition"
+          >
+            <Navigation className="w-4 h-4" /> Dovoli dostop do kompasa
+          </button>
+        </div>
+      )}
+      {!error && streamReady && userPos && !needsCompassPermission && heading == null && (
         <div className="absolute bottom-28 inset-x-4 flex justify-center" style={{ zIndex: 10 }}>
           <div className="bg-sky-500/90 backdrop-blur-md rounded-xl px-4 py-2 text-white text-xs flex items-center gap-2">
-            <Navigation className="w-4 h-4" /> Premakni telefon za kalibracijo kompasa...
+            <Navigation className="w-4 h-4" /> Premakni telefon v obliki osmice za kalibracijo kompasa...
           </div>
         </div>
       )}
