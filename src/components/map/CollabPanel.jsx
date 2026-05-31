@@ -66,34 +66,44 @@ export default function CollabPanel({ onClose, onDropPin, onFlyTo, isMobile }) {
     if (!username) { setError("Prijavite se za ustvarjanje seje."); return; }
     if (!sessionName.trim()) { setError("Vnesite ime seje."); return; }
     setLoading(true); setError("");
-    const code = generateCode();
-    const sess = await base44.entities.CollabSession.create({
-      name: sessionName.trim(),
-      invite_code: code,
-      owner_username: username,
-      member_usernames: [username],
-      is_active: true,
-    });
-    setSession(sess);
-    setView("session");
-    setLoading(false);
+    try {
+      const code = generateCode();
+      const sess = await base44.entities.CollabSession.create({
+        name: sessionName.trim(),
+        invite_code: code,
+        owner_username: username,
+        member_usernames: [username],
+        is_active: true,
+      });
+      setSession(sess);
+      setView("session");
+    } catch (err) {
+      setError("Napaka pri ustvarjanju seje: " + (err?.message || "Neznana napaka"));
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function joinSession() {
     if (!username) { setError("Prijavite se za pridružitev seje."); return; }
     if (!joinCode.trim()) { setError("Vnesite kodo seje."); return; }
     setLoading(true); setError("");
-    const results = await base44.entities.CollabSession.filter({ invite_code: joinCode.trim().toUpperCase() });
-    if (results.length === 0) { setError("Seja ni najdena."); setLoading(false); return; }
-    const sess = results[0];
-    const members = sess.member_usernames || [];
-    if (!members.includes(username)) {
-      await base44.entities.CollabSession.update(sess.id, { member_usernames: [...members, username] });
+    try {
+      const results = await base44.entities.CollabSession.filter({ invite_code: joinCode.trim().toUpperCase() });
+      if (results.length === 0) { setError("Seja ni najdena."); return; }
+      const sess = results[0];
+      const members = sess.member_usernames || [];
+      if (!members.includes(username)) {
+        await base44.entities.CollabSession.update(sess.id, { member_usernames: [...members, username] });
+      }
+      const updated = { ...sess, member_usernames: members.includes(username) ? members : [...members, username] };
+      setSession(updated);
+      setView("session");
+    } catch (err) {
+      setError("Napaka pri pridružitvi: " + (err?.message || "Neznana napaka"));
+    } finally {
+      setLoading(false);
     }
-    const updated = { ...sess, member_usernames: members.includes(username) ? members : [...members, username] };
-    setSession(updated);
-    setView("session");
-    setLoading(false);
   }
 
   async function sendMessage(pinRef = null) {
@@ -244,12 +254,12 @@ export default function CollabPanel({ onClose, onDropPin, onFlyTo, isMobile }) {
               />
               <button
                 onClick={createSession}
-                disabled={loading}
-                className="w-full flex items-center justify-center gap-2 py-2 rounded-xl text-sm font-medium transition"
+                disabled={loading || !sessionName.trim()}
+                className="w-full flex items-center justify-center gap-2 py-2 rounded-xl text-sm font-medium transition disabled:opacity-50"
                 style={{ backgroundColor: theme.buttonActiveBg, color: theme.buttonActiveText || "#fff" }}
               >
                 <Plus className="w-4 h-4" />
-                Ustvari sejo
+                {loading ? "Ustvarjam..." : "Ustvari sejo"}
               </button>
             </div>
 
