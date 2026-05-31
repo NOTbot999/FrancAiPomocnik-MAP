@@ -1,7 +1,9 @@
-import React, { useEffect, useRef, useState, useMemo } from "react";
+import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
-import { X, Camera, MapPin, Navigation, AlertTriangle, Info, Layers } from "lucide-react";
+import { X, Camera, MapPin, Navigation, AlertTriangle, Info, Layers, Loader2, Check } from "lucide-react";
 import { Link } from "react-router-dom";
+import { CATEGORIES, fetchFullSloveniaLayer } from "@/components/map/SearchBar";
+import { loadCaves, cavesToLayerFeatures } from "@/components/map/CaveLayer";
 
 const EARTH_R = 6371000;
 
@@ -36,12 +38,25 @@ const RADIUS_OPTIONS = [
   { label: "30 km", value: 30000 },
 ];
 
-// Stable color per category
 const CAT_COLORS = [
   "#10b981","#6366f1","#f59e0b","#ef4444","#3b82f6",
   "#8b5cf6","#ec4899","#14b8a6","#f97316","#a3e635",
 ];
 function categoryColor(idx) { return CAT_COLORS[idx % CAT_COLORS.length]; }
+
+// AR localStorage key for active categories
+const AR_ACTIVE_CATS_KEY = "ar_active_categories";
+
+function loadActiveCats() {
+  try {
+    const s = localStorage.getItem(AR_ACTIVE_CATS_KEY);
+    return s ? JSON.parse(s) : [];
+  } catch { return []; }
+}
+
+function saveActiveCats(cats) {
+  try { localStorage.setItem(AR_ACTIVE_CATS_KEY, JSON.stringify(cats)); } catch {}
+}
 
 export default function ARFieldExplorer() {
   const videoRef = useRef(null);
@@ -49,14 +64,18 @@ export default function ARFieldExplorer() {
   const [error, setError] = useState(null);
   const [userPos, setUserPos] = useState(null);
   const [heading, setHeading] = useState(null);
-  const [nearbyPins, setNearbyPins] = useState([]);
-  const [nearbyCaves, setNearbyCaves] = useState([]);
-  const [cachedLayers, setCachedLayers] = useState([]); // all CachedLayer records
-  const [nearbyFromCache, setNearbyFromCache] = useState([]); // filtered by radius
-  const [radius, setRadius] = useState(5000); // default 5 km
+  const [radius, setRadius] = useState(5000);
   const [showInfo, setShowInfo] = useState(false);
   const [showLayers, setShowLayers] = useState(false);
-  const [hiddenCategories, setHiddenCategories] = useState(new Set());
+
+  // Active category IDs and their loaded feature data
+  const [activeCatIds, setActiveCatIds] = useState(loadActiveCats);
+  const [catFeatures, setCatFeatures] = useState({}); // catId → [{lat,lng,label}]
+  const [loadingCats, setLoadingCats] = useState(new Set());
+
+  // Collab pins + caves (built-in)
+  const [nearbyPins, setNearbyPins] = useState([]);
+  const [nearbyCaves, setNearbyCaves] = useState([]);
   const watchIdRef = useRef(null);
 
   // Camera
@@ -118,14 +137,14 @@ export default function ARFieldExplorer() {
     };
   }, []);
 
-  // Fetch pins + caves when position changes
+  // Fetch collab pins + caves
   useEffect(() => {
     if (!userPos) return;
     const fetchData = async () => {
       try {
         const [pins, caves] = await Promise.all([
           base44.entities.CollabPin.list("-created_date", 50),
-          base44.entities.Cave.list("-created_date", 100),
+          base44.entities.Cave.list("-created_date", 200),
         ]);
         setNearbyPins(
           (pins || [])
@@ -133,7 +152,7 @@ export default function ARFieldExplorer() {
             .map(p => ({ ...p, _dist: distanceTo(userPos.lat, userPos.lng, p.lat, p.lng) }))
             .filter(p => p._dist < radius)
             .sort((a, b) => a._dist - b._dist)
-            .slice(0, 15)
+            .slice(0, 20)
         );
         setNearbyCaves(
           (caves || [])
@@ -141,68 +160,72 @@ export default function ARFieldExplorer() {
             .map(c => ({ ...c, lat: c.latitude, lng: c.longitude, _dist: distanceTo(userPos.lat, userPos.lng, c.latitude, c.longitude) }))
             .filter(c => c._dist < radius)
             .sort((a, b) => a._dist - b._dist)
-            .slice(0, 15)
+            .slice(0, 20)
         );
       } catch {}
     };
     fetchData();
-    const interval = setInterval(fetchData, 10000);
+    const interval = setInterval(fetchData, 15000);
     return () => clearInterval(interval);
   }, [userPos, radius]);
 
-  // Load CachedLayer records + subscribe to changes (auto-sync)
-  useEffect(() => {
-    const loadLayers = async () => {
-      try {
-        const layers = await base44.entities.CachedLayer.list("-built_at", 100);
-        setCachedLayers(layers || []);
-      } catch {}
-    };
-    loadLayers();
-
-    // Real-time subscription — auto-syncs when new categories are added
-    const unsubscribe = base44.entities.CachedLayer.subscribe((event) => {
-      if (event.type === "create") {
-        setCachedLayers(prev => [...prev, event.data]);
-      } else if (event.type === "update") {
-        setCachedLayers(prev => prev.map(l => l.id === event.id ? event.data : l));
-      } else if (event.type === "delete") {
-        setCachedLayers(prev => prev.filter(l => l.id !== event.id));
+  // Load a category's features
+  const loadCategory = useCallback(async (catId) => {
+    if (catFeatures[catId]) return; // already loaded
+    setLoadingCats(prev => new Set([...prev, catId]));
+    try {
+      const cat = CATEGORIES.find(c => c.id === catId);
+      if (!cat) return;
+      let features = [];
+      if (cat._caveDbLayer) {
+        const caves = await loadCaves();
+        features = cavesToLayerFeatures(caves).map(f => ({
+          lat: f.coords[0], lng: f.coords[1], label: f.label || "Jama"
+        }));
+      } else if (!cat._municipalityLayer) {
+        const layer = await fetchFullSloveniaLayer(cat);
+        features = (layer?.features || []).map(f => {
+          // SearchBar stores coords as [lat, lng]
+          const [lat, lng] = f.coords;
+          return { lat, lng, label: f.label || cat.label };
+        }).filter(f => f.lat && f.lng);
       }
-    });
-    return unsubscribe;
-  }, []);
+      setCatFeatures(prev => ({ ...prev, [catId]: features }));
+    } catch {
+      setCatFeatures(prev => ({ ...prev, [catId]: [] }));
+    } finally {
+      setLoadingCats(prev => { const n = new Set(prev); n.delete(catId); return n; });
+    }
+  }, [catFeatures]);
 
-  // Filter cached layer features by radius + user position
-  useEffect(() => {
-    if (!userPos || cachedLayers.length === 0) { setNearbyFromCache([]); return; }
-    const nearby = [];
-    cachedLayers.forEach((layer, layerIdx) => {
-      if (hiddenCategories.has(layer.category_id)) return;
-      const color = categoryColor(layerIdx);
-      (layer.features || []).forEach((f) => {
-        if (f.type !== "Point" || !f.coords || f.coords.length < 2) return;
-        const [lng, lat] = f.coords; // GeoJSON: [lng, lat]
-        const dist = distanceTo(userPos.lat, userPos.lng, lat, lng);
-        if (dist < radius) {
-          nearby.push({
-            id: `cache-${layer.category_id}-${lat}-${lng}`,
-            label: f.label || layer.category_id,
-            subLabel: layer.category_id,
-            lat, lng,
-            dist,
-            color,
-            type: "category",
-          });
-        }
-      });
+  // Toggle category on/off and load its data
+  const toggleCategory = useCallback(async (catId) => {
+    const cat = CATEGORIES.find(c => c.id === catId);
+    if (cat?._municipalityLayer) return; // skip polygon layers
+
+    setActiveCatIds(prev => {
+      const isActive = prev.includes(catId);
+      const next = isActive ? prev.filter(id => id !== catId) : [...prev, catId];
+      saveActiveCats(next);
+      return next;
     });
-    nearby.sort((a, b) => a.dist - b.dist);
-    setNearbyFromCache(nearby.slice(0, 50)); // max 50 category POIs
-  }, [userPos, cachedLayers, radius, hiddenCategories]);
+    // Load features if not yet loaded
+    if (!catFeatures[catId] && !CATEGORIES.find(c => c.id === catId)?._municipalityLayer) {
+      loadCategory(catId);
+    }
+  }, [catFeatures, loadCategory]);
+
+  // On mount, load features for already-active categories
+  useEffect(() => {
+    activeCatIds.forEach(catId => {
+      if (!catFeatures[catId]) loadCategory(catId);
+    });
+  }, []); // only on mount
 
   // All POIs merged
   const allPois = useMemo(() => {
+    if (!userPos) return [];
+
     const pinPois = nearbyPins.map(p => ({
       id: `pin-${p.id}`,
       label: p.label || "Skupna označba",
@@ -210,8 +233,8 @@ export default function ARFieldExplorer() {
       lat: p.lat, lng: p.lng,
       dist: p._dist,
       color: p.color || "#10b981",
-      type: "pin",
     }));
+
     const cavePois = nearbyCaves.map(c => ({
       id: `cave-${c.id}`,
       label: c.name,
@@ -219,12 +242,33 @@ export default function ARFieldExplorer() {
       lat: c.lat, lng: c.lng,
       dist: c._dist,
       color: "#6366f1",
-      type: "cave",
     }));
-    return [...pinPois, ...cavePois, ...nearbyFromCache];
-  }, [nearbyPins, nearbyCaves, nearbyFromCache]);
 
-  // Compute visible POIs based on heading
+    const catPois = activeCatIds.flatMap((catId, idx) => {
+      const cat = CATEGORIES.find(c => c.id === catId);
+      const features = catFeatures[catId] || [];
+      return features
+        .map(f => {
+          const dist = distanceTo(userPos.lat, userPos.lng, f.lat, f.lng);
+          if (dist > radius) return null;
+          return {
+            id: `cat-${catId}-${f.lat}-${f.lng}`,
+            label: f.label || cat?.label || catId,
+            subLabel: cat?.emoji || "",
+            lat: f.lat, lng: f.lng,
+            dist,
+            color: cat?.color || categoryColor(idx),
+          };
+        })
+        .filter(Boolean)
+        .sort((a, b) => a.dist - b.dist)
+        .slice(0, 30); // max 30 per category
+    });
+
+    return [...pinPois, ...cavePois, ...catPois];
+  }, [nearbyPins, nearbyCaves, activeCatIds, catFeatures, userPos, radius]);
+
+  // Visible POIs based on heading
   const visiblePois = useMemo(() => {
     if (!userPos || heading == null) return [];
     return allPois.map(poi => {
@@ -240,14 +284,7 @@ export default function ARFieldExplorer() {
     }).filter(Boolean).sort((a, b) => b.dist - a.dist);
   }, [userPos, heading, allPois, radius]);
 
-  const toggleCategory = (catId) => {
-    setHiddenCategories(prev => {
-      const next = new Set(prev);
-      if (next.has(catId)) next.delete(catId);
-      else next.add(catId);
-      return next;
-    });
-  };
+  const totalCatPois = activeCatIds.reduce((acc, catId) => acc + (catFeatures[catId]?.length || 0), 0);
 
   return (
     <div className="fixed inset-0 bg-black flex flex-col" style={{ zIndex: 9999 }}>
@@ -287,9 +324,14 @@ export default function ARFieldExplorer() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowLayers(p => !p)}
-            className="w-9 h-9 rounded-xl bg-black/50 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/70 transition"
+            className="relative w-9 h-9 rounded-xl bg-black/50 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/70 transition"
           >
             <Layers className="w-4 h-4" />
+            {activeCatIds.length > 0 && (
+              <span className="absolute -top-1 -right-1 bg-emerald-500 text-white text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                {activeCatIds.length}
+              </span>
+            )}
           </button>
           <button
             onClick={() => setShowInfo(p => !p)}
@@ -407,59 +449,75 @@ export default function ARFieldExplorer() {
             <div className="w-2 h-2 rounded-full bg-indigo-400" />
             <span className="text-white text-xs">{nearbyCaves.length} jam</span>
           </div>
-          <div className="bg-black/50 backdrop-blur-md rounded-xl px-3 py-2 flex items-center gap-1.5">
-            <div className="w-2 h-2 rounded-full bg-amber-400" />
-            <span className="text-white text-xs">{nearbyFromCache.length} kategorij</span>
-          </div>
+          {activeCatIds.length > 0 && (
+            <div className="bg-black/50 backdrop-blur-md rounded-xl px-3 py-2 flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full bg-amber-400" />
+              <span className="text-white text-xs">{totalCatPois} kategorij točk</span>
+            </div>
+          )}
         </div>
       )}
 
       {/* Layers panel */}
       {showLayers && (
         <div className="absolute inset-0 bg-black/70 flex items-end justify-center pb-6" style={{ zIndex: 20 }}>
-          <div className="bg-slate-900 rounded-2xl p-5 w-full max-w-sm mx-4 shadow-2xl border border-slate-700 max-h-[70vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
+          <div className="bg-slate-900 rounded-2xl p-4 w-full max-w-sm mx-4 shadow-2xl border border-slate-700" style={{ maxHeight: "80vh", overflowY: "auto" }}>
+            <div className="flex items-center justify-between mb-3">
               <h3 className="text-white font-bold">Sloji v AR pogledu</h3>
               <button onClick={() => setShowLayers(false)} className="text-slate-400 hover:text-white"><X className="w-4 h-4" /></button>
             </div>
-            {/* Built-in */}
-            <p className="text-slate-500 text-[10px] uppercase font-semibold mb-2">Vgrajeno</p>
+
+            {/* Built-in layers */}
+            <p className="text-slate-500 text-[10px] uppercase font-semibold mb-2">Vgrajeno (vedno vklopljeno)</p>
             <div className="space-y-1.5 mb-4">
-              {[{ id: "_pins", label: "Skupne označbe", color: "#10b981" }, { id: "_caves", label: "Jame", color: "#6366f1" }].map(item => (
+              {[
+                { id: "_pins", label: "Skupne označbe", color: "#10b981", emoji: "📍" },
+                { id: "_caves", label: "Jame (baza)", color: "#6366f1", emoji: "🕳️" },
+              ].map(item => (
                 <div key={item.id} className="flex items-center gap-3 px-3 py-2 rounded-xl bg-slate-800">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
-                  <span className="text-white text-sm">{item.label}</span>
+                  <span className="text-base">{item.emoji}</span>
+                  <span className="text-white text-sm flex-1">{item.label}</span>
+                  <Check className="w-3.5 h-3.5 text-emerald-400" />
                 </div>
               ))}
             </div>
-            {/* CachedLayer categories */}
-            <p className="text-slate-500 text-[10px] uppercase font-semibold mb-2">Kategorije s karte ({cachedLayers.length})</p>
-            {cachedLayers.length === 0 && (
-              <p className="text-slate-500 text-xs text-center py-3">Ni kategorij. Dodaj jih z iskalnikom na karti.</p>
-            )}
-            <div className="space-y-1.5">
-              {cachedLayers.map((layer, idx) => {
-                const hidden = hiddenCategories.has(layer.category_id);
-                const color = categoryColor(idx);
+
+            {/* All categories */}
+            <p className="text-slate-500 text-[10px] uppercase font-semibold mb-2">Kategorije ({activeCatIds.length} vklopljeno)</p>
+            <div className="grid grid-cols-4 gap-1.5">
+              {CATEGORIES.filter(cat => !cat._municipalityLayer).map(cat => {
+                const isActive = activeCatIds.includes(cat.id);
+                const isLoading = loadingCats.has(cat.id);
                 return (
                   <button
-                    key={layer.category_id}
-                    onClick={() => toggleCategory(layer.category_id)}
-                    className="w-full flex items-center gap-3 px-3 py-2 rounded-xl transition"
-                    style={{ backgroundColor: hidden ? "rgba(30,41,59,0.5)" : "rgba(30,41,59,1)" }}
+                    key={cat.id}
+                    onClick={() => toggleCategory(cat.id)}
+                    disabled={isLoading}
+                    className="flex flex-col items-center gap-1 px-1 py-2.5 rounded-xl transition-all relative"
+                    style={{
+                      backgroundColor: isActive ? cat.color + "33" : "rgba(30,41,59,0.8)",
+                      borderWidth: 1,
+                      borderColor: isActive ? cat.color : "transparent",
+                    }}
                   >
-                    <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: hidden ? "#475569" : color }} />
-                    <span className="text-sm flex-1 text-left" style={{ color: hidden ? "#64748b" : "#fff" }}>
-                      {layer.category_id}
+                    {isLoading
+                      ? <Loader2 className="w-5 h-5 text-slate-400 animate-spin" />
+                      : <span className="text-xl leading-none">{cat.emoji}</span>
+                    }
+                    <span className="text-[9px] text-center leading-tight" style={{ color: isActive ? "#fff" : "#64748b" }}>
+                      {cat.label}
                     </span>
-                    <span className="text-[10px] text-slate-500">{(layer.features || []).length} točk</span>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ backgroundColor: hidden ? "#374151" : "#10b981" + "30", color: hidden ? "#6b7280" : "#10b981" }}>
-                      {hidden ? "skrito" : "vidno"}
-                    </span>
+                    {isActive && !isLoading && (
+                      <div className="absolute top-1 right-1 w-2 h-2 rounded-full" style={{ backgroundColor: cat.color }} />
+                    )}
                   </button>
                 );
               })}
             </div>
+
+            <p className="text-slate-600 text-[10px] text-center mt-3">
+              Kategorije se naložijo iz predpomnilnika ali Overpass API
+            </p>
           </div>
         </div>
       )}
@@ -473,10 +531,10 @@ export default function ARFieldExplorer() {
               <button onClick={() => setShowInfo(false)} className="text-slate-400 hover:text-white"><X className="w-4 h-4" /></button>
             </div>
             <div className="space-y-3 text-slate-300 text-sm">
-              <div className="flex gap-2"><div className="w-2 h-2 rounded-full bg-emerald-400 mt-1.5 shrink-0" /><p>Točke skupnega dela, jame in kategorije iz karte se prikažejo glede na smer pogleda.</p></div>
+              <div className="flex gap-2"><div className="w-2 h-2 rounded-full bg-emerald-400 mt-1.5 shrink-0" /><p>Vklopi kategorije z gumbom <strong>Sloji</strong> (zgoraj desno). Vsaka kategorija se naloži enkrat in shrani v predpomnilnik.</p></div>
               <div className="flex gap-2"><div className="w-2 h-2 rounded-full bg-sky-400 mt-1.5 shrink-0" /><p>Izberi radij (1, 5, 10, 30 km) za filtriranje bližnjih točk.</p></div>
-              <div className="flex gap-2"><div className="w-2 h-2 rounded-full bg-amber-400 mt-1.5 shrink-0" /><p>Kategorije se samodejno sinhronizirajo z novimi sloji na karti (real-time).</p></div>
-              <div className="flex gap-2"><div className="w-2 h-2 rounded-full bg-indigo-400 mt-1.5 shrink-0" /><p>Klikni <strong>Sloji</strong> (ikona zgoraj) za upravljanje vidnih kategorij.</p></div>
+              <div className="flex gap-2"><div className="w-2 h-2 rounded-full bg-amber-400 mt-1.5 shrink-0" /><p>Skupne označbe in jame iz baze so vedno prikazane (brez nalaganja).</p></div>
+              <div className="flex gap-2"><div className="w-2 h-2 rounded-full bg-indigo-400 mt-1.5 shrink-0" /><p>Točke se prikažejo glede na smer pogleda (kompas).</p></div>
             </div>
             <button onClick={() => setShowInfo(false)} className="mt-4 w-full bg-emerald-500 text-white rounded-xl py-2 text-sm font-semibold hover:bg-emerald-600 transition">
               Razumem
