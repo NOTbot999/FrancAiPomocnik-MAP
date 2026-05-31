@@ -31,19 +31,5 @@
     "name",
     "invite_code",
     "owner_username"
-  ],
-  "rls": {
-    "create": {
-      "everyone": true
-    },
-    "read": {
-      "everyone": true
-    },
-    "update": {
-      "everyone": true
-    },
-    "delete": {
-      "created_by_id": "{{user.id}}"
-    }
-  }
+  ]
 }

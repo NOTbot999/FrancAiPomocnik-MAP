@@ -37,6 +37,15 @@ Deno.serve(async (req) => {
       await base44.asServiceRole.entities.CollabSession.update(session_id, { member_usernames: members });
       return Response.json({ ok: true });
 
+    } else if (action === "listMySessions") {
+      const { username } = body;
+      // Get all active sessions where user is a member or owner
+      const all = await base44.asServiceRole.entities.CollabSession.list("-created_date", 50);
+      const mine = all.filter(s => s.is_active && (
+        s.owner_username === username || (s.member_usernames || []).includes(username)
+      ));
+      return Response.json({ sessions: mine });
+
     } else if (action === "listMessages") {
       const { session_id } = body;
       const msgs = await base44.asServiceRole.entities.CollabMessage.filter({ session_id }, "created_date", 50);

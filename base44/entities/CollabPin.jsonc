@@ -28,19 +28,5 @@
     "session_id",
     "lat",
     "lng"
-  ],
-  "rls": {
-    "create": {
-      "everyone": true
-    },
-    "read": {
-      "everyone": true
-    },
-    "update": {
-      "everyone": true
-    },
-    "delete": {
-      "everyone": true
-    }
-  }
+  ]
 }

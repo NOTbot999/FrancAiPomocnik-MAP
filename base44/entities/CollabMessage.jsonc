@@ -34,19 +34,5 @@
     "session_id",
     "username",
     "text"
-  ],
-  "rls": {
-    "create": {
-      "everyone": true
-    },
-    "read": {
-      "everyone": true
-    },
-    "update": {
-      "everyone": true
-    },
-    "delete": {
-      "everyone": true
-    }
-  }
+  ]
 }

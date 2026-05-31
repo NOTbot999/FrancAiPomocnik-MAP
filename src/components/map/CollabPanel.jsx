@@ -29,6 +29,7 @@ export default function CollabPanel({ onClose, onDropPin, onFlyTo, isMobile }) {
 
   const [view, setView] = useState("home"); // home | session
   const [session, setSession] = useState(null);
+  const [mySessions, setMySessions] = useState([]);
   const [messages, setMessages] = useState([]);
   const [pins, setPins] = useState([]);
   const [msgText, setMsgText] = useState("");
@@ -41,6 +42,12 @@ export default function CollabPanel({ onClose, onDropPin, onFlyTo, isMobile }) {
   const pollRef = useRef(null);
 
   const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+
+  useEffect(() => {
+    if (username && view === "home") {
+      collab("listMySessions", { username }).then(d => setMySessions(d.sessions || [])).catch(() => {});
+    }
+  }, [view, username]);
 
   useEffect(() => {
     if (view === "session" && session) {
@@ -221,6 +228,29 @@ export default function CollabPanel({ onClose, onDropPin, onFlyTo, isMobile }) {
           <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="flex flex-col gap-4 p-4 overflow-y-auto flex-1">
             {error && <p className="text-xs text-red-400">{error}</p>}
+
+            {/* My sessions */}
+            {mySessions.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase opacity-50 tracking-wide">Moje seje</p>
+                <div className="flex flex-col gap-1.5">
+                  {mySessions.map(s => (
+                    <button
+                      key={s.id}
+                      onClick={() => { setSession(s); setView("session"); }}
+                      className="w-full flex items-center justify-between px-3 py-2 rounded-xl border text-left transition hover:opacity-80"
+                      style={{ borderColor: `${theme.menuText}22`, backgroundColor: `${theme.menuText}06` }}
+                    >
+                      <div>
+                        <p className="text-sm font-medium">{s.name}</p>
+                        <p className="text-[10px] opacity-50">{(s.member_usernames || []).length} članov · koda: <span className="font-mono">{s.invite_code}</span></p>
+                      </div>
+                      <LogIn className="w-3.5 h-3.5 opacity-40 flex-shrink-0" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Create session */}
             <div className="space-y-2">
