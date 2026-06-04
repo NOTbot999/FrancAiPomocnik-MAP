@@ -623,34 +623,8 @@ export const OVERLAY_CATEGORIES = [
     name: "Geologija & Tla",
     icon: "Mountain",
     thumbnail: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=80&h=60&fit=crop",
-    description: "Geološka karta, pedološka karta, kamninska podlaga, minerali",
+    description: "Geološka karta, pedološka karta, kamninska podlaga, plazovi",
     layers: [
-      {
-        id: "geozs_geoloski_enote",
-        name: "Osnovna geološka karta (OGK)",
-        type: "wms",
-        url: "https://ogc.geo-zs.si/soe/wms",
-        layers: "GeoloскаKartaSLO",
-        format: "image/png",
-        transparent: true,
-        version: "1.3.0",
-        opacity: 0.65,
-        thumbnail: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=80&h=60&fit=crop",
-        description: "Osnovna geološka karta 1:100.000 — kamninska podlaga, stratigrafija"
-      },
-      {
-        id: "geozs_inzenirska",
-        name: "Inženirsko-geološka karta",
-        type: "wms",
-        url: "https://ogc.geo-zs.si/soe/wms",
-        layers: "InzenirskaGeologijaSLO",
-        format: "image/png",
-        transparent: true,
-        version: "1.3.0",
-        opacity: 0.6,
-        thumbnail: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=80&h=60&fit=crop",
-        description: "Inženirsko-geološka karta za gradbeništvo in planiranje"
-      },
       {
         id: "arso_tla_pedoloski",
         name: "Pedološka karta tal",
@@ -665,19 +639,6 @@ export const OVERLAY_CATEGORIES = [
         description: "Pedološka karta tal — tipi tal po Sloveniji"
       },
       {
-        id: "geozs_plazovi",
-        name: "Plazovita območja",
-        type: "wms",
-        url: "https://ogc.geo-zs.si/soe/wms",
-        layers: "PlazovitaObmocja",
-        format: "image/png",
-        transparent: true,
-        version: "1.3.0",
-        opacity: 0.65,
-        thumbnail: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=80&h=60&fit=crop",
-        description: "Evidenca plazovitih in nestabilnih območij v Sloveniji"
-      },
-      {
         id: "arso_erozija",
         name: "Erozijsko ogrožena območja",
         type: "wms",
@@ -689,43 +650,108 @@ export const OVERLAY_CATEGORIES = [
         opacity: 0.55,
         thumbnail: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=80&h=60&fit=crop",
         description: "Območja ogrožena z erozijo tal iz ARSO"
+      },
+      {
+        id: "gurs_katastrske_obcine",
+        name: "Katastrske občine",
+        type: "wms",
+        url: "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
+        layers: "SI.GURS.KN:KATASTRSKE_OBCINE",
+        format: "image/png",
+        transparent: true,
+        version: "1.3.0",
+        opacity: 0.5,
+        thumbnail: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=80&h=60&fit=crop",
+        description: "Meje katastrskih občin iz GURS"
+      },
+      {
+        id: "gurs_bonitete",
+        name: "Bonitete kmetijskih zemljišč",
+        type: "wms",
+        url: "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
+        layers: "SI.GURS.KN:BONITETE",
+        format: "image/png",
+        transparent: true,
+        version: "1.3.0",
+        opacity: 0.6,
+        thumbnail: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=80&h=60&fit=crop",
+        description: "Bonitete parcel — kakovost kmetijskih zemljišč"
+      },
+      {
+        id: "gurs_gozdno_gosp",
+        name: "Gozdno-gospodarska območja",
+        type: "wms",
+        url: "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
+        layers: "SI.GURS.KN:GOZDNO_GOSP_OBM",
+        format: "image/png",
+        transparent: true,
+        version: "1.3.0",
+        opacity: 0.5,
+        thumbnail: "https://images.unsplash.com/photo-1448375240586-882707db888b?w=80&h=60&fit=crop",
+        description: "Gozdna gospodarska območja, rastiščni koeficient in odprtost"
       }
     ]
   },
 
-  // ── OBNOVLJIVI VIRI ENERGIJE ──────────────────────────────────
+  // ── ENERGIJA & INFRASTRUKTURA ─────────────────────────────────
   {
     id: "energija",
-    name: "Energija & Okolje",
+    name: "Energija & GJI",
     icon: "Zap",
     thumbnail: "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=80&h=60&fit=crop",
-    description: "Sončni potencial, vetrni potencial, hidroelektrarne, električno omrežje",
+    description: "Električno omrežje, kanalizacija, telekomunikacije, cevovodi iz katastra GJI",
     layers: [
       {
-        id: "arso_soncna_obsevanje",
-        name: "Sončno obsevanje (GHI)",
+        id: "gji_elektrika",
+        name: "Električno omrežje (GJI)",
         type: "wms",
-        url: ARSO_WMS,
-        layers: "ARSO:SONCE_GHI",
+        url: "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
+        layers: "SI.GURS.KGI:LINIJE_ELEKTRICNA_ENERGIJA_G",
         format: "image/png",
         transparent: true,
-        version: "1.1.1",
-        opacity: 0.7,
-        thumbnail: "https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?w=80&h=60&fit=crop",
-        description: "Globalno horizontalno sončno obsevanje — potencial za sončne elektrarne"
+        version: "1.3.0",
+        opacity: 0.85,
+        thumbnail: "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=80&h=60&fit=crop",
+        description: "Električna energija — linije iz katastra gospodarske infrastrukture GURS"
       },
       {
-        id: "arso_veter_potencial",
-        name: "Vetrni potencial",
+        id: "gji_kanalizacija",
+        name: "Kanalizacija (GJI)",
         type: "wms",
-        url: ARSO_WMS,
-        layers: "ARSO:VETER_PLG",
+        url: "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
+        layers: "SI.GURS.KGI:LINIJE_KANALIZACIJA_G",
         format: "image/png",
         transparent: true,
-        version: "1.1.1",
-        opacity: 0.65,
-        thumbnail: "https://images.unsplash.com/photo-1527482937786-6608f6e14c15?w=80&h=60&fit=crop",
-        description: "Povprečna hitrost vetra — potencial za vetrne elektrarne"
+        version: "1.3.0",
+        opacity: 0.8,
+        thumbnail: "https://images.unsplash.com/photo-1559825481-12a05cc00344?w=80&h=60&fit=crop",
+        description: "Kanalizacijska omrežja iz katastra GJI"
+      },
+      {
+        id: "gji_komunikacije",
+        name: "Telekomunikacije (GJI)",
+        type: "wms",
+        url: "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
+        layers: "SI.GURS.KGI:LINIJE_ELEKTRONSKE_KOMUNIKACIJE_G",
+        format: "image/png",
+        transparent: true,
+        version: "1.3.0",
+        opacity: 0.8,
+        thumbnail: "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=80&h=60&fit=crop",
+        description: "Elektronske komunikacije iz katastra GJI"
+      },
+      {
+        id: "gji_nafta",
+        name: "Naftovodi & Plinovodi (GJI)",
+        type: "wms",
+        url: "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
+        layers: "SI.GURS.KGI:LINIJE_NAFTA_G",
+        format: "image/png",
+        transparent: true,
+        version: "1.3.0",
+        opacity: 0.8,
+        thumbnail: "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=80&h=60&fit=crop",
+        description: "Nafta in plin — cevovodi iz katastra GJI"
       },
       {
         id: "arso_hidroloske_postaje",
@@ -739,104 +765,82 @@ export const OVERLAY_CATEGORIES = [
         opacity: 0.9,
         thumbnail: "https://images.unsplash.com/photo-1559825481-12a05cc00344?w=80&h=60&fit=crop",
         description: "Mreža hidroloških merilnih postaj ARSO na vodotokih"
-      },
-      {
-        id: "openinframap_power_lines",
-        name: "Električno omrežje (OSM)",
-        type: "tile",
-        url: "https://tiles.openinframap.org/power/{z}/{x}/{y}.png",
-        attribution: "&copy; OpenInfraMap, &copy; OpenStreetMap",
-        transparent: true,
-        opacity: 0.85,
-        thumbnail: "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=80&h=60&fit=crop",
-        description: "Daljnovodi, transformatorske postaje in elektrarne iz OSM"
-      },
-      {
-        id: "openinframap_petroleum",
-        name: "Naftovodi & Plinovodi (OSM)",
-        type: "tile",
-        url: "https://tiles.openinframap.org/petroleum/{z}/{x}/{y}.png",
-        attribution: "&copy; OpenInfraMap, &copy; OpenStreetMap",
-        transparent: true,
-        opacity: 0.85,
-        thumbnail: "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=80&h=60&fit=crop",
-        description: "Naftovodi, plinovodi in naftna infrastruktura iz OSM"
       }
     ]
   },
 
-  // ── REGISTER PROSTORSKIH ENOT ─────────────────────────────────
+  // ── NASLOVI & STAVBE ─────────────────────────────────────────
   {
     id: "rpe_naslovi",
-    name: "Naslovi & Stavbe (RPE)",
+    name: "Naslovi & Stavbe",
     icon: "Home",
     thumbnail: "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=80&h=60&fit=crop",
-    description: "Register prostorskih enot — hišne številke, naselja, občine, poštne številke",
+    description: "Hišne številke, etaže, parcele, kohezijske regije iz GURS katastra",
     layers: [
       {
         id: "rpe_hs_tocke",
-        name: "Hišne številke (točke)",
+        name: "Hišne številke",
         type: "wms",
-        url: "https://ipi.eprostor.gov.si/wms-si-gurs-rpe/ows",
-        layers: "SI.GURS.RPE:HS",
+        url: "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
+        layers: "SI.GURS.KN:HISNE_STEVILKE",
         format: "image/png",
         transparent: true,
-        version: "1.1.1",
+        version: "1.3.0",
         opacity: 0.9,
         thumbnail: "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=80&h=60&fit=crop",
-        description: "Točne lokacije hišnih številk iz Registra prostorskih enot (zoom 14+)"
+        description: "Hišne številke iz katastra (vidno pri zoom 14+)"
       },
       {
-        id: "rpe_naselja",
-        name: "Naselja (meje)",
+        id: "rpe_gradbene_parcele",
+        name: "Gradbene parcele",
         type: "wms",
-        url: "https://ipi.eprostor.gov.si/wms-si-gurs-rpe/ows",
-        layers: "SI.GURS.RPE:NA",
+        url: "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
+        layers: "SI.GURS.KN:GRADBENE_PARCELE",
         format: "image/png",
         transparent: true,
-        version: "1.1.1",
-        opacity: 0.6,
+        version: "1.3.0",
+        opacity: 0.65,
         thumbnail: "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=80&h=60&fit=crop",
-        description: "Meje naselij iz RPE"
+        description: "Gradbene parcele iz katastra nepremičnin"
       },
       {
-        id: "rpe_obcine",
-        name: "Občine (meje)",
+        id: "rpe_krajevne_skupnosti",
+        name: "Krajevne skupnosti",
         type: "wms",
-        url: "https://ipi.eprostor.gov.si/wms-si-gurs-rpe/ows",
-        layers: "SI.GURS.RPE:OB",
+        url: "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
+        layers: "SI.GURS.RPE:KRAJEVNE_SKUPNOSTI",
         format: "image/png",
         transparent: true,
-        version: "1.1.1",
+        version: "1.3.0",
         opacity: 0.5,
         thumbnail: "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=80&h=60&fit=crop",
-        description: "Administrativne meje občin iz RPE"
+        description: "Meje krajevnih skupnosti iz RPE"
       },
       {
-        id: "rpe_postne_stevilke",
-        name: "Poštne cone",
+        id: "rpe_kohezijske_regije",
+        name: "Kohezijske regije",
         type: "wms",
-        url: "https://ipi.eprostor.gov.si/wms-si-gurs-rpe/ows",
-        layers: "SI.GURS.RPE:PT",
+        url: "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
+        layers: "SI.GURS.RPE:KOHEZIJSKE_REGIJE",
         format: "image/png",
         transparent: true,
-        version: "1.1.1",
+        version: "1.3.0",
         opacity: 0.45,
         thumbnail: "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=80&h=60&fit=crop",
-        description: "Poštna območja in poštne cone Slovenije"
+        description: "Kohezijske regije Slovenije (Vzhodna / Zahodna)"
       },
       {
-        id: "gurs_stavbe",
-        name: "Register stavb (tloris)",
+        id: "gurs_drzavna_meja",
+        name: "Državna meja",
         type: "wms",
-        url: GURS_WMS,
-        layers: "SI.GURS.ZPDZ:STAVBE",
+        url: "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
+        layers: "SI.GURS.EDM:DRZAVNA_MEJA",
         format: "image/png",
         transparent: true,
-        version: "1.1.1",
-        opacity: 0.7,
+        version: "1.3.0",
+        opacity: 0.9,
         thumbnail: "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=80&h=60&fit=crop",
-        description: "Tlorisi stavb iz katastra stavb GURS (vidno pri zoom 14+)"
+        description: "Uradna meja Republike Slovenije"
       }
     ]
   },
@@ -844,49 +848,36 @@ export const OVERLAY_CATEGORIES = [
   // ── PROMET ───────────────────────────────────────────────────
   {
     id: "promet",
-    name: "Promet & Mobilnost",
+    name: "Promet & Ceste",
     icon: "Car",
     thumbnail: "https://images.unsplash.com/photo-1474487548417-781cb71495f3?w=80&h=60&fit=crop",
-    description: "Prometne obremenitve, kolesarsko omrežje, avtobusne postaje, parkirišča",
+    description: "Ceste, kolesarsko omrežje, letališča, javni promet iz GJI katastra",
     layers: [
       {
-        id: "drsi_promet_obremenitve",
-        name: "Prometne obremenitve (PLDP)",
+        id: "gji_ceste",
+        name: "Ceste (GJI kataster)",
         type: "wms",
-        url: "https://storitve.drsi.si/arcgis/services/Promet/MapServer/WMSServer",
-        layers: "0",
+        url: "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
+        layers: "SI.GURS.KGI:LINIJE_CESTE_G",
         format: "image/png",
         transparent: true,
-        version: "1.1.1",
+        version: "1.3.0",
         opacity: 0.8,
         thumbnail: "https://images.unsplash.com/photo-1474487548417-781cb71495f3?w=80&h=60&fit=crop",
-        description: "Povprečni letni dnevni promet (PLDP) na državnih cestah — DRSI"
+        description: "Cestno omrežje iz katastra gospodarske infrastrukture GURS"
       },
       {
-        id: "drsi_ceste_kategorije",
-        name: "Kategorizacija državnih cest",
+        id: "gji_letalisca",
+        name: "Letališka infrastruktura (GJI)",
         type: "wms",
-        url: "https://storitve.drsi.si/arcgis/services/Ceste/MapServer/WMSServer",
-        layers: "0",
+        url: "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
+        layers: "SI.GURS.KGI:LINIJE_LETALISCA_G",
         format: "image/png",
         transparent: true,
-        version: "1.1.1",
-        opacity: 0.8,
-        thumbnail: "https://images.unsplash.com/photo-1474487548417-781cb71495f3?w=80&h=60&fit=crop",
-        description: "Kategorizacija državnih cest (avtoceste, hitre ceste, regionalne, lokalne)"
-      },
-      {
-        id: "kolesarsko_omrezje_drzavno",
-        name: "Državno kolesarsko omrežje",
-        type: "wms",
-        url: "https://storitve.drsi.si/arcgis/services/Kolesarstvo/MapServer/WMSServer",
-        layers: "0",
-        format: "image/png",
-        transparent: true,
-        version: "1.1.1",
+        version: "1.3.0",
         opacity: 0.85,
-        thumbnail: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=80&h=60&fit=crop",
-        description: "Državno kolesarsko omrežje in načrtovane kolesarske povezave"
+        thumbnail: "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=80&h=60&fit=crop",
+        description: "Letališka infrastruktura iz katastra GJI"
       },
       {
         id: "osm_transit",
@@ -897,18 +888,20 @@ export const OVERLAY_CATEGORIES = [
         transparent: true,
         opacity: 0.85,
         thumbnail: "https://images.unsplash.com/photo-1527489377706-5bf97e608852?w=80&h=60&fit=crop",
-        description: "Linije javnega prevoza — avtobusi, vlaki, tramvaji iz OSM"
+        description: "Linije javnega prevoza — avtobusi, vlaki iz OSM"
       },
       {
-        id: "osm_speed_limits",
-        name: "Omejitve hitrosti (OSM)",
-        type: "tile",
-        url: "https://tile.waymarkedtrails.org/cycling/{z}/{x}/{y}.png",
-        attribution: "&copy; OpenStreetMap",
+        id: "gurs_geodetske_tocke_gps",
+        name: "Geodetske točke GPS",
+        type: "wms",
+        url: "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
+        layers: "SI.GURS.DKS:GEOTOCKE_GPS",
+        format: "image/png",
         transparent: true,
-        opacity: 0.7,
+        version: "1.3.0",
+        opacity: 0.9,
         thumbnail: "https://images.unsplash.com/photo-1474487548417-781cb71495f3?w=80&h=60&fit=crop",
-        description: "Cestna omrežja z označenimi omejitvami hitrosti"
+        description: "GNSS geodetske točke iz državnega koordinatnega sistema"
       }
     ]
   },
