@@ -30,7 +30,9 @@ function formatDist(m) {
 }
 
 const H_FOV = 60;
-const V_FOV = 45; // vertical field of view in degrees
+// Portrait phone camera vertical FOV is wider than you'd think (~65°)
+// Using a smaller effective value makes markers spread more on screen
+const V_FOV = 30;
 
 const RADIUS_OPTIONS = [
   { label: "1 km",  value: 1000 },
@@ -128,9 +130,14 @@ export default function ARFieldExplorer() {
       } else if (e.alpha != null) {
         setHeading((360 - e.alpha + 360) % 360);
       }
-      // beta: 90° when phone is perfectly upright portrait, 0° when flat on table
-      // pitch from horizontal = beta - 90: positive = tilting back (looking up), negative = looking down
-      if (e.beta != null) setDevicePitch(e.beta - 90);
+      // iOS beta: ~0° when upright portrait pointing forward, negative when tilting back (looking up)
+      // Android beta: ~90° upright. We detect via webkitCompassHeading (iOS only).
+      // For iOS: pitch = -beta (negative beta when looking up → positive pitch)
+      // For Android: pitch = beta - 90
+      if (e.beta != null) {
+        const isIOS = e.webkitCompassHeading != null;
+        setDevicePitch(isIOS ? -e.beta : e.beta - 90);
+      }
     };
 
     const handleRelative = (e) => {
@@ -141,7 +148,12 @@ export default function ARFieldExplorer() {
       } else if (e.alpha != null) {
         setHeading((360 - e.alpha + 360) % 360);
       }
-      if (e.beta != null) setDevicePitch(e.beta - 90);
+      if (e.beta != null) {
+        // iOS: webkitCompassHeading present. Beta ~0 when upright & horizontal, negative when tilting back (looking up)
+        // Android: no webkitCompassHeading. Beta ~90 when upright. pitch = beta - 90
+        const isIOS = e.webkitCompassHeading != null;
+        setDevicePitch(isIOS ? -e.beta : e.beta - 90);
+      }
     };
 
     const attach = () => {
@@ -171,13 +183,16 @@ export default function ARFieldExplorer() {
         absoluteReceivedRef.current = true;
         if (e.webkitCompassHeading != null) setHeading(e.webkitCompassHeading);
         else if (e.alpha != null) setHeading((360 - e.alpha + 360) % 360);
-        if (e.beta != null) setDevicePitch(e.beta - 90);
+        if (e.beta != null) setDevicePitch(-e.beta); // iOS always here (webkitCompassHeading present)
       };
       const handleRelative = (e) => {
         if (absoluteReceivedRef.current) return;
         if (e.webkitCompassHeading != null) setHeading(e.webkitCompassHeading);
         else if (e.alpha != null) setHeading((360 - e.alpha + 360) % 360);
-        if (e.beta != null) setDevicePitch(e.beta - 90);
+        if (e.beta != null) {
+          const isIOS = e.webkitCompassHeading != null;
+          setDevicePitch(isIOS ? -e.beta : e.beta - 90);
+        }
       };
       window.addEventListener("deviceorientationabsolute", handleAbsolute, true);
       window.addEventListener("deviceorientation", handleRelative, true);
@@ -418,7 +433,9 @@ export default function ARFieldExplorer() {
           {heading != null && (
             <div className="flex items-center gap-1 bg-black/50 backdrop-blur-md rounded-xl px-3 py-1.5">
               <Navigation className="w-3.5 h-3.5 text-sky-400" style={{ transform: `rotate(${heading}deg)` }} />
-              <span className="text-white text-xs font-mono">{Math.round(heading)}° / {devicePitch > 0 ? "+" : ""}{Math.round(devicePitch)}°</span>
+              <span className="text-white text-xs font-mono">
+                {Math.round(heading)}° / pitch:{devicePitch > 0 ? "+" : ""}{Math.round(devicePitch)}°
+              </span>
             </div>
           )}
           {userPos && (
