@@ -31,9 +31,7 @@
     "description"
   ],
   "rls": {
-    "create": {
-      "everyone": true
-    },
+    "create": true,
     "read": {
       "user_condition": {
         "role": "admin"

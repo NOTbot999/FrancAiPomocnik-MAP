@@ -261,6 +261,83 @@ export const OVERLAY_CATEGORIES = [
         opacity: 0.8,
         thumbnail: "https://images.unsplash.com/photo-1559825481-12a05cc00344?w=80&h=60&fit=crop",
         description: "Vodotoki iz ARSO registra voda"
+      },
+      {
+        id: "slopes_waymarked",
+        name: "Smučišča & Tereni",
+        type: "tile",
+        url: "https://tile.waymarkedtrails.org/slopes/{z}/{x}/{y}.png",
+        attribution: "&copy; WaymarkedTrails, &copy; OpenStreetMap",
+        transparent: true,
+        opacity: 0.9,
+        thumbnail: "https://images.unsplash.com/photo-1534274988757-a28bf1a57c17?w=80&h=60&fit=crop",
+        description: "Smučišča, tekaški tereni in zimske poti iz OSM"
+      },
+      {
+        id: "mtb_waymarked",
+        name: "MTB poti",
+        type: "tile",
+        url: "https://tile.waymarkedtrails.org/mtb/{z}/{x}/{y}.png",
+        attribution: "&copy; WaymarkedTrails, &copy; OpenStreetMap",
+        transparent: true,
+        opacity: 0.9,
+        thumbnail: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=80&h=60&fit=crop",
+        description: "Označene MTB kolesarske poti"
+      },
+      {
+        id: "equestrian_waymarked",
+        name: "Konjeniške poti",
+        type: "tile",
+        url: "https://tile.waymarkedtrails.org/riding/{z}/{x}/{y}.png",
+        attribution: "&copy; WaymarkedTrails, &copy; OpenStreetMap",
+        transparent: true,
+        opacity: 0.9,
+        thumbnail: "https://images.unsplash.com/photo-1553284965-83fd3e82fa5a?w=80&h=60&fit=crop",
+        description: "Označene konjeniške poti"
+      },
+      {
+        id: "openrailway_maxspeed",
+        name: "Železnica — hitrosti",
+        type: "tile",
+        url: "https://tiles.openrailwaymap.org/maxspeed/{z}/{x}/{y}.png",
+        attribution: "&copy; OpenRailwayMap",
+        transparent: true,
+        opacity: 0.85,
+        thumbnail: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=80&h=60&fit=crop",
+        description: "Železniške proge z barvnim prikazom hitrosti"
+      },
+      {
+        id: "openrailway_signals",
+        name: "Železnica — signali",
+        type: "tile",
+        url: "https://tiles.openrailwaymap.org/signals/{z}/{x}/{y}.png",
+        attribution: "&copy; OpenRailwayMap",
+        transparent: true,
+        opacity: 0.85,
+        thumbnail: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=80&h=60&fit=crop",
+        description: "Železniški signali in varnostni sistemi"
+      },
+      {
+        id: "carto_roads_only",
+        name: "Ceste (samo ceste)",
+        type: "tile",
+        url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png",
+        attribution: "&copy; CARTO, &copy; OpenStreetMap",
+        transparent: true,
+        opacity: 0.85,
+        thumbnail: "https://images.unsplash.com/photo-1474487548417-781cb71495f3?w=80&h=60&fit=crop",
+        description: "Samo oznake cest in ulic (transparentni sloj)"
+      },
+      {
+        id: "osm_roads_transparent",
+        name: "Ceste & Infrastruktura (OSM)",
+        type: "tile",
+        url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png",
+        attribution: "&copy; CARTO, &copy; OpenStreetMap",
+        transparent: true,
+        opacity: 0.75,
+        thumbnail: "https://images.unsplash.com/photo-1474487548417-781cb71495f3?w=80&h=60&fit=crop",
+        description: "Cestna mreža brez ozadja — za prekrivanje na satelitu ali LIDARu"
       }
     ]
   },
