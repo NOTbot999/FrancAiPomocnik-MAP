@@ -363,22 +363,13 @@ export default function ARFieldExplorer() {
       if (relAngle < -180) relAngle += 360;
       if (Math.abs(relAngle) > halfH + 10) return null;
 
-      // Vertical: elevation-based angle, clamped to screen
-      const poiElev = poiElevations[poi.id];
-      const myElev = userElevation;
-      let vertAngle = 0;
-      if (poiElev != null && myElev != null) {
-        const elevDiff = poiElev - myElev;
-        vertAngle = Math.atan2(elevDiff, Math.max(1, poi.dist)) * (180 / Math.PI);
-      }
-
       const screenX = 50 + (relAngle / halfH) * 50;
-      // vertAngle > 0 = POI higher than user → above center (lower screenY %)
-      const screenY = 50 - (vertAngle / halfV) * 50;
+      // Always show at center vertically — no tilt compensation
+      const screenY = 50;
 
-      return { ...poi, screenX, screenY: Math.max(5, Math.min(95, screenY)), relAngle };
+      return { ...poi, screenX, screenY, relAngle };
     }).filter(Boolean).sort((a, b) => b.dist - a.dist);
-  }, [userPos, heading, allPois, poiElevations, userElevation, radius]);
+  }, [userPos, heading, allPois, radius]);
 
   const totalCatPois = activeCatIds.reduce((acc, catId) => acc + (catFeatures[catId]?.length || 0), 0);
 
