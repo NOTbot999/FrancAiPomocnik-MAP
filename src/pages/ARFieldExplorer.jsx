@@ -30,6 +30,7 @@ function formatDist(m) {
 }
 
 const H_FOV = 60;
+const V_FOV = 45; // vertical field of view in degrees
 
 const RADIUS_OPTIONS = [
   { label: "1 km",  value: 1000 },
@@ -78,6 +79,11 @@ export default function ARFieldExplorer() {
   const [nearbyCaves, setNearbyCaves] = useState([]);
   const watchIdRef = useRef(null);
 
+  // Device tilt (beta = forward/back tilt in degrees)
+  const [deviceTilt, setDeviceTilt] = useState(0); // degrees from horizontal, positive = tilted up
+  const [userElevation, setUserElevation] = useState(null);
+  const [poiElevations, setPoiElevations] = useState({}); // poiId → elevation in meters
+
   // Camera
   useEffect(() => {
     let stream = null;
@@ -123,6 +129,14 @@ export default function ARFieldExplorer() {
       } else if (e.alpha != null) {
         setHeading((360 - e.alpha + 360) % 360);
       }
+      // beta: device tilt forward/back. 90° = flat, 0° = upright portrait.
+      // When phone is held upright (~0-30°), beta≈0. When pointed at sky, beta goes negative.
+      // We want: tilt=0 when pointing straight ahead horizontally.
+      // beta range: -180 to 180. Upright portrait = ~0. Tilted back (looking up) = negative beta.
+      if (e.beta != null) {
+        // Normalize: phone held upright & pointing forward = 0°, tilted up = positive
+        setDeviceTilt(-(e.beta)); // negate so tilting up = positive
+      }
     };
 
     const handleRelative = (e) => {
@@ -132,6 +146,9 @@ export default function ARFieldExplorer() {
         setHeading(e.webkitCompassHeading);
       } else if (e.alpha != null) {
         setHeading((360 - e.alpha + 360) % 360);
+      }
+      if (e.beta != null) {
+        setDeviceTilt(-(e.beta));
       }
     };
 
@@ -157,22 +174,54 @@ export default function ARFieldExplorer() {
     try {
       const perm = await DeviceOrientationEvent.requestPermission();
       if (perm === "granted") {
-        setNeedsCompassPermission(false);
-        const handleAbsolute = (e) => {
-          absoluteReceivedRef.current = true;
-          if (e.webkitCompassHeading != null) setHeading(e.webkitCompassHeading);
-          else if (e.alpha != null) setHeading((360 - e.alpha + 360) % 360);
-        };
-        const handleRelative = (e) => {
-          if (absoluteReceivedRef.current) return;
-          if (e.webkitCompassHeading != null) setHeading(e.webkitCompassHeading);
-          else if (e.alpha != null) setHeading((360 - e.alpha + 360) % 360);
-        };
-        window.addEventListener("deviceorientationabsolute", handleAbsolute, true);
-        window.addEventListener("deviceorientation", handleRelative, true);
+      setNeedsCompassPermission(false);
+      const handleAbsolute = (e) => {
+        absoluteReceivedRef.current = true;
+        if (e.webkitCompassHeading != null) setHeading(e.webkitCompassHeading);
+        else if (e.alpha != null) setHeading((360 - e.alpha + 360) % 360);
+        if (e.beta != null) setDeviceTilt(-(e.beta));
+      };
+      const handleRelative = (e) => {
+        if (absoluteReceivedRef.current) return;
+        if (e.webkitCompassHeading != null) setHeading(e.webkitCompassHeading);
+        else if (e.alpha != null) setHeading((360 - e.alpha + 360) % 360);
+        if (e.beta != null) setDeviceTilt(-(e.beta));
+      };
+      window.addEventListener("deviceorientationabsolute", handleAbsolute, true);
+      window.addEventListener("deviceorientation", handleRelative, true);
       }
     } catch {}
   };
+
+  // Fetch user's own elevation
+  useEffect(() => {
+    if (!userPos) return;
+    fetch(`https://api.open-meteo.com/v1/elevation?latitude=${userPos.lat}&longitude=${userPos.lng}`)
+      .then(r => r.json())
+      .then(d => { if (d.elevation?.[0] != null) setUserElevation(d.elevation[0]); })
+      .catch(() => {});
+  }, [userPos?.lat?.toFixed(3), userPos?.lng?.toFixed(3)]); // only re-fetch when position changes significantly
+
+  // Fetch elevations for visible POIs in batch
+  const fetchPoiElevations = useCallback(async (pois) => {
+    const missing = pois.filter(p => poiElevations[p.id] == null);
+    if (missing.length === 0) return;
+    // Batch up to 100 at a time
+    const batch = missing.slice(0, 100);
+    const lats = batch.map(p => p.lat).join(",");
+    const lngs = batch.map(p => p.lng).join(",");
+    try {
+      const r = await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${lats}&longitude=${lngs}`);
+      const d = await r.json();
+      if (d.elevation) {
+        setPoiElevations(prev => {
+          const next = { ...prev };
+          batch.forEach((p, i) => { next[p.id] = d.elevation[i]; });
+          return next;
+        });
+      }
+    } catch {}
+  }, [poiElevations]);
 
   // Fetch collab pins + caves
   useEffect(() => {
@@ -305,21 +354,53 @@ export default function ARFieldExplorer() {
     return [...pinPois, ...cavePois, ...catPois];
   }, [nearbyPins, nearbyCaves, activeCatIds, catFeatures, userPos, radius]);
 
-  // Visible POIs based on heading
+  // Trigger elevation fetch when allPois changes
+  useEffect(() => {
+    if (allPois.length > 0) fetchPoiElevations(allPois);
+  }, [allPois.map(p => p.id).join(",")]);
+
+  // Visible POIs based on heading + vertical angle from elevation data
   const visiblePois = useMemo(() => {
     if (!userPos || heading == null) return [];
+
+    const halfH = H_FOV / 2;
+    const halfV = V_FOV / 2;
+
     return allPois.map(poi => {
+      // Horizontal
       const bearing = bearingTo(userPos.lat, userPos.lng, poi.lat, poi.lng);
       let relAngle = bearing - heading;
       if (relAngle > 180) relAngle -= 360;
       if (relAngle < -180) relAngle += 360;
-      const halfFov = H_FOV / 2;
-      if (Math.abs(relAngle) > halfFov + 10) return null;
-      const screenX = 50 + (relAngle / halfFov) * 50;
-      const screenY = Math.max(15, 80 - (poi.dist / radius) * 60);
-      return { ...poi, screenX, screenY, relAngle };
+      if (Math.abs(relAngle) > halfH + 10) return null;
+
+      // Vertical: compute true elevation angle to POI
+      const poiElev = poiElevations[poi.id];
+      const myElev = userElevation;
+      let vertAngle = 0; // degrees above/below horizon
+      if (poiElev != null && myElev != null) {
+        const elevDiff = poiElev - myElev; // positive = POI is higher
+        const dist2d = Math.max(1, poi.dist);
+        vertAngle = Math.atan2(elevDiff, dist2d) * (180 / Math.PI);
+      }
+
+      // Adjust for device tilt: when phone tilts up, horizon moves down on screen
+      // deviceTilt: 0 = upright, positive = tilted up (looking up)
+      const relVertAngle = vertAngle - deviceTilt;
+
+      // screenX: horizontal position (0-100%)
+      const screenX = 50 + (relAngle / halfH) * 50;
+
+      // screenY: vertical position. 50% = horizon. Higher on screen = smaller Y% value.
+      // relVertAngle > 0 means POI is above where we're looking → move up (smaller Y%)
+      const screenY = 50 - (relVertAngle / halfV) * 50;
+
+      // Only show if within vertical FOV + margin
+      if (screenY < -20 || screenY > 120) return null;
+
+      return { ...poi, screenX, screenY: Math.max(5, Math.min(95, screenY)), relAngle, vertAngle };
     }).filter(Boolean).sort((a, b) => b.dist - a.dist);
-  }, [userPos, heading, allPois, radius]);
+  }, [userPos, heading, deviceTilt, allPois, poiElevations, userElevation, radius]);
 
   const totalCatPois = activeCatIds.reduce((acc, catId) => acc + (catFeatures[catId]?.length || 0), 0);
 
@@ -348,7 +429,7 @@ export default function ARFieldExplorer() {
           {heading != null && (
             <div className="flex items-center gap-1 bg-black/50 backdrop-blur-md rounded-xl px-3 py-1.5">
               <Navigation className="w-3.5 h-3.5 text-sky-400" style={{ transform: `rotate(${heading}deg)` }} />
-              <span className="text-white text-xs font-mono">{Math.round(heading)}°</span>
+              <span className="text-white text-xs font-mono">{Math.round(heading)}° {deviceTilt !== 0 && <span className="text-amber-300">{deviceTilt > 0 ? "▲" : "▼"}{Math.abs(Math.round(deviceTilt))}°</span>}</span>
             </div>
           )}
           {userPos && (
