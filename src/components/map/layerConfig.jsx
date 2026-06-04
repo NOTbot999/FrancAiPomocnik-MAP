@@ -617,6 +617,302 @@ export const OVERLAY_CATEGORIES = [
     ]
   },
 
+  // ── GEOLOGIJA ────────────────────────────────────────────────
+  {
+    id: "geologija",
+    name: "Geologija & Tla",
+    icon: "Mountain",
+    thumbnail: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=80&h=60&fit=crop",
+    description: "Geološka karta, pedološka karta, kamninska podlaga, minerali",
+    layers: [
+      {
+        id: "geozs_geoloski_enote",
+        name: "Osnovna geološka karta (OGK)",
+        type: "wms",
+        url: "https://ogc.geo-zs.si/soe/wms",
+        layers: "GeoloскаKartaSLO",
+        format: "image/png",
+        transparent: true,
+        version: "1.3.0",
+        opacity: 0.65,
+        thumbnail: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=80&h=60&fit=crop",
+        description: "Osnovna geološka karta 1:100.000 — kamninska podlaga, stratigrafija"
+      },
+      {
+        id: "geozs_inzenirska",
+        name: "Inženirsko-geološka karta",
+        type: "wms",
+        url: "https://ogc.geo-zs.si/soe/wms",
+        layers: "InzenirskaGeologijaSLO",
+        format: "image/png",
+        transparent: true,
+        version: "1.3.0",
+        opacity: 0.6,
+        thumbnail: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=80&h=60&fit=crop",
+        description: "Inženirsko-geološka karta za gradbeništvo in planiranje"
+      },
+      {
+        id: "arso_tla_pedoloski",
+        name: "Pedološka karta tal",
+        type: "wms",
+        url: ARSO_WMS,
+        layers: "ARSO:TL_PLG",
+        format: "image/png",
+        transparent: true,
+        version: "1.1.1",
+        opacity: 0.6,
+        thumbnail: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=80&h=60&fit=crop",
+        description: "Pedološka karta tal — tipi tal po Sloveniji"
+      },
+      {
+        id: "geozs_plazovi",
+        name: "Plazovita območja",
+        type: "wms",
+        url: "https://ogc.geo-zs.si/soe/wms",
+        layers: "PlazovitaObmocja",
+        format: "image/png",
+        transparent: true,
+        version: "1.3.0",
+        opacity: 0.65,
+        thumbnail: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=80&h=60&fit=crop",
+        description: "Evidenca plazovitih in nestabilnih območij v Sloveniji"
+      },
+      {
+        id: "arso_erozija",
+        name: "Erozijsko ogrožena območja",
+        type: "wms",
+        url: ARSO_WMS,
+        layers: "ARSO:ER_PLG",
+        format: "image/png",
+        transparent: true,
+        version: "1.1.1",
+        opacity: 0.55,
+        thumbnail: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=80&h=60&fit=crop",
+        description: "Območja ogrožena z erozijo tal iz ARSO"
+      }
+    ]
+  },
+
+  // ── OBNOVLJIVI VIRI ENERGIJE ──────────────────────────────────
+  {
+    id: "energija",
+    name: "Energija & Okolje",
+    icon: "Zap",
+    thumbnail: "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=80&h=60&fit=crop",
+    description: "Sončni potencial, vetrni potencial, hidroelektrarne, električno omrežje",
+    layers: [
+      {
+        id: "arso_soncna_obsevanje",
+        name: "Sončno obsevanje (GHI)",
+        type: "wms",
+        url: ARSO_WMS,
+        layers: "ARSO:SONCE_GHI",
+        format: "image/png",
+        transparent: true,
+        version: "1.1.1",
+        opacity: 0.7,
+        thumbnail: "https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?w=80&h=60&fit=crop",
+        description: "Globalno horizontalno sončno obsevanje — potencial za sončne elektrarne"
+      },
+      {
+        id: "arso_veter_potencial",
+        name: "Vetrni potencial",
+        type: "wms",
+        url: ARSO_WMS,
+        layers: "ARSO:VETER_PLG",
+        format: "image/png",
+        transparent: true,
+        version: "1.1.1",
+        opacity: 0.65,
+        thumbnail: "https://images.unsplash.com/photo-1527482937786-6608f6e14c15?w=80&h=60&fit=crop",
+        description: "Povprečna hitrost vetra — potencial za vetrne elektrarne"
+      },
+      {
+        id: "arso_hidroloske_postaje",
+        name: "Hidrološke merilne postaje",
+        type: "wms",
+        url: ARSO_WMS,
+        layers: "ARSO:HM_PNT",
+        format: "image/png",
+        transparent: true,
+        version: "1.1.1",
+        opacity: 0.9,
+        thumbnail: "https://images.unsplash.com/photo-1559825481-12a05cc00344?w=80&h=60&fit=crop",
+        description: "Mreža hidroloških merilnih postaj ARSO na vodotokih"
+      },
+      {
+        id: "openinframap_power_lines",
+        name: "Električno omrežje (OSM)",
+        type: "tile",
+        url: "https://tiles.openinframap.org/power/{z}/{x}/{y}.png",
+        attribution: "&copy; OpenInfraMap, &copy; OpenStreetMap",
+        transparent: true,
+        opacity: 0.85,
+        thumbnail: "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=80&h=60&fit=crop",
+        description: "Daljnovodi, transformatorske postaje in elektrarne iz OSM"
+      },
+      {
+        id: "openinframap_petroleum",
+        name: "Naftovodi & Plinovodi (OSM)",
+        type: "tile",
+        url: "https://tiles.openinframap.org/petroleum/{z}/{x}/{y}.png",
+        attribution: "&copy; OpenInfraMap, &copy; OpenStreetMap",
+        transparent: true,
+        opacity: 0.85,
+        thumbnail: "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=80&h=60&fit=crop",
+        description: "Naftovodi, plinovodi in naftna infrastruktura iz OSM"
+      }
+    ]
+  },
+
+  // ── REGISTER PROSTORSKIH ENOT ─────────────────────────────────
+  {
+    id: "rpe_naslovi",
+    name: "Naslovi & Stavbe (RPE)",
+    icon: "Home",
+    thumbnail: "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=80&h=60&fit=crop",
+    description: "Register prostorskih enot — hišne številke, naselja, občine, poštne številke",
+    layers: [
+      {
+        id: "rpe_hs_tocke",
+        name: "Hišne številke (točke)",
+        type: "wms",
+        url: "https://ipi.eprostor.gov.si/wms-si-gurs-rpe/ows",
+        layers: "SI.GURS.RPE:HS",
+        format: "image/png",
+        transparent: true,
+        version: "1.1.1",
+        opacity: 0.9,
+        thumbnail: "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=80&h=60&fit=crop",
+        description: "Točne lokacije hišnih številk iz Registra prostorskih enot (zoom 14+)"
+      },
+      {
+        id: "rpe_naselja",
+        name: "Naselja (meje)",
+        type: "wms",
+        url: "https://ipi.eprostor.gov.si/wms-si-gurs-rpe/ows",
+        layers: "SI.GURS.RPE:NA",
+        format: "image/png",
+        transparent: true,
+        version: "1.1.1",
+        opacity: 0.6,
+        thumbnail: "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=80&h=60&fit=crop",
+        description: "Meje naselij iz RPE"
+      },
+      {
+        id: "rpe_obcine",
+        name: "Občine (meje)",
+        type: "wms",
+        url: "https://ipi.eprostor.gov.si/wms-si-gurs-rpe/ows",
+        layers: "SI.GURS.RPE:OB",
+        format: "image/png",
+        transparent: true,
+        version: "1.1.1",
+        opacity: 0.5,
+        thumbnail: "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=80&h=60&fit=crop",
+        description: "Administrativne meje občin iz RPE"
+      },
+      {
+        id: "rpe_postne_stevilke",
+        name: "Poštne cone",
+        type: "wms",
+        url: "https://ipi.eprostor.gov.si/wms-si-gurs-rpe/ows",
+        layers: "SI.GURS.RPE:PT",
+        format: "image/png",
+        transparent: true,
+        version: "1.1.1",
+        opacity: 0.45,
+        thumbnail: "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=80&h=60&fit=crop",
+        description: "Poštna območja in poštne cone Slovenije"
+      },
+      {
+        id: "gurs_stavbe",
+        name: "Register stavb (tloris)",
+        type: "wms",
+        url: GURS_WMS,
+        layers: "SI.GURS.ZPDZ:STAVBE",
+        format: "image/png",
+        transparent: true,
+        version: "1.1.1",
+        opacity: 0.7,
+        thumbnail: "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=80&h=60&fit=crop",
+        description: "Tlorisi stavb iz katastra stavb GURS (vidno pri zoom 14+)"
+      }
+    ]
+  },
+
+  // ── PROMET ───────────────────────────────────────────────────
+  {
+    id: "promet",
+    name: "Promet & Mobilnost",
+    icon: "Car",
+    thumbnail: "https://images.unsplash.com/photo-1474487548417-781cb71495f3?w=80&h=60&fit=crop",
+    description: "Prometne obremenitve, kolesarsko omrežje, avtobusne postaje, parkirišča",
+    layers: [
+      {
+        id: "drsi_promet_obremenitve",
+        name: "Prometne obremenitve (PLDP)",
+        type: "wms",
+        url: "https://storitve.drsi.si/arcgis/services/Promet/MapServer/WMSServer",
+        layers: "0",
+        format: "image/png",
+        transparent: true,
+        version: "1.1.1",
+        opacity: 0.8,
+        thumbnail: "https://images.unsplash.com/photo-1474487548417-781cb71495f3?w=80&h=60&fit=crop",
+        description: "Povprečni letni dnevni promet (PLDP) na državnih cestah — DRSI"
+      },
+      {
+        id: "drsi_ceste_kategorije",
+        name: "Kategorizacija državnih cest",
+        type: "wms",
+        url: "https://storitve.drsi.si/arcgis/services/Ceste/MapServer/WMSServer",
+        layers: "0",
+        format: "image/png",
+        transparent: true,
+        version: "1.1.1",
+        opacity: 0.8,
+        thumbnail: "https://images.unsplash.com/photo-1474487548417-781cb71495f3?w=80&h=60&fit=crop",
+        description: "Kategorizacija državnih cest (avtoceste, hitre ceste, regionalne, lokalne)"
+      },
+      {
+        id: "kolesarsko_omrezje_drzavno",
+        name: "Državno kolesarsko omrežje",
+        type: "wms",
+        url: "https://storitve.drsi.si/arcgis/services/Kolesarstvo/MapServer/WMSServer",
+        layers: "0",
+        format: "image/png",
+        transparent: true,
+        version: "1.1.1",
+        opacity: 0.85,
+        thumbnail: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=80&h=60&fit=crop",
+        description: "Državno kolesarsko omrežje in načrtovane kolesarske povezave"
+      },
+      {
+        id: "osm_transit",
+        name: "Javni promet (OSM)",
+        type: "tile",
+        url: "https://tile.memomaps.de/tilegen/{z}/{x}/{y}.png",
+        attribution: "&copy; MeMoMaps, &copy; OpenStreetMap",
+        transparent: true,
+        opacity: 0.85,
+        thumbnail: "https://images.unsplash.com/photo-1527489377706-5bf97e608852?w=80&h=60&fit=crop",
+        description: "Linije javnega prevoza — avtobusi, vlaki, tramvaji iz OSM"
+      },
+      {
+        id: "osm_speed_limits",
+        name: "Omejitve hitrosti (OSM)",
+        type: "tile",
+        url: "https://tile.waymarkedtrails.org/cycling/{z}/{x}/{y}.png",
+        attribution: "&copy; OpenStreetMap",
+        transparent: true,
+        opacity: 0.7,
+        thumbnail: "https://images.unsplash.com/photo-1474487548417-781cb71495f3?w=80&h=60&fit=crop",
+        description: "Cestna omrežja z označenimi omejitvami hitrosti"
+      }
+    ]
+  },
+
   // ── ARHEOLOGIJA & KULTURNA DEDIŠČINA ────────────────────────
   {
     id: "dediscina",
