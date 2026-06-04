@@ -79,8 +79,6 @@ export default function ARFieldExplorer() {
   const [nearbyCaves, setNearbyCaves] = useState([]);
   const watchIdRef = useRef(null);
 
-  // Device tilt (beta = forward/back tilt in degrees)
-  const [deviceTilt, setDeviceTilt] = useState(0); // degrees from horizontal, positive = tilted up
   const [userElevation, setUserElevation] = useState(null);
   const [poiElevations, setPoiElevations] = useState({}); // poiId → elevation in meters
 
@@ -133,10 +131,6 @@ export default function ARFieldExplorer() {
       // When phone is held upright (~0-30°), beta≈0. When pointed at sky, beta goes negative.
       // We want: tilt=0 when pointing straight ahead horizontally.
       // beta range: -180 to 180. Upright portrait = ~0. Tilted back (looking up) = negative beta.
-      if (e.beta != null) {
-        // Normalize: phone held upright & pointing forward = 0°, tilted up = positive
-        setDeviceTilt(-(e.beta)); // negate so tilting up = positive
-      }
     };
 
     const handleRelative = (e) => {
@@ -146,9 +140,6 @@ export default function ARFieldExplorer() {
         setHeading(e.webkitCompassHeading);
       } else if (e.alpha != null) {
         setHeading((360 - e.alpha + 360) % 360);
-      }
-      if (e.beta != null) {
-        setDeviceTilt(-(e.beta));
       }
     };
 
@@ -179,13 +170,11 @@ export default function ARFieldExplorer() {
         absoluteReceivedRef.current = true;
         if (e.webkitCompassHeading != null) setHeading(e.webkitCompassHeading);
         else if (e.alpha != null) setHeading((360 - e.alpha + 360) % 360);
-        if (e.beta != null) setDeviceTilt(-(e.beta));
       };
       const handleRelative = (e) => {
         if (absoluteReceivedRef.current) return;
         if (e.webkitCompassHeading != null) setHeading(e.webkitCompassHeading);
         else if (e.alpha != null) setHeading((360 - e.alpha + 360) % 360);
-        if (e.beta != null) setDeviceTilt(-(e.beta));
       };
       window.addEventListener("deviceorientationabsolute", handleAbsolute, true);
       window.addEventListener("deviceorientation", handleRelative, true);
@@ -359,7 +348,7 @@ export default function ARFieldExplorer() {
     if (allPois.length > 0) fetchPoiElevations(allPois);
   }, [allPois.map(p => p.id).join(",")]);
 
-  // Visible POIs based on heading + vertical angle from elevation data
+  // Visible POIs based on heading
   const visiblePois = useMemo(() => {
     if (!userPos || heading == null) return [];
 
@@ -367,40 +356,29 @@ export default function ARFieldExplorer() {
     const halfV = V_FOV / 2;
 
     return allPois.map(poi => {
-      // Horizontal
+      // Horizontal angle
       const bearing = bearingTo(userPos.lat, userPos.lng, poi.lat, poi.lng);
       let relAngle = bearing - heading;
       if (relAngle > 180) relAngle -= 360;
       if (relAngle < -180) relAngle += 360;
       if (Math.abs(relAngle) > halfH + 10) return null;
 
-      // Vertical: compute true elevation angle to POI
+      // Vertical: elevation-based angle, clamped to screen
       const poiElev = poiElevations[poi.id];
       const myElev = userElevation;
-      let vertAngle = 0; // degrees above/below horizon
+      let vertAngle = 0;
       if (poiElev != null && myElev != null) {
-        const elevDiff = poiElev - myElev; // positive = POI is higher
-        const dist2d = Math.max(1, poi.dist);
-        vertAngle = Math.atan2(elevDiff, dist2d) * (180 / Math.PI);
+        const elevDiff = poiElev - myElev;
+        vertAngle = Math.atan2(elevDiff, Math.max(1, poi.dist)) * (180 / Math.PI);
       }
 
-      // Adjust for device tilt: when phone tilts up, horizon moves down on screen
-      // deviceTilt: 0 = upright, positive = tilted up (looking up)
-      const relVertAngle = vertAngle - deviceTilt;
-
-      // screenX: horizontal position (0-100%)
       const screenX = 50 + (relAngle / halfH) * 50;
+      // vertAngle > 0 = POI higher than user → above center (lower screenY %)
+      const screenY = 50 - (vertAngle / halfV) * 50;
 
-      // screenY: vertical position. 50% = horizon. Higher on screen = smaller Y% value.
-      // relVertAngle > 0 means POI is above where we're looking → move up (smaller Y%)
-      const screenY = 50 - (relVertAngle / halfV) * 50;
-
-      // Only show if within vertical FOV + margin
-      if (screenY < -20 || screenY > 120) return null;
-
-      return { ...poi, screenX, screenY: Math.max(5, Math.min(95, screenY)), relAngle, vertAngle };
+      return { ...poi, screenX, screenY: Math.max(5, Math.min(95, screenY)), relAngle };
     }).filter(Boolean).sort((a, b) => b.dist - a.dist);
-  }, [userPos, heading, deviceTilt, allPois, poiElevations, userElevation, radius]);
+  }, [userPos, heading, allPois, poiElevations, userElevation, radius]);
 
   const totalCatPois = activeCatIds.reduce((acc, catId) => acc + (catFeatures[catId]?.length || 0), 0);
 
@@ -429,7 +407,7 @@ export default function ARFieldExplorer() {
           {heading != null && (
             <div className="flex items-center gap-1 bg-black/50 backdrop-blur-md rounded-xl px-3 py-1.5">
               <Navigation className="w-3.5 h-3.5 text-sky-400" style={{ transform: `rotate(${heading}deg)` }} />
-              <span className="text-white text-xs font-mono">{Math.round(heading)}° {deviceTilt !== 0 && <span className="text-amber-300">{deviceTilt > 0 ? "▲" : "▼"}{Math.abs(Math.round(deviceTilt))}°</span>}</span>
+              <span className="text-white text-xs font-mono">{Math.round(heading)}°</span>
             </div>
           )}
           {userPos && (
