@@ -514,21 +514,6 @@ export default function ARFieldExplorer() {
               <button onClick={() => setShowLayers(false)} className="text-slate-400 hover:text-white"><X className="w-4 h-4" /></button>
             </div>
 
-            {/* Built-in layers */}
-            <p className="text-slate-500 text-[10px] uppercase font-semibold mb-2">Vgrajeno (vedno vklopljeno)</p>
-            <div className="space-y-1.5 mb-4">
-              {[
-                { id: "_pins", label: "Skupne označbe", color: "#10b981", emoji: "📍" },
-                { id: "_caves", label: "Jame (baza)", color: "#6366f1", emoji: "🕳️" },
-              ].map(item => (
-                <div key={item.id} className="flex items-center gap-3 px-3 py-2 rounded-xl bg-slate-800">
-                  <span className="text-base">{item.emoji}</span>
-                  <span className="text-white text-sm flex-1">{item.label}</span>
-                  <Check className="w-3.5 h-3.5 text-emerald-400" />
-                </div>
-              ))}
-            </div>
-
             {/* All categories */}
             <p className="text-slate-500 text-[10px] uppercase font-semibold mb-2">Kategorije ({activeCatIds.length} vklopljeno)</p>
             <div className="grid grid-cols-4 gap-1.5">
