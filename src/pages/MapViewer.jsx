@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from "react";
+import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import AuthModal from "@/components/AuthModal";
 import MapContainerComponent from "@/components/map/MapContainer";
 import LayerPanel from "@/components/map/LayerPanel";
@@ -373,6 +373,16 @@ export default function MapViewer() {
   const activeLayerCount = Object.keys(activeLayers).length;
   const isMobile = useIsMobile();
 
+  // Memoized search-category layers for the 3D view — only visible ones, stable reference
+  // so Map3DView doesn't re-sync (and re-parse GeoJSON) on every unrelated parent render.
+  const searchCategoryLayers3D = useMemo(() => customLayers
+    .filter(l => l._searchCat && !l._municipalityLayer && customLayerVisible[l.id] !== false)
+    .map(layer => ({
+      ...layer,
+      opacity: customLayerOpacities[layer.id] ?? layer.opacity ?? 0.8,
+      visible: true,
+    })), [customLayers, customLayerVisible, customLayerOpacities]);
+
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [currentUser, setCurrentUser] = useState(() => localStorage.getItem('userUsername'));
   const [hasSeenAuthPrompt, setHasSeenAuthPrompt] = useState(
@@ -408,13 +418,7 @@ export default function MapViewer() {
           customLayers={customLayers}
           customLayerVisible={customLayerVisible}
           customLayerOpacities={customLayerOpacities}
-          searchCategoryLayers={customLayers
-            .filter(l => l._searchCat && !l._municipalityLayer)
-            .map(layer => ({
-              ...layer,
-              opacity: customLayerOpacities[layer.id] ?? layer.opacity ?? 0.8,
-              visible: customLayerVisible[layer.id] !== false,
-            }))}
+          searchCategoryLayers={searchCategoryLayers3D}
           gpsTrack={gpsTrack}
           onPinPicked={isPinPicking ? (latlng) => { setPinnedLocation([latlng.lat, latlng.lng]); setIsPinPicking(false); } : null}
         />

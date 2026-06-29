@@ -125,25 +125,30 @@ const Map3DView = forwardRef(function Map3DView({
     // Add or update desired layers
     (layers || []).forEach(catLayer => {
       try {
+        // Respect the layer's visible flag — hidden layers must not render in 3D
+        if (catLayer.visible === false) return;
+
         const catId = catLayer._searchCat || Object.keys(EMOJI_MAP).find(k => catLayer.name?.toLowerCase().includes(k));
         const sourceId = `search_cat_${catId || catLayer.id}`;
         const layerId = `search_cat_symbol_${catId || catLayer.id}`;
-        const emoji = EMOJI_MAP[catId] || "📍";
 
         const geojsonFeatures = (catLayer.features || [])
-          .filter(f => f?.type === "Point" && f?.coords && Array.isArray(f.coords) && f.coords.length >= 2)
+          .filter(f => f?.type === "Point" && f?.coords && Array.isArray(f.coords) && f.coords.length >= 2
+            && Number.isFinite(f.coords[0]) && Number.isFinite(f.coords[1]))
           .map(f => ({
             type: "Feature",
             geometry: { type: "Point", coordinates: [f.coords[1], f.coords[0]] },
-            properties: { label: f.label || "", emoji }
+            properties: { label: f.label || "" }
           }));
 
         if (geojsonFeatures.length === 0) return;
 
         const geojson = { type: "FeatureCollection", features: geojsonFeatures };
+        const opacity = catLayer.opacity ?? 1;
+        const color = catLayer.color || "#10b981";
 
         if (!map.getSource(sourceId)) {
-          map.addSource(sourceId, { type: "geojson", data: geojson, cluster: false });
+          map.addSource(sourceId, { type: "geojson", data: geojson, cluster: false, tolerance: 0.5 });
         } else {
           map.getSource(sourceId).setData(geojson);
         }
@@ -151,35 +156,30 @@ const Map3DView = forwardRef(function Map3DView({
         if (!map.getLayer(layerId)) {
           const allLayers = map.getStyle()?.layers || [];
           const topLayerId = allLayers.length > 0 ? allLayers[allLayers.length - 1].id : undefined;
+          // Emoji ne izrišejo v MapLibre pisavah, zato točke prikažemo kot krogce
+          // obarvane po barvi kategorije — zanesljivo in hitro.
           map.addLayer({
             id: layerId,
-            type: "symbol",
+            type: "circle",
             source: sourceId,
-            layout: {
-              "text-field": ["get", "emoji"],
-              "text-size": 26,
-              "text-anchor": "center",
-              "text-allow-overlap": true,
-              "text-ignore-placement": true,
-              "text-pitch-alignment": "viewport",
-              "text-rotation-alignment": "viewport",
-              "text-max-width": 1,
-              "icon-allow-overlap": true,
-              "symbol-z-elevate": true,
-            },
             paint: {
-              "text-color": "#ffffff",
-              "text-halo-color": "#000000",
-              "text-halo-width": 1,
-              "text-halo-blur": 0.5,
-              "text-translate": [0, -18],
-              "text-translate-anchor": "viewport",
-              "text-opacity": catLayer.opacity ?? 1,
+              "circle-radius": 6,
+              "circle-color": color,
+              "circle-opacity": opacity,
+              "circle-stroke-width": 2,
+              "circle-stroke-color": "#ffffff",
+              "circle-stroke-opacity": opacity,
+              "circle-pitch-alignment": "map",
+              "circle-pitch-scale": "map",
             }
           }, topLayerId);
           activeCatLayerIds.current.add(layerId);
         } else {
-          try { map.setPaintProperty(layerId, "text-opacity", catLayer.opacity ?? 1); } catch {}
+          try {
+            map.setPaintProperty(layerId, "circle-opacity", opacity);
+            map.setPaintProperty(layerId, "circle-color", color);
+            map.setPaintProperty(layerId, "circle-stroke-opacity", opacity);
+          } catch {}
         }
       } catch (err) {
         console.error("[Map3D] Error syncing search layer:", catLayer?.id, err);

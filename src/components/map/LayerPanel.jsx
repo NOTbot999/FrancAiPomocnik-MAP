@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { Layers, X, ExternalLink, ChevronDown, GripVertical, Mountain, Search } from "lucide-react";
+import { Layers, X, ExternalLink, ChevronDown, GripVertical, Mountain, Search, BookOpen } from "lucide-react";
 import { ML_BASE_STYLES } from "./Map3DView";
 import { base44 } from "@/api/base44Client";
 import { Slider } from "@/components/ui/slider";
@@ -487,7 +487,7 @@ export default function LayerPanel({
   }, [activeLayers, onToggleLayer]);
 
   const theme = loadTheme();
-  const [showLegend] = useState(false);
+  const [showLegend, setShowLegend] = useState(false);
   const [layerSearch, setLayerSearch] = useState("");
   // savedCustomLayers = favorited custom layers persisted in localStorage
   const savedCustomLayers = (favoritedCustomLayerIds || [])
@@ -556,10 +556,26 @@ export default function LayerPanel({
                     </div>
                     <h2 className="text-sm font-semibold tracking-tight" style={{ color: panelText }}>Sloji</h2>
                   </div>
-                  <button onClick={onClose} className="p-1.5 rounded-xl transition-colors hover:bg-white/10" style={{ color: panelText, opacity: 0.6 }}>
-                    <X className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => setShowLegend(v => !v)}
+                      className={`p-1.5 rounded-xl transition-colors hover:bg-white/10 ${showLegend ? "bg-emerald-500/20" : ""}`}
+                      style={{ color: showLegend ? accentColor : panelText, opacity: showLegend ? 1 : 0.6 }}
+                      title="Legenda"
+                    >
+                      <BookOpen className="w-4 h-4" />
+                    </button>
+                    <button onClick={onClose} className="p-1.5 rounded-xl transition-colors hover:bg-white/10" style={{ color: panelText, opacity: 0.6 }}>
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
+                {/* Legend overlay — floats above the sheet */}
+                {showLegend && (
+                  <div style={{ position: "absolute", bottom: "100%", marginBottom: 8, right: 16, zIndex: 950 }}>
+                    <LayerLegend isOpen onClose={() => setShowLegend(false)} theme={theme} />
+                  </div>
+                )}
                 <div className="relative">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style={{ color: panelText, opacity: 0.4 }} />
                   <input
@@ -609,10 +625,26 @@ export default function LayerPanel({
                   </div>
                   <h2 className="text-sm font-bold tracking-tight" style={{ color: panelText }}>Sloji karte</h2>
                 </div>
-                <button onClick={onClose} className="p-1.5 rounded-xl hover:bg-white/10 transition-colors" style={{ color: panelText, opacity: 0.6 }}>
-                  <X className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setShowLegend(v => !v)}
+                    className={`p-1.5 rounded-xl hover:bg-white/10 transition-colors ${showLegend ? "bg-emerald-500/20" : ""}`}
+                    style={{ color: showLegend ? accentColor : panelText, opacity: showLegend ? 1 : 0.6 }}
+                    title="Legenda"
+                  >
+                    <BookOpen className="w-4 h-4" />
+                  </button>
+                  <button onClick={onClose} className="p-1.5 rounded-xl hover:bg-white/10 transition-colors" style={{ color: panelText, opacity: 0.6 }}>
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
+              {/* Legend overlay — floats to the right of the panel */}
+              {showLegend && (
+                <div style={{ position: "absolute", top: 56, left: "100%", marginLeft: 8, zIndex: 950, pointerEvents: "auto" }}>
+                  <LayerLegend isOpen onClose={() => setShowLegend(false)} theme={theme} />
+                </div>
+              )}
               {/* Search bar */}
               <div className="relative">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style={{ color: panelText, opacity: 0.4 }} />
