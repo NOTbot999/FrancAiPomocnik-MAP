@@ -19,7 +19,7 @@ export default function SearchCategoryLayer({ layer }) {
 
     const emoji = layer.emoji || DEFAULT_EMOJI;
     const points = layer.features
-      .filter(f => f.type === "Point" && Array.isArray(f.coords) && f.coords.length >= 2)
+      .filter(f => f.type === "Point" && Array.isArray(f.coords) && f.coords.length >= 2 && Number.isFinite(f.coords[0]) && Number.isFinite(f.coords[1]))
       .map(f => ({ lat: f.coords[0], lng: f.coords[1], label: f.label || "" }));
     if (points.length === 0) return;
 

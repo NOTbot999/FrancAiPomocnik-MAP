@@ -20,9 +20,10 @@ function makeIcon(color) {
 }
 
 export default function CollabPinsLayer({ pins = [] }) {
+  const validPins = pins.filter(pin => pin && Number.isFinite(pin.lat) && Number.isFinite(pin.lng));
   return (
     <>
-      {pins.map(pin => (
+      {validPins.map(pin => (
         <Marker
           key={pin.id}
           position={[pin.lat, pin.lng]}

@@ -695,25 +695,27 @@ export default function MapContainerComponent({
         const isVisible = customLayerVisible?.[layer.id] !== false;
         if (!isVisible) return null;
         const opacity = customLayerOpacities?.[layer.id] ?? 0.9;
+        const isFinitePair = (c) => Array.isArray(c) && c.length >= 2 && Number.isFinite(c[0]) && Number.isFinite(c[1]);
+        const allFinite = (coords) => Array.isArray(coords) && coords.every(isFinitePair);
         return (
           <React.Fragment key={layer.id}>
             {(layer.features || []).map((f, fi) => {
               const color = layer.color || "#e11d48";
-              if (f.type === "LineString" && f.coords?.length > 1) {
+              if (f.type === "LineString" && f.coords?.length > 1 && allFinite(f.coords)) {
                 return (
                   <Polyline key={fi} positions={f.coords} color={color} weight={3} opacity={opacity}>
                     {f.label && <Tooltip sticky>{f.label}</Tooltip>}
                   </Polyline>
                 );
               }
-              if (f.type === "Polygon" && f.coords?.length > 2) {
+              if (f.type === "Polygon" && f.coords?.length > 2 && allFinite(f.coords)) {
                 return (
                   <Polygon key={fi} positions={f.coords} pathOptions={{ color, fillColor: color, fillOpacity: opacity * 0.4, weight: 2, opacity }}>
                     {f.label && <Tooltip sticky>{f.label}</Tooltip>}
                   </Polygon>
                 );
               }
-              if (f.type === "Point" && f.coords?.length === 2) {
+              if (f.type === "Point" && isFinitePair(f.coords)) {
                 const emoji = layer.emoji || "📍";
                 const icon = L.divIcon({
                   className: "ai-emoji-marker",
