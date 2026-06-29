@@ -32,6 +32,7 @@ export default function CategoryGrid({
   const [hiddenBuiltin, setHiddenBuiltin] = useState(() => loadHidden(HIDDEN_BUILTIN_KEY));
   const [hiddenCustom, setHiddenCustom] = useState(() => loadHidden(HIDDEN_CUSTOM_KEY));
   const [loadingCat, setLoadingCat] = useState(null);
+  const [errorCat, setErrorCat] = useState(null);
 
   const activeLayers = activeSearchLayers || {};
   const setActiveLayers = onSearchLayersChange || (() => {});
@@ -91,6 +92,7 @@ export default function CategoryGrid({
     }
 
     setLoadingCat(cat.id);
+    setErrorCat(null);
     try {
       const layer = await fetchFullSloveniaLayer(cat);
       if (layer) {
@@ -99,9 +101,9 @@ export default function CategoryGrid({
         setActiveLayers(prev => ({ ...prev, [cat.id]: layerId }));
       }
     } catch {
-      const layerId = `search_${cat.id}`;
-      onAddCustomLayer({ id: layerId, name: `${cat.emoji} ${cat.label}`, color: cat.color, features: [], _searchCat: cat.id });
-      setActiveLayers(prev => ({ ...prev, [cat.id]: layerId }));
+      // Ne dodajamo praznega sloja — sicer bi gumb ostal "aktiven" brez markerjev.
+      setErrorCat(cat.id);
+      setTimeout(() => setErrorCat(prev => (prev === cat.id ? null : prev)), 4000);
     } finally { setLoadingCat(null); }
   }, [activeLayers, onAddCustomLayer, onRemoveCustomLayer, setActiveLayers]);
 
@@ -143,6 +145,12 @@ export default function CategoryGrid({
       {manageMode && (
         <p className="text-[10px] text-slate-400 mb-2 px-1">
           👁 Skrij/prikaži gumb · 🗑 izbriši Franc sloj. Skriti gumbi so prikazani sivo.
+        </p>
+      )}
+
+      {errorCat && (
+        <p className="text-[10px] text-red-500 mb-2 px-1">
+          Podatkov za to kategorijo trenutno ni mogoče naložiti (Overpass nedosegljiv). Poskusi znova kasneje.
         </p>
       )}
 

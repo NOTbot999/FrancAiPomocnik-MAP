@@ -85,23 +85,39 @@ const OVERPASS_MIRRORS = [
   "https://overpass-api.de/api/interpreter",
   "https://overpass.kumi.systems/api/interpreter",
   "https://overpass.openstreetmap.fr/api/interpreter",
+  "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
+  "https://overpass.osm.ch/api/interpreter",
 ];
 
+const OP_HEADERS = {
+  "Accept": "application/json",
+  "Accept-Language": "sl,en;q=0.8",
+  "User-Agent": "SloveniaGISExplorer/1.0 (https://francaimap.app)",
+};
+
 async function fetchOverpass(query) {
+  const enc = encodeURIComponent(query);
+  // Try GET first (lighter, fewer 406s), then POST as fallback per mirror
   for (const mirror of OVERPASS_MIRRORS) {
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 20000);
-      const res = await fetch(mirror, {
-        method: "POST",
-        body: "data=" + encodeURIComponent(query),
-        signal: controller.signal,
-      });
-      clearTimeout(timeout);
-      if (!res.ok) continue;
-      return await res.json();
-    } catch {
-      // try next mirror
+    for (const method of ["GET", "POST"]) {
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 25000);
+        const url = method === "GET" ? `${mirror}?data=${enc}` : mirror;
+        const init = { method, headers: OP_HEADERS, signal: controller.signal };
+        if (method === "POST") {
+          init.headers["Content-Type"] = "application/x-www-form-urlencoded";
+          init.body = `data=${enc}`;
+        }
+        const res = await fetch(url, init);
+        clearTimeout(timeout);
+        if (!res.ok) continue;
+        const ct = res.headers.get("content-type") || "";
+        if (!ct.includes("json")) continue; // HTML error page → try next
+        return await res.json();
+      } catch {
+        // try next method/mirror
+      }
     }
   }
   throw new Error("Vsi Overpass strežniki so nedosegljivi");
