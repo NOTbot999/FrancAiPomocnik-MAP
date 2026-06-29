@@ -41,7 +41,7 @@ export const CATEGORIES = [
   // ── Novi custom sloji (označi na karti) ──────────────────────────────────────
   { id: "beach",         label: "Plaže",          emoji: "🏖️", color: "#fbbf24", query: `[out:json][timeout:30];(node["natural"="beach"](45.4,13.4,46.9,16.6);way["natural"="beach"](45.4,13.4,46.9,16.6);relation["natural"="beach"](45.4,13.4,46.9,16.6););out center;` },
   { id: "geocache",      label: "Geocacher",      emoji: "🥾", color: "#84cc16", query: `[out:json][timeout:45];(node["geocache"](45.4,13.4,46.9,16.6);node["tourism"="information"]["information"="geocache"](45.4,13.4,46.9,16.6););out;` },
-  { id: "racetrack",     label: "Dirkališča",      emoji: "🏁", color: "#ef4444", query: `[out:json][timeout:30];(way["sport"="motorsport"](45.4,13.4,46.9,16.6);way["leisure"="track"]["sport"~"motor|motorsport|racing"](45.4,13.4,46.9,16.6);way["leisure"="track"]["motor_vehicle"="yes"](45.4,13.4,46.9,16.6););out center;` },
+  { id: "racetrack",     label: "Dirkališča",      emoji: "🏁", color: "#ef4444", query: `[out:json][timeout:30];(way["highway"="raceway"](45.4,13.4,46.9,16.6);way["leisure"="track"]["sport"="motorsport"](45.4,13.4,46.9,16.6);way["leisure"="track"]["sport"="karting"](45.4,13.4,46.9,16.6);way["leisure"="track"]["sport"="motor_autocross"](45.4,13.4,46.9,16.6);way["sport"="motorsport"](45.4,13.4,46.9,16.6););out center;` },
   { id: "pitch",         label: "Šport. igrišča", emoji: "⚽", color: "#22c55e", query: `[out:json][timeout:45];(way["leisure"="pitch"](45.4,13.4,46.9,16.6);relation["leisure"="pitch"](45.4,13.4,46.9,16.6););out center;` },
   { id: "fitness",       label: "Outdoor fitnes",  emoji: "💪", color: "#f97316", query: `[out:json][timeout:30];(node["leisure"="fitness_station"](45.4,13.4,46.9,16.6);way["leisure"="fitness_station"](45.4,13.4,46.9,16.6););out center;` },
   { id: "toilets",       label: "Stranišča",      emoji: "🚻", color: "#64748b", query: `[out:json][timeout:30];(node["amenity"="toilets"](45.4,13.4,46.9,16.6);way["amenity"="toilets"](45.4,13.4,46.9,16.6););out center;` },
@@ -52,7 +52,7 @@ export const CATEGORIES = [
 ];
 
 // Invalidate old cache for improved queries
-["fuel","atm","hospital","clinic","lake"].forEach(id => {
+["fuel","atm","hospital","clinic","lake","racetrack","geocache","pitch","fitness","toilets","transmitter","speed_camera","post_office"].forEach(id => {
   try { localStorage.removeItem("slomapcat_" + id); } catch {}
 });
 // Invalidate old municipality cache (stitching fix)
@@ -108,11 +108,11 @@ async function fetchOverpass(query) {
 }
 
 export async function fetchFullSloveniaLayer(cat) {
-  // 1. In-memory cache
-  if (layerCache[cat.id]) return layerCache[cat.id];
-  // 2. localStorage cache
+  // 1. In-memory cache (only non-empty results)
+  if (layerCache[cat.id] && layerCache[cat.id].features.length > 0) return layerCache[cat.id];
+  // 2. localStorage cache (ignore stale empty results so a transient Overpass failure doesn't stick)
   const cached = loadFromStorage(cat.id);
-  if (cached) {
+  if (cached && cached.length > 0) {
     const layer = { name: `${cat.emoji} ${cat.label}`, color: cat.color, emoji: cat.emoji, features: cached, _categoryId: cat.id };
     layerCache[cat.id] = layer;
     return layer;
@@ -140,7 +140,12 @@ export async function fetchFullSloveniaLayer(cat) {
       label: el.tags?.name || el.tags?.["name:sl"] || el.tags?.ref || "",
     };
   }).filter(Boolean);
-  saveToStorage(cat.id, features);
+  // Only persist non-empty results so a temporary failure never pins an empty layer for 7 days
+  if (features.length > 0) {
+    saveToStorage(cat.id, features);
+  } else {
+    try { localStorage.removeItem(LS_PREFIX + cat.id); } catch {}
+  }
   const layer = { name: `${cat.emoji} ${cat.label}`, color: cat.color, emoji: cat.emoji, features, _categoryId: cat.id };
   layerCache[cat.id] = layer;
   return layer;
