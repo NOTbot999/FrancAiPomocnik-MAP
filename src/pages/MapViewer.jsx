@@ -189,6 +189,16 @@ export default function MapViewer() {
       scopedSet("customLayerVisible", next);
       return next;
     });
+    // Auto-persist Franc AI-generated layers to the CustomLayer entity (cross-device)
+    if (typeof id === "string" && id.startsWith("franc_")) {
+      base44.entities.CustomLayer.create({
+        name: layer.name || "Franc sloj",
+        emoji: layer.emoji || "✨",
+        color: layer.color || "#10b981",
+        features: layer.features || [],
+        source: "franc_ai",
+      }).catch(() => {});
+    }
   }, []);
 
   const handleToggleCustomLayerVisible = useCallback((layerId) => {
@@ -262,6 +272,39 @@ export default function MapViewer() {
       return changed ? next : prev;
     });
   }, [customLayers]);
+
+  // Load Franc AI custom layers saved to the entity (cross-device) on mount
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const saved = await base44.entities.CustomLayer.list("-created_date", 50);
+        if (cancelled || !saved || saved.length === 0) return;
+        setCustomLayers(prev => {
+          const existingIds = new Set(prev.map(l => l.id));
+          const toAdd = saved
+            .filter(r => !existingIds.has(`franc_saved_${r.id}`))
+            .map(r => ({
+              id: `franc_saved_${r.id}`,
+              name: `${r.emoji || "✨"} ${r.name}`.trim(),
+              emoji: r.emoji || "✨",
+              color: r.color || "#10b981",
+              features: r.features || [],
+              _francSavedId: r.id,
+            }));
+          if (toAdd.length === 0) return prev;
+          setCustomLayerVisible(vis => {
+            const next = { ...vis };
+            toAdd.forEach(l => { if (next[l.id] === undefined) next[l.id] = true; });
+            scopedSet("customLayerVisible", next);
+            return next;
+          });
+          return [...prev, ...toAdd];
+        });
+      } catch {}
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   const [routePolyline, setRoutePolyline] = useState(null);
   const [aiRoutePolyline, setAiRoutePolyline] = useState(null);

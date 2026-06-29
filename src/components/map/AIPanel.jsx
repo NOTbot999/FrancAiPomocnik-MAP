@@ -152,7 +152,7 @@ function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme, messag
         }
       }
     }
-    return { name, color: color || "#1d9bf0", features };
+    return { name, color: color || "#1d9bf0", emoji: "✨", features };
   };
 
   const send = async () => {

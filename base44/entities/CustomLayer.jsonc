@@ -1,0 +1,72 @@
+{
+  "name": "CustomLayer",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Display name (e.g. 'Geocacher Ljubljana')"
+    },
+    "emoji": {
+      "type": "string",
+      "description": "Emoji shown as marker on map"
+    },
+    "color": {
+      "type": "string",
+      "description": "Hex color"
+    },
+    "features": {
+      "type": "array",
+      "description": "GeoJSON-like features (Point/LineString/Polygon)",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "coords": {
+            "type": "array",
+            "items": {}
+          },
+          "label": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "source": {
+      "type": "string",
+      "description": "Origin: 'franc_ai' | 'manual' | 'overpass'"
+    },
+    "prompt": {
+      "type": "string",
+      "description": "Original AI prompt if created by Franc"
+    }
+  },
+  "required": [
+    "name",
+    "features"
+  ],
+  "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

@@ -2,6 +2,15 @@ import React, { useState, useRef, useEffect } from "react";
 import { Navigation, Plus, Trash2, X, Loader2, Route } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { loadTheme } from "@/components/map/ThemeCustomizer";
+import { base44 } from "@/api/base44Client";
+
+// Route profile options — map to backend BRouter/OSRM profiles
+const PROFILES = [
+  { id: "forest",  label: "Gozdne",  emoji: "🌲", hint: "pohodniške/gozdne poti" },
+  { id: "main",    label: "Glavne",  emoji: "🛣️", hint: "glavne ceste" },
+  { id: "highway", label: "Avtoceste", emoji: "🚗", hint: "najhitrejša (avtoceste)" },
+  { id: "foot",    label: "Peš",     emoji: "🚶", hint: "hoja po mestih" },
+];
 
 function PointInput({ label, value, onChange, onClear }) {
   const [query, setQuery] = useState(value?.label || "");
@@ -148,6 +157,7 @@ export default function NavigationPanel({ onRouteResult, onClose, isOpen, onTogg
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+  const [profile, setProfile] = useState("main");
 
   const addWaypoint = () => {
     if (waypoints.length < 5) setWaypoints([...waypoints, null]);
@@ -170,46 +180,28 @@ export default function NavigationPanel({ onRouteResult, onClose, isOpen, onTogg
     setError(null);
     setResult(null);
     const validWaypoints = waypoints.filter(Boolean);
+    const points = [origin, ...validWaypoints, destination].map(p => ({ lat: p.lat, lng: p.lng }));
 
-    // Build OSRM coordinates string: lng,lat;lng,lat;...
-    const coords = [origin, ...validWaypoints, destination]
-      .map(p => `${p.lng},${p.lat}`)
-      .join(";");
+    try {
+      const response = await base44.functions.invoke("routePlan", { points, profile });
+      const data = response.data;
+      if (data.error) throw new Error(data.error);
 
-    const url = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson&steps=false`;
-    const res = await fetch(url);
-    const data = await res.json();
-    setLoading(false);
-
-    if (data.code !== "Ok" || !data.routes?.length) {
-      setError("Could not find a route between these points.");
+      const result = {
+        polyline: data.polyline,
+        legs: data.legs || [],
+        totalDistance: data.totalDistance,
+        totalDuration: data.totalDuration,
+        usedFallback: data.usedFallback,
+      };
+      setResult(result);
+      onRouteResult(result);
+    } catch (err) {
+      setError(err.message || "Poti ni mogoče najti.");
       onRouteResult(null);
-      return;
+    } finally {
+      setLoading(false);
     }
-
-    const route = data.routes[0];
-    const polyline = route.geometry.coordinates.map(([lng, lat]) => [lat, lng]);
-
-    // Build per-leg info
-    const legs = route.legs.map(leg => ({
-      distance: leg.distance >= 1000
-        ? `${(leg.distance / 1000).toFixed(1)} km`
-        : `${Math.round(leg.distance)} m`,
-      duration: leg.duration >= 3600
-        ? `${Math.floor(leg.duration / 3600)}h ${Math.round((leg.duration % 3600) / 60)}min`
-        : `${Math.round(leg.duration / 60)} min`,
-    }));
-
-    const totalDist = route.distance >= 1000
-      ? `${(route.distance / 1000).toFixed(1)} km`
-      : `${Math.round(route.distance)} m`;
-    const totalDur = route.duration >= 3600
-      ? `${Math.floor(route.duration / 3600)}h ${Math.round((route.duration % 3600) / 60)}min`
-      : `${Math.round(route.duration / 60)} min`;
-
-    const result = { polyline, legs, totalDistance: totalDist, totalDuration: totalDur };
-    setResult(result);
-    onRouteResult(result);
   };
 
   const clear = () => {
@@ -263,9 +255,35 @@ export default function NavigationPanel({ onRouteResult, onClose, isOpen, onTogg
             onClick={addWaypoint}
             className="flex items-center gap-1 text-xs text-emerald-600 hover:text-emerald-700 font-medium"
           >
-            <Plus className="w-3.5 h-3.5" /> Add stop
+            <Plus className="w-3.5 h-3.5" /> Vmesna točka
           </button>
         )}
+
+        {/* Profile selector */}
+        <div className="pt-1">
+          <p className="text-[10px] font-semibold text-slate-500 uppercase mb-1.5">Tip poti</p>
+          <div className="grid grid-cols-4 gap-1">
+            {PROFILES.map(p => {
+              const active = profile === p.id;
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => setProfile(p.id)}
+                  title={p.hint}
+                  className="flex flex-col items-center gap-0.5 py-1.5 rounded-lg text-[10px] font-medium transition-all"
+                  style={{
+                    backgroundColor: active ? "#10b98115" : "transparent",
+                    border: `1px solid ${active ? "#10b981" : "#e2e8f0"}`,
+                    color: active ? "#047857" : "#64748b",
+                  }}
+                >
+                  <span className="text-sm leading-none">{p.emoji}</span>
+                  <span>{p.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
         <div className="flex gap-2 pt-1">
           <button
@@ -274,10 +292,10 @@ export default function NavigationPanel({ onRouteResult, onClose, isOpen, onTogg
             className="flex-1 py-2 rounded-xl bg-emerald-500 text-white text-xs font-semibold hover:bg-emerald-600 transition disabled:opacity-50 flex items-center justify-center gap-1.5"
           >
             {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Route className="w-3.5 h-3.5" />}
-            {loading ? "Calculating..." : "Get Route"}
+            {loading ? "Načrtujem..." : "Prikaži pot"}
           </button>
           <button onClick={clear} className="px-3 py-2 rounded-xl bg-slate-100 text-slate-600 text-xs font-medium hover:bg-slate-200 transition">
-            Clear
+            Počisti
           </button>
         </div>
 
@@ -291,7 +309,12 @@ export default function NavigationPanel({ onRouteResult, onClose, isOpen, onTogg
               <span>🛣 {result.totalDistance}</span>
               <span>⏱ {result.totalDuration}</span>
             </div>
-            {result.legs.map((leg, i) => (
+            {result.usedFallback && (
+              <p className="text-[10px] text-amber-600 bg-amber-50 rounded px-2 py-1">
+                ℹ️ Za ta tip poti je bil uporabljen nadomestni strežnik (OSRM).
+              </p>
+            )}
+            {result.legs.length > 1 && result.legs.map((leg, i) => (
               <div key={i} className="text-[10px] text-slate-600 border-t border-emerald-100 pt-1.5">
                 <span className="font-medium">{String.fromCharCode(65 + i)} → {String.fromCharCode(66 + i)}:</span>{" "}
                 {leg.distance} · {leg.duration}

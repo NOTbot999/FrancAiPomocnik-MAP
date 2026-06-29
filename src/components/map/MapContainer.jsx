@@ -714,15 +714,17 @@ export default function MapContainerComponent({
                 );
               }
               if (f.type === "Point" && f.coords?.length === 2) {
+                const emoji = layer.emoji || "📍";
                 const icon = L.divIcon({
-                  className: "",
-                  html: `<div style="width:12px;height:12px;background:${color};border:2px solid white;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,.5);transform:translate(-6px,-6px);opacity:${opacity}"></div>`,
-                  iconSize: [0, 0],
+                  className: "ai-emoji-marker",
+                  html: `<div style="font-size:18px;line-height:1;text-shadow:0 0 2px #fff,0 1px 3px rgba(0,0,0,.6);opacity:${opacity}">${emoji}</div>`,
+                  iconSize: [20, 20],
+                  iconAnchor: [10, 10],
                 });
                 return (
                   <Marker key={fi} position={f.coords} icon={icon}>
                     {f.label && (
-                      <Tooltip permanent={false} sticky direction="top" offset={[0, -8]}>
+                      <Tooltip permanent={false} sticky direction="top" offset={[0, -10]}>
                         <span className="text-xs font-semibold">{f.label}</span>
                       </Tooltip>
                     )}

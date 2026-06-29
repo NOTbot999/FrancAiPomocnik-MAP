@@ -38,6 +38,17 @@ export const CATEGORIES = [
   { id: "municipality",  label: "Občine",         emoji: "🏘️", color: "#b45309", _municipalityLayer: true, query: `` },
   { id: "motorway_jct",  label: "AC uvozi",       emoji: "🛣️", color: "#64748b", query: `[out:json][timeout:30];node["highway"="motorway_junction"](45.4,13.4,46.9,16.6);out;` },
 
+  // ── Novi custom sloji (označi na karti) ──────────────────────────────────────
+  { id: "beach",         label: "Plaže",          emoji: "🏖️", color: "#fbbf24", query: `[out:json][timeout:30];(node["natural"="beach"](45.4,13.4,46.9,16.6);way["natural"="beach"](45.4,13.4,46.9,16.6);relation["natural"="beach"](45.4,13.4,46.9,16.6););out center;` },
+  { id: "geocache",      label: "Geocacher",      emoji: "🥾", color: "#84cc16", query: `[out:json][timeout:45];(node["geocache"](45.4,13.4,46.9,16.6);node["tourism"="information"]["information"="geocache"](45.4,13.4,46.9,16.6););out;` },
+  { id: "racetrack",     label: "Dirkališča",      emoji: "🏁", color: "#ef4444", query: `[out:json][timeout:30];(way["sport"="motorsport"](45.4,13.4,46.9,16.6);way["leisure"="track"]["sport"~"motor|motorsport|racing"](45.4,13.4,46.9,16.6);way["leisure"="track"]["motor_vehicle"="yes"](45.4,13.4,46.9,16.6););out center;` },
+  { id: "pitch",         label: "Šport. igrišča", emoji: "⚽", color: "#22c55e", query: `[out:json][timeout:45];(way["leisure"="pitch"](45.4,13.4,46.9,16.6);relation["leisure"="pitch"](45.4,13.4,46.9,16.6););out center;` },
+  { id: "fitness",       label: "Outdoor fitnes",  emoji: "💪", color: "#f97316", query: `[out:json][timeout:30];(node["leisure"="fitness_station"](45.4,13.4,46.9,16.6);way["leisure"="fitness_station"](45.4,13.4,46.9,16.6););out center;` },
+  { id: "toilets",       label: "Stranišča",      emoji: "🚻", color: "#64748b", query: `[out:json][timeout:30];(node["amenity"="toilets"](45.4,13.4,46.9,16.6);way["amenity"="toilets"](45.4,13.4,46.9,16.6););out center;` },
+  { id: "transmitter",   label: "Oddajniki",      emoji: "📡", color: "#0ea5e9", query: `[out:json][timeout:30];(node["man_made"="communications_tower"](45.4,13.4,46.9,16.6);node["man_made"="tower"]["tower:type"="communication"](45.4,13.4,46.9,16.6);way["man_made"="tower"]["tower:type"="communication"](45.4,13.4,46.9,16.6);node["man_made"="mast"]["tower:type"="communication"](45.4,13.4,46.9,16.6););out center;` },
+  { id: "speed_camera",   label: "Radarji",       emoji: "📷", color: "#dc2626", query: `[out:json][timeout:30];node["highway"="speed_camera"](45.4,13.4,46.9,16.6);out;` },
+  { id: "post_office",   label: "Pošte",          emoji: "📮", color: "#8b5cf6", query: `[out:json][timeout:30];(node["amenity"="post_office"](45.4,13.4,46.9,16.6);way["amenity"="post_office"](45.4,13.4,46.9,16.6););out center;` },
+
 ];
 
 // Invalidate old cache for improved queries
@@ -102,7 +113,7 @@ export async function fetchFullSloveniaLayer(cat) {
   // 2. localStorage cache
   const cached = loadFromStorage(cat.id);
   if (cached) {
-    const layer = { name: `${cat.emoji} ${cat.label}`, color: cat.color, features: cached, _categoryId: cat.id };
+    const layer = { name: `${cat.emoji} ${cat.label}`, color: cat.color, emoji: cat.emoji, features: cached, _categoryId: cat.id };
     layerCache[cat.id] = layer;
     return layer;
   }
@@ -112,7 +123,7 @@ export async function fetchFullSloveniaLayer(cat) {
     if (serverData && serverData.length > 0 && serverData[0].features?.length > 0) {
       const features = serverData[0].features;
       saveToStorage(cat.id, features);
-      const layer = { name: `${cat.emoji} ${cat.label}`, color: cat.color, features, _categoryId: cat.id };
+      const layer = { name: `${cat.emoji} ${cat.label}`, color: cat.color, emoji: cat.emoji, features, _categoryId: cat.id };
       layerCache[cat.id] = layer;
       return layer;
     }
@@ -130,7 +141,7 @@ export async function fetchFullSloveniaLayer(cat) {
     };
   }).filter(Boolean);
   saveToStorage(cat.id, features);
-  const layer = { name: `${cat.emoji} ${cat.label}`, color: cat.color, features, _categoryId: cat.id };
+  const layer = { name: `${cat.emoji} ${cat.label}`, color: cat.color, emoji: cat.emoji, features, _categoryId: cat.id };
   layerCache[cat.id] = layer;
   return layer;
 }
@@ -263,7 +274,7 @@ export default function SearchBar({ onLocationSelect, autoFocus, onAddCustomLaye
     if (cat._municipalityLayer) {
       setShowCategories(false);
       const layerId = `search_municipality`;
-      onAddCustomLayer({ id: layerId, name: "🏘️ Občine", color: "#b45309", features: [], _searchCat: cat.id, _municipalityLayer: true });
+      onAddCustomLayer({ id: layerId, name: "🏘️ Občine", color: "#b45309", emoji: cat.emoji, features: [], _searchCat: cat.id, _municipalityLayer: true });
       setActiveLayers(prev => ({ ...prev, [cat.id]: layerId }));
       return;
     }
@@ -275,7 +286,7 @@ export default function SearchBar({ onLocationSelect, autoFocus, onAddCustomLaye
         const caves = await loadCaves();
         const features = cavesToLayerFeatures(caves);
         const layerId = `search_${cat.id}`;
-        onAddCustomLayer({ id: layerId, name: "🕳️ Jame", color: "#78716c", features, _searchCat: cat.id, _caveDbLayer: true });
+        onAddCustomLayer({ id: layerId, name: "🕳️ Jame", color: "#78716c", emoji: cat.emoji, features, _searchCat: cat.id, _caveDbLayer: true });
         setActiveLayers(prev => ({ ...prev, [cat.id]: layerId }));
       } finally {
         setLoadingCat(null);
@@ -296,7 +307,7 @@ export default function SearchBar({ onLocationSelect, autoFocus, onAddCustomLaye
     } catch {
       // Overpass/network failure — show empty layer with friendly label so UI doesn't break
       const layerId = `search_${cat.id}`;
-      onAddCustomLayer({ id: layerId, name: `${cat.emoji} ${cat.label}`, color: cat.color, features: [], _searchCat: cat.id });
+      onAddCustomLayer({ id: layerId, name: `${cat.emoji} ${cat.label}`, color: cat.color, emoji: cat.emoji, features: [], _searchCat: cat.id });
       setActiveLayers(prev => ({ ...prev, [cat.id]: layerId }));
     } finally {
       setLoadingCat(null);
