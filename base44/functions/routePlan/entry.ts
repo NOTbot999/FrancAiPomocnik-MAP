@@ -2,9 +2,11 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 // Route planner — direct fetch to free services, no integration credits used.
 //   forest  → BRouter "trekking"    (pohodništvo po gozdu, pohodniške/gozdne poti)
-//   foot    → OSRM /foot/           (peš po poteh in pločnikih)
-//   main    → BRouter "car-strict"  (glavne/regionalne ceste — izogiba avtocestam)
+//   foot    → BRouter "trekking"    (peš — izogiba avtocestam, ker so foot=no/bicycle=no)
+//   main    → BRouter "moped"       (glavne/regionalne ceste — mopedi ne smejo na AC)
 //   highway → BRouter "car-fast"    (avtoceste — najhitrejša vožnja po avtocestah)
+// OPOMBA: javni OSRM (router.project-osrm.org) podpira LE "driving" — klic /foot/
+// tiho vrne isto avtocestno pot, zato za pešce uporabljamo BRouter (izogne avtocestam).
 
 const EARTH_R = 6371000;
 function toRad(d) { return d * Math.PI / 180; }
@@ -17,12 +19,14 @@ function haversine(lat1, lng1, lat2, lng2) {
 
 const BROUTER_PROFILES = {
   forest: "trekking",
+  foot: "trekking",   // peš — trekking profil izogne avtocestam (foot=no/bicycle=no)
   main: "moped",      // mopedi ne smejo na avtoceste → sledi glavnim/regionalnim cestam
   highway: "car-fast",
 };
-const OSRM_PROFILES = { foot: "foot" };
-// Realna povprečna hitrost za glavne ceste (m/s) — prepišemo BRouterjev moped-čas
-const MAIN_ROAD_SPEED_MS = 70 / 3.6;
+const OSRM_PROFILES = {};
+// Realna povprečna hitrost (m/s) — prepišemo BRouterjev čas
+const MAIN_ROAD_SPEED_MS = 70 / 3.6;   // glavne ceste (avto)
+const FOOT_SPEED_MS = 5 / 3.6;         // peš ~5 km/h
 
 function fmtDist(m) {
   if (m >= 1000) return `${(m / 1000).toFixed(1)} km`;
@@ -90,9 +94,11 @@ Deno.serve(async (req) => {
       try {
         const r = await tryBrouter(BROUTER_PROFILES[profile], points);
         polyline = r.polyline; totalMeters = r.meters; totalSeconds = r.seconds;
-        // Za "main" (moped profil) prepiši čas z realno hitrostjo avta na glavnih cestah
+        // Prepiši čas z realno hitrostjo glede na profil
         if (profile === "main" && totalMeters > 0) {
           totalSeconds = Math.round(totalMeters / MAIN_ROAD_SPEED_MS);
+        } else if (profile === "foot" && totalMeters > 0) {
+          totalSeconds = Math.round(totalMeters / FOOT_SPEED_MS);
         }
       } catch (e) {
         // Za cestna profila poskusi OSRM driving kot rezervo (vrne avtocestno trto)
