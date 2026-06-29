@@ -12,6 +12,126 @@ const PROFILES = [
   { id: "foot",    label: "Peš",     emoji: "🚶", hint: "hoja po mestih" },
 ];
 
+// Prepozna vrsto POI-ja iz Nominatim class/type → { emoji, label }
+function poiType(s) {
+  const cls = s.class, typ = s.type;
+  if (cls === "historic") {
+    if (typ === "castle") return { emoji: "🏰", label: "Grad" };
+    if (typ === "monument" || typ === "memorial" || typ === "statue") return { emoji: "🗿", label: "Spomenik" };
+    if (typ === "ruins") return { emoji: "🏚️", label: "Ruševine" };
+    if (typ === "archaeological_site") return { emoji: "🏺", label: "Arheološko" };
+    if (typ === "wayside_shrine" || typ === "wayside_cross") return { emoji: "⛪", label: "Kapelica" };
+    if (typ === "tomb" || typ === "tombstone") return { emoji: "⚰️", label: "Grob" };
+    return { emoji: "🏛️", label: "Zgodovinski objekt" };
+  }
+  if (cls === "tourism") {
+    if (typ === "artwork") return { emoji: "🗿", label: "Umetnina" };
+    if (typ === "attraction") return { emoji: "🎡", label: "Atrakcija" };
+    if (typ === "museum") return { emoji: "🏛️", label: "Muzej" };
+    if (typ === "viewpoint") return { emoji: "👁️", label: "Razgledišče" };
+    if (typ === "hotel" || typ === "hostel" || typ === "guest_house" || typ === "motel" || typ === "apartment" || typ === "chalet" || typ === "alpine_hut") return { emoji: "🏨", label: "Namestitev" };
+    if (typ === "camp_site") return { emoji: "🏕️", label: "Kamp" };
+    if (typ === "hotel") return { emoji: "🍴", label: "Gostilna" };
+    return { emoji: "📍", label: "Turizem" };
+  }
+  if (cls === "amenity") {
+    if (typ === "restaurant") return { emoji: "🍴", label: "Restavracija" };
+    if (typ === "bar" || typ === "pub" || typ === "cafe" || typ === "fast_food" || typ === "biergarten" || typ === "ice_cream") return { emoji: "🍺", label: "Lokal" };
+    if (typ === "fuel") return { emoji: "⛽", label: "Bencinska" };
+    if (typ === "hospital") return { emoji: "🏥", label: "Bolnica" };
+    if (typ === "clinic" || typ === "doctors" || typ === "dentist") return { emoji: "🩺", label: "Ambulanta" };
+    if (typ === "pharmacy") return { emoji: "💊", label: "Lekarna" };
+    if (typ === "police") return { emoji: "🚔", label: "Policija" };
+    if (typ === "fire_station") return { emoji: "🚒", label: "Gasilci" };
+    if (typ === "place_of_worship") return { emoji: "⛪", label: "Cerkev" };
+    if (typ === "parking") return { emoji: "🅿️", label: "Parkirišče" };
+    if (typ === "bus_station") return { emoji: "🚌", label: "Avtobusna" };
+    if (typ === "school" || typ === "kindergarten" || typ === "university" || typ === "college") return { emoji: "🏫", label: "Šola" };
+    if (typ === "post_office") return { emoji: "📮", label: "Pošta" };
+    if (typ === "bank") return { emoji: "🏦", label: "Banka" };
+    if (typ === "atm") return { emoji: "💳", label: "Bankomat" };
+    if (typ === "toilets") return { emoji: "🚻", label: "Stranišče" };
+    if (typ === "library") return { emoji: "📚", label: "Knjižnica" };
+    if (typ === "theatre" || typ === "cinema" || typ === "arts_centre") return { emoji: "🎭", label: "Kultura" };
+    if (typ === "townhall" || typ === "courthouse" || typ === "embassy") return { emoji: "🏢", label: "Ustanova" };
+    if (typ === "marketplace") return { emoji: "🛒", label: "Tržnica" };
+    if (typ === "childcare") return { emoji: "👶", label: "Vrtec" };
+    return { emoji: "📍", label: "Storitev" };
+  }
+  if (cls === "shop") {
+    if (typ === "supermarket" || typ === "convenience" || typ === "grocery") return { emoji: "🛒", label: "Trgovina" };
+    if (typ === "bakery") return { emoji: "🥖", label: "Pekarna" };
+    if (typ === "alcohol" || typ === "beverages") return { emoji: "🍷", label: "Pijača" };
+    if (typ === "clothes" || typ === "fashion" || typ === "shoes") return { emoji: "👕", label: "Modna" };
+    if (typ === "hardware" || typ === "doityourself") return { emoji: "🔧", label: "Železnina" };
+    if (typ === "books") return { emoji: "📚", label: "Knjigarna" };
+    if (typ === "electronics" || typ === "mobile_phone") return { emoji: "🔌", label: "Elektronika" };
+    if (typ === "sports") return { emoji: "⚽", label: "Športna" };
+    return { emoji: "🏪", label: "Trgovina" };
+  }
+  if (cls === "leisure") {
+    if (typ === "park") return { emoji: "🌳", label: "Park" };
+    if (typ === "pitch") return { emoji: "⚽", label: "Igr. igrišče" };
+    if (typ === "playground") return { emoji: "🛝", label: "Otroško igrišče" };
+    if (typ === "fitness_station") return { emoji: "💪", label: "Fitnes" };
+    if (typ === "stadium") return { emoji: "🏟️", label: "Stadion" };
+    if (typ === "swimming_pool") return { emoji: "🏊", label: "Bazen" };
+    return { emoji: "🌿", label: "Rekreacija" };
+  }
+  if (cls === "natural") {
+    if (typ === "peak") return { emoji: "⛰️", label: "Vrh" };
+    if (typ === "waterfall") return { emoji: "💧", label: "Slap" };
+    if (typ === "spring") return { emoji: "💦", label: "Izvir" };
+    if (typ === "beach") return { emoji: "🏖️", label: "Plaža" };
+    if (typ === "cave_entrance" || typ === "cave") return { emoji: "🕳️", label: "Jama" };
+    if (typ === "tree") return { emoji: "🌲", label: "Drevo" };
+    return { emoji: "🌿", label: "Narava" };
+  }
+  if (cls === "man_made") {
+    if (typ === "tower" || typ === "communications_tower") return { emoji: "📡", label: "Oddajnik" };
+    if (typ === "bridge") return { emoji: "🌉", label: "Most" };
+    if (typ === "water_tower" || typ === "water_well") return { emoji: "🚰", label: "Voda" };
+    return { emoji: "🏗️", label: "Objekt" };
+  }
+  if (cls === "aeroway") return { emoji: "✈️", label: "Letališče" };
+  if (cls === "railway") return { emoji: "🚂", label: "Železnica" };
+  if (cls === "highway") return { emoji: "🛣️", label: "Cesta" };
+  if (cls === "building") return { emoji: "🏠", label: "Zgradba" };
+  return { emoji: "📍", label: null };
+}
+
+// Zgradi glavni naslov in podpis za Nominatim rezultat
+function describeResult(s) {
+  const a = s.address || {};
+  const street = a.road || a.pedestrian || a.footway || a.path || a.cycleway || a.residential || a.square;
+  const houseNo = a.house_number;
+  const place = a.city || a.town || a.village || a.hamlet || a.suburb || a.municipality || a.county;
+  const postcode = a.postcode;
+  const poi = poiType(s);
+  // Ime objekta (POI) ima prednost pred ulico — da uporabnik vidi kaj je našel
+  const poiName = s.namedetails?.name || a.amenity || a.tourism || a.shop;
+  const placeStr = place ? (postcode ? `${postcode} ${place}` : place) : "";
+
+  let main, sub;
+  if (poiName) {
+    main = poiName;
+    const addrParts = [];
+    if (street && houseNo) addrParts.push(`${street} ${houseNo}`);
+    else if (street) addrParts.push(street);
+    if (placeStr) addrParts.push(placeStr);
+    sub = [poi.label ? `${poi.emoji} ${poi.label}` : poi.emoji, ...addrParts].filter(Boolean).join(" · ");
+  } else if (street) {
+    main = houseNo ? `${street} ${houseNo}` : street;
+    const addrParts = [];
+    if (placeStr) addrParts.push(placeStr);
+    sub = [poi.label ? `${poi.emoji} ${poi.label}` : null, ...addrParts].filter(Boolean).join(" · ");
+  } else {
+    main = place || s.display_name.split(",")[0];
+    sub = [poi.label ? `${poi.emoji} ${poi.label}` : null, place && place !== main ? place : null, a.country && a.country !== "Slovenija" ? a.country : null].filter(Boolean).join(" · ");
+  }
+  return { main, sub };
+}
+
 function PointInput({ label, value, onChange, onClear }) {
   const [query, setQuery] = useState(value?.label || "");
   const [suggestions, setSuggestions] = useState([]);
@@ -24,16 +144,36 @@ function PointInput({ label, value, onChange, onClear }) {
     if (!q || q.length < 2) { setSuggestions([]); setLoading(false); return; }
     setLoading(true);
     try {
-      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=10&addressdetails=1&namedetails=1&dedupe=1&countrycodes=si&accept-language=sl,hr,en`;
-      const res = await fetch(url, { headers: { "User-Agent": "SloveniaGISExplorer/1.0", "Accept-Language": "sl,hr,en" } });
+      const baseHeaders = { "User-Agent": "SloveniaGISExplorer/1.0", "Accept-Language": "sl,hr,en" };
+      const common = "&addressdetails=1&namedetails=1&dedupe=1&countrycodes=si&accept-language=sl,hr,en";
+      // Prosti iskalnik — najde POI (gradovi, trgovine, gostilne, kipi) in naslove
+      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=14${common}`;
+      const res = await fetch(url, { headers: baseHeaders });
       let data = await res.json();
+
+      // Structured search za natančne naslove (ulica + hišna + kraj) če prosti ne najde natančno
+      const looksLikeAddress = /\d/.test(q) && /(,|\s)/.test(q);
+      if (looksLikeAddress && data.length < 5) {
+        // Razbijemo "Slovenska 12 Ljubljana" → street/housenumber/city
+        const m = q.trim().match(/^(.+?)\s+(\d+[a-zA-ZčšžČŠŽ]?)\s*,?\s*(.*)$/);
+        if (m) {
+          const [, streetPart, hn, placePart] = m;
+          const sUrl = `https://nominatim.openstreetmap.org/search?street=${encodeURIComponent(streetPart + " " + hn)}&city=${encodeURIComponent(placePart)}&format=json&limit=8${common.replace(/&dedupe=1/, "")}`;
+          const sRes = await fetch(sUrl, { headers: baseHeaders });
+          const sData = await sRes.json();
+          // Spoji, deduplikuj po koordinatah
+          const seen = new Set(data.map(d => `${d.lat},${d.lon}`));
+          sData.forEach(d => { if (!seen.has(`${d.lat},${d.lon}`)) data.push(d); });
+        }
+      }
+
       // fallback: if no results with countrycodes=si, try globally
       if (!data.length) {
         const fallback = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=8&addressdetails=1&namedetails=1&dedupe=1&accept-language=sl,hr,en`;
-        const res2 = await fetch(fallback, { headers: { "User-Agent": "SloveniaGISExplorer/1.0" } });
+        const res2 = await fetch(fallback, { headers: baseHeaders });
         data = await res2.json();
       }
-      setSuggestions(data);
+      setSuggestions(data.slice(0, 14));
     } catch { setSuggestions([]); }
     setLoading(false);
   };
@@ -51,20 +191,7 @@ function PointInput({ label, value, onChange, onClear }) {
     }
   };
 
-  const buildLabel = (s) => {
-    const a = s.address || {};
-    const street = a.road || a.pedestrian || a.footway || a.path || a.cycleway || a.residential;
-    const houseNo = a.house_number;
-    const place = a.city || a.town || a.village || a.hamlet || a.suburb || a.municipality;
-    const postcode = a.postcode;
-    const country = a.country;
-    const parts = [];
-    if (street && houseNo) parts.push(`${street} ${houseNo}`);
-    else if (street) parts.push(street);
-    if (place) parts.push(postcode ? `${postcode} ${place}` : place);
-    if (country && country !== "Slovenija" && country !== "Slovenia") parts.push(country);
-    return parts.length > 0 ? parts.join(", ") : s.display_name;
-  };
+  const buildLabel = (s) => describeResult(s).main;
 
   const select = (s) => {
     const shortLabel = buildLabel(s);
@@ -123,15 +250,7 @@ function PointInput({ label, value, onChange, onClear }) {
       {showDropdown && (
         <div className="absolute left-7 right-0 top-full mt-0.5 bg-white border border-slate-200 rounded-lg shadow-xl z-[1100] max-h-52 overflow-y-auto">
           {suggestions.map((s, i) => {
-            const a = s.address || {};
-            const street = a.road || a.pedestrian || a.footway || a.path || a.cycleway || a.residential;
-            const houseNo = a.house_number;
-            const place = a.city || a.town || a.village || a.hamlet || a.suburb || a.municipality;
-            const postcode = a.postcode;
-            const mainLine = street
-              ? (houseNo ? `${street} ${houseNo}` : street)
-              : (a.amenity || a.tourism || a.shop || s.namedetails?.name || s.display_name.split(",")[0]);
-            const subLine = [postcode ? `${postcode} ${place}` : place, a.country].filter(Boolean).join(", ");
+            const { main: mainLine, sub: subLine } = describeResult(s);
             return (
               <button
                 key={i}
