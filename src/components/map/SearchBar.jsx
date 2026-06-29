@@ -3,7 +3,7 @@ import { Search, X, Loader2, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePrefetchCategories } from "@/hooks/usePrefetchCategories";
 import { base44 } from "@/api/base44Client";
-import { loadCaves, cavesToLayerFeatures } from "@/components/map/CaveLayer";
+import CategoryGrid from "./CategoryGrid";
 
 // ── All categories — each toggles a full-Slovenia layer ───────────────────────
 export const CATEGORIES = [
@@ -175,7 +175,7 @@ function getSubtitle(item) {
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
-export default function SearchBar({ onLocationSelect, autoFocus, onAddCustomLayer, onRemoveCustomLayer, activeSearchLayers, onSearchLayersChange }) {
+export default function SearchBar({ onLocationSelect, autoFocus, onAddCustomLayer, onRemoveCustomLayer, activeSearchLayers, onSearchLayersChange, customMenuLayers, customMenuActive, onToggleCustomMenuLayer, onDeleteCustomMenuLayer }) {
   // Pre-warm Overpass cache for all categories in background on first render
   usePrefetchCategories(CATEGORIES);
 
@@ -185,7 +185,6 @@ export default function SearchBar({ onLocationSelect, autoFocus, onAddCustomLaye
   const [isOpen, setIsOpen] = useState(false);
   const [highlighted, setHighlighted] = useState(-1);
   const [showCategories, setShowCategories] = useState(false);
-  const [loadingCat, setLoadingCat] = useState(null);
   // Use controlled state from parent if provided, otherwise local fallback
   const [localActiveLayers, setLocalActiveLayers] = useState({});
   const activeLayers = activeSearchLayers ?? localActiveLayers;
@@ -259,62 +258,6 @@ export default function SearchBar({ onLocationSelect, autoFocus, onAddCustomLaye
     setResults([]);
   };
 
-  const handleCategoryClick = async (cat) => {
-    if (!onAddCustomLayer) return;
-
-    // Toggle off if already active
-    if (activeLayers[cat.id]) {
-      setShowCategories(false);
-      if (onRemoveCustomLayer) onRemoveCustomLayer(activeLayers[cat.id]);
-      setActiveLayers(prev => { const n = { ...prev }; delete n[cat.id]; return n; });
-      return;
-    }
-
-    // Municipality layer — special polygon layer, no Overpass fetch needed
-    if (cat._municipalityLayer) {
-      setShowCategories(false);
-      const layerId = `search_municipality`;
-      onAddCustomLayer({ id: layerId, name: "🏘️ Občine", color: "#b45309", emoji: cat.emoji, features: [], _searchCat: cat.id, _municipalityLayer: true });
-      setActiveLayers(prev => ({ ...prev, [cat.id]: layerId }));
-      return;
-    }
-
-    // Cave DB layer — load from database
-    if (cat._caveDbLayer) {
-      setLoadingCat(cat.id);
-      try {
-        const caves = await loadCaves();
-        const features = cavesToLayerFeatures(caves);
-        const layerId = `search_${cat.id}`;
-        onAddCustomLayer({ id: layerId, name: "🕳️ Jame", color: "#78716c", emoji: cat.emoji, features, _searchCat: cat.id, _caveDbLayer: true });
-        setActiveLayers(prev => ({ ...prev, [cat.id]: layerId }));
-      } finally {
-        setLoadingCat(null);
-        setShowCategories(false);
-      }
-      return;
-    }
-
-    // Start loading — keep menu open so user sees the spinner on the button
-    setLoadingCat(cat.id);
-    try {
-      const layer = await fetchFullSloveniaLayer(cat);
-      if (layer) {
-        const layerId = `search_${cat.id}`;
-        onAddCustomLayer({ ...layer, id: layerId, _searchCat: cat.id });
-        setActiveLayers(prev => ({ ...prev, [cat.id]: layerId }));
-      }
-    } catch {
-      // Overpass/network failure — show empty layer with friendly label so UI doesn't break
-      const layerId = `search_${cat.id}`;
-      onAddCustomLayer({ id: layerId, name: `${cat.emoji} ${cat.label}`, color: cat.color, emoji: cat.emoji, features: [], _searchCat: cat.id });
-      setActiveLayers(prev => ({ ...prev, [cat.id]: layerId }));
-    } finally {
-      setLoadingCat(null);
-      setShowCategories(false);
-    }
-  };
-
   const activeCount = Object.keys(activeLayers).length;
 
   return (
@@ -371,50 +314,16 @@ export default function SearchBar({ onLocationSelect, autoFocus, onAddCustomLaye
             className="absolute top-full left-0 right-0 mt-1.5 bg-white/97 backdrop-blur-xl rounded-xl shadow-xl border border-slate-100 p-2.5 z-[1010]"
             style={{ minWidth: 280 }}
           >
-            <div className="flex items-center justify-between mb-2 px-1">
-              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Označi na karti — celotna Slovenija</p>
-              {activeCount > 0 && (
-                <button
-                  onClick={() => {
-                    Object.values(activeLayers).forEach(lid => onRemoveCustomLayer && onRemoveCustomLayer(lid));
-                    setActiveLayers({});
-                  }}
-                  className="text-[10px] text-red-400 hover:text-red-600 transition-colors font-medium"
-                >
-                  Počisti vse
-                </button>
-              )}
-            </div>
-            <div className="grid grid-cols-5 gap-1">
-              {CATEGORIES.map(cat => {
-                const isActive = !!activeLayers[cat.id];
-                const isLoading = loadingCat === cat.id;
-                return (
-                  <button
-                    key={cat.id}
-                    onClick={() => handleCategoryClick(cat)}
-                    disabled={isLoading}
-                    className={`relative flex flex-col items-center gap-0.5 px-1 py-2 rounded-lg text-center transition-all ${
-                      isActive
-                        ? "ring-2 text-emerald-700"
-                        : isLoading
-                        ? "bg-slate-100 text-slate-400 cursor-wait"
-                        : "hover:bg-slate-50 text-slate-600"
-                    }`}
-                    style={isActive ? { backgroundColor: cat.color + "15", ringColor: cat.color } : {}}
-                  >
-                    {isLoading
-                      ? <span className="text-lg leading-none">⏳</span>
-                      : <span className="text-lg leading-none">{cat.emoji}</span>
-                    }
-                    <span className="text-[9px] leading-tight text-center w-full truncate">{cat.label}</span>
-                    {isActive && (
-                      <span className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full" style={{ backgroundColor: cat.color }} />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+            <CategoryGrid
+              onAddCustomLayer={onAddCustomLayer}
+              onRemoveCustomLayer={onRemoveCustomLayer}
+              activeSearchLayers={activeLayers}
+              onSearchLayersChange={setActiveLayers}
+              customMenuLayers={customMenuLayers}
+              customMenuActive={customMenuActive}
+              onToggleCustomMenuLayer={onToggleCustomMenuLayer}
+              onDeleteCustomMenuLayer={onDeleteCustomMenuLayer}
+            />
           </motion.div>
         )}
       </AnimatePresence>

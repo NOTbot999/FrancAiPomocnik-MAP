@@ -197,6 +197,10 @@ export default function MapViewer() {
         color: layer.color || "#10b981",
         features: layer.features || [],
         source: "franc_ai",
+      }).then(rec => {
+        if (rec?.id) {
+          setCustomLayers(prev => prev.map(l => l.id === id ? { ...l, _francSavedId: rec.id } : l));
+        }
       }).catch(() => {});
     }
   }, []);
@@ -252,6 +256,24 @@ export default function MapViewer() {
     setCustomLayerVisible(prev => { const next = { ...prev }; delete next[layerId]; scopedSet("customLayerVisible", next); return next; });
     setCustomLayerOpacities(prev => { const next = { ...prev }; delete next[layerId]; scopedSet("customLayerOpacities", next); return next; });
   }, []);
+
+  // Delete a Franc-created menu layer: remove from entity + in-memory state
+  const handleDeleteCustomMenuLayer = useCallback((layer) => {
+    if (layer._francSavedId) {
+      base44.entities.CustomLayer.delete(layer._francSavedId).catch(() => {});
+    }
+    handleRemoveCustomLayer(layer.id);
+    setActiveSearchLayers(prev => {
+      const next = { ...prev };
+      Object.entries(next).forEach(([catId, lid]) => { if (lid === layer.id) delete next[catId]; });
+      return next;
+    });
+  }, [handleRemoveCustomLayer]);
+
+  // Franc-created layers shown as menu buttons (persisted + session)
+  const customMenuLayers = customLayers.filter(l => l._francSavedId || (typeof l.id === "string" && l.id.startsWith("franc_")));
+  const customMenuActive = {};
+  customMenuLayers.forEach(l => { customMenuActive[l.id] = customLayerVisible[l.id] !== false; });
 
   // Shared search category active layers — derived from customLayers so it's always in sync
   // Maps catId → layerId, e.g. { castle: "search_castle" }
@@ -446,6 +468,10 @@ export default function MapViewer() {
           onRemoveCustomLayer: handleRemoveCustomLayer,
           activeSearchLayers,
           onSearchLayersChange: setActiveSearchLayers,
+          customMenuLayers,
+          customMenuActive,
+          onToggleCustomMenuLayer: handleToggleCustomLayerVisible,
+          onDeleteCustomMenuLayer: handleDeleteCustomMenuLayer,
           is3DOpen,
           on3DToggle: () => { setIs3DOpen(p => !p); setMapLibreEverOpened(true); },
           isCollabOpen,
@@ -468,7 +494,7 @@ export default function MapViewer() {
         <>
           {/* Search bar — centered top */}
           <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[950] w-full max-w-md px-4">
-            <SearchBar onLocationSelect={(loc) => handleLocate(loc)} mapCenter={mapCenter} onAddCustomLayer={handleAddCustomLayer} onRemoveCustomLayer={handleRemoveCustomLayer} activeSearchLayers={activeSearchLayers} onSearchLayersChange={setActiveSearchLayers} />
+            <SearchBar onLocationSelect={(loc) => handleLocate(loc)} mapCenter={mapCenter} onAddCustomLayer={handleAddCustomLayer} onRemoveCustomLayer={handleRemoveCustomLayer} activeSearchLayers={activeSearchLayers} onSearchLayersChange={setActiveSearchLayers} customMenuLayers={customMenuLayers} customMenuActive={customMenuActive} onToggleCustomMenuLayer={handleToggleCustomLayerVisible} onDeleteCustomMenuLayer={handleDeleteCustomMenuLayer} />
           </div>
 
           {/* My Tracks panel */}
@@ -838,6 +864,10 @@ export default function MapViewer() {
           onRemoveCustomLayer={handleRemoveCustomLayer}
           activeSearchLayers={activeSearchLayers}
           onSearchLayersChange={setActiveSearchLayers}
+          customMenuLayers={customMenuLayers}
+          customMenuActive={customMenuActive}
+          onToggleCustomMenuLayer={handleToggleCustomLayerVisible}
+          onDeleteCustomMenuLayer={handleDeleteCustomMenuLayer}
           isCollabOpen={isCollabOpen}
           onCollabToggle={() => { setIsCollabOpen(p => !p); setIsMobile3DMenuOpen(false); }}
           onAROpen={() => { window.location.href = '/ar'; }}

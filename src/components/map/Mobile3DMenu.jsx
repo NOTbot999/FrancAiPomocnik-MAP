@@ -6,8 +6,7 @@ import { Slider } from "@/components/ui/slider";
 import MyTracks from "./MyTracks";
 import DeviceLink from "./DeviceLink";
 import ThemeCustomizer, { loadTheme } from "@/components/map/ThemeCustomizer";
-import { CATEGORIES, fetchFullSloveniaLayer } from "./SearchBar";
-import { loadCaves, cavesToLayerFeatures } from "@/components/map/CaveLayer";
+import CategoryGrid from "./CategoryGrid";
 
 
 const DEFAULT_BUTTONS = [
@@ -82,6 +81,10 @@ export default function Mobile3DMenu({
   onRemoveCustomLayer,
   activeSearchLayers,
   onSearchLayersChange,
+  customMenuLayers,
+  customMenuActive,
+  onToggleCustomMenuLayer,
+  onDeleteCustomMenuLayer,
   isCollabOpen,
   onCollabToggle,
   onAROpen,
@@ -93,74 +96,13 @@ export default function Mobile3DMenu({
   const [showLagReport, setShowLagReport] = useState(false);
   const [showMapMarkings, setShowMapMarkings] = useState(false);
   const [theme, setTheme] = useState(loadTheme);
-  const [loadingCat, setLoadingCat] = useState(null);
   const username = localStorage.getItem("userUsername") || null;
   const deviceId = getDeviceId();
-  
-  // Use controlled state from parent if provided, otherwise local fallback
-  const [localActiveLayers, setLocalActiveLayers] = useState({});
-  const activeLayers = activeSearchLayers ?? localActiveLayers;
-  const setActiveLayers = (updater) => {
-    const next = typeof updater === "function" ? updater(activeLayers) : updater;
-    if (onSearchLayersChange) onSearchLayersChange(next);
-    else setLocalActiveLayers(next);
-  };
 
   const setPrefs = useCallback((next) => {
     setPrefsState(next);
     savePrefs(next);
   }, []);
-
-  const handleCategoryClick = async (cat) => {
-    if (!onAddCustomLayer) return;
-
-    // Toggle off if already active
-    if (activeLayers[cat.id]) {
-      if (onRemoveCustomLayer) onRemoveCustomLayer(activeLayers[cat.id]);
-      setActiveLayers(prev => { const n = { ...prev }; delete n[cat.id]; return n; });
-      return;
-    }
-
-    // Municipality layer — special polygon layer, no Overpass fetch needed
-    if (cat._municipalityLayer) {
-      const layerId = `search_municipality`;
-      onAddCustomLayer({ id: layerId, name: "🏘️ Občine", color: "#b45309", features: [], _searchCat: cat.id, _municipalityLayer: true });
-      setActiveLayers(prev => ({ ...prev, [cat.id]: layerId }));
-      return;
-    }
-
-    // Cave DB layer — load from database
-    if (cat._caveDbLayer) {
-      setLoadingCat(cat.id);
-      try {
-        const caves = await loadCaves();
-        const features = cavesToLayerFeatures(caves);
-        const layerId = `search_caves_db`;
-        onAddCustomLayer({ id: layerId, name: "🕳️ Jame (baza)", color: "#78716c", features, _searchCat: cat.id, _caveDbLayer: true });
-        setActiveLayers(prev => ({ ...prev, [cat.id]: layerId }));
-      } finally {
-        setLoadingCat(null);
-      }
-      return;
-    }
-
-    // Start loading
-    setLoadingCat(cat.id);
-    try {
-      const layer = await fetchFullSloveniaLayer(cat);
-      if (layer) {
-        const layerId = `search_${cat.id}`;
-        onAddCustomLayer({ ...layer, id: layerId, _searchCat: cat.id });
-        setActiveLayers(prev => ({ ...prev, [cat.id]: layerId }));
-      }
-    } catch {
-      const layerId = `search_${cat.id}`;
-      onAddCustomLayer({ id: layerId, name: `${cat.emoji} ${cat.label}`, color: cat.color, features: [], _searchCat: cat.id });
-      setActiveLayers(prev => ({ ...prev, [cat.id]: layerId }));
-    } finally {
-      setLoadingCat(null);
-    }
-  };
 
   const orderedButtons = prefs.order
     .map(id => DEFAULT_BUTTONS.find(b => b.id === id))
@@ -240,50 +182,16 @@ export default function Mobile3DMenu({
         </button>
         {showMapMarkings && (
           <div className="mt-1 bg-white rounded-xl overflow-hidden border border-slate-200 p-2.5">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Celotna Slovenija</p>
-              {Object.keys(activeLayers).length > 0 && (
-                <button
-                  onClick={() => {
-                    Object.values(activeLayers).forEach(lid => onRemoveCustomLayer && onRemoveCustomLayer(lid));
-                    setActiveLayers({});
-                  }}
-                  className="text-[10px] text-red-400 hover:text-red-600 transition-colors font-medium"
-                >
-                  Počisti
-                </button>
-              )}
-            </div>
-            <div className="grid grid-cols-5 gap-1">
-              {CATEGORIES.map(cat => {
-                const isActive = !!activeLayers[cat.id];
-                const isLoading = loadingCat === cat.id;
-                return (
-                  <button
-                    key={cat.id}
-                    onClick={() => handleCategoryClick(cat)}
-                    disabled={isLoading}
-                    className={`relative flex flex-col items-center gap-0.5 px-1 py-2 rounded-lg text-center transition-all ${
-                      isActive
-                        ? "ring-2 text-emerald-700"
-                        : isLoading
-                        ? "bg-slate-100 text-slate-400 cursor-wait"
-                        : "hover:bg-slate-50 text-slate-600"
-                    }`}
-                    style={isActive ? { backgroundColor: cat.color + "15", ringColor: cat.color } : {}}
-                  >
-                    {isLoading
-                      ? <Loader2 className="w-4 h-4 animate-spin" />
-                      : <span className="text-lg leading-none">{cat.emoji}</span>
-                    }
-                    <span className="text-[9px] leading-tight text-center w-full truncate">{cat.label}</span>
-                    {isActive && (
-                      <span className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full" style={{ backgroundColor: cat.color }} />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+            <CategoryGrid
+              onAddCustomLayer={onAddCustomLayer}
+              onRemoveCustomLayer={onRemoveCustomLayer}
+              activeSearchLayers={activeSearchLayers}
+              onSearchLayersChange={onSearchLayersChange}
+              customMenuLayers={customMenuLayers}
+              customMenuActive={customMenuActive}
+              onToggleCustomMenuLayer={onToggleCustomMenuLayer}
+              onDeleteCustomMenuLayer={onDeleteCustomMenuLayer}
+            />
           </div>
         )}
       </div>

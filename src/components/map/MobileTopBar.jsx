@@ -27,6 +27,7 @@ function MobileTopBarInner({
   measurements, mapCenter,
   onAddCustomLayer, onRemoveCustomLayer,
   activeSearchLayers, onSearchLayersChange,
+  customMenuLayers, customMenuActive, onToggleCustomMenuLayer, onDeleteCustomMenuLayer,
   is3DOpen, on3DToggle,
   isLidarOpen, onLidarToggle,
   isCollabOpen, onCollabToggle,
@@ -171,6 +172,10 @@ function MobileTopBarInner({
             onRemoveCustomLayer={onRemoveCustomLayer}
             activeSearchLayers={activeSearchLayers}
             onSearchLayersChange={onSearchLayersChange}
+            customMenuLayers={customMenuLayers}
+            customMenuActive={customMenuActive}
+            onToggleCustomMenuLayer={onToggleCustomMenuLayer}
+            onDeleteCustomMenuLayer={onDeleteCustomMenuLayer}
           />
         </div>
       )}
@@ -230,6 +235,10 @@ function MobileTopBarInner({
               onRemoveCustomLayer={onRemoveCustomLayer}
               activeSearchLayers={activeSearchLayers}
               onSearchLayersChange={onSearchLayersChange}
+              customMenuLayers={customMenuLayers}
+              customMenuActive={customMenuActive}
+              onToggleCustomMenuLayer={onToggleCustomMenuLayer}
+              onDeleteCustomMenuLayer={onDeleteCustomMenuLayer}
             />
           </motion.div>
         )}
