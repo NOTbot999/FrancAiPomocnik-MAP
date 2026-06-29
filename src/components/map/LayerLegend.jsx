@@ -4,6 +4,24 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const LEGEND_ITEMS = [
   {
+    category: "OpenStreetMap (OSM)",
+    color: "#7ebc6f",
+    items: [
+      { label: "Avtocesta / hitra cesta", color: "#e892a2", style: "line" },
+      { label: "Glavna cesta (primary)", color: "#fcd6a4", style: "line" },
+      { label: "Regionalna cesta (secondary)", color: "#fff7b1", style: "line" },
+      { label: "Lokalna / naselbina (residential)", color: "#ffffff", style: "line" },
+      { label: "Kolesarska pot (cycleway)", color: "#0066ff", style: "dash" },
+      { label: "Pešpot / planinska pot", color: "#d72d2d", style: "dash" },
+      { label: "Železnica", color: "#707070", style: "line" },
+      { label: "Poseljeno območje / stavbe", color: "#d9d0c9", style: "square" },
+      { label: "Gozd / vegetacija", color: "#aedfa3", style: "polygon" },
+      { label: "Vode (reke, jezera)", color: "#aad2f0", style: "polygon" },
+      { label: "Parki / zelenje", color: "#c7f0a3", style: "polygon" },
+      { label: "POI (znamenitost, trgovina…)", color: "#ff6b6b", style: "dot" },
+    ]
+  },
+  {
     category: "Kataster / GURS",
     color: "#6366f1",
     items: [
@@ -57,6 +75,9 @@ function LegendSymbol({ style, color }) {
   );
   if (style === "line") return (
     <div className="w-5 h-0.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
+  );
+  if (style === "dash") return (
+    <div className="w-5 shrink-0" style={{ height: "2px", backgroundImage: `repeating-linear-gradient(90deg, ${color} 0 5px, transparent 5px 9px)` }} />
   );
   if (style === "polygon") return (
     <div className="w-4 h-3 rounded shrink-0 border border-white/20" style={{ backgroundColor: color + "55", borderColor: color }} />
