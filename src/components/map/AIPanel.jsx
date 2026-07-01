@@ -11,6 +11,7 @@ import { loadTheme } from "@/components/map/ThemeCustomizer";
 import ReactMarkdown from "react-markdown";
 import UnifiedAnalysisPanel from "./UnifiedAnalysisPanel";
 import SimpleAnalysisPanel from "./SimpleAnalysisPanel";
+import { fetchOverpass, overpassToFeatures } from "@/lib/overpass";
 
 // ─── Layer summary for Ask Franc ───────────────────────────────────────────
 const LAYER_SUMMARY = [
@@ -121,37 +122,16 @@ function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme, messag
 
 
   const executeOverpassQuery = async (queryStr, name, color, bbox) => {
-    // Replace {{bbox}} with actual south,west,north,east
+    // Razreši {{bbox}} v dejanske meje (south,west,north,east)
     const bboxParts = bbox.split(",").map(Number);
     const [south, west, north, east] = bboxParts;
     const bboxOverpass = `${south},${west},${north},${east}`;
     const finalQuery = queryStr.replace(/\{\{bbox\}\}/g, bboxOverpass);
 
-    const response = await base44.functions.invoke("overpassProxy", { query: finalQuery });
-    const data = response.data;
-    if (data.error) throw new Error(data.error);
-
-    const features = [];
-    for (const el of (data.elements || [])) {
-      const label = el.tags?.name || el.tags?.["name:sl"] || "";
-      if (el.type === "node" && el.lat != null) {
-        features.push({ type: "Point", coords: [el.lat, el.lon], label });
-      } else if (el.type === "way" && el.geometry) {
-        const coords = el.geometry.filter(p => p.lat != null && p.lon != null).map(p => [p.lat, p.lon]);
-        if (coords.length >= 2) {
-          // Close polygon if natural=water / waterway area
-          const isArea = el.tags?.natural === "water" || el.tags?.landuse === "reservoir";
-          features.push({ type: isArea ? "Polygon" : "LineString", coords, label });
-        }
-      } else if (el.type === "relation" && el.members) {
-        for (const m of el.members) {
-          if (m.geometry && m.geometry.length > 0) {
-            const coords = m.geometry.map(p => [p.lat, p.lon]);
-            features.push({ type: "Polygon", coords, label: el.tags?.name || "" });
-          }
-        }
-      }
-    }
+    // Kličemo Overpass DIREKTNO iz brskalnika (server-side Overpass blokira).
+    // Tako dobimo PRAVE OSM podatke, ne LLM-halucinacij preko overpassProxy.
+    const data = await fetchOverpass(finalQuery);
+    const features = overpassToFeatures(data.elements || []);
     return { name, color: color || "#1d9bf0", emoji: "✨", features };
   };
 
