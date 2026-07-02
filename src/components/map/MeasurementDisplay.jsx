@@ -5,15 +5,22 @@ import { base44 } from "@/api/base44Client";
 
 // Unit conversion helpers
 function convertDistance(meters, unit) {
+  if (unit === "m") return { value: meters.toFixed(0), label: "m" };
+  if (unit === "km") return { value: (meters / 1000).toFixed(3), label: "km" };
   if (unit === "ft") return { value: (meters * 3.28084).toFixed(1), label: "ft" };
   if (unit === "mi") return { value: (meters / 1609.34).toFixed(3), label: "mi" };
+  // auto
   if (meters < 1000) return { value: meters.toFixed(0), label: "m" };
   return { value: (meters / 1000).toFixed(3), label: "km" };
 }
 
 function convertArea(sqm, unit) {
+  if (unit === "m2") return { value: sqm.toFixed(0), label: "m²" };
+  if (unit === "ha") return { value: (sqm / 10000).toFixed(2), label: "ha" };
+  if (unit === "km2") return { value: (sqm / 1000000).toFixed(4), label: "km²" };
   if (unit === "ft2") return { value: (sqm * 10.7639).toFixed(1), label: "ft²" };
   if (unit === "acres") return { value: (sqm / 4046.86).toFixed(4), label: "ac" };
+  // auto
   if (sqm < 10000) return { value: sqm.toFixed(0), label: "m²" };
   if (sqm < 1000000) return { value: (sqm / 10000).toFixed(2), label: "ha" };
   return { value: (sqm / 1000000).toFixed(4), label: "km²" };
@@ -121,6 +128,7 @@ export default function MeasurementDisplay({ type, valueMeters, areaSqm, points,
   ];
   const AREA_UNITS = [
     { id: "auto", label: "auto" },
+    { id: "m2", label: "m²" },
     { id: "ha", label: "ha" },
     { id: "km2", label: "km²" },
     { id: "ft2", label: "ft²" },
