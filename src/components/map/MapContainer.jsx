@@ -225,9 +225,29 @@ function DrawingHandler({ activeTool, onMeasurement, drawings, setDrawings }) {
       {currentPoints.length >= 3 && activeTool === "distance" && (
         <Polygon positions={currentPoints} pathOptions={{ color: "#10b981", fillColor: "#10b981", fillOpacity: 0.08, weight: 2 }} />
       )}
-      {/* Drawing dots */}
+      {/* Drawing dots — draggable for manual fine-tuning */}
       {currentPoints.map((p, i) => (
-        <Marker key={`mp-${i}`} position={p} icon={i === 0 && currentPoints.length >= 2 ? snapIcon : dotIcon} />
+        <Marker
+          key={`mp-${i}`}
+          position={p}
+          draggable
+          icon={i === 0 && currentPoints.length >= 2 ? snapIcon : dotIcon}
+          eventHandlers={{
+            dragend: (e) => {
+              const ll = e.target.getLatLng();
+              const newPts = currentPoints.map((pt, idx) => idx === i ? [ll.lat, ll.lng] : pt);
+              setCurrentPoints(newPts);
+              if (newPts.length >= 2) {
+                let total = 0;
+                for (let k = 1; k < newPts.length; k++)
+                  total += L.latLng(newPts[k - 1]).distanceTo(L.latLng(newPts[k]));
+                onMeasurement({ type: "distance", meters: total, points: newPts });
+              } else {
+                onMeasurement(null);
+              }
+            },
+          }}
+        />
       ))}
 
       {/* Saved lines */}

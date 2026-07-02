@@ -136,7 +136,18 @@ async function searchNominatim(q) {
     const res2 = await fetch(global, { headers: { "Accept-Language": "sl,hr,en", "User-Agent": "SloveniaGISExplorer/1.0" } });
     data = await res2.json();
   }
-  return data;
+  // Remove true duplicates: same display_name or same coordinates (within ~1m)
+  const seen = new Set();
+  const deduped = [];
+  for (const item of data) {
+    const key = (item.display_name || "").trim().toLowerCase();
+    const coordKey = `${parseFloat(item.lat).toFixed(5)},${parseFloat(item.lon).toFixed(5)}`;
+    if (seen.has(key) || seen.has(coordKey)) continue;
+    seen.add(key);
+    seen.add(coordKey);
+    deduped.push(item);
+  }
+  return deduped;
 }
 
 function getMainName(item) {
