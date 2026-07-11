@@ -269,20 +269,25 @@ export default function ARFieldExplorer() {
     try {
       const cat = CATEGORIES.find(c => c.id === catId);
       if (!cat) return;
-      let features = [];
-      if (cat._caveDbLayer) {
-        const caves = await loadCaves();
-        features = cavesToLayerFeatures(caves).map(f => ({
-          lat: f.coords[0], lng: f.coords[1], label: f.label || "Jama"
-        }));
-      } else if (!cat._municipalityLayer) {
-        const layer = await fetchFullSloveniaLayer(cat);
-        features = (layer?.features || []).map(f => {
-          // SearchBar stores coords as [lat, lng]
-          const [lat, lng] = f.coords;
-          return { lat, lng, label: f.label || cat.label };
-        }).filter(f => f.lat && f.lng);
-      }
+      const fetchPromise = (async () => {
+        if (cat._caveDbLayer) {
+          const caves = await loadCaves();
+          return cavesToLayerFeatures(caves).map(f => ({
+            lat: f.coords[0], lng: f.coords[1], label: f.label || "Jama"
+          }));
+        } else if (!cat._municipalityLayer) {
+          const layer = await fetchFullSloveniaLayer(cat);
+          return (layer?.features || []).map(f => {
+            const [lat, lng] = f.coords;
+            return { lat, lng, label: f.label || cat.label };
+          }).filter(f => f.lat && f.lng);
+        }
+        return [];
+      })();
+      const features = await Promise.race([
+        fetchPromise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 30000))
+      ]);
       setCatFeatures(prev => ({ ...prev, [catId]: features }));
     } catch {
       setCatFeatures(prev => ({ ...prev, [catId]: [] }));
@@ -373,7 +378,7 @@ export default function ARFieldExplorer() {
     const halfH = H_FOV / 2;
     const halfV = V_FOV / 2;
 
-    return allPois.map(poi => {
+    const raw = allPois.map(poi => {
       // --- Horizontal ---
       const bearing = bearingTo(userPos.lat, userPos.lng, poi.lat, poi.lng);
       let relAngle = bearing - heading;
@@ -403,7 +408,26 @@ export default function ARFieldExplorer() {
       if (screenY < -20 || screenY > 120) return null;
 
       return { ...poi, screenX, screenY: Math.max(5, Math.min(95, screenY)), relAngle };
-    }).filter(Boolean).sort((a, b) => b.dist - a.dist);
+    }).filter(Boolean).sort((a, b) => a.dist - b.dist); // closest first for priority
+
+    // Limit to 8 POIs to prevent clutter
+    const limited = raw.slice(0, 8);
+
+    // Collision detection: spread overlapping POIs vertically
+    const MIN_GAP = 14; // minimum % vertical gap between POI labels
+    const placed = [];
+    for (const poi of limited) {
+      let y = poi.screenY;
+      for (let attempt = 0; attempt < 6; attempt++) {
+        const conflict = placed.find(p =>
+          Math.abs(p.screenX - poi.screenX) < 18 && Math.abs(p.screenY - y) < MIN_GAP
+        );
+        if (!conflict) break;
+        y += MIN_GAP; // push down
+      }
+      placed.push({ ...poi, screenY: Math.max(8, Math.min(88, y)) });
+    }
+    return placed;
   }, [userPos, heading, devicePitch, allPois, poiElevations, userElevation, radius]);
 
   const totalCatPois = activeCatIds.reduce((acc, catId) => acc + (catFeatures[catId]?.length || 0), 0);
