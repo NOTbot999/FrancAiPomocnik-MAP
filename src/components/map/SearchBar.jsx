@@ -92,36 +92,37 @@ export async function fetchFullSloveniaLayer(cat) {
     layerCache[cat.id] = layer;
     return layer;
   }
-  // 3. Server-side prebuilt cache (fastest remote source)
-  try {
-    const serverData = await base44.entities.CachedLayer.filter({ category_id: cat.id });
-    if (serverData && serverData.length > 0 && serverData[0].features?.length > 0) {
-      const features = serverData[0].features;
-      saveToStorage(cat.id, features);
-      const layer = { name: `${cat.emoji} ${cat.label}`, color: cat.color, emoji: cat.emoji, features, _categoryId: cat.id };
-      layerCache[cat.id] = layer;
-      return layer;
-    }
-  } catch { /* fallback to Overpass */ }
-  // 4. Fallback: Fetch from Overpass (with mirror fallback)
-  const data = await fetchOverpass(cat.query);
-  const features = (data.elements || []).map(el => {
+  // 3+4. Race server cache vs Overpass in parallel — whichever returns valid data first wins
+  const parseOverpass = (data) => (data.elements || []).map(el => {
     const lat = el.lat ?? el.center?.lat;
     const lon = el.lon ?? el.center?.lon;
     if (!lat || !lon) return null;
-    return {
-      type: "Point",
-      coords: [lat, lon],
-      label: el.tags?.name || el.tags?.["name:sl"] || el.tags?.ref || "",
-    };
+    return { type: "Point", coords: [lat, lon], label: el.tags?.name || el.tags?.["name:sl"] || el.tags?.ref || "" };
   }).filter(Boolean);
+
+  const serverPromise = base44.entities.CachedLayer.filter({ category_id: cat.id })
+    .then(d => (d?.length > 0 && d[0].features?.length > 0) ? d[0].features : null)
+    .catch(() => null);
+
+  const overpassPromise = cat.query
+    ? fetchOverpass(cat.query).then(parseOverpass).catch(() => null)
+    : Promise.resolve(null);
+
+  let features = null;
+  // Wait for server first (usually faster), then Overpass as fallback
+  const serverResult = await serverPromise;
+  if (serverResult && serverResult.length > 0) {
+    features = serverResult;
+  } else {
+    features = await overpassPromise;
+  }
   // Only persist non-empty results so a temporary failure never pins an empty layer for 7 days
-  if (features.length > 0) {
+  if (features && features.length > 0) {
     saveToStorage(cat.id, features);
   } else {
     try { localStorage.removeItem(LS_PREFIX + cat.id); } catch {}
   }
-  const layer = { name: `${cat.emoji} ${cat.label}`, color: cat.color, emoji: cat.emoji, features, _categoryId: cat.id };
+  const layer = { name: `${cat.emoji} ${cat.label}`, color: cat.color, emoji: cat.emoji, features: features || [], _categoryId: cat.id };
   layerCache[cat.id] = layer;
   return layer;
 }

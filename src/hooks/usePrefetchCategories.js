@@ -1,10 +1,13 @@
 // Background prefetcher — pre-warms the layer cache for all search categories
 // Priority order: 1. localStorage, 2. CachedLayer (server), 3. Overpass (fallback)
+// Uses a concurrency pool for fast parallel fetching.
 import { useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { fetchOverpass } from "@/lib/overpass";
 
 const LS_PREFIX = "slomapcat_";
 const CACHE_TTL = 7 * 24 * 60 * 60 * 1000;
+const CONCURRENCY = 6;
 
 function isCached(id) {
   try {
@@ -36,11 +39,7 @@ async function prefetchCategory(cat) {
 
   // Fallback to Overpass (only for categories with a query)
   if (!cat.query) return;
-  const res = await fetch("https://overpass-api.de/api/interpreter", {
-    method: "POST",
-    body: "data=" + encodeURIComponent(cat.query),
-  });
-  const data = await res.json();
+  const data = await fetchOverpass(cat.query);
   const features = (data.elements || []).map(el => {
     const lat = el.lat ?? el.center?.lat;
     const lon = el.lon ?? el.center?.lon;
@@ -54,6 +53,19 @@ async function prefetchCategory(cat) {
   saveToCache(cat.id, features);
 }
 
+// Run a pool of workers over the queue, each picking the next item until done
+async function runPool(items, worker, poolSize) {
+  let index = 0;
+  const next = async () => {
+    while (index < items.length) {
+      const current = items[index++];
+      try { await worker(current); } catch { /* silently ignore */ }
+    }
+  };
+  const workers = Array.from({ length: Math.min(poolSize, items.length) }, () => next());
+  await Promise.all(workers);
+}
+
 let prefetchStarted = false;
 
 export function usePrefetchCategories(categories) {
@@ -63,18 +75,13 @@ export function usePrefetchCategories(categories) {
 
     const run = async () => {
       const toFetch = categories.filter(c => !isCached(c.id));
-      for (const cat of toFetch) {
-        try {
-          await prefetchCategory(cat);
-          await new Promise(r => setTimeout(r, 500));
-        } catch { /* silently ignore */ }
-      }
+      await runPool(toFetch, prefetchCategory, CONCURRENCY);
     };
 
     if (typeof requestIdleCallback !== "undefined") {
-      requestIdleCallback(() => run(), { timeout: 5000 });
+      requestIdleCallback(() => run(), { timeout: 3000 });
     } else {
-      setTimeout(run, 2000);
+      setTimeout(run, 800);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 }
