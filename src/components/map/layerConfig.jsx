@@ -902,6 +902,14 @@ export const OVERLAY_CATEGORIES = [
         opacity: 0.9,
         thumbnail: "https://images.unsplash.com/photo-1474487548417-781cb71495f3?w=80&h=60&fit=crop",
         description: "GNSS geodetske točke iz državnega koordinatnega sistema"
+      },
+      {
+        id: "third_dev_axis",
+        name: "3. razvojna os (nova hitra cesta)",
+        type: "third_dev_axis",
+        opacity: 0.85,
+        thumbnail: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=80&h=60&fit=crop",
+        description: "Tretja razvojna os — bodoča hitra cesta od Holmca (AT meja) preko Slovenj Gradca, Velenja in Šentruperta, ter od Novega mesta preko Gorjancev, Metlike do Črnomlja (HR meja). Severni krak v gradnji, južni v načrtovanju."
       }
     ]
   },

@@ -21,6 +21,7 @@ import OfflineManager from "./OfflineManager";
 import SearchCategoryLayer from "./SearchCategoryLayer";
 import MunicipalityLayer from "./MunicipalityLayer";
 import CollabPinsLayer from "./CollabPinsLayer";
+import ThirdDevAxisLayer from "./ThirdDevAxisLayer";
 
 function OfflineManagerPortal({ onClose }) {
   const map = useMap();
@@ -675,9 +676,19 @@ export default function MapContainerComponent({
         }
 
         return null;
-      })}
+        })}
 
-      {offlineOpen && <OfflineManagerPortal onClose={onOfflineClose} />}
+        {/* Tretja razvojna os — posebni sloj s polilinijo in priključki */}
+        {(() => {
+        const tdaLayer = allLayers["third_dev_axis"];
+        if (!tdaLayer) return null;
+        const cfg = activeLayers["third_dev_axis"];
+        if (!cfg) return null;
+        const opacity = cfg.opacity ?? tdaLayer.opacity ?? 0.85;
+        return <ThirdDevAxisLayer opacity={opacity} />;
+        })()}
+
+        {offlineOpen && <OfflineManagerPortal onClose={onOfflineClose} />}
       {showZoomControls && <ZoomControls />}
       <MapScaleBar />
       {mobileProps && <MobileTopBar {...mobileProps} />}
