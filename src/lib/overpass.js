@@ -2,10 +2,10 @@
 // Server-side (backend funkcije) Overpass blokira (403/406), zato to izvajamo klient-side.
 
 const OVERPASS_MIRRORS = [
-  "https://overpass-api.de/api/interpreter",
-  "https://overpass.kumi.systems/api/interpreter",
   "https://overpass.openstreetmap.fr/api/interpreter",
   "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
+  "https://overpass-api.de/api/interpreter",
+  "https://overpass.kumi.systems/api/interpreter",
   "https://overpass.osm.ch/api/interpreter",
 ];
 
