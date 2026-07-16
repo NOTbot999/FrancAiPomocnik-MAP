@@ -50,10 +50,16 @@ export const CATEGORIES = [
   { id: "speed_camera",   label: "Radarji",       emoji: "📷", color: "#dc2626", query: `[out:json][timeout:30];node["highway"="speed_camera"](45.4,13.4,46.9,16.6);out;` },
   { id: "post_office",   label: "Pošte",          emoji: "📮", color: "#8b5cf6", query: `[out:json][timeout:30];(node["amenity"="post_office"](45.4,13.4,46.9,16.6);way["amenity"="post_office"](45.4,13.4,46.9,16.6););out center;` },
 
+  // ── Infrastruktura: predori, vijadukti, mostovi ──────────────────────────────
+  { id: "tunnel",         label: "Predori",        emoji: "🚇", color: "#1e293b", query: `[out:json][timeout:45];(way["tunnel"="yes"]["highway"](45.4,13.4,46.9,16.6););out center;` },
+  { id: "viaduct",        label: "Vijadukti",      emoji: "🌉", color: "#7c3aed", query: `[out:json][timeout:45];(way["bridge"="yes"]["highway"]["bridge:name"](45.4,13.4,46.9,16.6);way["man_made"="bridge"](45.4,13.4,46.9,16.6);way["bridge"="yes"]["highway"]["bridge:structure"="arch"](45.4,13.4,46.9,16.6););out center;` },
+  { id: "motorway_tunnel", label: "AC predori",    emoji: "🕳️", color: "#0f172a", query: `[out:json][timeout:45];(way["highway"~"motorway|motorway_link|trunk|trunk_link"]["tunnel"="yes"](45.4,13.4,46.9,16.6););out center;` },
+  { id: "motorway_bridge", label: "AC vijadukti",   emoji: "🏗️", color: "#5b21b6", query: `[out:json][timeout:45];(way["highway"~"motorway|motorway_link|trunk|trunk_link"]["bridge"="yes"](45.4,13.4,46.9,16.6););out center;` },
+
 ];
 
 // Invalidate old cache for improved queries
-["fuel","atm","hospital","clinic","lake","racetrack","geocache","pitch","fitness","toilets","transmitter","speed_camera","post_office"].forEach(id => {
+["fuel","atm","hospital","clinic","lake","racetrack","geocache","pitch","fitness","toilets","transmitter","speed_camera","post_office","tunnel","viaduct","motorway_tunnel","motorway_bridge"].forEach(id => {
   try { localStorage.removeItem("slomapcat_" + id); } catch {}
 });
 // Invalidate old municipality cache (stitching fix)
