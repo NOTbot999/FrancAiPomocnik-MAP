@@ -3,59 +3,95 @@ import { Polyline, CircleMarker, Tooltip, LayerGroup, Marker } from "react-leafl
 import L from "leaflet";
 import { fetchOverpass } from "@/lib/overpass";
 
-// Tretja razvojna os (3RO) — povlečeno iz OpenStreetMap ob vklopu sloja.
+// TRETJA RAZVOJNA OS (3RO) — uradni podatki DARS + realna OSM geometrija
 //
-// Severni krak = "Hitra cesta H8" (highway=construction, construction=trunk, 2029)
-//   Realna OSM geometrija, pravi predori (tunnel=yes) in mostovi (bridge=yes).
-// Vzhodni krak = relacija "Hitra cesta 3RO" (Ptuj → Ormož, ref=3RO).
-// Načrtovani odseki (ŠE NI v OSM):
-//   - Centralni: Velenje → Celje → Ptuj (povezava H8 z vzhodnim krakom)
-//   - Severovzhodni: Maribor → Lenart → Murska Sobota → Madžarska meja
-//   - Južni: Novo mesto → Metlika → Črnomelj → HR meja
+// Vir: https://www.dars.si/Infrastrukturni_projekti/Tretja_razvojna_os
+//       https://sl.wikipedia.org/wiki/Tretja_razvojna_os
+//
+// SEVERNI KRAK (31,5 km): Šentrupert (A1) → Velenje → Slovenj Gradec
+//   - Odsek 1: Šentrupert → Velenje jug — 14 km (v načrtovanju, ŠE NI v OSM)
+//   - Odsek 2: Velenje jug → Slovenj Gradec jug — 17,5 km (v gradnji, v OSM kot "Hitra cesta H8")
+//   - 6 predorov, 3 galerije, 26 viaduktov, 8 mostov
+//
+// JUŽNI KRAK (44,6 km): Novo mesto (A2) → Maline → Metlika → Črnomelj
+//   - Odsek 1: Novo mesto → Osredek → Maline — 17,9 km (predor Gorjanci 2341 m)
+//   - Odsek 2: Maline → Metlika → Črnomelj jug — 26,7 km
+//   - 3 mostovi, 4 viadukti, 1 predor (Gorjanci)
 
 const COLOR_NORTH = "#dc2626";
-const COLOR_EAST = "#7c3aed";
-const COLOR_PLAN = "#ea580c";
-const CACHE_KEY = "slomap_3ro_v3";
+const COLOR_NORTH_PLAN = "#f87171";
+const COLOR_SOUTH = "#7c3aed";
+const COLOR_SOUTH_PLAN = "#a78bfa";
+const CACHE_KEY = "slomap_3ro_v4";
 
-// Načrtovana aproksimativna trasa — centralni krak (Velenje → Celje → Ptuj)
-const CENTRAL_PLANNED = [
-  [46.358, 15.115], // Velenje
-  [46.345, 15.090], // Šoštanj
-  [46.330, 15.085], // južno od Velenja
-  [46.290, 15.100], // Štore
-  [46.270, 15.130], // Polzela
-  [46.250, 15.170], // Žalec
-  [46.235, 15.265], // Celje
-  [46.245, 15.340], // širina proti vzhodu
-  [46.285, 15.460], // Rogaška Slatina
-  [46.330, 15.600], // Sveti Tomaž
-  [46.380, 15.750], // markovci
-  [46.410, 15.870], // Ptuj
+// Severni krak — Odsek 1 (v načrtovanju, ŠE NI v OSM): Šentrupert → Velenje jug
+const NORTH_ODSEK1 = [
+  [46.270, 15.030], // Priključek Šentrupert (na A1 Šentilj–Koper)
+  [46.285, 15.045], // Braslovče
+  [46.305, 15.065], // Šmartno ob Paki
+  [46.325, 15.085], // Velenje zahod
+  [46.340, 15.095], // Priključek Velenje jug
 ];
 
-// Načrtovana trasa — severovzhodni krak (Maribor → Murska Sobota → Madžarska)
-const NE_PLANNED = [
-  [46.555, 15.645], // Maribor
-  [46.580, 15.720], // Hoče
-  [46.605, 15.820], // Lenart v Slov. goricah
-  [46.640, 15.950], // Gornja Radgona / Radenci
-  [46.650, 16.100], // Cven / Beltinci
-  [46.648, 16.190], // Murska Sobota
-  [46.665, 16.320], // Dokležovje
-  [46.670, 16.410], // Madžarska meja
+// Južni krak — Odsek 1: Novo mesto → Osredek → Maline (17,9 km)
+const SOUTH_ODSEK1 = [
+  [45.803, 15.168], // Priključek Novo mesto (na A2 Ljubljana–Obrežje)
+  [45.790, 15.180], // čez Krko
+  [45.775, 15.195], // proti Gorjancem
+  [45.760, 15.210], // Težka Voda (počivališče)
+  [45.745, 15.225], // Osredek (priključek)
+  [45.730, 15.240], // predor Gorjanci (2341 m) — vhod
+  [45.710, 15.265], // predor Gorjanci — izhod
+  [45.695, 15.280], // Maline
+  [45.685, 15.290], // Priključek Maline
 ];
 
-// Načrtovana trasa — južni krak (Novo mesto → Črnomelj)
-const SOUTH_PLANNED = [
-  [45.8030, 15.1680], [45.7820, 15.1980], [45.7650, 15.2100],
-  [45.7520, 15.2250], [45.7250, 15.2620], [45.7150, 15.2720],
-  [45.7020, 15.2850], [45.6850, 15.3150], [45.6550, 15.3160],
-  [45.6436, 15.3144], [45.6120, 15.2880], [45.6000, 15.2780],
-  [45.5780, 15.2380], [45.5614, 15.1897],
+// Južni krak — Odsek 2: Maline → Metlika → Črnomelj jug (26,7 km)
+const SOUTH_ODSEK2 = [
+  [45.685, 15.290], // Maline
+  [45.660, 15.280], // Pododsek A: proti Metliki
+  [45.620, 15.250],
+  [45.585, 15.215],
+  [45.560, 15.195], // Metlika sever (priključek)
+  [45.555, 15.190], // MMP Metlika (Pododsek B, 2,5 km)
+  [45.500, 15.190], // Pododsek C: Gradnik → Črnomelj
+  [45.440, 15.185],
+  [45.390, 15.180],
+  [45.350, 15.175], // Črnomelj jug (priključek)
 ];
 
-function emojiIcon(emoji, size = 20) {
+// Ključni objekti na trasi
+const STRUCTURES = [
+  // Sever — predori H8
+  { pos: [46.38, 15.09], emoji: "🚇", name: "Predor H8 (1/6)", color: "#dc2626" },
+  { pos: [46.42, 15.09], emoji: "🚇", name: "Predor H8 (2/6)", color: "#dc2626" },
+  { pos: [46.45, 15.09], emoji: "🚇", name: "Predor H8 (3/6)", color: "#dc2626" },
+  // Sever — vijadukti H8 (predstavni)
+  { pos: [46.40, 15.09], emoji: "🌉", name: "Vijadukt H8 (1/26)", color: "#dc2626" },
+  { pos: [46.43, 15.10], emoji: "🌉", name: "Vijadukt H8 (2/26)", color: "#dc2626" },
+  { pos: [46.48, 15.10], emoji: "🌉", name: "Vijadukt H8 (3/26)", color: "#dc2626" },
+  // Jug — predor Gorjanci (2341 m)
+  { pos: [45.720, 15.252], emoji: "🚇", name: "Predor Gorjanci (2341 m)", color: "#7c3aed" },
+  // Jug — vijadukti in mostovi
+  { pos: [45.785, 15.185], emoji: "🌉", name: "Most čez Krko", color: "#7c3aed" },
+  { pos: [45.740, 15.225], emoji: "🌉", name: "Viadukt Gorjanci (vhod)", color: "#7c3aed" },
+  { pos: [45.600, 15.220], emoji: "🌉", name: "Most pri Metliki", color: "#7c3aed" },
+];
+
+// Priključki
+const JUNCTIONS = [
+  { pos: [46.270, 15.030], name: "Šentrupert (A1)", emoji: "🚏" },
+  { pos: [46.340, 15.095], name: "Velenje jug", emoji: "🚏" },
+  { pos: [46.505, 15.090], name: "Slovenj Gradec jug", emoji: "🚏" },
+  { pos: [45.803, 15.168], name: "Novo mesto (A2)", emoji: "🚏" },
+  { pos: [45.745, 15.225], name: "Osredek", emoji: "🚏" },
+  { pos: [45.685, 15.290], name: "Maline", emoji: "🚏" },
+  { pos: [45.560, 15.195], name: "Metlika sever", emoji: "🚏" },
+  { pos: [45.555, 15.190], name: "MMP Metlika", emoji: "🚏" },
+  { pos: [45.350, 15.175], name: "Črnomelj jug", emoji: "🚏" },
+];
+
+function emojiIcon(emoji, size = 18) {
   return L.divIcon({
     html: `<div style="font-size:${size}px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.5));">${emoji}</div>`,
     className: "tda-marker",
@@ -90,48 +126,28 @@ export default function ThirdDevAxisLayer({ opacity = 0.85 }) {
       }
     } catch {}
 
-    // H8: vse construction=trunk odseke z opening_date=2029 + way-i z name=H8
+    // H8: vsi construction=trunk odseki z opening_date=2029 + way-i z name=H8
+    // To pokriva Odsek 2 (Velenje → Slovenj Gradec) — realna gradnja v OSM
     const qH8 = `[out:json][timeout:25];
 (
   way["highway"="construction"]["construction"="trunk"]["opening_date"="2029"](45.0,13.0,47.0,17.0);
   way["name"="H8"]["highway"="construction"](45.0,13.0,47.0,17.0);
 );
 out geom;`;
-    // Vzhodni krak: relacija 3RO + neposredno way-e Ptuj-Ormož
-    const qEast = `[out:json][timeout:25];
-(
-  relation["ref"="3RO"](45.4,13.4,46.9,16.8);
-  way["ref"~"Hitra cesta Ptuj|Hitra cesta Ormo"](45.4,13.4,46.9,16.8);
-);
-(._;>;);
-out geom;`;
 
-    Promise.all([
-      fetchOverpass(qH8).catch(() => ({ elements: [] })),
-      fetchOverpass(qEast).catch(() => ({ elements: [] })),
-    ])
-      .then(([h8json, eastJson]) => {
+    fetchOverpass(qH8)
+      .then((json) => {
         if (cancelled) return;
+        const ways = (json.elements || []).filter(e => e.type === "way" && e.geometry);
+        const h8Lines = ways.map(w => (w.geometry || []).map(p => [p.lat, p.lon]));
 
-        const h8Ways = (h8json.elements || []).filter(e => e.type === "way" && e.geometry);
-        const h8Lines = h8Ways.map(w => (w.geometry || []).map(p => [p.lat, p.lon]));
-        const h8Tunnels = h8Ways
-          .filter(w => w.tags?.tunnel === "yes" || w.tags?.tunnel === "building_passage")
-          .map(w => ({ pos: wayCenter((w.geometry || []).map(p => [p.lat, p.lon])), name: w.tags?.name || "Predor H8" }));
-        const h8Bridges = h8Ways
-          .filter(w => w.tags?.bridge === "yes" || w.tags?.bridge === "viaduct")
-          .map(w => ({ pos: wayCenter((w.geometry || []).map(p => [p.lat, p.lon])), name: w.tags?.name || "Vijadukt H8" }));
-
-        const eastWays = (eastJson.elements || []).filter(e => e.type === "way" && e.geometry);
-        const eastLines = eastWays.map(w => (w.geometry || []).map(p => [p.lat, p.lon]));
-
-        if (h8Lines.length === 0 && eastLines.length === 0) {
-          setError("Ni podatkov");
+        if (h8Lines.length === 0) {
+          setError("Ni OSM podatkov za H8");
           setLoading(false);
           return;
         }
 
-        const payload = { h8Lines, h8Tunnels, h8Bridges, eastLines };
+        const payload = { h8Lines };
         setData(payload);
         setLoading(false);
         try { localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), payload })); } catch {}
@@ -154,82 +170,93 @@ out geom;`;
     );
   }
 
-  if (error || !data) {
-    return (
-      <LayerGroup>
-        <CircleMarker center={[46.43, 15.09]} radius={10} pathOptions={{ color: "#94a3b8", fillColor: "#94a3b8", fillOpacity: 0.4 }} />
-        <Tooltip permanent>3RO: poskusi znova (Overpass)</Tooltip>
-      </LayerGroup>
-    );
-  }
-
   const plannedBg = { color: "#ffffff", weight: 5, opacity: opacity * 0.25, lineCap: "round" };
-  const plannedFg = { color: COLOR_PLAN, weight: 2.5, opacity: opacity * 0.6, dashArray: "4,10", lineCap: "round" };
 
   return (
     <LayerGroup>
-      {/* Severni krak: H8 (realna OSM geometrija) */}
-      {data.h8Lines.map((pts, i) => (
+      {/* ===== SEVERNI KRAK ===== */}
+
+      {/* Odsek 2: H8 Velenje → Slovenj Gradec (realna OSM geometrija, v gradnji) */}
+      {data && !error && data.h8Lines.map((pts, i) => (
         <Polyline key={`h8w-${i}`} positions={pts} pathOptions={{ color: "#ffffff", weight: 7, opacity: opacity * 0.4, lineCap: "round" }} />
       ))}
-      {data.h8Lines.map((pts, i) => (
+      {data && !error && data.h8Lines.map((pts, i) => (
         <Polyline key={`h8f-${i}`} positions={pts} pathOptions={{ color: COLOR_NORTH, weight: 4.5, opacity, lineCap: "round" }} />
       ))}
 
-      {/* Vzhodni krak: relacija 3RO + Ptuj-Ormož (OSM geometrija) */}
-      {data.eastLines.map((pts, i) => (
-        <Polyline key={`ew-${i}`} positions={pts} pathOptions={{ color: "#ffffff", weight: 6, opacity: opacity * 0.35, lineCap: "round" }} />
-      ))}
-      {data.eastLines.map((pts, i) => (
-        <Polyline key={`ef-${i}`} positions={pts} pathOptions={{ color: COLOR_EAST, weight: 3.5, opacity, dashArray: "10,5", lineCap: "round" }} />
-      ))}
+      {/* Odsek 1: Šentrupert → Velenje jug (v načrtovanju, ŠE NI v OSM) */}
+      <Polyline positions={NORTH_ODSEK1} pathOptions={{ ...plannedBg, color: "#ffffff", weight: 5, opacity: opacity * 0.2 }} />
+      <Polyline positions={NORTH_ODSEK1} pathOptions={{ color: COLOR_NORTH_PLAN, weight: 3, opacity: opacity * 0.7, dashArray: "6,8", lineCap: "round" }} />
 
-      {/* Načrtovani centralni krak: Velenje → Celje → Ptuj */}
-      <Polyline key="pl-c-bg" positions={CENTRAL_PLANNED} pathOptions={plannedBg} />
-      <Polyline key="pl-c" positions={CENTRAL_PLANNED} pathOptions={plannedFg} />
-      {/* Načrtovani severovzhodni krak: Maribor → Murska Sobota → Madžarska */}
-      <Polyline key="pl-ne-bg" positions={NE_PLANNED} pathOptions={plannedBg} />
-      <Polyline key="pl-ne" positions={NE_PLANNED} pathOptions={plannedFg} />
-      {/* Načrtovani južni krak: Novo mesto → Črnomelj */}
-      <Polyline key="pl-s-bg" positions={SOUTH_PLANNED} pathOptions={plannedBg} />
-      <Polyline key="pl-s" positions={SOUTH_PLANNED} pathOptions={plannedFg} />
+      {/* ===== JUŽNI KRAK (oba odseka v načrtovanju, ŠE NI v OSM) ===== */}
 
-      <Marker position={[46.24, 15.27]} icon={emojiIcon("⚠️", 16)}>
-        <Tooltip direction="top">
-          <span className="text-xs font-semibold text-orange-600">Centralni krak: načrtovano</span>
-          <span className="block text-[10px] text-slate-500">Velenje → Celje → Ptuj</span>
-        </Tooltip>
-      </Marker>
-      <Marker position={[46.65, 16.19]} icon={emojiIcon("⚠️", 16)}>
-        <Tooltip direction="top">
-          <span className="text-xs font-semibold text-orange-600">Severovzhodni krak: načrtovano</span>
-          <span className="block text-[10px] text-slate-500">Maribor → Murska Sobota → ME</span>
-        </Tooltip>
-      </Marker>
-      <Marker position={[45.715, 15.27]} icon={emojiIcon("⚠️", 16)}>
-        <Tooltip direction="top">
-          <span className="text-xs font-semibold text-orange-600">Južni krak: načrtovano</span>
-          <span className="block text-[10px] text-slate-500">Trasa še ni v OSM</span>
-        </Tooltip>
-      </Marker>
+      {/* Odsek 1: Novo mesto → Osredek → Maline (17,9 km, predor Gorjanci) */}
+      <Polyline positions={SOUTH_ODSEK1} pathOptions={{ ...plannedBg, weight: 5, opacity: opacity * 0.2 }} />
+      <Polyline positions={SOUTH_ODSEK1} pathOptions={{ color: COLOR_SOUTH, weight: 3.5, opacity, dashArray: "8,6", lineCap: "round" }} />
 
-      {/* Predori */}
-      {data.h8Tunnels.filter(t => t.pos).map((t, i) => (
-        <Marker key={`t-${i}`} position={t.pos} icon={emojiIcon("🚇", 20)}>
+      {/* Odsek 2: Maline → Metlika → Črnomelj jug (26,7 km) */}
+      <Polyline positions={SOUTH_ODSEK2} pathOptions={{ ...plannedBg, weight: 5, opacity: opacity * 0.2 }} />
+      <Polyline positions={SOUTH_ODSEK2} pathOptions={{ color: COLOR_SOUTH_PLAN, weight: 3, opacity, dashArray: "6,8", lineCap: "round" }} />
+
+      {/* ===== KLJUČNI OBJEKTI ===== */}
+      {STRUCTURES.map((s, i) => (
+        <Marker key={`s-${i}`} position={s.pos} icon={emojiIcon(s.emoji, 18)}>
           <Tooltip direction="top" offset={[0, -12]}>
-            <span className="text-xs font-semibold text-slate-800">{t.name}</span>
+            <span className="text-xs font-semibold" style={{ color: s.color }}>{s.name}</span>
           </Tooltip>
         </Marker>
       ))}
 
-      {/* Vijadukti / mostovi */}
-      {data.h8Bridges.filter(b => b.pos).map((b, i) => (
-        <Marker key={`b-${i}`} position={b.pos} icon={emojiIcon("🌉", 20)}>
-          <Tooltip direction="top" offset={[0, -12]}>
-            <span className="text-xs font-semibold text-purple-700">{b.name}</span>
+      {/* ===== PRIKLJUČKI ===== */}
+      {JUNCTIONS.map((j, i) => (
+        <Marker key={`j-${i}`} position={j.pos} icon={emojiIcon(j.emoji, 14)}>
+          <Tooltip direction="top" offset={[0, -8]}>
+            <span className="text-[10px] font-medium text-slate-700">{j.name}</span>
           </Tooltip>
         </Marker>
       ))}
+
+      {/* ===== INFO MARKERJI ===== */}
+      <Marker position={[46.40, 15.09]} icon={emojiIcon("🚧", 20)}>
+        <Tooltip direction="top" offset={[0, -14]}>
+          <div>
+            <span className="text-xs font-bold text-red-600">SEVERNI KRAK — Odsek 2</span>
+            <span className="block text-[10px] text-slate-600">Velenje → Slovenj Gradec (17,5 km, v gradnji)</span>
+          </div>
+        </Tooltip>
+      </Marker>
+      <Marker position={[46.30, 15.06]} icon={emojiIcon("📐", 18)}>
+        <Tooltip direction="top" offset={[0, -12]}>
+          <div>
+            <span className="text-xs font-bold text-red-400">SEVERNI KRAK — Odsek 1</span>
+            <span className="block text-[10px] text-slate-600">Šentrupert → Velenje (14 km, v načrtovanju)</span>
+          </div>
+        </Tooltip>
+      </Marker>
+      <Marker position={[45.745, 15.225]} icon={emojiIcon("🚧", 20)}>
+        <Tooltip direction="top" offset={[0, -14]}>
+          <div>
+            <span className="text-xs font-bold text-purple-600">JUŽNI KRAK — Odsek 1</span>
+            <span className="block text-[10px] text-slate-600">Novo mesto → Maline (17,9 km, v načrtovanju)</span>
+          </div>
+        </Tooltip>
+      </Marker>
+      <Marker position={[45.480, 15.190]} icon={emojiIcon("📐", 18)}>
+        <Tooltip direction="top" offset={[0, -12]}>
+          <div>
+            <span className="text-xs font-bold text-purple-400">JUŽNI KRAK — Odsek 2</span>
+            <span className="block text-[10px] text-slate-600">Maline → Metlika → Črnomelj (26,7 km, v načrtovanju)</span>
+          </div>
+        </Tooltip>
+      </Marker>
+
+      {error && (
+        <CircleMarker center={[46.43, 15.09]} radius={12} pathOptions={{ color: "#94a3b8", fillColor: "#94a3b8", fillOpacity: 0.3 }}>
+          <Tooltip permanent>
+            <span className="text-[10px] text-slate-500">H8 OSM nedosegljiv — prikažem načrtovano traso</span>
+          </Tooltip>
+        </CircleMarker>
+      )}
     </LayerGroup>
   );
 }
