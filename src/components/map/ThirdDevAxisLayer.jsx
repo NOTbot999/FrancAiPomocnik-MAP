@@ -114,49 +114,75 @@ export default function ThirdDevAxisLayer({ opacity = 0.85 }) {
   useEffect(() => {
     let cancelled = false;
 
-    try {
-      const cached = localStorage.getItem(CACHE_KEY);
-      if (cached) {
-        const { ts, payload } = JSON.parse(cached);
-        if (Date.now() - ts < 7 * 24 * 60 * 60 * 1000) {
-          setData(payload);
-          setLoading(false);
-          return;
-        }
-      }
-    } catch {}
+    function setLinesFromFlat(features) {
+      // CachedLayer.coords je flat [lat1,lon1,lat2,lon2,...] — rekonstruiramo pare
+      return (features || [])
+        .filter(f => f.type === "LineString" && f.coords && f.coords.length >= 4)
+        .map(f => {
+          const pairs = [];
+          for (let i = 0; i + 1 < f.coords.length; i += 2) pairs.push([f.coords[i], f.coords[i + 1]]);
+          return pairs;
+        });
+    }
 
-    // H8: vsi construction=trunk odseki z opening_date=2029 + way-i z name=H8
-    // To pokriva Odsek 2 (Velenje → Slovenj Gradec) — realna gradnja v OSM
-    const qH8 = `[out:json][timeout:25];
+    async function loadFromServer() {
+      const { base44 } = await import("@/api/base44Client");
+      const rows = await base44.entities.CachedLayer.filter({ category_id: "third_dev_axis" });
+      const row = rows && rows[0];
+      if (!row || !row.features) return false;
+      const age = Date.now() - new Date(row.built_at).getTime();
+      if (age > 14 * 24 * 60 * 60 * 1000) return false; // starejši od 14 dni = neuporaben
+      const h8Lines = setLinesFromFlat(row.features);
+      if (!h8Lines.length) return false;
+      setData({ h8Lines });
+      setLoading(false);
+      try { localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), payload: { h8Lines } })); } catch {}
+      return true;
+    }
+
+    async function loadFromLocal() {
+      try {
+        const cached = localStorage.getItem(CACHE_KEY);
+        if (cached) {
+          const { ts, payload } = JSON.parse(cached);
+          if (Date.now() - ts < 7 * 24 * 60 * 60 * 1000 && payload?.h8Lines?.length) {
+            setData(payload);
+            setLoading(false);
+            return true;
+          }
+        }
+      } catch {}
+      return false;
+    }
+
+    async function loadFromOSM() {
+      // H8: vsi construction=trunk odseki z opening_date=2029 + way-i z name=H8
+      const qH8 = `[out:json][timeout:25];
 (
   way["highway"="construction"]["construction"="trunk"]["opening_date"="2029"](45.0,13.0,47.0,17.0);
   way["name"="H8"]["highway"="construction"](45.0,13.0,47.0,17.0);
 );
 out geom;`;
+      const json = await fetchOverpass(qH8);
+      const ways = (json.elements || []).filter(e => e.type === "way" && e.geometry);
+      const h8Lines = ways.map(w => (w.geometry || []).map(p => [p.lat, p.lon]));
+      if (!h8Lines.length) throw new Error("Ni OSM podatkov za H8");
+      setData({ h8Lines });
+      try { localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), payload: { h8Lines } })); } catch {}
+    }
 
-    fetchOverpass(qH8)
-      .then((json) => {
-        if (cancelled) return;
-        const ways = (json.elements || []).filter(e => e.type === "way" && e.geometry);
-        const h8Lines = ways.map(w => (w.geometry || []).map(p => [p.lat, p.lon]));
-
-        if (h8Lines.length === 0) {
-          setError("Ni OSM podatkov za H8");
-          setLoading(false);
-          return;
-        }
-
-        const payload = { h8Lines };
-        setData(payload);
-        setLoading(false);
-        try { localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), payload })); } catch {}
-      })
-      .catch(err => {
+    (async () => {
+      try {
+        if (await loadFromLocal()) return;
+        if (await loadFromServer()) return;
+        await loadFromOSM();
+      } catch (err) {
         if (cancelled) return;
         setError(err.message);
-        setLoading(false);
-      });
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
 
     return () => { cancelled = true; };
   }, []);
