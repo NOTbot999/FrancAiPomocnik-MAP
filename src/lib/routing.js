@@ -20,6 +20,7 @@ const BROUTER_PROFILES = {
   foot: "trekking",
   main: "moped",
   highway: "car-fast",
+  macadam: "gravel",
 };
 const MAIN_ROAD_SPEED_MS = 70 / 3.6;
 const FOOT_SPEED_MS = 5 / 3.6;
@@ -33,9 +34,9 @@ function fmtDur(s) {
   return `${Math.round(s / 60)} min`;
 }
 
-async function tryBrouter(profile, points) {
+async function tryBrouter(profile, points, alternativeidx = 0) {
   const lonlats = points.map(p => `${p.lng},${p.lat}`).join("|");
-  const url = `https://brouter.de/brouter?lonlats=${lonlats}&profile=${encodeURIComponent(profile)}&alternativeidx=0&format=geojson`;
+  const url = `https://brouter.de/brouter?lonlats=${lonlats}&profile=${encodeURIComponent(profile)}&alternativeidx=${alternativeidx}&format=geojson`;
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 25000);
   const res = await fetch(url, { headers: { "Accept": "application/json" }, signal: controller.signal });
@@ -78,29 +79,45 @@ export async function planRoute(points, profile) {
     throw new Error("Potrebna sta vsaj dve točki.");
   }
 
+  const brouterProfile = BROUTER_PROFILES[profile] || "car-fast";
+
+  // Fetch up to 3 alternative routes in parallel (BRouter alternativeidx 0,1,2)
+  const altPromises = [0, 1, 2].map(idx =>
+    tryBrouter(brouterProfile, points, idx).catch(() => null)
+  );
+  const altResults = await Promise.all(altPromises);
+  const validAlts = altResults.filter(r => r && r.polyline && r.polyline.length > 1);
+
   let polyline = [];
   let totalMeters = 0;
   let totalSeconds = 0;
   let usedFallback = false;
+  let alternatives = [];
 
-  const brouterProfile = BROUTER_PROFILES[profile] || "car-fast";
-
-  try {
-    const r = await tryBrouter(brouterProfile, points);
-    polyline = r.polyline; totalMeters = r.meters; totalSeconds = r.seconds;
+  if (validAlts.length > 0) {
+    const primary = validAlts[0];
+    polyline = primary.polyline;
+    totalMeters = primary.meters;
+    totalSeconds = primary.seconds;
     if (profile === "main" && totalMeters > 0) {
       totalSeconds = Math.round(totalMeters / MAIN_ROAD_SPEED_MS);
     } else if (profile === "foot" && totalMeters > 0) {
       totalSeconds = Math.round(totalMeters / FOOT_SPEED_MS);
     }
-  } catch (e) {
-    // Za cestna profila poskusi OSRM driving kot rezervo
-    if (profile === "main" || profile === "highway") {
+    alternatives = validAlts.map((r, i) => ({
+      polyline: r.polyline,
+      meters: r.meters,
+      isPrimary: i === 0,
+    }));
+  } else {
+    // Fallback to OSRM for driving profiles
+    if (profile === "main" || profile === "highway" || profile === "macadam") {
       const r = await tryOsrm("driving", points);
       polyline = r.polyline; totalMeters = r.meters; totalSeconds = r.seconds;
       usedFallback = true;
+      alternatives = [{ polyline, meters: totalMeters, isPrimary: true }];
     } else {
-      throw new Error("Usmerjevalnik (BRouter) ni dosegljiv: " + (e.message || "napaka"));
+      throw new Error("Usmerjevalnik (BRouter) ni dosegljiv.");
     }
   }
 
@@ -128,6 +145,7 @@ export async function planRoute(points, profile) {
 
   return {
     polyline,
+    alternatives,
     legs: legs.map(l => ({ distance: fmtDist(l.distance), duration: fmtDur(l.duration) })),
     totalDistance: fmtDist(totalMeters),
     totalDuration: fmtDur(totalSeconds),

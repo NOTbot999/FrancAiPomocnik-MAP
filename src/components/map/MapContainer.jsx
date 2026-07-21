@@ -537,6 +537,7 @@ export default function MapContainerComponent({
   setDrawings,
   routePolyline,
   routeColor = "#2563eb",
+  routeAlternatives,
   showZoomControls = true,
   mobileProps,
   gpsTracking,
@@ -702,6 +703,12 @@ export default function MapContainerComponent({
           followLocation={gpsTracking.isTracking}
         />
       )}
+      {/* Alternative routes — semi-transparent gray, rendered below primary */}
+      {routeAlternatives && routeAlternatives.length > 1 && routeAlternatives.map((alt, i) => (
+        !alt.isPrimary && alt.polyline && alt.polyline.length > 0 ? (
+          <Polyline key={`alt-${i}`} positions={alt.polyline} color="#64748b" weight={4} opacity={0.4} dashArray="8,6" lineCap="round" />
+        ) : null
+      ))}
       {routePolyline && routePolyline.length > 0 && (
         <>
           <Polyline positions={routePolyline} color="#ffffff" weight={7} opacity={0.5} lineCap="round" />

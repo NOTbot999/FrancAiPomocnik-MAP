@@ -23,6 +23,7 @@ import MobileBottomNav from "@/components/map/MobileBottomNav";
 import { Layers, Locate, Navigation, Route, WifiOff, Brain, TrendingUp, Box, Users, Camera } from "lucide-react";
 import CollabPanel from "@/components/map/CollabPanel";
 import CollabPinsLayer from "@/components/map/CollabPinsLayer";
+import { reverseGeocode } from "@/lib/routing";
 
 
 // Fix iOS Safari 100vh bug — sets --vh CSS variable to actual visible viewport height
@@ -332,6 +333,7 @@ export default function MapViewer() {
   }, []);
 
   const [routePolyline, setRoutePolyline] = useState(null);
+  const [routeAlternatives, setRouteAlternatives] = useState(null);
   const [routeColor, setRouteColor] = useState("#2563eb");
   const [aiRoutePolyline, setAiRoutePolyline] = useState(null);
   const [isNavOpen, setIsNavOpen] = useState(false);
@@ -367,7 +369,14 @@ export default function MapViewer() {
   }, []);
 
   const handleRouteResult = useCallback((data) => {
-    setRoutePolyline(data ? data.polyline : null);
+    if (!data) {
+      setRoutePolyline(null);
+      setRouteAlternatives(null);
+      setRouteColor("#2563eb");
+      return;
+    }
+    setRoutePolyline(data.polyline);
+    setRouteAlternatives(data.alternatives || null);
     setRouteColor(data?.color || "#2563eb");
   }, []);
 
@@ -377,6 +386,20 @@ export default function MapViewer() {
 
   const activeLayerCount = Object.keys(activeLayers).length;
   const isMobile = useIsMobile();
+
+  const handlePinPicked = useCallback(async (latlng) => {
+    if (routePickTarget) {
+      const target = routePickTarget;
+      setIsPinPicking(false);
+      setRoutePickTarget(null);
+      const geo = await reverseGeocode(latlng.lat, latlng.lng);
+      setPendingRoutePick({ target, lat: latlng.lat, lng: latlng.lng, label: geo?.label });
+      if (isMobile) setIsNavOpen(true);
+    } else {
+      setPinnedLocation([latlng.lat, latlng.lng]);
+      setIsPinPicking(false);
+    }
+  }, [routePickTarget, isMobile]);
 
   // Memoized search-category layers for the 3D view — only visible ones, stable reference
   // so Map3DView doesn't re-sync (and re-parse GeoJSON) on every unrelated parent render.
@@ -425,7 +448,7 @@ export default function MapViewer() {
           customLayerOpacities={customLayerOpacities}
           searchCategoryLayers={searchCategoryLayers3D}
           gpsTrack={gpsTrack}
-          onPinPicked={isPinPicking ? (latlng) => { setPinnedLocation([latlng.lat, latlng.lng]); setIsPinPicking(false); } : null}
+          onPinPicked={isPinPicking ? handlePinPicked : null}
         />
       </div>}
 
@@ -442,6 +465,7 @@ export default function MapViewer() {
         setDrawings={setDrawings}
         routePolyline={routePolyline}
         routeColor={routeColor}
+        routeAlternatives={routeAlternatives}
         aiRoutePolyline={aiRoutePolyline}
         customLayers={customLayers}
         customLayerOpacities={customLayerOpacities}
@@ -489,7 +513,7 @@ export default function MapViewer() {
           onAROpen: () => { window.location.href = '/ar'; },
         } : null}
         isPinPicking={isPinPicking}
-        onPinPicked={(latlng) => { setPinnedLocation([latlng.lat, latlng.lng]); setIsPinPicking(false); }}
+        onPinPicked={handlePinPicked}
         locateTrigger={locateTrigger}
         gpsTracking={{
           isTracking: isGpsTracking,
@@ -722,8 +746,8 @@ export default function MapViewer() {
       {isPinPicking && (
         <div className="absolute inset-0 pointer-events-none flex items-center justify-center" style={{ zIndex: 969, cursor: "crosshair" }}>
           <div className="absolute top-20 left-1/2 -translate-x-1/2 bg-slate-900/90 text-white text-xs px-4 py-2 rounded-xl shadow-xl pointer-events-auto">
-            Klikni na karto za izbiro točke analize
-            <button onClick={() => setIsPinPicking(false)} className="ml-3 text-slate-400 hover:text-white">✕</button>
+            {routePickTarget ? "Klikni na karto za izbiro točke poti" : "Klikni na karto za izbiro točke analize"}
+            <button onClick={() => { setIsPinPicking(false); setRoutePickTarget(null); if (isMobile) setIsNavOpen(true); }} className="ml-3 text-slate-400 hover:text-white">✕</button>
           </div>
         </div>
       )}
@@ -780,6 +804,13 @@ export default function MapViewer() {
         isOpen={isNavOpen}
         onToggle={() => setIsNavOpen(p => !p)}
         onClose={() => setIsNavOpen(false)}
+        onRequestPick={(target) => {
+          setRoutePickTarget(target);
+          if (isMobile) setIsNavOpen(false);
+          setIsPinPicking(true);
+        }}
+        pendingPick={pendingRoutePick}
+        onPickApplied={() => { setPendingRoutePick(null); setRoutePickTarget(null); }}
       />
 
 

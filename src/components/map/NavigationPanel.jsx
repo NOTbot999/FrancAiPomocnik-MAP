@@ -8,6 +8,7 @@ import { planRoute } from "@/lib/routing";
 const PROFILES = [
   { id: "highway", label: "Avtocesta",  emoji: "🚗", hint: "najhitrejša — avtoceste" },
   { id: "main",    label: "Hitra cesta", emoji: "🛣️", hint: "hitre/glavne ceste (brez avtocest)" },
+  { id: "macadam", label: "Makadam",    emoji: "🛤️", hint: "makadamske/neasfaltirane ceste" },
   { id: "forest",  label: "Gozdna cesta", emoji: "🌲", hint: "pohodniške/gozdne poti" },
   { id: "foot",    label: "Peš pot",    emoji: "🚶", hint: "hoja, peš poti" },
 ];
@@ -349,6 +350,7 @@ export default function NavigationPanel({ onRouteResult, onClose, isOpen, onTogg
 
       const result = {
         polyline: data.polyline,
+        alternatives: data.alternatives,
         legs: data.legs || [],
         totalDistance: data.totalDistance,
         totalDuration: data.totalDuration,
@@ -427,7 +429,7 @@ export default function NavigationPanel({ onRouteResult, onClose, isOpen, onTogg
         {/* Profile selector */}
         <div className="pt-1">
           <p className="text-[10px] font-semibold text-slate-500 uppercase mb-1.5">Tip poti</p>
-          <div className="grid grid-cols-4 gap-1">
+          <div className="grid grid-cols-5 gap-1">
             {PROFILES.map(p => {
               const active = profile === p.id;
               return (
