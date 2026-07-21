@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Navigation, Plus, Trash2, X, Loader2, Route } from "lucide-react";
+import { Navigation, Plus, Trash2, X, Loader2, Route, MapPin } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { loadTheme } from "@/components/map/ThemeCustomizer";
-import { base44 } from "@/api/base44Client";
+import { planRoute } from "@/lib/routing";
 
 // Route profile options — map to backend BRouter/OSRM profiles
 const PROFILES = [
@@ -138,7 +138,7 @@ function describeResult(s) {
   return { main, sub };
 }
 
-function PointInput({ label, value, onChange, onClear }) {
+function PointInput({ label, value, onChange, onClear, onPick, picking }) {
   const [query, setQuery] = useState(value?.label || "");
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -252,6 +252,16 @@ function PointInput({ label, value, onChange, onClear }) {
             </button>
           )}
         </div>
+        {onPick && (
+          <button
+            onClick={onPick}
+            title="Izberi na zemljevidu"
+            className="shrink-0 transition px-1"
+            style={{ color: picking ? "#10b981" : "#94a3b8" }}
+          >
+            <MapPin className="w-3.5 h-3.5" style={{ filter: picking ? "drop-shadow(0 0 3px #10b981)" : "none" }} />
+          </button>
+        )}
       </div>
       {showDropdown && (
         <div className="absolute left-7 right-0 top-full mt-0.5 bg-white border border-slate-200 rounded-lg shadow-xl z-[1100] max-h-52 overflow-y-auto">
@@ -274,7 +284,7 @@ function PointInput({ label, value, onChange, onClear }) {
   );
 }
 
-export default function NavigationPanel({ onRouteResult, onClose, isOpen, onToggle, inline = false }) {
+export default function NavigationPanel({ onRouteResult, onClose, isOpen, onToggle, inline = false, onRequestPick, pendingPick, onPickApplied }) {
   const theme = loadTheme();
   const [origin, setOrigin] = useState(null);
   const [destination, setDestination] = useState(null);
@@ -284,6 +294,32 @@ export default function NavigationPanel({ onRouteResult, onClose, isOpen, onTogg
   const [error, setError] = useState(null);
   const [profile, setProfile] = useState("highway");
   const [routeColor, setRouteColor] = useState(ROUTE_COLORS[0]);
+  const [pickingTarget, setPickingTarget] = useState(null);
+
+  // Apply a map-picked point to the right field, then clear pending
+  useEffect(() => {
+    if (!pendingPick || !pendingPick.target) return;
+    const pt = { label: pendingPick.label || pendingPick.shortLabel, lat: pendingPick.lat, lng: pendingPick.lng };
+    if (pendingPick.target === "origin") setOrigin(pt);
+    else if (pendingPick.target === "destination") setDestination(pt);
+    else if (pendingPick.target.startsWith("waypoint-")) {
+      const i = parseInt(pendingPick.target.split("-")[1], 10);
+      if (!Number.isNaN(i)) {
+        setWaypoints(prev => {
+          const updated = [...prev];
+          updated[i] = pt;
+          return updated;
+        });
+      }
+    }
+    setPickingTarget(null);
+    if (onPickApplied) onPickApplied();
+  }, [pendingPick, onPickApplied]);
+
+  const requestPick = (target) => {
+    setPickingTarget(target);
+    if (onRequestPick) onRequestPick(target);
+  };
 
   const addWaypoint = () => {
     if (waypoints.length < 5) setWaypoints([...waypoints, null]);
@@ -309,9 +345,7 @@ export default function NavigationPanel({ onRouteResult, onClose, isOpen, onTogg
     const points = [origin, ...validWaypoints, destination].map(p => ({ lat: p.lat, lng: p.lng }));
 
     try {
-      const response = await base44.functions.invoke("routePlan", { points, profile });
-      const data = response.data;
-      if (data.error) throw new Error(data.error);
+      const data = await planRoute(points, profile);
 
       const result = {
         polyline: data.polyline,
@@ -352,7 +386,7 @@ export default function NavigationPanel({ onRouteResult, onClose, isOpen, onTogg
       </div>
 
       <div className="p-3 space-y-2">
-        <PointInput label="A" value={origin} onChange={setOrigin} onClear={() => setOrigin(null)} />
+        <PointInput label="A" value={origin} onChange={setOrigin} onClear={() => setOrigin(null)} onPick={() => requestPick("origin")} picking={pickingTarget === "origin"} />
 
         {waypoints.map((wp, i) => (
           <div key={i} className="flex items-start gap-1">
@@ -362,6 +396,8 @@ export default function NavigationPanel({ onRouteResult, onClose, isOpen, onTogg
                 value={wp}
                 onChange={v => updateWaypoint(i, v)}
                 onClear={() => updateWaypoint(i, null)}
+                onPick={() => requestPick(`waypoint-${i}`)}
+                picking={pickingTarget === `waypoint-${i}`}
               />
             </div>
             <button onClick={() => removeWaypoint(i)} className="mt-1 text-red-300 hover:text-red-500 shrink-0">
@@ -375,6 +411,8 @@ export default function NavigationPanel({ onRouteResult, onClose, isOpen, onTogg
           value={destination}
           onChange={setDestination}
           onClear={() => setDestination(null)}
+          onPick={() => requestPick("destination")}
+          picking={pickingTarget === "destination"}
         />
 
         {waypoints.length < 5 && (

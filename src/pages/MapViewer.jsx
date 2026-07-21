@@ -61,6 +61,9 @@ export default function MapViewer() {
   const [isAIOpen, setIsAIOpen] = useState(false);
   const [pinnedLocation, setPinnedLocation] = useState(null);
   const [isPinPicking, setIsPinPicking] = useState(false);
+  const [routePickTarget, setRoutePickTarget] = useState(null); // 'origin' | 'destination' | 'waypoint-N' | null
+  const [pendingRoutePick, setPendingRoutePick] = useState(null);
+  const wasNavOpenBeforePick = useRef(false);
 
   // Check premium status — read from UserAccount entity via backend (service role)
   const [isPremium, setIsPremium] = useState(false);
