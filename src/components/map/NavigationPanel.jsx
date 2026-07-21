@@ -6,10 +6,16 @@ import { base44 } from "@/api/base44Client";
 
 // Route profile options — map to backend BRouter/OSRM profiles
 const PROFILES = [
-  { id: "forest",  label: "Gozdne",  emoji: "🌲", hint: "pohodniške/gozdne poti" },
-  { id: "main",    label: "Glavne",  emoji: "🛣️", hint: "glavne ceste" },
-  { id: "highway", label: "Avtoceste", emoji: "🚗", hint: "najhitrejša (avtoceste)" },
-  { id: "foot",    label: "Peš",     emoji: "🚶", hint: "hoja po mestih" },
+  { id: "highway", label: "Avtocesta",  emoji: "🚗", hint: "najhitrejša — avtoceste" },
+  { id: "main",    label: "Hitra cesta", emoji: "🛣️", hint: "hitre/glavne ceste (brez avtocest)" },
+  { id: "forest",  label: "Gozdna cesta", emoji: "🌲", hint: "pohodniške/gozdne poti" },
+  { id: "foot",    label: "Peš pot",    emoji: "🚶", hint: "hoja, peš poti" },
+];
+
+// Barvne palete za označbo poti na karti
+const ROUTE_COLORS = [
+  "#2563eb", "#dc2626", "#7c3aed", "#ea580c",
+  "#059669", "#db2777", "#0891b2", "#ca8a04",
 ];
 
 // Prepozna vrsto POI-ja iz Nominatim class/type → { emoji, label }
@@ -276,7 +282,8 @@ export default function NavigationPanel({ onRouteResult, onClose, isOpen, onTogg
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
-  const [profile, setProfile] = useState("main");
+  const [profile, setProfile] = useState("highway");
+  const [routeColor, setRouteColor] = useState(ROUTE_COLORS[0]);
 
   const addWaypoint = () => {
     if (waypoints.length < 5) setWaypoints([...waypoints, null]);
@@ -312,6 +319,7 @@ export default function NavigationPanel({ onRouteResult, onClose, isOpen, onTogg
         totalDistance: data.totalDistance,
         totalDuration: data.totalDuration,
         usedFallback: data.usedFallback,
+        color: routeColor,
       };
       setResult(result);
       onRouteResult(result);
@@ -404,11 +412,36 @@ export default function NavigationPanel({ onRouteResult, onClose, isOpen, onTogg
           </div>
         </div>
 
+        {/* Color picker */}
+        <div className="pt-1">
+          <p className="text-[10px] font-semibold text-slate-500 uppercase mb-1.5">Barva poti</p>
+          <div className="flex flex-wrap gap-1.5">
+            {ROUTE_COLORS.map(c => {
+              const active = routeColor === c;
+              return (
+                <button
+                  key={c}
+                  onClick={() => setRouteColor(c)}
+                  className="rounded-full transition-all"
+                  style={{
+                    width: 22, height: 22,
+                    backgroundColor: c,
+                    border: active ? "2px solid #0f172a" : "2px solid white",
+                    boxShadow: active ? "0 0 0 2px " + c : "0 1px 2px rgba(0,0,0,0.2)",
+                    transform: active ? "scale(1.15)" : "scale(1)",
+                  }}
+                />
+              );
+            })}
+          </div>
+        </div>
+
         <div className="flex gap-2 pt-1">
           <button
             onClick={calculate}
             disabled={!origin || !destination || loading}
-            className="flex-1 py-2 rounded-xl bg-emerald-500 text-white text-xs font-semibold hover:bg-emerald-600 transition disabled:opacity-50 flex items-center justify-center gap-1.5"
+            className="flex-1 py-2 rounded-xl text-white text-xs font-semibold transition disabled:opacity-50 flex items-center justify-center gap-1.5"
+            style={{ backgroundColor: routeColor }}
           >
             {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Route className="w-3.5 h-3.5" />}
             {loading ? "Načrtujem..." : "Prikaži pot"}

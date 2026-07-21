@@ -329,6 +329,7 @@ export default function MapViewer() {
   }, []);
 
   const [routePolyline, setRoutePolyline] = useState(null);
+  const [routeColor, setRouteColor] = useState("#2563eb");
   const [aiRoutePolyline, setAiRoutePolyline] = useState(null);
   const [isNavOpen, setIsNavOpen] = useState(false);
   const [isOfflineOpen, setIsOfflineOpen] = useState(false);
@@ -364,6 +365,7 @@ export default function MapViewer() {
 
   const handleRouteResult = useCallback((data) => {
     setRoutePolyline(data ? data.polyline : null);
+    setRouteColor(data?.color || "#2563eb");
   }, []);
 
   const handleLayerReorder = useCallback((newOrder) => {
@@ -436,6 +438,7 @@ export default function MapViewer() {
         drawings={drawings}
         setDrawings={setDrawings}
         routePolyline={routePolyline}
+        routeColor={routeColor}
         aiRoutePolyline={aiRoutePolyline}
         customLayers={customLayers}
         customLayerOpacities={customLayerOpacities}

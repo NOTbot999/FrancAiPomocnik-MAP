@@ -536,6 +536,7 @@ export default function MapContainerComponent({
   drawings,
   setDrawings,
   routePolyline,
+  routeColor = "#2563eb",
   showZoomControls = true,
   mobileProps,
   gpsTracking,
@@ -702,7 +703,16 @@ export default function MapContainerComponent({
         />
       )}
       {routePolyline && routePolyline.length > 0 && (
-        <Polyline positions={routePolyline} color="#2563eb" weight={5} opacity={0.85} />
+        <>
+          <Polyline positions={routePolyline} color="#ffffff" weight={7} opacity={0.5} lineCap="round" />
+          <Polyline positions={routePolyline} color={routeColor} weight={5} opacity={0.9} lineCap="round" />
+          <Marker position={routePolyline[0]} icon={L.divIcon({ className: "", html: `<div style="display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50% 50% 50% 0;background:${routeColor};color:white;font-size:12px;font-weight:bold;transform:rotate(-45deg);box-shadow:0 2px 6px rgba(0,0,0,.4);border:2px solid white">A</div>`, iconSize: [26, 26], iconAnchor: [0, 26] })}>
+            <Tooltip direction="top" offset={[13, -20]}><span className="text-xs font-semibold">Izhodišče A</span></Tooltip>
+          </Marker>
+          <Marker position={routePolyline[routePolyline.length - 1]} icon={L.divIcon({ className: "", html: `<div style="display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50% 50% 50% 0;background:${routeColor};color:white;font-size:12px;font-weight:bold;transform:rotate(-45deg);box-shadow:0 2px 6px rgba(0,0,0,.4);border:2px solid white">B</div>`, iconSize: [26, 26], iconAnchor: [0, 26] })}>
+            <Tooltip direction="top" offset={[13, -20]}><span className="text-xs font-semibold">Cilj B</span></Tooltip>
+          </Marker>
+        </>
       )}
       {aiRoutePolyline && aiRoutePolyline.length > 1 && (
         <Polyline positions={aiRoutePolyline} color="#f59e0b" weight={4} opacity={0.9} dashArray="8,5" />
