@@ -22,6 +22,7 @@ import SearchCategoryLayer from "./SearchCategoryLayer";
 import MunicipalityLayer from "./MunicipalityLayer";
 import CollabPinsLayer from "./CollabPinsLayer";
 import ThirdDevAxisLayer from "./ThirdDevAxisLayer";
+import FlightLayer from "./FlightLayer";
 
 function OfflineManagerPortal({ onClose }) {
   const map = useMap();
@@ -688,6 +689,16 @@ export default function MapContainerComponent({
         if (!cfg) return null;
         const opacity = cfg.opacity ?? tdaLayer.opacity ?? 0.85;
         return <ThirdDevAxisLayer opacity={opacity} />;
+        })()}
+
+        {/* Leti v realnem času — OpenSky Network (alternativa Flightradar24) */}
+        {(() => {
+        const flLayer = allLayers["live_flights"];
+        if (!flLayer) return null;
+        const cfg = activeLayers["live_flights"];
+        if (!cfg) return null;
+        const opacity = cfg.opacity ?? flLayer.opacity ?? 0.9;
+        return <FlightLayer opacity={opacity} />;
         })()}
 
         {offlineOpen && <OfflineManagerPortal onClose={onOfflineClose} />}

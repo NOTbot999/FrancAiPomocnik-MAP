@@ -910,6 +910,14 @@ export const OVERLAY_CATEGORIES = [
         opacity: 0.85,
         thumbnail: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=80&h=60&fit=crop",
         description: "Tretja razvojna os — bodoča hitra cesta od Holmca (AT meja) preko Slovenj Gradca, Velenja in Šentruperta, ter od Novega mesta preko Gorjancev, Metlike do Črnomlja (HR meja). Severni krak v gradnji, južni v načrtovanju."
+      },
+      {
+        id: "live_flights",
+        name: "Leti v realnem času (Flightradar24)",
+        type: "live_flights",
+        opacity: 0.9,
+        thumbnail: "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=80&h=60&fit=crop",
+        description: "Pozicije letal v zraku nad Slovenijo v realnem času (OpenSky Network — brezplačna alternativa Flightradar24). Ikone letal rotirane v smeri leta, osvežitev vsako minuto."
       }
     ]
   },
