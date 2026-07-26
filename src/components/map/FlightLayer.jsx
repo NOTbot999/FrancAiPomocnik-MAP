@@ -13,8 +13,8 @@ import L from "leaflet";
 
 const OPENSKY_API = "https://opensky-network.org/api/states/all";
 const CORS_PROXIES = [
+  (url) => `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(url)}`,
   (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-  (url) => `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
 ];
 const SLO_BBOX = { lamin: 45.3, lomin: 13.3, lamax: 46.9, lomax: 16.8 };
 const REFRESH_MS = 60000;
