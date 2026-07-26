@@ -36,16 +36,16 @@ function makePlaneIcon(heading, onGround, opacity) {
   // Clearly distinct from OSM airport icons and visible on all base layers.
   return L.divIcon({
     className: "",
-    html: `<div style="opacity:${opacity};position:relative;width:38px;height:38px">
-      <div style="position:absolute;inset:0;border-radius:50%;background:${color};border:2.5px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.45)"></div>
+    html: `<div style="opacity:${opacity};position:relative;width:19px;height:19px">
+      <div style="position:absolute;inset:0;border-radius:50%;background:${color};border:1.5px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.45)"></div>
       <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;transform:rotate(${rot}deg)">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="white" stroke="rgba(0,0,0,0.25)" stroke-width="0.5">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="white" stroke="rgba(0,0,0,0.25)" stroke-width="0.5">
           <path d="M21 16v-2l-8-5V3.5C13 2.67 12.33 2 11.5 2S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5L21 16z"/>
         </svg>
       </div>
     </div>`,
-    iconSize: [38, 38],
-    iconAnchor: [19, 19],
+    iconSize: [19, 19],
+    iconAnchor: [9.5, 9.5],
   });
 }
 
