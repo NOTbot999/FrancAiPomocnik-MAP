@@ -13,8 +13,18 @@ import L from "leaflet";
 
 const OPENSKY_API = "https://opensky-network.org/api/states/all";
 const CORS_PROXIES = [
-  (url) => `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(url)}`,
-  (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  {
+    url: (apiUrl) => `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`,
+    parse: (data) => JSON.parse(data.contents),
+  },
+  {
+    url: (apiUrl) => `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(apiUrl)}`,
+    parse: (data) => data,
+  },
+  {
+    url: (apiUrl) => `https://api.allorigins.win/raw?url=${encodeURIComponent(apiUrl)}`,
+    parse: (data) => data,
+  },
 ];
 const SLO_BBOX = { lamin: 45.3, lomin: 13.3, lamax: 46.9, lomax: 16.8 };
 const REFRESH_MS = 60000;
@@ -46,20 +56,16 @@ export default function FlightLayer({ opacity = 0.9 }) {
     try {
       const { lamin, lomin, lamax, lomax } = SLO_BBOX;
       const apiUrl = `${OPENSKY_API}?lamin=${lamin}&lomin=${lomin}&lamax=${lamax}&lomax=${lomax}`;
-      let data = null;
-      let lastErr = null;
-      for (const makeProxyUrl of CORS_PROXIES) {
-        try {
-          const controller = new AbortController();
-          const timeout = setTimeout(() => controller.abort(), 15000);
-          const res = await fetch(makeProxyUrl(apiUrl), { signal: controller.signal });
-          clearTimeout(timeout);
-          if (!res.ok) throw new Error("HTTP " + res.status);
-          data = await res.json();
-          break;
-        } catch (e) { lastErr = e; }
-      }
-      if (!data || !data.states) throw lastErr || new Error("Brez podatkov");
+      const attempts = CORS_PROXIES.map(({ url: makeUrl, parse }) => {
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), 15000);
+        return fetch(makeUrl(apiUrl), { signal: ctrl.signal })
+          .then(res => { if (!res.ok) throw new Error("HTTP " + res.status); return res.json(); })
+          .then(data => parse(data))
+          .finally(() => clearTimeout(t));
+      });
+      const data = await Promise.any(attempts);
+      if (!data || !data.states) throw new Error("Brez podatkov");
       const states = data.states;
       const parsed = states
         .filter(s => s[5] != null && s[6] != null)
@@ -78,7 +84,10 @@ export default function FlightLayer({ opacity = 0.9 }) {
       setLastUpdate(new Date());
       setError(null);
     } catch (e) {
-      setError(e.name === "AbortError" ? "Časovna omejitev" : (e.message || "Napaka"));
+      const msg = e instanceof AggregateError
+        ? "Proxyji nedelujoči"
+        : (e.name === "AbortError" ? "Časovna omejitev" : (e.message || "Napaka"));
+      setError(msg);
     } finally {
       setLoading(false);
     }
