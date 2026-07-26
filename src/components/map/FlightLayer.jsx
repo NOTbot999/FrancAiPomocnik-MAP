@@ -11,7 +11,11 @@ import L from "leaflet";
 //  [5] lon  [6] lat  [7] baro_altitude  [8] on_ground  [9] velocity(m/s)
 //  [10] true_track(heading°)  [11] vertical_rate  [13] geo_altitude
 
-const OPENSKY_URL = "https://opensky-network.org/api/states/all";
+const OPENSKY_API = "https://opensky-network.org/api/states/all";
+const CORS_PROXIES = [
+  (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  (url) => `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
+];
 const SLO_BBOX = { lamin: 45.3, lomin: 13.3, lamax: 46.9, lomax: 16.8 };
 const REFRESH_MS = 60000;
 
@@ -41,14 +45,22 @@ export default function FlightLayer({ opacity = 0.9 }) {
     setLoading(true);
     try {
       const { lamin, lomin, lamax, lomax } = SLO_BBOX;
-      const url = `${OPENSKY_URL}?lamin=${lamin}&lomin=${lomin}&lamax=${lamax}&lomax=${lomax}`;
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 15000);
-      const res = await fetch(url, { signal: controller.signal });
-      clearTimeout(timeout);
-      if (!res.ok) throw new Error("OpenSky HTTP " + res.status);
-      const data = await res.json();
-      const states = data.states || [];
+      const apiUrl = `${OPENSKY_API}?lamin=${lamin}&lomin=${lomin}&lamax=${lamax}&lomax=${lomax}`;
+      let data = null;
+      let lastErr = null;
+      for (const makeProxyUrl of CORS_PROXIES) {
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 15000);
+          const res = await fetch(makeProxyUrl(apiUrl), { signal: controller.signal });
+          clearTimeout(timeout);
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          data = await res.json();
+          break;
+        } catch (e) { lastErr = e; }
+      }
+      if (!data || !data.states) throw lastErr || new Error("Brez podatkov");
+      const states = data.states;
       const parsed = states
         .filter(s => s[5] != null && s[6] != null)
         .map(s => ({
