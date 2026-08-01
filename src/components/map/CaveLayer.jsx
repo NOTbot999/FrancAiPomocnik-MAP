@@ -24,14 +24,13 @@ export async function loadCaves() {
     }
   } catch { /* fallback to DB */ }
 
-  // 2. Fallback: Load from Cave entity via backend function
+  // 2. Fallback: Load directly from Cave entity (paginated)
   const batchSize = 2000;
   let all = [];
   let skip = 0;
 
   while (true) {
-    const res = await base44.functions.invoke('getCaves', { skip, limit: batchSize });
-    const batch = res.data?.caves || [];
+    const batch = await base44.entities.Cave.list(undefined, batchSize, skip);
     if (!batch || batch.length === 0) break;
     all = all.concat(batch);
     if (batch.length < batchSize) break;
