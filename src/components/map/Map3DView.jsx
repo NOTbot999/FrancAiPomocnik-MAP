@@ -3,46 +3,34 @@ import { base44 } from "@/api/base44Client";
 import { useMapLibreLayers } from "./useMapLibreLayers";
 import SearchCategory3DLayer from "./SearchCategory3DLayer";
 
-// MapLibre base map styles
+// MapLibre base map styles — free sources, no API key required.
+// (Backend functions getMaptilerKey / getCesiumToken are no longer available
+// on the current plan, so we use OpenFreeMap vector styles + Esri satellite.)
 export const ML_BASE_STYLES = [
-  { id: "satellite", label: "Satelit",     style: (key) => `https://api.maptiler.com/maps/satellite/style.json?key=${key}` },
-  { id: "topo",      label: "Topografija", style: (key) => `https://api.maptiler.com/maps/topo-v2/style.json?key=${key}` },
-  { id: "outdoor",   label: "Outdoor",     style: (key) => `https://api.maptiler.com/maps/outdoor-v2/style.json?key=${key}` },
-  { id: "osm",       label: "OSM",         style: (key) => `https://api.maptiler.com/maps/openstreetmap/style.json?key=${key}` },
-  { id: "hybrid",    label: "Hibrid",      style: (key) => `https://api.maptiler.com/maps/hybrid/style.json?key=${key}` },
-  { id: "cesium",    label: "Cesium",      style: null, isCesium: true },
+  { id: "satellite", label: "Satelit",     style: () => esriImageryStyle() },
+  { id: "topo",      label: "Topografija", style: () => "https://tiles.openfreemap.org/styles/liberty" },
+  { id: "outdoor",   label: "Outdoor",     style: () => "https://tiles.openfreemap.org/styles/liberty" },
+  { id: "osm",       label: "OSM",         style: () => "https://tiles.openfreemap.org/styles/bright" },
+  { id: "hybrid",    label: "Hibrid",      style: () => esriImageryStyle() },
 ];
 
-// Fetch Cesium Ion asset endpoint and build a MapLibre raster style
-async function buildCesiumStyle(cesiumToken) {
-  // Asset 1 = Cesium World Imagery (high-res satellite)
-  const endpointRes = await fetch(
-    `https://api.cesium.com/v1/assets/1/endpoint?access_token=${cesiumToken}`
-  );
-  if (!endpointRes.ok) throw new Error("Cesium endpoint fetch failed: " + endpointRes.status);
-  const endpoint = await endpointRes.json();
-  // endpoint.url is like "https://assets.cesium.com/1/{z}/{x}/{y}.jpg"
-  // endpoint.accessToken may be a short-lived token
-  const tileUrl = endpoint.url + "?access_token=" + (endpoint.accessToken || cesiumToken);
-
+// Esri World Imagery — free raster satellite tiles, no API key
+function esriImageryStyle() {
   return {
     version: 8,
     sources: {
-      "cesium-imagery": {
+      "esri-imagery": {
         type: "raster",
-        tiles: [tileUrl],
+        tiles: [
+          "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+        ],
         tileSize: 256,
-        attribution: endpoint.attributions?.[0]?.html || "© Cesium Ion / Maxar",
-        maxzoom: 20,
+        maxzoom: 19,
+        attribution: "© Esri, Maxar, Earthstar Geographics"
       }
     },
     layers: [
-      {
-        id: "cesium-imagery-layer",
-        type: "raster",
-        source: "cesium-imagery",
-        paint: { "raster-opacity": 1 }
-      }
+      { id: "esri-imagery-layer", type: "raster", source: "esri-imagery", paint: { "raster-opacity": 1 } }
     ]
   };
 }
@@ -246,8 +234,10 @@ const Map3DView = forwardRef(function Map3DView({
     if (!map.getSource("terrain-dem")) {
       map.addSource("terrain-dem", {
         type: "raster-dem",
-        url: `https://api.maptiler.com/tiles/terrain-rgb-v2/tiles.json?key=${key}`,
+        tiles: ["https://elevation-tiles-prod.s3.amazonaws.com/terrarium/{z}/{x}/{y}.png"],
         tileSize: 256,
+        encoding: "terrarium",
+        maxzoom: 14,
       });
     }
     map.setTerrain({ source: "terrain-dem", exaggeration: 1.0 });
@@ -325,42 +315,17 @@ const Map3DView = forwardRef(function Map3DView({
         }
         if (cancelled) return;
 
-        const res = await base44.functions.invoke("getMaptilerKey", {});
-        const apiKey = res.data?.key;
-        if (!apiKey) throw new Error("No API key");
+        // API key no longer needed — using free tile sources (no backend function calls)
+        const apiKey = null;
         apiKeyRef.current = apiKey;
-        window.__maptilerKey = apiKey; // share with useMapLibreLayers and MapContainer
-
-        // Fetch Cesium token (non-blocking — silently fail if unavailable)
-        base44.functions.invoke("getCesiumToken", {}).then(r => {
-          if (r.data?.token) {
-            window.__cesiumToken = r.data.token; // eslint-disable-line
-          }
-        }).catch(() => {});
+        window.__maptilerKey = null; // hillshade overlay will silently skip without a key
 
         if (cancelled || !containerRef.current) return;
 
         // Determine initial style — respect activeMLBase prop
         const initialStyleId = activeMLBase || "satellite";
         const initialStyleDef = ML_BASE_STYLES.find(s => s.id === initialStyleId) || ML_BASE_STYLES[0];
-        let initialStyle;
-        if (initialStyleDef.isCesium) {
-          let cesToken = window.__cesiumToken || null;
-          if (!cesToken) {
-            try {
-              const cesRes = await base44.functions.invoke("getCesiumToken", {});
-              cesToken = cesRes.data?.token;
-              window.__cesiumToken = cesToken;
-            } catch {}
-          }
-          try {
-            initialStyle = cesToken ? await buildCesiumStyle(cesToken) : ML_BASE_STYLES[0].style(apiKey);
-          } catch {
-            initialStyle = ML_BASE_STYLES[0].style(apiKey);
-          }
-        } else {
-          initialStyle = initialStyleDef.style(apiKey);
-        }
+        const initialStyle = initialStyleDef.style();
 
         const maplibre = window.maplibregl;
         const safeLng = (center && !isNaN(center[1])) ? center[1] : 14.9955;
@@ -435,27 +400,8 @@ const Map3DView = forwardRef(function Map3DView({
       });
     };
 
-    setTimeout(async () => {
-      if (styleDef.isCesium) {
-        let token = window.__cesiumToken || null;
-        if (!token) {
-          try {
-            const cesRes = await base44.functions.invoke("getCesiumToken", {});
-            token = cesRes.data?.token;
-            window.__cesiumToken = token;
-          } catch {}
-        }
-        if (!token) { console.warn("No Cesium token"); mapReadyRef.current = true; return; }
-        try {
-          const cesiumStyle = await buildCesiumStyle(token);
-          applyStyle(cesiumStyle);
-        } catch (e) {
-          console.warn("Cesium style build failed:", e.message);
-          mapReadyRef.current = true;
-        }
-      } else {
-        applyStyle(styleDef.style(apiKey));
-      }
+    setTimeout(() => {
+      applyStyle(styleDef.style());
     }, 50);
   }, [setupTerrain, is3D, syncSearchCategoryLayers]);
 
