@@ -513,6 +513,31 @@ function PinPickHandler({ onPinPicked }) {
   return null;
 }
 
+/**
+ * Force Leaflet GridLayers (WMS / tile / arcgis_export) to (re)load tiles whenever
+ * the set of active overlay layers changes.
+ *
+ * Symptom this fixes: a WMS/tile overlay that is toggled ON → OFF → ON renders
+ * blank on the second activation. On re-add, Leaflet's GridLayer.onAdd calls
+ * _update(), but inside a long-lived MapContainer react-leaflet sometimes adds
+ * the new layer after the map's current view was already "settled", so no
+ * moveend fires and the new tiles never load. Firing a synthetic `moveend`
+ * triggers every GridLayer's _onMoveEnd → _update() → tile fetch.
+ */
+function TileReloadOnLayersChange({ activeLayerSignature }) {
+  const map = useMap();
+  useEffect(() => {
+    if (!activeLayerSignature) return;
+    // Defer so the freshly (re)added layer is already listening for moveend.
+    const t = setTimeout(() => {
+      map.invalidateSize({ animate: false });
+      map.fire("moveend");
+    }, 0);
+    return () => clearTimeout(t);
+  }, [activeLayerSignature, map]);
+  return null;
+}
+
 // Fetch MapTiler key once and cache globally
 let _maptilerKeyCache = null;
 async function getMaptilerKeyOnce() {
@@ -566,6 +591,10 @@ export default function MapContainerComponent({
     ? Object.entries(activeBaseLayers)
     : [];
 
+  // Stable signature of the active overlay set — changing it (toggle on/off)
+  // forces a tile reload nudge for (re)added WMS/tile/arcgis layers.
+  const activeLayerSignature = Object.keys(activeLayers || {}).sort().join("|");
+
   return (
     <LeafletMapContainer
       center={SLOVENIA_CENTER}
@@ -580,6 +609,9 @@ export default function MapContainerComponent({
     >
       {/* Base layer — always rendered with stable key="base-layer" so overlay layers stay on top when switching */}
       <BaseLayerRenderer activeBaseLayerEntries={activeBaseLayerEntries} />
+
+      {/* Nudge Leaflet to (re)load tiles whenever the active overlay set changes */}
+      <TileReloadOnLayersChange activeLayerSignature={activeLayerSignature} />
 
       {/* Active overlay layers — rendered in layerOrder (bottom→top), each in its own overlayPane so they always sit above the base */}
       {(layerOrder && layerOrder.length > 0 ? layerOrder : Object.keys(activeLayers)).map((layerId, index) => {
