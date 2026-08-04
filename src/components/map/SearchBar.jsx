@@ -19,6 +19,7 @@ export const CATEGORIES = [
   { id: "lake",          label: "Jezera",         emoji: "🌊", color: "#3b82f6", query: `[out:json][timeout:45];(way["natural"="water"]["water"~"lake|reservoir|pond"](45.4,13.4,46.9,16.6);way["natural"="water"][!"water"](45.4,13.4,46.9,16.6);way["landuse"="reservoir"](45.4,13.4,46.9,16.6);relation["natural"="water"](45.4,13.4,46.9,16.6););out center;` },
   { id: "park",          label: "Parki",          emoji: "🌳", color: "#22c55e", query: `[out:json][timeout:30];(way["leisure"="park"](45.4,13.4,46.9,16.6);relation["leisure"="park"](45.4,13.4,46.9,16.6););out center;` },
   { id: "chapel",        label: "Kapelice",       emoji: "⛪", color: "#e879f9", query: `[out:json][timeout:30];(node["amenity"="place_of_worship"]["religion"="christian"]["building"~"chapel|wayside_shrine"](45.4,13.4,46.9,16.6);node["historic"="wayside_shrine"](45.4,13.4,46.9,16.6););out;` },
+  { id: "cross",         label: "Križi",          emoji: "✝️", color: "#a855f7", query: `[out:json][timeout:30];node["historic"="wayside_cross"](45.4,13.4,46.9,16.6);out;` },
   { id: "church",        label: "Cerkve",         emoji: "🕌", color: "#d946ef", query: `[out:json][timeout:30];(node["amenity"="place_of_worship"]["religion"="christian"](45.4,13.4,46.9,16.6);way["amenity"="place_of_worship"]["religion"="christian"](45.4,13.4,46.9,16.6););out center;` },
   { id: "fuel",          label: "Bencinske",      emoji: "⛽", color: "#f59e0b", query: `[out:json][timeout:45];(node["amenity"="fuel"](45.4,13.4,46.9,16.6);way["amenity"="fuel"](45.4,13.4,46.9,16.6);node["fuel"="yes"](45.4,13.4,46.9,16.6););out center;` },
   { id: "parking",       label: "Parkirišča",     emoji: "🅿️", color: "#6366f1", query: `[out:json][timeout:30];(node["amenity"="parking"](45.4,13.4,46.9,16.6);way["amenity"="parking"](45.4,13.4,46.9,16.6););out center;` },
@@ -59,7 +60,7 @@ export const CATEGORIES = [
 ];
 
 // Invalidate old cache for improved queries
-["fuel","atm","hospital","clinic","lake","racetrack","geocache","pitch","fitness","toilets","transmitter","speed_camera","post_office","tunnel","viaduct","motorway_tunnel","motorway_bridge"].forEach(id => {
+["fuel","atm","hospital","clinic","lake","racetrack","geocache","pitch","fitness","toilets","transmitter","speed_camera","post_office","tunnel","viaduct","motorway_tunnel","motorway_bridge","cross"].forEach(id => {
   try { localStorage.removeItem("slomapcat_" + id); } catch {}
 });
 // Invalidate OLD municipality cache formats only (stitching fix).
