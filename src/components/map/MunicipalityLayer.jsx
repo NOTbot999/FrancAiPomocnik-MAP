@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useMap } from "react-leaflet";
 import L from "leaflet";
+import { fetchOverpass } from "@/lib/overpass";
 
 const LS_KEY_MUN = "slomapcat_mun_v4";
 const LS_KEY_PLACES = "slomapcat_places_v2";
@@ -65,35 +66,11 @@ function dist(a, b) {
   return dlat * dlat + dlon * dlon;
 }
 
-const OVERPASS_MIRRORS = [
-  "https://overpass-api.de/api/interpreter",
-  "https://overpass.kumi.systems/api/interpreter",
-  "https://overpass.openstreetmap.fr/api/interpreter",
-];
-
-async function overpassFetch(query) {
-  for (const mirror of OVERPASS_MIRRORS) {
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 30000);
-      const res = await fetch(mirror, {
-        method: "POST",
-        body: "data=" + encodeURIComponent(query),
-        signal: controller.signal,
-      });
-      clearTimeout(timeout);
-      if (!res.ok) continue;
-      return await res.json();
-    } catch { /* try next */ }
-  }
-  throw new Error("Overpass nedosegljiv");
-}
-
 async function fetchMunicipalities() {
   const query = `[out:json][timeout:90];
-relation["admin_level"="8"]["boundary"="administrative"](45.4,13.3,46.9,16.7);
-out geom;`;
-  const data = await overpassFetch(query);
+  relation["admin_level"="8"]["boundary"="administrative"](45.4,13.3,46.9,16.7);
+  out geom;`;
+  const data = await fetchOverpass(query);
 
   const features = [];
   for (const el of data.elements || []) {
@@ -123,7 +100,7 @@ out geom;`;
 
 async function fetchPlaces() {
   const query = `[out:json][timeout:30];node["place"~"town|village|hamlet"](45.4,13.3,46.9,16.7);out;`;
-  const data = await overpassFetch(query);
+  const data = await fetchOverpass(query);
   return (data.elements || []).map(el => ({
     lat: el.lat, lon: el.lon,
     name: el.tags?.name || "",

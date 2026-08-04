@@ -62,8 +62,10 @@ export const CATEGORIES = [
 ["fuel","atm","hospital","clinic","lake","racetrack","geocache","pitch","fitness","toilets","transmitter","speed_camera","post_office","tunnel","viaduct","motorway_tunnel","motorway_bridge"].forEach(id => {
   try { localStorage.removeItem("slomapcat_" + id); } catch {}
 });
-// Invalidate old municipality cache (stitching fix)
-["slomapcat_mun_v1","slomapcat_mun_v2","slomapcat_mun_v3","slomapcat_municipalities_v2","slomapcat_mun_v4","slomapcat_places_v2"].forEach(k => {
+// Invalidate OLD municipality cache formats only (stitching fix).
+// Current keys (slomapcat_mun_v4, slomapcat_places_v2) are kept so the layer
+// loads instantly from cache instead of re-fetching from Overpass every time.
+["slomapcat_mun_v1","slomapcat_mun_v2","slomapcat_mun_v3","slomapcat_municipalities_v2"].forEach(k => {
   try { localStorage.removeItem(k); } catch {}
 });
 
