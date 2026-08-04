@@ -86,14 +86,15 @@ function relationToFeature(el) {
 }
 
 async function fetchMunicipalities() {
-  // Area-filter (ISO3166-1=SI) vrne SAMO slovenske občine (~215, ~10 MB) — brez
-  // italijanskih/avstrijskih/hrvaških občin, ki bi jih dobili z golim bbox-om.
-  // Odgovor se po prvi uspešni naložitvi shrani v 30-dnevni predpomnilnik.
+  // Area-filter (ISO3166-1=SI) na nekaterih zrcalih vrne tudi obmejne avstrijske
+  // občine (~196). Zato dodatno zahtevamo ISO3166-2=SI-* že na strežniku — tako
+  // dobimo samo ~212 slovenskih občin (~7 MB namesto ~14 MB), kar je hitreje in
+  // zanesljiveje. Odgovor se po prvi uspešni naložitvi shrani v 30-dnevni predpomnilnik.
   const query = `[out:json][timeout:90];
   area["ISO3166-1"="SI"]->.si;
-  relation(area.si)["admin_level"="8"]["boundary"="administrative"];
+  relation(area.si)["admin_level"="8"]["boundary"="administrative"]["ISO3166-2"~"^SI-"];
   out geom;`;
-  const data = await fetchOverpass(query, 60000);
+  const data = await fetchOverpass(query, 90000);
 
   const seen = new Map();
   for (const el of data.elements || []) {
