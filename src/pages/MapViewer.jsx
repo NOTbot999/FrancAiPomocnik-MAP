@@ -24,6 +24,8 @@ import { Layers, Locate, Navigation, Route, WifiOff, Brain, TrendingUp, Box, Use
 import CollabPanel from "@/components/map/CollabPanel";
 import CollabPinsLayer from "@/components/map/CollabPinsLayer";
 import { reverseGeocode } from "@/lib/routing";
+import PremiumGateModal from "@/components/PremiumGateModal";
+import { useNavigate } from "react-router-dom";
 
 
 // Fix iOS Safari 100vh bug — sets --vh CSS variable to actual visible viewport height
@@ -46,6 +48,7 @@ function useViewportHeight() {
 export default function MapViewer() {
   const { settings, updateSettings, isLoaded } = useUserSettings();
   useViewportHeight();
+  const navigate = useNavigate();
 
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [activeBaseLayers, setActiveBaseLayers] = useState({ osm: { opacity: 1 } });
@@ -82,6 +85,23 @@ export default function MapViewer() {
     };
     checkPremium();
   }, []);
+
+  // Premium-gated feature wrappers — 3D in AR sta premium (enako kot AI)
+  const [premiumGateFeature, setPremiumGateFeature] = useState(null);
+  const gateOrRun = useCallback((feature, fn) => {
+    if (!isPremium) { setPremiumGateFeature(feature); return; }
+    fn();
+  }, [isPremium]);
+
+  const request3DToggle = useCallback(() => {
+    gateOrRun("3D Pogled", () => { setIs3DOpen(p => !p); setMapLibreEverOpened(true); });
+  }, [gateOrRun]);
+  const request3DModeToggle = useCallback(() => {
+    gateOrRun("3D Pogled", () => { setUse3DMode(p => !p); setIs3DOpen(true); setMapLibreEverOpened(true); });
+  }, [gateOrRun]);
+  const requestAR = useCallback(() => {
+    gateOrRun("AR Pogled", () => navigate("/ar"));
+  }, [gateOrRun, navigate]);
 
   // Restore saved settings once loaded
   useEffect(() => {
@@ -507,10 +527,10 @@ export default function MapViewer() {
           onToggleCustomMenuLayer: handleToggleCustomLayerVisible,
           onDeleteCustomMenuLayer: handleDeleteCustomMenuLayer,
           is3DOpen,
-          on3DToggle: () => { setIs3DOpen(p => !p); setMapLibreEverOpened(true); },
+          on3DToggle: request3DToggle,
           isCollabOpen,
           onCollabToggle: () => setIsCollabOpen(p => !p),
-          onAROpen: () => { window.location.href = '/ar'; },
+          onAROpen: requestAR,
         } : null}
         isPinPicking={isPinPicking}
         onPinPicked={handlePinPicked}
@@ -627,9 +647,10 @@ export default function MapViewer() {
             gpsTrack={gpsTrack}
             onLoadDrawings={handleLoadDrawings}
             is3DOpen={is3DOpen}
-            on3DToggle={() => { setIs3DOpen(p => !p); setMapLibreEverOpened(true); }}
+            on3DToggle={request3DToggle}
             use3DMode={use3DMode}
-            onToggle3DMode={() => { setUse3DMode(p => !p); setIs3DOpen(true); setMapLibreEverOpened(true); }}
+            onToggle3DMode={request3DModeToggle}
+            onAROpen={requestAR}
             isCollabOpen={isCollabOpen}
             onCollabToggle={() => setIsCollabOpen(p => !p)}
           />
@@ -671,9 +692,9 @@ export default function MapViewer() {
                 offline: { Icon: WifiOff, label: "Offline karte", onClick: () => setIsOfflineOpen(p => !p), isActive: isOfflineOpen },
                 ai: { Icon: Brain, label: "AI Asistent", onClick: () => setIsAIOpen(p => !p), isActive: isAIOpen },
                 trackanalyzer: { Icon: TrendingUp, label: "Analiza sledi", onClick: () => setIsTrackAnalyzerOpen(p => !p), isActive: isTrackAnalyzerOpen },
-                view3d: { Icon: Box, label: "3D Pogled", onClick: () => { setIs3DOpen(p => !p); setMapLibreEverOpened(true); }, isActive: is3DOpen },
+                view3d: { Icon: Box, label: "3D Pogled", onClick: request3DToggle, isActive: is3DOpen },
                 collab: { Icon: Users, label: "Skupno delo", onClick: () => setIsCollabOpen(p => !p), isActive: isCollabOpen },
-                ar: { Icon: Camera, label: "AR Pogled", onClick: () => { window.location.href = '/ar'; }, isActive: false },
+                ar: { Icon: Camera, label: "AR Pogled", onClick: requestAR, isActive: false },
               };
               
               const config = buttonConfigs[btnId];
@@ -875,6 +896,16 @@ export default function MapViewer() {
         />
       )}
 
+      {/* Premium gate — shown when a non-premium user tries 3D / AR / AI */}
+      {premiumGateFeature && (
+        <PremiumGateModal
+          feature={premiumGateFeature}
+          isLoggedIn={!!currentUser}
+          onLogin={() => { setPremiumGateFeature(null); setShowAuthModal(true); }}
+          onClose={() => setPremiumGateFeature(null)}
+        />
+      )}
+
       {/* Mobile 3D Menu */}
       {isMobile3DMenuOpen && (
         <Mobile3DMenu
@@ -900,7 +931,7 @@ export default function MapViewer() {
           onShowMyTracks={() => setShowMyTracks(p => !p)}
           onLoadTrack={handleLoadTrack}
           is3DOpen={is3DOpen}
-          on3DToggle={() => { setIs3DOpen(p => !p); setMapLibreEverOpened(true); }}
+          on3DToggle={request3DToggle}
           onAddCustomLayer={handleAddCustomLayer}
           onRemoveCustomLayer={handleRemoveCustomLayer}
           activeSearchLayers={activeSearchLayers}
@@ -911,7 +942,7 @@ export default function MapViewer() {
           onDeleteCustomMenuLayer={handleDeleteCustomMenuLayer}
           isCollabOpen={isCollabOpen}
           onCollabToggle={() => { setIsCollabOpen(p => !p); setIsMobile3DMenuOpen(false); }}
-          onAROpen={() => { window.location.href = '/ar'; }}
+          onAROpen={requestAR}
         />
       )}
     </div>

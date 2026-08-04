@@ -88,6 +88,7 @@ export default function DesktopToolbar({
   drawings, gpsTrack, onLoadDrawings,
   is3DOpen, on3DToggle,
   use3DMode, onToggle3DMode,
+  onAROpen,
   isCollabOpen, onCollabToggle,
 }) {
   const navigate = useNavigate();
@@ -215,7 +216,7 @@ export default function DesktopToolbar({
     if (id === "view3d")        return on3DToggle && on3DToggle();
     if (id === "toggle3dmode")  return onToggle3DMode && onToggle3DMode();
     if (id === "collab")        return onCollabToggle && onCollabToggle();
-    if (id === "ar")            return navigate("/ar");
+    if (id === "ar")            return onAROpen ? onAROpen() : navigate("/ar");
     if (id === "ruler")         return setRulerOpen(p => !p);
     if (id === "save")          return handleSave();
     if (id === "load")          return handleLoad();
