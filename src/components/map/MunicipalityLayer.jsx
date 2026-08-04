@@ -66,36 +66,42 @@ function dist(a, b) {
   return dlat * dlat + dlon * dlon;
 }
 
+function relationToFeature(el) {
+  const name = el.tags?.name || el.tags?.["name:sl"] || "";
+  if (!name) return null;
+  // Area-filter (ISO3166-1=SI) je med Overpass zrcali nedosleden — na nekaterih
+  // vrne tudi obmejne avstrijske/hrvaške občine. Zanesljivo obdržimo samo slovenske
+  // občine (imajo ISO3166-2 = "SI-XXX").
+  const iso = el.tags?.["ISO3166-2"] || "";
+  if (!iso.startsWith("SI-")) return null;
+  const outerWays = (el.members || []).filter(m => m.type === "way" && m.role === "outer" && m.geometry?.length > 0);
+  const innerWays = (el.members || []).filter(m => m.type === "way" && m.role === "inner" && m.geometry?.length > 0);
+  if (outerWays.length === 0) return null;
+  const outerRing = stitchWays(outerWays);
+  if (outerRing.length < 4) return null;
+  const holes = innerWays.length > 0 ? [stitchWays(innerWays)] : [];
+  const lat = outerRing.reduce((s, c) => s + c[0], 0) / outerRing.length;
+  const lon = outerRing.reduce((s, c) => s + c[1], 0) / outerRing.length;
+  return { name, outerRing, holes, centroid: [lat, lon] };
+}
+
 async function fetchMunicipalities() {
+  // Area-filter (ISO3166-1=SI) vrne SAMO slovenske občine (~215, ~10 MB) — brez
+  // italijanskih/avstrijskih/hrvaških občin, ki bi jih dobili z golim bbox-om.
+  // Odgovor se po prvi uspešni naložitvi shrani v 30-dnevni predpomnilnik.
   const query = `[out:json][timeout:90];
-  relation["admin_level"="8"]["boundary"="administrative"](45.4,13.3,46.9,16.7);
+  area["ISO3166-1"="SI"]->.si;
+  relation(area.si)["admin_level"="8"]["boundary"="administrative"];
   out geom;`;
-  const data = await fetchOverpass(query);
+  const data = await fetchOverpass(query, 60000);
 
-  const features = [];
+  const seen = new Map();
   for (const el of data.elements || []) {
-    if (el.type !== "relation") continue;
-    const name = el.tags?.name || el.tags?.["name:sl"] || "";
-    if (!name) continue;
-
-    const outerWays = (el.members || []).filter(m => m.type === "way" && m.role === "outer" && m.geometry?.length > 0);
-    const innerWays = (el.members || []).filter(m => m.type === "way" && m.role === "inner" && m.geometry?.length > 0);
-
-    if (outerWays.length === 0) continue;
-
-    const outerRing = stitchWays(outerWays);
-    if (outerRing.length < 4) continue;
-
-    // Holes
-    const holes = innerWays.length > 0 ? [stitchWays(innerWays)] : [];
-
-    // Centroid from outer ring
-    const lat = outerRing.reduce((s, c) => s + c[0], 0) / outerRing.length;
-    const lon = outerRing.reduce((s, c) => s + c[1], 0) / outerRing.length;
-
-    features.push({ name, outerRing, holes, centroid: [lat, lon] });
+    if (el.type !== "relation" || seen.has(el.id)) continue;
+    const f = relationToFeature(el);
+    if (f) seen.set(el.id, f);
   }
-  return features;
+  return Array.from(seen.values());
 }
 
 async function fetchPlaces() {
