@@ -62,7 +62,7 @@ export default function LayerCategory({ category, activeLayers, onToggleLayer, o
                   </div>
 
                   {/* Name */}
-                  <span className={`text-xs leading-tight flex-1 ${isActive ? 'text-slate-100' : 'text-slate-400'}`}>
+                  <span className={`text-xs leading-tight flex-1 min-w-0 truncate ${isActive ? 'text-slate-100' : 'text-slate-400'}`}>
                     {layer.name}
                   </span>
 

@@ -233,8 +233,8 @@ function FavoritesCategory({ favoriteLayerIds, allCategories, activeLayers, onTo
                           : <div className={`w-full h-full flex items-center justify-center text-[9px] font-bold ${isActive ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-700 text-slate-500'}`}>{layer.name.charAt(0)}</div>
                         }
                       </div>
-                      <span className="text-slate-200 text-xs leading-tight flex-1">{layer.name}</span>
-                      <span className="text-[9px] text-slate-500">{layer._categoryName}</span>
+                      <span className="text-slate-200 text-xs leading-tight flex-1 min-w-0 truncate">{layer.name}</span>
+                      <span className="text-[9px] text-slate-500 shrink-0">{layer._categoryName}</span>
                       <button onClick={() => onToggleFavorite(layer.id)} className="shrink-0 text-base leading-none hover:scale-125 transition-transform">❤️</button>
                       <button
                         onClick={() => !atLimit && onToggleLayer(layer.id)}
