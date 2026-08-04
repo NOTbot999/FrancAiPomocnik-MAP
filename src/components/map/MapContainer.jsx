@@ -435,7 +435,7 @@ function ArcGISExportLayer({ url, opacity, layerIds, maxZoom, maxNativeZoom, bbo
        maxZoom: maxZoom || 22,
        maxNativeZoom: maxNativeZoom || 19,
        bounds: [[45.3, 13.3], [46.9, 16.8]],
-       keepBuffer: 4,
+       keepBuffer: 2,
        updateWhenIdle: false,
        updateWhenZooming: false,
        pane: pane || "overlayPane",
@@ -642,7 +642,7 @@ export default function MapContainerComponent({
                        maxZoom={22}
                        maxNativeZoom={layer.maxNativeZoom || 12}
                        attribution={layer.attribution || ""}
-                       keepBuffer={4}
+                       keepBuffer={2}
                        updateWhenIdle={false}
                        updateWhenZooming={false}
                        pane={pane}
@@ -662,7 +662,7 @@ export default function MapContainerComponent({
                maxZoom={22}
                maxNativeZoom={layer.maxNativeZoom || layer.maxZoom || 19}
                attribution={layer.attribution || ""}
-               keepBuffer={4}
+               keepBuffer={2}
                updateWhenIdle={false}
                updateWhenZooming={false}
                pane={pane}
@@ -707,7 +707,7 @@ export default function MapContainerComponent({
                 crs={L.CRS.EPSG3857}
                 tileSize={layer.tileSize || 256}
                 detectRetina={false}
-                keepBuffer={4}
+                keepBuffer={2}
                 updateWhenIdle={false}
                 updateWhenZooming={false}
               pane={pane}

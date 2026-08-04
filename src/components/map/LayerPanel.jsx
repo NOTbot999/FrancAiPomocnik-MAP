@@ -202,7 +202,7 @@ function FavoritesCategory({ favoriteLayerIds, allCategories, activeLayers, onTo
                     <div key={layer.id} className={`rounded-lg transition-colors ${isVisible ? 'bg-slate-700/50' : 'bg-slate-800/40'}`}>
                       <div className="flex items-center gap-2 px-2 py-1.5">
                         <div className="w-3 h-3 rounded-full shrink-0 border border-white/20" style={{ backgroundColor: layer.color || "#e11d48" }} />
-                        <span className="text-xs flex-1 truncate" style={{ color: theme.fontColor }}>{layer.name}</span>
+                        <span className="text-xs flex-1 min-w-0 truncate" style={{ color: theme.fontColor }}>{layer.name}</span>
                         <span className="text-[9px] text-slate-500 shrink-0">{layer.features?.length || 0}× AI</span>
                         <button
                           onClick={() => onRemoveFavCustomLayer && onRemoveFavCustomLayer(layer.id)}
@@ -287,7 +287,7 @@ function CustomLayersSection({ customLayers, onRemoveCustomLayer, favoritedIds, 
               <div key={layer.id} className={`rounded-lg transition-colors ${isVisible ? 'bg-slate-700/50' : 'bg-slate-800/40'}`}>
                 <div className="flex items-center gap-2 px-2 py-1.5">
                   <div className="w-3 h-3 rounded-full shrink-0 border border-white/20" style={{ backgroundColor: layer.color || "#e11d48" }} />
-                  <span className="text-xs flex-1 truncate" style={{ color: theme.fontColor }}>{layer.name}</span>
+                  <span className="text-xs flex-1 min-w-0 truncate" style={{ color: theme.fontColor }}>{layer.name}</span>
                   <span className="text-[9px] text-slate-500 shrink-0">{layer.features?.length || 0}×</span>
                   <button
                     onClick={() => onFavorite && onFavorite(layer.id)}
