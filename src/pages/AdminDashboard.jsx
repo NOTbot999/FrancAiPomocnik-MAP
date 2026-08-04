@@ -88,14 +88,16 @@ export default function AdminDashboard() {
     }
   };
 
-  const isAdmin = user?.role === 'admin';
+  // Custom login stores the role in localStorage (no Base44 session), so fall back to it
+  const isAdmin = user?.role === 'admin' || localStorage.getItem('userRole') === 'admin';
 
   const fetchAccounts = async () => {
     setLoading(true);
     setError('');
     try {
-      const res = await base44.functions.invoke('adminGetUsers', {});
-      setAccounts(res.data?.accounts || []);
+      // Client-side list (read RLS is public) — adminGetUsers backend is unavailable
+      const accounts = await base44.entities.UserAccount.list('-created_date', 500);
+      setAccounts(accounts || []);
     } catch (e) {
       setError('Napaka pri nalaganju: ' + e.message);
     } finally {
