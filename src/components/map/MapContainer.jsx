@@ -59,8 +59,14 @@ function FlyToLocation({ location }) {
 function CoordsDisplay({ onMapMove }) {
   const [coords, setCoords] = useState(null);
   const [zoom, setZoom] = useState(DEFAULT_ZOOM);
+  const lastMoveRef = useRef(0);
   useMapEvents({
-    mousemove: (e) => setCoords({ lat: e.latlng.lat, lng: e.latlng.lng }),
+    mousemove: (e) => {
+      const now = Date.now();
+      if (now - lastMoveRef.current < 80) return;
+      lastMoveRef.current = now;
+      setCoords({ lat: e.latlng.lat, lng: e.latlng.lng });
+    },
     zoom: (e) => {
       const z = e.target.getZoom();
       const c = e.target.getCenter();

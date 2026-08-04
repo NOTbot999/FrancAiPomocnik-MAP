@@ -370,6 +370,16 @@ export default function MapViewer() {
   const [locationSummary, setLocationSummary] = useState(null); // { latlng: [lat, lng] }
   const [mapCenter, setMapCenter] = useState([46.1512, 14.9955]);
   const [mapZoom, setMapZoom] = useState(9);
+  const mapMoveTimer = useRef(null);
+  // Debounce map view state updates so panning/zooming doesn't re-render the
+  // whole component tree (SearchBar, LayerPanel, DesktopToolbar, …) on every move.
+  const handleMapMove = useCallback((center, zoom) => {
+    if (mapMoveTimer.current) clearTimeout(mapMoveTimer.current);
+    mapMoveTimer.current = setTimeout(() => {
+      setMapCenter(center);
+      setMapZoom(zoom);
+    }, 250);
+  }, []);
   const [isMobile3DMenuOpen, setIsMobile3DMenuOpen] = useState(false);
   const [mobileNavTab, setMobileNavTab] = useState("map");
   const [isCollabOpen, setIsCollabOpen] = useState(false);
@@ -499,7 +509,7 @@ export default function MapViewer() {
         collabPins={collabPins}
         showZoomControls={!isMobile}
         onLocationSummary={(latlng) => setLocationSummary({ latlng })}
-        onMapMove={(center, zoom) => { setMapCenter(center); setMapZoom(zoom); }}
+        onMapMove={handleMapMove}
         mobileProps={isMobile ? {
           onTogglePanel: () => setIsPanelOpen(p => !p),
           isPanelOpen,
