@@ -23,7 +23,14 @@ export default function SearchCategoryLayer({ layer }) {
       .map(f => ({ lat: f.coords[0], lng: f.coords[1], label: f.label || "" }));
     if (points.length === 0) return;
 
-    const pane = map.getPanes().overlayPane;
+    // Dedicated high-z pane so "Označi na karti" emoji always render above
+    // base map and all WMS/tile overlays (overlayPane z=400), yet below the
+    // marker pane (z=600) so map markers stay clickable.
+    let pane = map.getPane("searchCatPane");
+    if (!pane) {
+      pane = map.createPane("searchCatPane");
+      pane.style.zIndex = 450;
+    }
     const canvas = L.DomUtil.create("canvas", "leaflet-emoji-canvas-layer");
     canvas.style.position = "absolute";
     canvas.style.pointerEvents = "auto";
