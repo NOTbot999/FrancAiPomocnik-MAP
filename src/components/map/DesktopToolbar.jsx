@@ -15,6 +15,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { base44 } from "@/api/base44Client";
 import ThemeCustomizer, { loadTheme, saveTheme, DEFAULT_THEME } from "@/components/map/ThemeCustomizer";
 import MeasurementDisplay from "@/components/map/MeasurementDisplay";
+import { Slider } from "@/components/ui/slider";
+import { CATEGORIES } from "@/components/map/SearchBar";
+import { getMarkerSize, setMarkerSize, getEmojiOverrides, setEmojiOverride } from "@/lib/searchCatSettings";
 
 const BUTTON_DEFS = [
   { id: "layers",          icon: Layers,        label: "Sloji",                color: "emerald" },
@@ -104,6 +107,14 @@ export default function DesktopToolbar({
   const [savedOk, setSavedOk] = useState(false);
   const [loadingDraw, setLoadingDraw] = useState(false);
   const [rulerOpen, setRulerOpen] = useState(false);
+  const [markerSize, setMarkerSizeState] = useState(() => getMarkerSize());
+  const selectableCats = CATEGORIES.filter(c => !c._municipalityLayer && !c._caveDbLayer);
+  const [emojiCatSel, setEmojiCatSel] = useState(() => selectableCats[0]?.id || "castle");
+  const [emojiInput, setEmojiInput] = useState(() => {
+    const ov = getEmojiOverrides();
+    const c = selectableCats[0] || { id: "castle", emoji: "🏰" };
+    return ov[c.id] || c.emoji || "";
+  });
 
   const dragOffset = useRef({ x: 0, y: 0 });
   const movedRef = useRef(false);
@@ -465,6 +476,62 @@ export default function DesktopToolbar({
             >
               Ponastavi vrstico
             </button>
+
+            {/* Velikost emoji označb */}
+            <div className="mt-3 pt-2" style={{ borderTop: `1px solid ${theme.menuText}22` }}>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[10px] font-semibold uppercase opacity-60" style={{ color: theme.menuText }}>Velikost označb</span>
+                <span className="text-[10px] opacity-60" style={{ color: theme.menuText }}>{markerSize}px</span>
+              </div>
+              <Slider
+                value={[markerSize]}
+                min={10}
+                max={40}
+                step={1}
+                onValueChange={(v) => { setMarkerSize(v[0]); setMarkerSizeState(v[0]); }}
+              />
+            </div>
+
+            {/* Custom emoji označba */}
+            <div className="mt-3 pt-2" style={{ borderTop: `1px solid ${theme.menuText}22` }}>
+              <span className="text-[10px] font-semibold uppercase opacity-60" style={{ color: theme.menuText }}>Označba po izbiri</span>
+              <div className="flex gap-1.5 mt-1.5 items-center">
+                <select
+                  value={emojiCatSel}
+                  onChange={(e) => {
+                    const id = e.target.value;
+                    setEmojiCatSel(id);
+                    const ov = getEmojiOverrides();
+                    const cat = selectableCats.find(c => c.id === id);
+                    setEmojiInput(ov[id] || cat?.emoji || "");
+                  }}
+                  style={{ color: theme.menuText, backgroundColor: theme.menuBg }}
+                  className="flex-1 min-w-0 text-xs rounded-lg border border-slate-200/60 px-1.5 py-1 outline-none"
+                >
+                  {selectableCats.map(c => (
+                    <option key={c.id} value={c.id}>{c.label}</option>
+                  ))}
+                </select>
+                <input
+                  value={emojiInput}
+                  onChange={(e) => setEmojiInput(e.target.value)}
+                  placeholder="emoji"
+                  maxLength={4}
+                  className="w-12 text-center text-base rounded-lg border border-slate-200/60 px-1 py-1 outline-none focus:border-emerald-400"
+                />
+              </div>
+              <div className="flex gap-1.5 mt-1.5">
+                <button
+                  onClick={() => setEmojiOverride(emojiCatSel, emojiInput)}
+                  className="flex-1 text-xs py-1 rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 transition"
+                >Uporabi</button>
+                <button
+                  onClick={() => { setEmojiOverride(emojiCatSel, ""); const cat = selectableCats.find(c => c.id === emojiCatSel); setEmojiInput(cat?.emoji || ""); }}
+                  className="flex-1 text-xs py-1 rounded-lg border border-slate-200/60 hover:bg-slate-100 transition"
+                  style={{ color: theme.menuText }}
+                >Počisti</button>
+              </div>
+            </div>
 
             {/* Lag Report button */}
             <div className="mt-3 pt-2" style={{ borderTop: `1px solid ${theme.menuText}22` }}>

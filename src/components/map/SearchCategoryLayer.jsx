@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useMap } from "react-leaflet";
 import L from "leaflet";
+import { getMarkerSize, resolveEmoji, SETTINGS_EVENT } from "@/lib/searchCatSettings";
 
 /**
  * Renders point features as emoji glyphs on a single canvas overlay pane.
@@ -17,7 +18,7 @@ export default function SearchCategoryLayer({ layer }) {
   useEffect(() => {
     if (!layer || !layer.features || layer.features.length === 0) return;
 
-    const emoji = layer.emoji || DEFAULT_EMOJI;
+    const emojiFor = () => resolveEmoji(layer.id, layer.emoji || DEFAULT_EMOJI);
     const points = layer.features
       .filter(f => f.type === "Point" && Array.isArray(f.coords) && f.coords.length >= 2 && Number.isFinite(f.coords[0]) && Number.isFinite(f.coords[1]))
       .map(f => ({ lat: f.coords[0], lng: f.coords[1], label: f.label || "" }));
@@ -48,7 +49,8 @@ export default function SearchCategoryLayer({ layer }) {
       const topLeft = map.containerPointToLayerPoint([0, 0]);
       L.DomUtil.setPosition(canvas, topLeft);
       ctx.clearRect(0, 0, size.x, size.y);
-      ctx.font = "15px 'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif";
+      const emoji = emojiFor();
+      ctx.font = `${getMarkerSize()}px 'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.lineWidth = 3;
@@ -69,6 +71,8 @@ export default function SearchCategoryLayer({ layer }) {
     map.on("zoomend", onZoomEnd);
     map.on("zoomstart", onZoomStart);
     map.on("resize", draw);
+    const onSettingsChange = () => draw();
+    window.addEventListener(SETTINGS_EVENT, onSettingsChange);
 
     // Hover tooltip via proximity hit-test
     const tooltip = L.tooltip({ permanent: false, direction: "top", offset: [0, -10], className: "search-cat-tooltip" });
@@ -86,7 +90,7 @@ export default function SearchCategoryLayer({ layer }) {
       if (nearest) {
         if (!tooltip._map) map.addLayer(tooltip);
         tooltip.setLatLng(L.latLng(nearest.lat, nearest.lng));
-        tooltip.setContent(nearest.label || emoji);
+        tooltip.setContent(nearest.label || emojiFor());
       } else if (tooltip._map) {
         map.removeLayer(tooltip);
       }
@@ -100,6 +104,7 @@ export default function SearchCategoryLayer({ layer }) {
       map.off("zoomend", onZoomEnd);
       map.off("zoomstart", onZoomStart);
       map.off("resize", draw);
+      window.removeEventListener(SETTINGS_EVENT, onSettingsChange);
       canvas.removeEventListener("mousemove", onMove);
       canvas.removeEventListener("mouseleave", onLeave);
       if (tooltip._map) map.removeLayer(tooltip);
