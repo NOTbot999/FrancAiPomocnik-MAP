@@ -102,6 +102,9 @@ export default function MapViewer() {
   const requestAR = useCallback(() => {
     gateOrRun("AR Pogled", () => navigate("/ar"));
   }, [gateOrRun, navigate]);
+  const requestCollabToggle = useCallback(() => {
+    gateOrRun("Skupno delo", () => setIsCollabOpen(p => !p));
+  }, [gateOrRun]);
 
   // Restore saved settings once loaded
   useEffect(() => {
@@ -529,7 +532,7 @@ export default function MapViewer() {
           is3DOpen,
           on3DToggle: request3DToggle,
           isCollabOpen,
-          onCollabToggle: () => setIsCollabOpen(p => !p),
+          onCollabToggle: requestCollabToggle,
           onAROpen: requestAR,
         } : null}
         isPinPicking={isPinPicking}
@@ -652,7 +655,7 @@ export default function MapViewer() {
             onToggle3DMode={request3DModeToggle}
             onAROpen={requestAR}
             isCollabOpen={isCollabOpen}
-            onCollabToggle={() => setIsCollabOpen(p => !p)}
+            onCollabToggle={requestCollabToggle}
           />
         </>
       )}
@@ -693,7 +696,7 @@ export default function MapViewer() {
                 ai: { Icon: Brain, label: "AI Asistent", onClick: () => setIsAIOpen(p => !p), isActive: isAIOpen },
                 trackanalyzer: { Icon: TrendingUp, label: "Analiza sledi", onClick: () => setIsTrackAnalyzerOpen(p => !p), isActive: isTrackAnalyzerOpen },
                 view3d: { Icon: Box, label: "3D Pogled", onClick: request3DToggle, isActive: is3DOpen },
-                collab: { Icon: Users, label: "Skupno delo", onClick: () => setIsCollabOpen(p => !p), isActive: isCollabOpen },
+                collab: { Icon: Users, label: "Skupno delo", onClick: requestCollabToggle, isActive: isCollabOpen },
                 ar: { Icon: Camera, label: "AR Pogled", onClick: requestAR, isActive: false },
               };
               
@@ -941,7 +944,7 @@ export default function MapViewer() {
           onToggleCustomMenuLayer={handleToggleCustomLayerVisible}
           onDeleteCustomMenuLayer={handleDeleteCustomMenuLayer}
           isCollabOpen={isCollabOpen}
-          onCollabToggle={() => { setIsCollabOpen(p => !p); setIsMobile3DMenuOpen(false); }}
+          onCollabToggle={() => { requestCollabToggle(); setIsMobile3DMenuOpen(false); }}
           onAROpen={requestAR}
         />
       )}

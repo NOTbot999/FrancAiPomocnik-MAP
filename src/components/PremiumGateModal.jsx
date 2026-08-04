@@ -4,7 +4,7 @@ import { X, Lock, LogIn, Crown } from "lucide-react";
 
 /**
  * Premium gate modal — shown when a non-premium user tries to open a
- * premium-only feature (AI, 3D Pogled, AR Pogled).
+ * premium-only feature (AI, 3D Pogled, AR Pogled, Skupno delo).
  *
  * - Not logged in → prompt to log in (calls onLogin).
  * - Logged in but not premium → inform that the feature requires a premium account.
