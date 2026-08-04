@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { X, User, Mail, Lock, Loader2, AlertCircle, Map } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import SetupAccountModal from '@/components/SetupAccountModal';
+import { b64EncodeUtf8 } from '@/lib/utils';
 
 export default function AuthModal({ onClose, onSuccess }) {
   const [isLogin, setIsLogin] = useState(true);
@@ -27,27 +28,39 @@ export default function AuthModal({ onClose, onSuccess }) {
     if (!identifier || !password) { setError('Vnesite podatke za prijavo'); return; }
     setLoading(true);
     try {
-      const res = await base44.functions.invoke('loginUser', { login: identifier.trim(), password });
-      const data = res.data;
+      const loginLower = identifier.trim().toLowerCase();
+      // Lookup by username, then by email — client-side (no backend function)
+      let records = await base44.entities.UserAccount.filter({ username: loginLower });
+      if (!records || records.length === 0) {
+        records = await base44.entities.UserAccount.filter({ email: loginLower });
+      }
+      if (!records || records.length === 0) {
+        setError('Napačno uporabniško ime ali geslo');
+        return;
+      }
+      // Prefer a record that already has a password set
+      const account = records.find(r => r.password_hash) || records[0];
 
-      if (data?.error) {
+      // Admin pre-created account with no password yet → force setup
+      if (!account.password_hash) {
+        setSetupAccount(account);
+        return;
+      }
+
+      // Verify password (base64, matches the js-base64 encode used at registration)
+      const hash = b64EncodeUtf8(password);
+      if (account.password_hash !== hash) {
         setError('Napačno uporabniško ime ali geslo');
         return;
       }
 
-      // Admin pre-created account with no password yet → force setup
-      if (data?.needsSetup) {
-        setSetupAccount({ id: data.accountId, email: identifier.trim() });
-        return;
-      }
-
-      localStorage.setItem('userAccountId', data.accountId);
-      localStorage.setItem('userUsername', data.username);
-      localStorage.setItem('userEmail', data.email || '');
-      localStorage.setItem('userRole', data.role || 'user');
-      localStorage.setItem('userIsPremium', data.is_premium ? 'true' : 'false');
-      onSuccess?.(data);
-      if (data.role === 'admin') window.location.href = '/admin';
+      localStorage.setItem('userAccountId', account.id);
+      localStorage.setItem('userUsername', account.username);
+      localStorage.setItem('userEmail', account.email || '');
+      localStorage.setItem('userRole', account.role || 'user');
+      localStorage.setItem('userIsPremium', account.is_premium ? 'true' : 'false');
+      onSuccess?.(account);
+      if (account.role === 'admin') window.location.href = '/admin';
     } catch (err) {
       setError('Prijava ni uspela');
     } finally { setLoading(false); }
@@ -61,23 +74,25 @@ export default function AuthModal({ onClose, onSuccess }) {
     if (password !== confirmPassword) { setError('Gesli se ne ujemata'); return; }
     setLoading(true);
     try {
-      const res = await base44.functions.invoke('registerUser', {
-        username: username.trim().toLowerCase(),
-        password,
-        email: email.trim() || undefined,
-      });
-      if (res.data?.error) {
-        const msg = res.data.error;
-        if (msg.includes('already taken') || msg.includes('Username already')) {
-          setError('Uporabniško ime že obstaja');
-        } else {
-          setError('Registracija ni uspela: ' + msg);
-        }
+      const uname = username.trim().toLowerCase();
+      // Uniqueness check — client-side
+      const existing = await base44.entities.UserAccount.filter({ username: uname });
+      if (existing && existing.length > 0) {
+        setError('Uporabniško ime že obstaja');
         return;
       }
+      const hash = b64EncodeUtf8(password);
+      await base44.entities.UserAccount.create({
+        username: uname,
+        email: email.trim() || null,
+        password_hash: hash,
+        login_method: email.trim() ? 'both' : 'username',
+        is_base44_user: false,
+        role: 'user',
+      });
       setSuccess('Račun ustvarjen! Prijavite se.');
       switchMode(true);
-      setIdentifier(username.trim().toLowerCase());
+      setIdentifier(uname);
       setUsername(''); setEmail(''); setPassword(''); setConfirmPassword('');
     } catch (err) {
       setError('Registracija ni uspela');

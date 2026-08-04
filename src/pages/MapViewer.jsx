@@ -79,8 +79,9 @@ export default function MapViewer() {
 
         const username = localStorage.getItem("userUsername");
         if (!username) return;
-        const res = await base44.functions.invoke('getMyPremiumStatus', { username });
-        if (res.data?.is_premium === true) setIsPremium(true);
+        // Client-side premium check (no backend function)
+        const accs = await base44.entities.UserAccount.filter({ username });
+        if (accs && accs.some(a => a.is_premium)) setIsPremium(true);
       } catch {}
     };
     checkPremium();

@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { User, Lock, Loader2, AlertCircle, Map } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { b64EncodeUtf8 } from '@/lib/utils';
 
 // Shown when admin pre-created user has no username/password set yet
 export default function SetupAccountModal({ account, onComplete }) {
@@ -24,31 +25,35 @@ export default function SetupAccountModal({ account, onComplete }) {
 
     setLoading(true);
     try {
-      // Check username uniqueness
-      const existing = await base44.entities.UserAccount.filter({ username: username.trim().toLowerCase() });
+      // Check username uniqueness — client-side
+      const uname = username.trim().toLowerCase();
+      const existing = await base44.entities.UserAccount.filter({ username: uname });
       if (existing.length > 0) { setError('Uporabniško ime že obstaja'); setLoading(false); return; }
 
-      // Use registerUser-like backend call but we need to update existing account
-      // Call a backend function to update the account securely
-      const res = await base44.functions.invoke('setupAccount', {
-        accountId: account.id,
-        username: username.trim().toLowerCase(),
-        password,
+      // Create a fresh account (preserving the pre-created account's role/premium),
+      // since client-side update of the pre-created record is RLS-blocked without
+      // a backend function. The empty pre-created record is left orphaned.
+      const hash = b64EncodeUtf8(password);
+      const created = await base44.entities.UserAccount.create({
+        username: uname,
+        email: account.email || null,
+        password_hash: hash,
+        login_method: account.email ? 'both' : 'username',
+        is_base44_user: false,
+        role: account.role || 'user',
+        is_premium: account.is_premium || false,
+        premium_since: account.premium_since || null,
+        premium_until: account.premium_until || null,
       });
 
-      if (res.data?.error) {
-        setError(res.data.error === 'Username already taken' ? 'Uporabniško ime že obstaja' : 'Napaka: ' + res.data.error);
-        return;
-      }
-
       // Update localStorage
-      localStorage.setItem('userUsername', username.trim().toLowerCase());
-      localStorage.setItem('userAccountId', account.id);
+      localStorage.setItem('userUsername', uname);
+      localStorage.setItem('userAccountId', created.id);
       localStorage.setItem('userEmail', account.email || '');
       localStorage.setItem('userRole', account.role || 'user');
       localStorage.setItem('userIsPremium', account.is_premium ? 'true' : 'false');
 
-      onComplete?.({ ...account, username: username.trim().toLowerCase(), password });
+      onComplete?.({ ...account, id: created.id, username: uname });
     } catch (err) {
       setError('Napaka pri shranjevanju. Poskusite znova.');
     } finally {
