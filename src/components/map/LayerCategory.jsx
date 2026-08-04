@@ -2,9 +2,11 @@ import React, { useState } from "react";
 import { ChevronDown, GripVertical } from "lucide-react";
 
 import { Slider } from "@/components/ui/slider";
+import { loadTheme } from "./ThemeCustomizer";
 
 export default function LayerCategory({ category, activeLayers, onToggleLayer, onOpacityChange, favorites = [], onToggleFavorite, activeLayerCount = 0, maxLayers = 6, dragHandleProps }) {
   const [isOpen, setIsOpen] = useState(false);
+  const theme = loadTheme();
   const activeCount = category.layers.filter((l) => activeLayers[l.id]).length;
 
   return (
@@ -62,7 +64,7 @@ export default function LayerCategory({ category, activeLayers, onToggleLayer, o
                   </div>
 
                   {/* Name */}
-                  <span className={`text-xs leading-tight flex-1 min-w-0 truncate ${isActive ? 'text-slate-100' : 'text-slate-400'}`}>
+                  <span className="text-xs leading-tight flex-1 min-w-0 truncate" style={{ color: theme.fontColor }}>
                     {layer.name}
                   </span>
 

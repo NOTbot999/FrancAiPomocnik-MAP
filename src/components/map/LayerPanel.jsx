@@ -69,6 +69,7 @@ const MAX_OVERLAY_LAYERS = 6;
 
 function ActiveLayersCategory({ activeLayers, allCategories, onToggleLayer, onOpacityChange, layerOrder, onLayerReorder }) {
   const [isOpen, setIsOpen] = useState(true);
+  const theme = loadTheme();
 
   // Build lookup
   const layerMeta = {};
@@ -136,7 +137,7 @@ function ActiveLayersCategory({ activeLayers, allCategories, onToggleLayer, onOp
                                 : <div className="w-full h-full flex items-center justify-center text-[9px] font-bold bg-emerald-500/20 text-emerald-400">{layer.name?.charAt(0)}</div>
                               }
                             </div>
-                            <span className="text-slate-200 text-xs leading-tight flex-1 min-w-0 truncate">{layer.name}</span>
+                            <span className="text-xs leading-tight flex-1 min-w-0 truncate" style={{ color: theme.fontColor }}>{layer.name}</span>
                             <span className="text-[9px] text-slate-500 shrink-0">{layer._categoryName}</span>
                             <button
                               onClick={() => onToggleLayer(layer.id)}
@@ -166,6 +167,7 @@ function ActiveLayersCategory({ activeLayers, allCategories, onToggleLayer, onOp
 
 function FavoritesCategory({ favoriteLayerIds, allCategories, activeLayers, onToggleLayer, onOpacityChange, onToggleFavorite, activeLayerCount, favoritedCustomLayers, onRemoveFavCustomLayer, customLayerVisible, onToggleCustomVisible, customLayerOpacities, onCustomOpacity }) {
   const [isOpen, setIsOpen] = useState(true);
+  const theme = loadTheme();
 
   const favLayers = [];
   for (const cat of allCategories) {
@@ -200,7 +202,7 @@ function FavoritesCategory({ favoriteLayerIds, allCategories, activeLayers, onTo
                     <div key={layer.id} className={`rounded-lg transition-colors ${isVisible ? 'bg-slate-700/50' : 'bg-slate-800/40'}`}>
                       <div className="flex items-center gap-2 px-2 py-1.5">
                         <div className="w-3 h-3 rounded-full shrink-0 border border-white/20" style={{ backgroundColor: layer.color || "#e11d48" }} />
-                        <span className="text-xs text-slate-200 flex-1 truncate">{layer.name}</span>
+                        <span className="text-xs flex-1 truncate" style={{ color: theme.fontColor }}>{layer.name}</span>
                         <span className="text-[9px] text-slate-500 shrink-0">{layer.features?.length || 0}× AI</span>
                         <button
                           onClick={() => onRemoveFavCustomLayer && onRemoveFavCustomLayer(layer.id)}
@@ -233,7 +235,7 @@ function FavoritesCategory({ favoriteLayerIds, allCategories, activeLayers, onTo
                           : <div className={`w-full h-full flex items-center justify-center text-[9px] font-bold ${isActive ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-700 text-slate-500'}`}>{layer.name.charAt(0)}</div>
                         }
                       </div>
-                      <span className="text-slate-200 text-xs leading-tight flex-1 min-w-0 truncate">{layer.name}</span>
+                      <span className="text-xs leading-tight flex-1 min-w-0 truncate" style={{ color: theme.fontColor }}>{layer.name}</span>
                       <span className="text-[9px] text-slate-500 shrink-0">{layer._categoryName}</span>
                       <button onClick={() => onToggleFavorite(layer.id)} className="shrink-0 text-base leading-none hover:scale-125 transition-transform">❤️</button>
                       <button
@@ -263,6 +265,7 @@ function FavoritesCategory({ favoriteLayerIds, allCategories, activeLayers, onTo
 
 function CustomLayersSection({ customLayers, onRemoveCustomLayer, favoritedIds, onFavorite, customLayerVisible, onToggleVisible, customLayerOpacities, onOpacityChange }) {
   const [isOpen, setIsOpen] = useState(true);
+  const theme = loadTheme();
   // Hide search-category full-Slovenia layers from the panel (they're managed via SearchBar)
   const visibleLayers = (customLayers || []).filter(l => !l._searchCat);
   if (!visibleLayers || visibleLayers.length === 0) return null;
@@ -284,7 +287,7 @@ function CustomLayersSection({ customLayers, onRemoveCustomLayer, favoritedIds, 
               <div key={layer.id} className={`rounded-lg transition-colors ${isVisible ? 'bg-slate-700/50' : 'bg-slate-800/40'}`}>
                 <div className="flex items-center gap-2 px-2 py-1.5">
                   <div className="w-3 h-3 rounded-full shrink-0 border border-white/20" style={{ backgroundColor: layer.color || "#e11d48" }} />
-                  <span className="text-xs text-slate-200 flex-1 truncate">{layer.name}</span>
+                  <span className="text-xs flex-1 truncate" style={{ color: theme.fontColor }}>{layer.name}</span>
                   <span className="text-[9px] text-slate-500 shrink-0">{layer.features?.length || 0}×</span>
                   <button
                     onClick={() => onFavorite && onFavorite(layer.id)}

@@ -11,6 +11,7 @@ export const DEFAULT_THEME = {
   buttonActiveText: "#ffffff",
   panelBg: "#0f172a",
   panelText: "#e2e8f0",
+  fontColor: "#e2e8f0",
   accentColor: "#10b981",
   menuBg: "#ffffff",
   menuText: "#334155",
@@ -39,6 +40,7 @@ const FIELDS = [
   { key: "popupBg",         label: "Popup Background" },
   { key: "panelBg",         label: "Panel Background" },
   { key: "panelText",       label: "Panel Text" },
+  { key: "fontColor",       label: "Font Color" },
   { key: "accentColor",     label: "Accent / Highlights" },
 ];
 
@@ -109,7 +111,7 @@ export default function ThemeCustomizer({ isOpen, onClose, theme, onThemeChange 
                 <Palette className="w-3.5 h-3.5" style={{ color: theme.toolbarText }} />
               </div>
               <div className="flex-1 h-7 rounded-lg flex items-center px-2" style={{ backgroundColor: theme.panelBg }}>
-                <span className="text-[10px]" style={{ color: theme.panelText }}>Panel</span>
+                <span className="text-[10px]" style={{ color: theme.fontColor }}>Panel</span>
               </div>
             </div>
           </div>
