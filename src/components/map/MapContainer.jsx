@@ -23,6 +23,7 @@ import MunicipalityLayer from "./MunicipalityLayer";
 import CollabPinsLayer from "./CollabPinsLayer";
 import ThirdDevAxisLayer from "./ThirdDevAxisLayer";
 import FlightLayer from "./FlightLayer";
+import MarkerNotePopup from "./MarkerNotePopup";
 
 function OfflineManagerPortal({ onClose }) {
   const map = useMap();
@@ -114,8 +115,6 @@ const SNAP_THRESHOLD_PX = 35;
 
 function DrawingHandler({ activeTool, onMeasurement, drawings, setDrawings }) {
   const [currentPoints, setCurrentPoints] = useState([]);
-  const [editingMarkerIdx, setEditingMarkerIdx] = useState(null);
-  const [editLabel, setEditLabel] = useState("");
   const map = useMap();
 
   useEffect(() => {
@@ -278,64 +277,19 @@ function DrawingHandler({ activeTool, onMeasurement, drawings, setDrawings }) {
         );
       })}
 
-      {/* Markers with rename popup */}
+      {/* Markers with note + photo popup */}
       {(drawings.markers || []).map((m, i) => (
         <Marker key={`mk-${i}`} position={[m.lat, m.lng]} icon={markerIcon}>
           <Popup>
-            <div style={{ minWidth: 160 }}>
-              {editingMarkerIdx === i ? (
-                <div className="flex flex-col gap-1">
-                  <input
-                    autoFocus
-                    value={editLabel}
-                    onChange={e => setEditLabel(e.target.value)}
-                    onKeyDown={e => {
-                      if (e.key === "Enter") {
-                        setDrawings(prev => {
-                          const markers = [...prev.markers];
-                          markers[i] = { ...markers[i], label: editLabel };
-                          return { ...prev, markers };
-                        });
-                        setEditingMarkerIdx(null);
-                      }
-                      if (e.key === "Escape") setEditingMarkerIdx(null);
-                    }}
-                    className="border border-slate-300 rounded px-2 py-1 text-xs w-full outline-none focus:border-emerald-500"
-                    placeholder="Vnesi ime..."
-                  />
-                  <div className="flex gap-1">
-                    <button
-                      onClick={() => {
-                        setDrawings(prev => {
-                          const markers = [...prev.markers];
-                          markers[i] = { ...markers[i], label: editLabel };
-                          return { ...prev, markers };
-                        });
-                        setEditingMarkerIdx(null);
-                      }}
-                      className="flex-1 bg-emerald-500 text-white text-xs py-1 rounded hover:bg-emerald-600"
-                    >Shrani</button>
-                    <button
-                      onClick={() => setEditingMarkerIdx(null)}
-                      className="flex-1 bg-slate-100 text-slate-600 text-xs py-1 rounded hover:bg-slate-200"
-                    >Prekliči</button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-1.5">
-                  {m.label && <div className="font-semibold text-xs text-slate-800">{m.label}</div>}
-                  <span className="font-mono text-[10px] text-slate-500">{m.lat.toFixed(5)}, {m.lng.toFixed(5)}</span>
-                  <button
-                    onClick={() => { setEditingMarkerIdx(i); setEditLabel(m.label || ""); }}
-                    className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 rounded px-2 py-1 text-left"
-                  >✏️ Preimenuj oznako</button>
-                  <button
-                    onClick={() => setDrawings(prev => ({ ...prev, markers: prev.markers.filter((_, idx) => idx !== i) }))}
-                    className="text-xs bg-red-50 hover:bg-red-100 text-red-600 rounded px-2 py-1 text-left"
-                  >🗑 Odstrani</button>
-                </div>
-              )}
-            </div>
+            <MarkerNotePopup
+              marker={m}
+              onChange={(updated) => setDrawings((prev) => {
+                const markers = [...prev.markers];
+                markers[i] = updated;
+                return { ...prev, markers };
+              })}
+              onRemove={() => setDrawings((prev) => ({ ...prev, markers: prev.markers.filter((_, idx) => idx !== i) }))}
+            />
           </Popup>
         </Marker>
       ))}

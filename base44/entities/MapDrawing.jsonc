@@ -8,7 +8,7 @@
     },
     "markers": {
       "type": "array",
-      "description": "Array of marker objects with lat/lng",
+      "description": "Array of marker objects with lat/lng, optional label, note and photos",
       "items": {
         "type": "object",
         "properties": {
@@ -17,6 +17,21 @@
           },
           "lng": {
             "type": "number"
+          },
+          "label": {
+            "type": "string",
+            "description": "Marker name/label"
+          },
+          "note": {
+            "type": "string",
+            "description": "Descriptive note attached to the marker"
+          },
+          "photos": {
+            "type": "array",
+            "description": "Photo file URLs attached to the marker",
+            "items": {
+              "type": "string"
+            }
           }
         }
       }
