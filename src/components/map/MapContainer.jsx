@@ -436,7 +436,7 @@ function ArcGISExportLayer({ url, opacity, layerIds, maxZoom, maxNativeZoom, bbo
        maxNativeZoom: maxNativeZoom || 19,
        bounds: [[45.3, 13.3], [46.9, 16.8]],
        keepBuffer: 2,
-       updateWhenIdle: false,
+       updateWhenIdle: true,
        updateWhenZooming: false,
        pane: pane || "overlayPane",
        zIndex: zIndex || 400,
@@ -534,11 +534,12 @@ function TileReloadOnLayersChange({ activeLayerSignature }) {
   const map = useMap();
   useEffect(() => {
     if (!activeLayerSignature) return;
-    // Defer so the freshly (re)added layer is already listening for moveend.
+    // Debounce so rapidly enabling/disabling several layers coalesces into a
+    // single tile-reload nudge instead of one wave per toggle.
     const t = setTimeout(() => {
       map.invalidateSize({ animate: false });
       map.fire("moveend");
-    }, 0);
+    }, 120);
     return () => clearTimeout(t);
   }, [activeLayerSignature, map]);
   return null;
@@ -643,11 +644,11 @@ export default function MapContainerComponent({
                        maxNativeZoom={layer.maxNativeZoom || 12}
                        attribution={layer.attribution || ""}
                        keepBuffer={2}
-                       updateWhenIdle={false}
+                       updateWhenIdle={true}
                        updateWhenZooming={false}
                        pane={pane}
                        zIndex={400 + index}
-                     />
+                       />
                    );
                  }
 
@@ -663,11 +664,11 @@ export default function MapContainerComponent({
                maxNativeZoom={layer.maxNativeZoom || layer.maxZoom || 19}
                attribution={layer.attribution || ""}
                keepBuffer={2}
-               updateWhenIdle={false}
+               updateWhenIdle={true}
                updateWhenZooming={false}
                pane={pane}
                zIndex={400 + index}
-             />
+               />
            );
          }
 
@@ -708,7 +709,7 @@ export default function MapContainerComponent({
                 tileSize={layer.tileSize || 256}
                 detectRetina={false}
                 keepBuffer={2}
-                updateWhenIdle={false}
+                updateWhenIdle={true}
                 updateWhenZooming={false}
               pane={pane}
               zIndex={400 + index}

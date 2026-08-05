@@ -8,12 +8,23 @@ import { getMarkerSize, resolveEmoji, SETTINGS_EVENT } from "@/lib/searchCatSett
  * Performant for thousands of points (one canvas, drawn via fillText).
  * Non-point features (LineString/Polygon) are ignored — handled elsewhere.
  * Supports hover tooltips via proximity hit-testing.
+ *
+ * Performance notes:
+ *  - On each `draw()` we cache the screen-space container points for all
+ *    features so the mousemove hit-test runs in pure screen space (no
+ *    per-event latLngToContainerPoint projection) and can cheaply cull
+ *    off-screen points.
+ *  - mousemove is throttled (~60ms) and uses the cached points, keeping the
+ *    hover loop O(visible) even for layers with tens of thousands of markers.
  */
 const DEFAULT_EMOJI = "📍";
 
 export default function SearchCategoryLayer({ layer }) {
   const map = useMap();
   const tooltipRef = useRef(null);
+  const pointsRef = useRef([]);       // lat/lng/label features
+  const screenRef = useRef([]);      // cached {x,y,label,lat,lng} for current view
+  const hoverTimerRef = useRef(null);
 
   useEffect(() => {
     if (!layer || !layer.features || layer.features.length === 0) return;
@@ -23,6 +34,7 @@ export default function SearchCategoryLayer({ layer }) {
       .filter(f => f.type === "Point" && Array.isArray(f.coords) && f.coords.length >= 2 && Number.isFinite(f.coords[0]) && Number.isFinite(f.coords[1]))
       .map(f => ({ lat: f.coords[0], lng: f.coords[1], label: f.label || "" }));
     if (points.length === 0) return;
+    pointsRef.current = points;
 
     // Dedicated high-z pane so "Označi na karti" emoji always render above
     // base map and all WMS/tile overlays (overlayPane z=400), yet below the
@@ -55,12 +67,22 @@ export default function SearchCategoryLayer({ layer }) {
       ctx.textBaseline = "middle";
       ctx.lineWidth = 3;
       ctx.strokeStyle = "rgba(255,255,255,0.9)";
-      for (const p of points) {
+
+      // Cache screen-space coords for the hit-test; cull off-screen so the
+      // hover loop only iterates over visible markers.
+      const screen = new Array(points.length);
+      const pad = getMarkerSize();
+      for (let i = 0; i < points.length; i++) {
+        const p = points[i];
         const cp = map.latLngToContainerPoint(L.latLng(p.lat, p.lng));
-        if (cp.x < -20 || cp.x > size.x + 20 || cp.y < -20 || cp.y > size.y + 20) continue;
-        ctx.strokeText(emoji, cp.x, cp.y);
-        ctx.fillText(emoji, cp.x, cp.y);
+        const inView = cp.x > -pad && cp.x < size.x + pad && cp.y > -pad && cp.y < size.y + pad;
+        screen[i] = { x: cp.x, y: cp.y, label: p.label, lat: p.lat, lng: p.lng, inView };
+        if (inView) {
+          ctx.strokeText(emoji, cp.x, cp.y);
+          ctx.fillText(emoji, cp.x, cp.y);
+        }
       }
+      screenRef.current = screen;
     };
 
     const onZoomStart = () => { canvas.style.opacity = "0"; };
@@ -74,18 +96,19 @@ export default function SearchCategoryLayer({ layer }) {
     const onSettingsChange = () => draw();
     window.addEventListener(SETTINGS_EVENT, onSettingsChange);
 
-    // Hover tooltip via proximity hit-test
+    // Hover tooltip via proximity hit-test — throttled, uses cached screen points.
     const tooltip = L.tooltip({ permanent: false, direction: "top", offset: [0, -10], className: "search-cat-tooltip" });
     tooltipRef.current = tooltip;
 
-    const onMove = (e) => {
-      const cp = e.containerPoint || map.mouseEventToContainerPoint(e);
+    const runHitTest = (cp) => {
+      const screen = screenRef.current;
       let nearest = null;
       let bestDist = 14;
-      for (const p of points) {
-        const pp = map.latLngToContainerPoint(L.latLng(p.lat, p.lng));
-        const d = Math.hypot(pp.x - cp.x, pp.y - cp.y);
-        if (d < bestDist) { bestDist = d; nearest = p; }
+      for (let i = 0; i < screen.length; i++) {
+        const s = screen[i];
+        if (!s.inView) continue;
+        const d = Math.hypot(s.x - cp.x, s.y - cp.y);
+        if (d < bestDist) { bestDist = d; nearest = s; }
       }
       if (nearest) {
         if (!tooltip._map) map.addLayer(tooltip);
@@ -95,7 +118,20 @@ export default function SearchCategoryLayer({ layer }) {
         map.removeLayer(tooltip);
       }
     };
-    const onLeave = () => { if (tooltip._map) map.removeLayer(tooltip); };
+
+    const onMove = (e) => {
+      const cp = e.containerPoint || map.mouseEventToContainerPoint(e);
+      // Throttle hit-test so a fast mouse sweep doesn't re-run O(visible) per event.
+      if (hoverTimerRef.current) return;
+      hoverTimerRef.current = setTimeout(() => {
+        hoverTimerRef.current = null;
+        runHitTest(cp);
+      }, 55);
+    };
+    const onLeave = () => {
+      if (hoverTimerRef.current) { clearTimeout(hoverTimerRef.current); hoverTimerRef.current = null; }
+      if (tooltip._map) map.removeLayer(tooltip);
+    };
     canvas.addEventListener("mousemove", onMove);
     canvas.addEventListener("mouseleave", onLeave);
 
@@ -107,6 +143,7 @@ export default function SearchCategoryLayer({ layer }) {
       window.removeEventListener(SETTINGS_EVENT, onSettingsChange);
       canvas.removeEventListener("mousemove", onMove);
       canvas.removeEventListener("mouseleave", onLeave);
+      if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
       if (tooltip._map) map.removeLayer(tooltip);
       if (canvas.parentNode) canvas.parentNode.removeChild(canvas);
       tooltipRef.current = null;
