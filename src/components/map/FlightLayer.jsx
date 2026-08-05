@@ -12,16 +12,18 @@ import L from "leaflet";
 //  [10] true_track(heading°)  [11] vertical_rate  [13] geo_altitude
 
 const OPENSKY_API = "https://opensky-network.org/api/states/all";
-// OpenSky API supports CORS, so try a direct browser fetch first.
-// Public CORS proxies are unreliable (rate limits / 403 / 521), kept as fallback only.
+// OpenSky API does NOT send CORS headers, so a proxy is required.
+// Free public CORS proxies are unreliable — we race several and fall back to
+// the last successful snapshot when all are down/rate-limited (instead of erroring).
 const SOURCES = [
-  { url: (apiUrl) => apiUrl, parse: (data) => data },
-  { url: (apiUrl) => `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(apiUrl)}`, parse: (data) => data },
   { url: (apiUrl) => `https://api.allorigins.win/raw?url=${encodeURIComponent(apiUrl)}`, parse: (data) => data },
   { url: (apiUrl) => `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`, parse: (data) => JSON.parse(data.contents) },
+  { url: (apiUrl) => `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(apiUrl)}`, parse: (data) => data },
+  { url: (apiUrl) => `https://cors.eu.org/${apiUrl}`, parse: (data) => data },
+  { url: (apiUrl) => `https://thingproxy.freeboard.io/fetch/${apiUrl}`, parse: (data) => data },
 ];
 const SLO_BBOX = { lamin: 45.3, lomin: 13.3, lamax: 46.9, lomax: 16.8 };
-const REFRESH_MS = 60000;
+const REFRESH_MS = 90000;
 
 function makePlaneIcon(heading, onGround, opacity) {
   const color = onGround ? "#94a3b8" : "#2563eb";
@@ -48,6 +50,7 @@ export default function FlightLayer({ opacity = 0.9 }) {
   const [lastUpdate, setLastUpdate] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [stale, setStale] = useState(false);
   const timerRef = useRef(null);
 
   const fetchFlights = async () => {
@@ -65,8 +68,7 @@ export default function FlightLayer({ opacity = 0.9 }) {
       });
       const data = await Promise.any(attempts);
       if (!data || !data.states) throw new Error("Brez podatkov");
-      const states = data.states;
-      const parsed = states
+      const parsed = data.states
         .filter(s => s[5] != null && s[6] != null)
         .map(s => ({
           icao24: s[0],
@@ -82,11 +84,15 @@ export default function FlightLayer({ opacity = 0.9 }) {
       setFlights(parsed);
       setLastUpdate(new Date());
       setError(null);
+      setStale(false);
     } catch (e) {
+      // Keep showing the last successful snapshot (marked stale) instead of wiping the map.
+      setStale(true);
       const msg = e instanceof AggregateError
         ? "Strežnik/proxyji nedelujoči"
         : (e.name === "AbortError" ? "Časovna omejitev" : (e.message || "Napaka"));
-      setError(msg);
+      // Only surface a hard error if we have no cached flights to show.
+      if (flights.length === 0) setError(msg);
     } finally {
       setLoading(false);
     }
@@ -103,6 +109,11 @@ export default function FlightLayer({ opacity = 0.9 }) {
       {error && (
         <div className="leaflet-control" style={{ position: "absolute", top: 10, right: 10, zIndex: 1000, background: "rgba(239,68,68,0.95)", color: "white", fontSize: 11, padding: "4px 10px", borderRadius: 8, pointerEvents: "none" }}>
           ✈ {error}
+        </div>
+      )}
+      {!error && stale && flights.length > 0 && (
+        <div className="leaflet-control" style={{ position: "absolute", top: 10, right: 10, zIndex: 1000, background: "rgba(234,179,8,0.95)", color: "white", fontSize: 11, padding: "4px 10px", borderRadius: 8, pointerEvents: "none" }}>
+          ✈ Posodobitev neuspešna — prikazan zadnji snapshot
         </div>
       )}
       {loading && flights.length === 0 && (
