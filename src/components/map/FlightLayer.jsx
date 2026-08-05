@@ -2,34 +2,73 @@ import React, { useState, useEffect, useRef } from "react";
 import { Marker, Tooltip, Popup } from "react-leaflet";
 import L from "leaflet";
 
-// Leti v realnem času — OpenSky Network (brezplačna alternativa Flightradar24,
-// ki zahteva plačljivo komercialno licenco).
-// API: https://opensky-network.org/api/states/all?lamin=..&lomin=..&lamax=..&lomax=..
+// Leti v realnem času — brezplačni odprtokodni ADS-B viri (adsb.lol / adsb.fi),
+// združljivi z ADSBexchange v2 API. Brez ključa; primarni poskus je neposredni
+// klic (CORS). Če ta spodrsne, pademo na OpenSky Network skozi proste
+// CORS proxyje (drugačen vir podatkov = večja zanesljivost).
 //
-// State vector indeksi v polju:
-//  [0] icao24  [1] callsign  [2] origin_country
-//  [5] lon  [6] lat  [7] baro_altitude  [8] on_ground  [9] velocity(m/s)
-//  [10] true_track(heading°)  [11] vertical_rate  [13] geo_altitude
+// Odgovor: { ac: [ { hex, flight, lat, lon, alt_baro, gs, track, ... } ] }
+//   alt_baro: število (čevlji) ali "ground"
+//   gs:      hitrost v vozlih (knots)
+//   track:   smer v stopinjah
 
+// Slovenija + okolica: center ~46.1/15.05, polmer 250 NM pokrije celo državo.
+const CENTER = { lat: 46.1, lon: 15.05, dist: 250 };
+const ADSB_SOURCES = [
+  `https://api.adsb.lol/v2/lat/${CENTER.lat}/lon/${CENTER.lon}/dist/${CENTER.dist}`,
+  `https://opendata.adsb.fi/api/v3/lat/${CENTER.lat}/lon/${CENTER.lon}/dist/${CENTER.dist}`,
+];
+
+// OpenSky (rezerva) — API ne pošilja CORS glav, zato skozi proxyje.
 const OPENSKY_API = "https://opensky-network.org/api/states/all";
-// OpenSky API does NOT send CORS headers, so a proxy is required.
-// Free public CORS proxies are unreliable — we race several and fall back to
-// the last successful snapshot when all are down/rate-limited (instead of erroring).
-const SOURCES = [
+const SLO_BBOX = { lamin: 45.3, lomin: 13.3, lamax: 46.9, lomax: 16.8 };
+const OPENSKY_PROXIES = [
   { url: (apiUrl) => `https://api.allorigins.win/raw?url=${encodeURIComponent(apiUrl)}`, parse: (data) => data },
-  { url: (apiUrl) => `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`, parse: (data) => JSON.parse(data.contents) },
   { url: (apiUrl) => `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(apiUrl)}`, parse: (data) => data },
   { url: (apiUrl) => `https://cors.eu.org/${apiUrl}`, parse: (data) => data },
-  { url: (apiUrl) => `https://thingproxy.freeboard.io/fetch/${apiUrl}`, parse: (data) => data },
 ];
-const SLO_BBOX = { lamin: 45.3, lomin: 13.3, lamax: 46.9, lomax: 16.8 };
+
 const REFRESH_MS = 90000;
+const KNOTS_TO_MS = 0.514444;
+const FT_TO_M = 0.3048;
+
+function parseAdsb(data) {
+  if (!data || !Array.isArray(data.ac)) throw new Error("Brez podatkov");
+  return data.ac
+    .filter((s) => s.lat != null && s.lon != null)
+    .map((s) => ({
+      icao24: s.hex,
+      callsign: (s.flight || "").trim() || "—",
+      country: "",
+      lon: s.lon,
+      lat: s.lat,
+      altitude: typeof s.alt_baro === "number" ? s.alt_baro * FT_TO_M : null,
+      onGround: s.alt_baro === "ground",
+      velocity: s.gs != null ? s.gs * KNOTS_TO_MS : null,
+      heading: s.track ?? 0,
+    }));
+}
+
+function parseOpensky(data) {
+  if (!data || !data.states) throw new Error("Brez podatkov");
+  return data.states
+    .filter((s) => s[5] != null && s[6] != null)
+    .map((s) => ({
+      icao24: s[0],
+      callsign: (s[1] || "").trim() || "—",
+      country: s[2] || "",
+      lon: s[5],
+      lat: s[6],
+      altitude: s[7] ?? s[13] ?? null,
+      onGround: !!s[8],
+      velocity: s[9] ?? null,
+      heading: s[10] ?? 0,
+    }));
+}
 
 function makePlaneIcon(heading, onGround, opacity) {
   const color = onGround ? "#94a3b8" : "#2563eb";
   const rot = heading || 0;
-  // Badge-style marker: colored circle with white plane inside, rotated by heading.
-  // Clearly distinct from OSM airport icons and visible on all base layers.
   return L.divIcon({
     className: "",
     html: `<div style="opacity:${opacity};position:relative;width:19px;height:19px">
@@ -52,47 +91,46 @@ export default function FlightLayer({ opacity = 0.9 }) {
   const [error, setError] = useState(null);
   const [stale, setStale] = useState(false);
   const timerRef = useRef(null);
+  const flightsRef = useRef([]);
+
+  useEffect(() => { flightsRef.current = flights; }, [flights]);
+
+  const fetchWithTimeout = (url, ms = 12000) => {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), ms);
+    return fetch(url, { signal: ctrl.signal })
+      .then((res) => { if (!res.ok) throw new Error("HTTP " + res.status); return res.json(); })
+      .finally(() => clearTimeout(t));
+  };
 
   const fetchFlights = async () => {
     setLoading(true);
     try {
-      const { lamin, lomin, lamax, lomax } = SLO_BBOX;
-      const apiUrl = `${OPENSKY_API}?lamin=${lamin}&lomin=${lomin}&lamax=${lamax}&lomax=${lomax}`;
-      const attempts = SOURCES.map(({ url: makeUrl, parse }) => {
-        const ctrl = new AbortController();
-        const t = setTimeout(() => ctrl.abort(), 15000);
-        return fetch(makeUrl(apiUrl), { signal: ctrl.signal })
-          .then(res => { if (!res.ok) throw new Error("HTTP " + res.status); return res.json(); })
-          .then(data => parse(data))
-          .finally(() => clearTimeout(t));
-      });
-      const data = await Promise.any(attempts);
-      if (!data || !data.states) throw new Error("Brez podatkov");
-      const parsed = data.states
-        .filter(s => s[5] != null && s[6] != null)
-        .map(s => ({
-          icao24: s[0],
-          callsign: (s[1] || "").trim() || "—",
-          country: s[2] || "",
-          lon: s[5],
-          lat: s[6],
-          altitude: s[7] ?? s[13] ?? null,
-          onGround: !!s[8],
-          velocity: s[9] ?? null,
-          heading: s[10] ?? 0,
-        }));
+      // 1) Neposredni ADS-B viri (CORS) — rasamo oba.
+      let parsed = null;
+      try {
+        const data = await Promise.any(ADSB_SOURCES.map((u) => fetchWithTimeout(u, 12000)));
+        parsed = parseAdsb(data);
+      } catch (e) {
+        // 2) Rezerva: OpenSky skozi proxyje.
+        const { lamin, lomin, lamax, lomax } = SLO_BBOX;
+        const apiUrl = `${OPENSKY_API}?lamin=${lamin}&lomin=${lomin}&lamax=${lamax}&lomax=${lomax}`;
+        const data = await Promise.any(
+          OPENSKY_PROXIES.map(({ url: makeUrl, parse }) =>
+            fetchWithTimeout(makeUrl(apiUrl), 15000).then(parse)
+          )
+        );
+        parsed = parseOpensky(data);
+      }
       setFlights(parsed);
       setLastUpdate(new Date());
       setError(null);
       setStale(false);
     } catch (e) {
-      // Keep showing the last successful snapshot (marked stale) instead of wiping the map.
+      // Obdržimo zadnji uspešen snapshot (označen kot zastarel) namesto prazne karte.
       setStale(true);
-      const msg = e instanceof AggregateError
-        ? "Strežnik/proxyji nedelujoči"
-        : (e.name === "AbortError" ? "Časovna omejitev" : (e.message || "Napaka"));
-      // Only surface a hard error if we have no cached flights to show.
-      if (flights.length === 0) setError(msg);
+      const msg = e instanceof AggregateError ? "Vsi viri letov nedelujoči" : (e.message || "Napaka");
+      if (flightsRef.current.length === 0) setError(msg);
     } finally {
       setLoading(false);
     }
@@ -135,14 +173,17 @@ export default function FlightLayer({ opacity = 0.9 }) {
             <div style={{ minWidth: 180, fontSize: 12 }}>
               <div style={{ fontWeight: 700, marginBottom: 4 }}>✈ {f.callsign}</div>
               <div style={{ color: "#64748b", fontSize: 10, marginBottom: 6 }}>
-                ICAO: {f.icao24} · {f.country}
+                ICAO: {f.icao24}{f.country ? " · " + f.country : ""}
               </div>
               <div>🏔 Višina: {f.altitude != null ? Math.round(f.altitude) + " m" : "—"}</div>
               <div>💨 Hitrost: {f.velocity != null ? Math.round(f.velocity * 3.6) + " km/h" : "—"}</div>
               <div>🧭 Smer: {Math.round(f.heading)}°</div>
               <div>{f.onGround ? "🟢 Na tleh" : "🔵 V zraku"}</div>
+              <div style={{ color: "#94a3b8", fontSize: 9, marginTop: 4 }}>
+                Vir: adsb.lol / adsb.fi
+              </div>
               {lastUpdate && (
-                <div style={{ color: "#94a3b8", fontSize: 9, marginTop: 4 }}>
+                <div style={{ color: "#94a3b8", fontSize: 9 }}>
                   Osveženo: {lastUpdate.toLocaleTimeString("sl-SI")}
                 </div>
               )}
