@@ -12,6 +12,18 @@ import LayerLegend from "./LayerLegend";
 import { scopedGet, scopedSet } from "@/lib/userPrefs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useLayerHealthStatus } from "@/hooks/useLayerHealthStatus";
+
+// Health badge: ✗ failed, ⚠ degraded — from last LayerHealthTester run
+function HealthBadge({ status }) {
+  if (status === "failed") {
+    return <span className="shrink-0 text-red-400 text-xs font-bold leading-none" title="Ne deluje (zadnji samotest)">✗</span>;
+  }
+  if (status === "degraded") {
+    return <span className="shrink-0 text-amber-400 text-xs font-bold leading-none" title="Delno deluje (zadnji samotest)">⚠</span>;
+  }
+  return null;
+}
 
 // Base Map grid — radio select (samo ena naenkrat kot ozadje)
 // Vključuje tudi 3D/MapLibre izbiro kadar je 3D odprt
@@ -70,6 +82,7 @@ const MAX_OVERLAY_LAYERS = 6;
 function ActiveLayersCategory({ activeLayers, allCategories, onToggleLayer, onOpacityChange, layerOrder, onLayerReorder }) {
   const [isOpen, setIsOpen] = useState(true);
   const theme = loadTheme();
+  const layerStatus = useLayerHealthStatus();
 
   // Build lookup
   const layerMeta = {};
@@ -138,6 +151,7 @@ function ActiveLayersCategory({ activeLayers, allCategories, onToggleLayer, onOp
                               }
                             </div>
                             <span className="text-xs leading-tight flex-1 min-w-0 truncate" style={{ color: theme.fontColor }}>{layer.name}</span>
+                            <HealthBadge status={layerStatus[layer.id]} />
                             <span className="text-[9px] text-slate-500 shrink-0">{layer._categoryName}</span>
                             <button
                               onClick={() => onToggleLayer(layer.id)}
@@ -168,6 +182,7 @@ function ActiveLayersCategory({ activeLayers, allCategories, onToggleLayer, onOp
 function FavoritesCategory({ favoriteLayerIds, allCategories, activeLayers, onToggleLayer, onOpacityChange, onToggleFavorite, activeLayerCount, favoritedCustomLayers, onRemoveFavCustomLayer, customLayerVisible, onToggleCustomVisible, customLayerOpacities, onCustomOpacity }) {
   const [isOpen, setIsOpen] = useState(true);
   const theme = loadTheme();
+  const layerStatus = useLayerHealthStatus();
 
   const favLayers = [];
   for (const cat of allCategories) {
@@ -236,6 +251,7 @@ function FavoritesCategory({ favoriteLayerIds, allCategories, activeLayers, onTo
                         }
                       </div>
                       <span className="text-xs leading-tight flex-1 min-w-0 truncate" style={{ color: theme.fontColor }}>{layer.name}</span>
+                      <HealthBadge status={layerStatus[layer.id]} />
                       <span className="text-[9px] text-slate-500 shrink-0">{layer._categoryName}</span>
                       <button onClick={() => onToggleFavorite(layer.id)} className="shrink-0 text-base leading-none hover:scale-125 transition-transform">❤️</button>
                       <button

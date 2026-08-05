@@ -3,10 +3,23 @@ import { ChevronDown, GripVertical } from "lucide-react";
 
 import { Slider } from "@/components/ui/slider";
 import { loadTheme } from "./ThemeCustomizer";
+import { useLayerHealthStatus } from "@/hooks/useLayerHealthStatus";
+
+// Small inline badge: ✗ for failed, ⚠ for degraded layers (from last health run)
+function HealthBadge({ status }) {
+  if (status === "failed") {
+    return <span className="shrink-0 text-red-400 text-xs font-bold leading-none" title="Ne deluje (zadnji samotest)">✗</span>;
+  }
+  if (status === "degraded") {
+    return <span className="shrink-0 text-amber-400 text-xs font-bold leading-none" title="Delno deluje (zadnji samotest)">⚠</span>;
+  }
+  return null;
+}
 
 export default function LayerCategory({ category, activeLayers, onToggleLayer, onOpacityChange, favorites = [], onToggleFavorite, activeLayerCount = 0, maxLayers = 6, dragHandleProps }) {
   const [isOpen, setIsOpen] = useState(false);
   const theme = loadTheme();
+  const layerStatus = useLayerHealthStatus();
   const activeCount = category.layers.filter((l) => activeLayers[l.id]).length;
 
   return (
@@ -67,6 +80,7 @@ export default function LayerCategory({ category, activeLayers, onToggleLayer, o
                   <span className="text-xs leading-tight flex-1 min-w-0 truncate" style={{ color: theme.fontColor }}>
                     {layer.name}
                   </span>
+                  <HealthBadge status={layerStatus[layer.id]} />
 
                   {/* Favorite */}
                   {onToggleFavorite && (

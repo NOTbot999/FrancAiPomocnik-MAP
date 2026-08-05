@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import L from 'leaflet';
 import { base44 } from '@/api/base44Client';
+import { refreshLayerHealthStatus } from '@/hooks/useLayerHealthStatus';
 import { BASE_LAYERS, OVERLAY_CATEGORIES } from '@/components/map/layerConfig';
 import { Button } from '@/components/ui/button';
 import { Activity, Play, Square, CheckCircle2, AlertTriangle, XCircle, MinusCircle, RefreshCw } from 'lucide-react';
@@ -277,6 +278,8 @@ export default function LayerHealthTester() {
         speed_preset: speed,
         results: acc,
       });
+      // Refresh shared cache so ✗/⚠ badges update across the layer menu
+      refreshLayerHealthStatus();
       loadHistory();
     } catch (e) {
       // Persist failure is non-fatal — results still shown in UI
