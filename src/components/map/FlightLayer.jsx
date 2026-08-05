@@ -12,19 +12,13 @@ import L from "leaflet";
 //  [10] true_track(heading°)  [11] vertical_rate  [13] geo_altitude
 
 const OPENSKY_API = "https://opensky-network.org/api/states/all";
-const CORS_PROXIES = [
-  {
-    url: (apiUrl) => `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`,
-    parse: (data) => JSON.parse(data.contents),
-  },
-  {
-    url: (apiUrl) => `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(apiUrl)}`,
-    parse: (data) => data,
-  },
-  {
-    url: (apiUrl) => `https://api.allorigins.win/raw?url=${encodeURIComponent(apiUrl)}`,
-    parse: (data) => data,
-  },
+// OpenSky API supports CORS, so try a direct browser fetch first.
+// Public CORS proxies are unreliable (rate limits / 403 / 521), kept as fallback only.
+const SOURCES = [
+  { url: (apiUrl) => apiUrl, parse: (data) => data },
+  { url: (apiUrl) => `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(apiUrl)}`, parse: (data) => data },
+  { url: (apiUrl) => `https://api.allorigins.win/raw?url=${encodeURIComponent(apiUrl)}`, parse: (data) => data },
+  { url: (apiUrl) => `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`, parse: (data) => JSON.parse(data.contents) },
 ];
 const SLO_BBOX = { lamin: 45.3, lomin: 13.3, lamax: 46.9, lomax: 16.8 };
 const REFRESH_MS = 60000;
@@ -61,7 +55,7 @@ export default function FlightLayer({ opacity = 0.9 }) {
     try {
       const { lamin, lomin, lamax, lomax } = SLO_BBOX;
       const apiUrl = `${OPENSKY_API}?lamin=${lamin}&lomin=${lomin}&lamax=${lamax}&lomax=${lomax}`;
-      const attempts = CORS_PROXIES.map(({ url: makeUrl, parse }) => {
+      const attempts = SOURCES.map(({ url: makeUrl, parse }) => {
         const ctrl = new AbortController();
         const t = setTimeout(() => ctrl.abort(), 15000);
         return fetch(makeUrl(apiUrl), { signal: ctrl.signal })
@@ -90,7 +84,7 @@ export default function FlightLayer({ opacity = 0.9 }) {
       setError(null);
     } catch (e) {
       const msg = e instanceof AggregateError
-        ? "Proxyji nedelujoči"
+        ? "Strežnik/proxyji nedelujoči"
         : (e.name === "AbortError" ? "Časovna omejitev" : (e.message || "Napaka"));
       setError(msg);
     } finally {
