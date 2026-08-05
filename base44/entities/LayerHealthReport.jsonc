@@ -1,0 +1,110 @@
+{
+  "name": "LayerHealthReport",
+  "type": "object",
+  "properties": {
+    "run_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the test run started"
+    },
+    "total_layers": {
+      "type": "number",
+      "description": "Number of layers tested"
+    },
+    "healthy": {
+      "type": "number",
+      "description": "Layers that loaded OK"
+    },
+    "degraded": {
+      "type": "number",
+      "description": "Layers that loaded with some tile errors"
+    },
+    "failed": {
+      "type": "number",
+      "description": "Layers that failed to load"
+    },
+    "skipped": {
+      "type": "number",
+      "description": "Layers skipped (unsupported type)"
+    },
+    "duration_ms": {
+      "type": "number",
+      "description": "Total test duration in ms"
+    },
+    "speed_preset": {
+      "type": "string",
+      "description": "Speed preset used for the run"
+    },
+    "results": {
+      "type": "array",
+      "description": "Per-layer test results",
+      "items": {
+        "type": "object",
+        "properties": {
+          "layer_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "degraded",
+              "failed",
+              "skipped"
+            ]
+          },
+          "first_tile_ms": {
+            "type": "number"
+          },
+          "full_load_ms": {
+            "type": "number"
+          },
+          "tiles_loaded": {
+            "type": "number"
+          },
+          "tiles_errored": {
+            "type": "number"
+          },
+          "fps": {
+            "type": "number"
+          },
+          "max_frame_ms": {
+            "type": "number"
+          },
+          "lag_spikes": {
+            "type": "number"
+          },
+          "error": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "run_at"
+  ],
+  "rls": {
+    "create": true,
+    "read": true,
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

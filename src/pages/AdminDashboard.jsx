@@ -4,8 +4,9 @@ import { useAuth } from '@/lib/AuthContext';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Shield, Crown, User, RefreshCw, ChevronDown, ChevronUp, Database } from 'lucide-react';
+import { Search, Shield, Crown, User, RefreshCw, ChevronDown, ChevronUp, Database, Activity } from 'lucide-react';
 import { format } from 'date-fns';
+import LayerHealthTester from '@/components/admin/LayerHealthTester';
 
 const COLS = [
   { key: 'username', label: 'Username' },
@@ -55,6 +56,7 @@ export default function AdminDashboard() {
   const [error, setError] = useState('');
   const [buildingCache, setBuildingCache] = useState(false);
   const [cacheMsg, setCacheMsg] = useState('');
+  const [view, setView] = useState('users'); // 'users' | 'layers'
 
   // Pull-to-refresh state
   const [pullY, setPullY] = useState(0);
@@ -165,8 +167,28 @@ export default function AdminDashboard() {
           </div>
           <div>
             <h1 className="text-base font-bold text-white">Admin Panel</h1>
-            <p className="text-xs text-slate-400 hidden sm:block">Upravljanje uporabnikov</p>
+            <p className="text-xs text-slate-400 hidden sm:block">
+              {view === 'users' ? 'Upravljanje uporabnikov' : 'Samotest slojev'}
+            </p>
           </div>
+        </div>
+        <div className="flex items-center gap-1.5 mr-2 p-1 rounded-lg bg-slate-800/60">
+          <button
+            onClick={() => setView('users')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition ${
+              view === 'users' ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <User className="w-3.5 h-3.5" /> Uporabniki
+          </button>
+          <button
+            onClick={() => setView('layers')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition ${
+              view === 'layers' ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Activity className="w-3.5 h-3.5" /> Zdravje slojev
+          </button>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-xs text-slate-500 hidden sm:block">{filtered.length} / {accounts.length} uporabnikov</span>
@@ -186,7 +208,8 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Search */}
+      {/* Search — only in users view */}
+      {view === 'users' && (
       <div className="px-6 py-4">
         <div className="relative max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
@@ -198,6 +221,7 @@ export default function AdminDashboard() {
           />
         </div>
       </div>
+      )}
 
       {error && (
         <div className="mx-6 mb-4 p-3 bg-red-900/30 border border-red-800 rounded-lg text-red-300 text-sm">{error}</div>
@@ -206,7 +230,11 @@ export default function AdminDashboard() {
         <div className={`mx-6 mb-4 p-3 border rounded-lg text-sm ${cacheMsg.startsWith('✓') ? 'bg-emerald-900/30 border-emerald-800 text-emerald-300' : 'bg-red-900/30 border-red-800 text-red-300'}`}>{cacheMsg}</div>
       )}
 
+      {/* Layer health tester */}
+      {view === 'layers' && <LayerHealthTester />}
+
       {/* Table — with pull-to-refresh on mobile */}
+      {view === 'users' && (
       <div
         ref={scrollRef}
         className="px-6 pb-8 overflow-x-auto"
@@ -214,57 +242,9 @@ export default function AdminDashboard() {
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        {pullY > 0 && (
-          <div className="flex items-center justify-center text-slate-500 text-xs transition-all" style={{ height: pullY }}>
-            {isPulling ? "↑ Spusti za osvežitev" : "↓ Povleci za osvežitev"}
-          </div>
-        )}
-        <div className="rounded-xl border border-slate-800 overflow-hidden">
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="bg-slate-900 border-b border-slate-800">
-                {COLS.map(col => (
-                  <th
-                    key={col.key}
-                    onClick={() => handleSort(col.key)}
-                    className="px-3 py-2.5 text-left text-slate-400 font-semibold uppercase tracking-wider cursor-pointer hover:text-white select-none whitespace-nowrap"
-                  >
-                    <span className="flex items-center gap-1">
-                      {col.label}
-                      {sortKey === col.key
-                        ? sortAsc ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />
-                        : null
-                      }
-                    </span>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={COLS.length} className="px-4 py-8 text-center text-slate-500">
-                    Ni uporabnikov
-                  </td>
-                </tr>
-              ) : filtered.map((acc, i) => (
-                <tr
-                  key={acc.id}
-                  className={`border-b border-slate-800/50 hover:bg-slate-800/40 transition-colors ${
-                    i % 2 === 0 ? 'bg-slate-900/20' : ''
-                  }`}
-                >
-                  {COLS.map(col => (
-                    <td key={col.key} className="px-3 py-2 max-w-[150px] truncate">
-                      {formatVal(col.key, acc[col.key])}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+...
       </div>
+      )}
     </div>
   );
 }
