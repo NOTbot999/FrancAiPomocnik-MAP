@@ -1,70 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Marker, Tooltip, Popup } from "react-leaflet";
 import L from "leaflet";
+import { base44 } from "@/api/base44Client";
 
-// Leti v realnem času — brezplačni odprtokodni ADS-B viri (adsb.lol / adsb.fi),
-// združljivi z ADSBexchange v2 API. Brez ključa; primarni poskus je neposredni
-// klic (CORS). Če ta spodrsne, pademo na OpenSky Network skozi proste
-// CORS proxyje (drugačen vir podatkov = večja zanesljivost).
-//
-// Odgovor: { ac: [ { hex, flight, lat, lon, alt_baro, gs, track, ... } ] }
-//   alt_baro: število (čevlji) ali "ground"
-//   gs:      hitrost v vozlih (knots)
-//   track:   smer v stopinjah
-
-// Slovenija + okolica: center ~46.1/15.05, polmer 250 NM pokrije celo državo.
-const CENTER = { lat: 46.1, lon: 15.05, dist: 250 };
-const ADSB_SOURCES = [
-  `https://api.adsb.lol/v2/lat/${CENTER.lat}/lon/${CENTER.lon}/dist/${CENTER.dist}`,
-  `https://opendata.adsb.fi/api/v3/lat/${CENTER.lat}/lon/${CENTER.lon}/dist/${CENTER.dist}`,
-];
-
-// OpenSky (rezerva) — API ne pošilja CORS glav, zato skozi proxyje.
-const OPENSKY_API = "https://opensky-network.org/api/states/all";
-const SLO_BBOX = { lamin: 45.3, lomin: 13.3, lamax: 46.9, lomax: 16.8 };
-const OPENSKY_PROXIES = [
-  { url: (apiUrl) => `https://api.allorigins.win/raw?url=${encodeURIComponent(apiUrl)}`, parse: (data) => data },
-  { url: (apiUrl) => `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(apiUrl)}`, parse: (data) => data },
-  { url: (apiUrl) => `https://cors.eu.org/${apiUrl}`, parse: (data) => data },
-];
+// Leti v realnem času — ADS-B viri (adsb.lol / adsb.fi) nimajo CORS glav, zato
+// podatke pridobivamo strežniško prek backend funkcije flightProxy (brez ključa,
+// deluje za vse uporabnike vključno z gosti). Osvežitev vsakih 90 s.
 
 const REFRESH_MS = 90000;
-const KNOTS_TO_MS = 0.514444;
-const FT_TO_M = 0.3048;
-
-function parseAdsb(data) {
-  if (!data || !Array.isArray(data.ac)) throw new Error("Brez podatkov");
-  return data.ac
-    .filter((s) => s.lat != null && s.lon != null)
-    .map((s) => ({
-      icao24: s.hex,
-      callsign: (s.flight || "").trim() || "—",
-      country: "",
-      lon: s.lon,
-      lat: s.lat,
-      altitude: typeof s.alt_baro === "number" ? s.alt_baro * FT_TO_M : null,
-      onGround: s.alt_baro === "ground",
-      velocity: s.gs != null ? s.gs * KNOTS_TO_MS : null,
-      heading: s.track ?? 0,
-    }));
-}
-
-function parseOpensky(data) {
-  if (!data || !data.states) throw new Error("Brez podatkov");
-  return data.states
-    .filter((s) => s[5] != null && s[6] != null)
-    .map((s) => ({
-      icao24: s[0],
-      callsign: (s[1] || "").trim() || "—",
-      country: s[2] || "",
-      lon: s[5],
-      lat: s[6],
-      altitude: s[7] ?? s[13] ?? null,
-      onGround: !!s[8],
-      velocity: s[9] ?? null,
-      heading: s[10] ?? 0,
-    }));
-}
 
 function makePlaneIcon(heading, onGround, opacity) {
   const color = onGround ? "#94a3b8" : "#2563eb";
@@ -95,41 +38,22 @@ export default function FlightLayer({ opacity = 0.9 }) {
 
   useEffect(() => { flightsRef.current = flights; }, [flights]);
 
-  const fetchWithTimeout = (url, ms = 12000) => {
-    const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), ms);
-    return fetch(url, { signal: ctrl.signal })
-      .then((res) => { if (!res.ok) throw new Error("HTTP " + res.status); return res.json(); })
-      .finally(() => clearTimeout(t));
-  };
-
   const fetchFlights = async () => {
     setLoading(true);
     try {
-      // 1) Neposredni ADS-B viri (CORS) — rasamo oba.
-      let parsed = null;
-      try {
-        const data = await Promise.any(ADSB_SOURCES.map((u) => fetchWithTimeout(u, 12000)));
-        parsed = parseAdsb(data);
-      } catch (e) {
-        // 2) Rezerva: OpenSky skozi proxyje.
-        const { lamin, lomin, lamax, lomax } = SLO_BBOX;
-        const apiUrl = `${OPENSKY_API}?lamin=${lamin}&lomin=${lomin}&lamax=${lamax}&lomax=${lomax}`;
-        const data = await Promise.any(
-          OPENSKY_PROXIES.map(({ url: makeUrl, parse }) =>
-            fetchWithTimeout(makeUrl(apiUrl), 15000).then(parse)
-          )
-        );
-        parsed = parseOpensky(data);
+      const resp = await base44.functions.invoke("flightProxy", {});
+      const data = resp.data;
+      if (!data || !Array.isArray(data.flights)) {
+        throw new Error(data?.error || "Brez podatkov");
       }
-      setFlights(parsed);
+      setFlights(data.flights);
       setLastUpdate(new Date());
       setError(null);
       setStale(false);
     } catch (e) {
       // Obdržimo zadnji uspešen snapshot (označen kot zastarel) namesto prazne karte.
       setStale(true);
-      const msg = e instanceof AggregateError ? "Vsi viri letov nedelujoči" : (e.message || "Napaka");
+      const msg = e?.response?.data?.error || e?.message || "Napaka pri pridobivanju letov";
       if (flightsRef.current.length === 0) setError(msg);
     } finally {
       setLoading(false);
@@ -180,7 +104,7 @@ export default function FlightLayer({ opacity = 0.9 }) {
               <div>🧭 Smer: {Math.round(f.heading)}°</div>
               <div>{f.onGround ? "🟢 Na tleh" : "🔵 V zraku"}</div>
               <div style={{ color: "#94a3b8", fontSize: 9, marginTop: 4 }}>
-                Vir: adsb.lol / adsb.fi
+                Vir: ADS-B (adsb.lol / adsb.fi)
               </div>
               {lastUpdate && (
                 <div style={{ color: "#94a3b8", fontSize: 9 }}>
