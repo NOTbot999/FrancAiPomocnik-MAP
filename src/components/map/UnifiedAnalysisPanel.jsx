@@ -88,15 +88,31 @@ NE dodajaj objektov ki niso na spodnjem seznamu. NE izmišljaj imen ali lokacij.
 OSM podatki:
 ${osmText}`;
 
-const URBEX_AI_PROMPT = (osmText, placeName, lat, lng, km, arcanumUrl, lidarUrl, satelliteUrl) =>
+// Povleče dinamično raster sliko client-side in jo naloži v Base44 shrambo,
+// da LLM dobi pravi statični URL (ne more povleči dinamičnih ArcGIS export endpointov).
+async function fetchAndUploadImage(url, filename) {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    if (blob.size < 500) return null; // prazna/napačna slika
+    const file = new File([blob], filename, { type: blob.type || "image/jpeg" });
+    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    return file_url;
+  } catch {
+    return null;
+  }
+}
+
+const URBEX_AI_PROMPT = (osmText, placeName, lat, lng, km, arcanumUrl, lidarOk, satelliteOk) =>
 `Si GIS analitik za iskanje neznanih in opuščenih objektov v Sloveniji. VEDNO odgovarjaj v SLOVENŠČINI.
 
 Območje: "${placeName || `${lat.toFixed(4)}, ${lng.toFixed(4)}`}", ${km}×${km} km
 
 Tvoja naloga je primerjalna analiza treh virov za to območje:
 
-1. **LIDAR senčenje (ARSO)** — razkrije reliefne anomalije: jarke, nasipe, temelje zgradb, utrjene poti, gomile, ki niso vidni na navadni karti. Tile URL: ${lidarUrl}
-2. **Satelitska karta (Esri)** — pokaže aktualno stanje: vegetacijo, prosvetlitve, ruševine, asfalt, strehi. Tile URL: ${satelliteUrl}
+1. **LIDAR senčenje (ARSO)** — razkrije reliefne anomalije: jarke, nasipe, temelje zgradb, utrjene poti, gomile, ki niso vidni na navadni karti. ${lidarOk ? "Slika je priložena — analiza temelji na dejanskih vizualnih podatkih." : "Slike ni bilo mogoče naložiti — analiza temelji na metodoloških pričakovanjih."}
+2. **Satelitska karta (Esri)** — pokaže aktualno stanje: vegetacijo, prosvetlitve, ruševine, asfalt, strehi. ${satelliteOk ? "Slika je priložena." : "Slike ni bilo mogoče naložiti."}
 3. **Arcanum Maps (zgodovinska karta ~1910)** — primerja staro stanje s sedanjim. Objekti ki so bili na karti 1910 a niso več na OSM = potencialne ruševine/bunkerji/opuščeni objekti. Tile URL: ${arcanumUrl}
 4. **OpenStreetMap Overpass podatki** (dejanski, spodaj):
 ${osmText}
@@ -216,14 +232,23 @@ export default function UnifiedAnalysisPanel({
     const tileX = Math.floor((analysisLng + 180) / 360 * Math.pow(2, tileZoom));
     const tileY = Math.floor((1 - Math.log(Math.tan(analysisLat * Math.PI / 180) + 1 / Math.cos(analysisLat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, tileZoom));
     const arcanumUrl = `https://maps.arcanum.com/en/map/europe-1910s/${tileZoom}/${tileX}/${tileY}.png`;
-    const lidarUrl = `https://gis.arso.gov.si/arcgis/rest/services/Lidar_hillshade_D96TM/MapServer/export?bbox=${minLng},${minLat},${maxLng},${maxLat}&bboxSR=4326&imageSR=3857&size=512,512&f=image&format=jpg`;
-    const satelliteUrl = `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=${minLng},${minLat},${maxLng},${maxLat}&bboxSR=4326&imageSR=3857&size=512,512&f=image&format=jpg`;
+    const lidarExportUrl = `https://gis.arso.gov.si/arcgis/rest/services/Lidar_hillshade_D96TM/MapServer/export?bbox=${minLng},${minLat},${maxLng},${maxLat}&bboxSR=4326&imageSR=3857&size=512,512&f=image&format=jpg`;
+    const satelliteExportUrl = `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=${minLng},${minLat},${maxLng},${maxLat}&bboxSR=4326&imageSR=3857&size=512,512&f=image&format=jpg`;
+
+    // Povleci in nalozi slike client-side — LLM ne more povleci dinamicnih ArcGIS export URL-jev
+    const [lidarUrl, satelliteUrl] = await Promise.all([
+      fetchAndUploadImage(lidarExportUrl, "lidar.jpg"),
+      fetchAndUploadImage(satelliteExportUrl, "satellite.jpg"),
+    ]);
+    const imageUrls = [lidarUrl, satelliteUrl].filter(Boolean);
+    const lidarOk = !!lidarUrl;
+    const satelliteOk = !!satelliteUrl;
 
     const [terrainRes, urbexRes] = await Promise.all([
       base44.integrations.Core.InvokeLLM({ prompt: TERRAIN_AI_PROMPT(osmText, placeName, analysisLat, analysisLng, km) }),
       base44.integrations.Core.InvokeLLM({
-        prompt: URBEX_AI_PROMPT(osmText, placeName, analysisLat, analysisLng, km, arcanumUrl, lidarUrl, satelliteUrl),
-        file_urls: [lidarUrl, satelliteUrl],
+        prompt: URBEX_AI_PROMPT(osmText, placeName, analysisLat, analysisLng, km, arcanumUrl, lidarOk, satelliteOk),
+        file_urls: imageUrls.length > 0 ? imageUrls : undefined,
         model: "claude_sonnet_4_6",
       }),
     ]);

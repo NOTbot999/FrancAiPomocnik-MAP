@@ -21,15 +21,37 @@ async function fetchOverpassData(minLat, minLng, maxLat, maxLng) {
   way["historic"](${bbox});
   way["ruins"](${bbox});
   way["military"](${bbox});
-  relation["route"~"hiking|bicycle|foot"](${bbox});
+  way["waterway"~"river|stream|canal"](${bbox});
+  way["highway"~"path|track|footway|cycleway"](${bbox});
 );
-out center tags 100;`;
+out geom;`;
   const res = await fetch("https://overpass-api.de/api/interpreter", {
     method: "POST",
     body: "data=" + encodeURIComponent(query),
   });
   const data = await res.json();
   return data.elements || [];
+}
+
+// Zgradi custom sloje iz PRAVE OSM geometrije (vodotoki, poti) — nikoli LLM-haluciniranih
+function buildRealLineLayers(elements) {
+  const waterwayFeatures = [];
+  const pathFeatures = [];
+  for (const el of elements) {
+    if (el.type !== "way" || !el.geometry) continue;
+    const coords = el.geometry.map(p => [p.lat, p.lng]);
+    if (coords.length < 2) continue;
+    const t = el.tags || {};
+    if (["river", "stream", "canal"].includes(t.waterway)) {
+      waterwayFeatures.push({ type: "LineString", coords, label: t.name || t.waterway });
+    } else if (["path", "track", "footway", "cycleway"].includes(t.highway)) {
+      pathFeatures.push({ type: "LineString", coords, label: t.name || t.highway });
+    }
+  }
+  const layers = [];
+  if (waterwayFeatures.length) layers.push({ name: "Vodotoki (OSM)", color: "#1d9bf0", features: waterwayFeatures });
+  if (pathFeatures.length) layers.push({ name: "Poti in steze (OSM)", color: "#d97706", features: pathFeatures });
+  return layers;
 }
 
 function overpassToText(elements) {
@@ -91,24 +113,14 @@ ${osmText}
 
 1. V 3-5 stavkih opiši kaj je v tem območju (narava, zanimivosti, infrastruktura).
 2. Naštej do 5 najpomembnejših točk z imenom in tipom.
-3. Predlagaj 1-2 custom layer-ja za vizualizacijo na karti (poti, reke, zanimivosti) v formatu:
-<custom_layers>[{"name":"Naziv","color":"#hexcolor","features":[{"type":"LineString","coords":[[lat,lng],[lat,lng]]}]}]</custom_layers>
-Koordinate moraj biti realne za to območje (${lat?.toFixed(3)}, ${lng?.toFixed(3)}).`;
+NE izmišljaj koordinat ali lokacij.`;
 
     const res = await base44.integrations.Core.InvokeLLM({ prompt });
     const text = typeof res === "string" ? res : res?.content || "";
 
-    // Parse custom layers
-    const clMatch = text.match(/<custom_layers>(.*?)<\/custom_layers>/s);
-    let cleanText = text.replace(/<custom_layers>.*?<\/custom_layers>/s, "").trim();
-    if (clMatch) {
-      try {
-        const layers = JSON.parse(clMatch[1]);
-        setCustomLayerSuggestions(Array.isArray(layers) ? layers : [layers]);
-      } catch {}
-    }
-
-    setResult(cleanText);
+    // Custom sloji iz PRAVE OSM geometrije — ne LLM halucinacij
+    setCustomLayerSuggestions(buildRealLineLayers(osmElements));
+    setResult(text);
     setLoading(false);
   };
 
