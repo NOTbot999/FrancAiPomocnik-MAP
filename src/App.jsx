@@ -10,6 +10,7 @@ import Auth from './pages/Auth';
 import AdminImport from './pages/AdminImport';
 import AdminDashboard from './pages/AdminDashboard';
 import ARFieldExplorer from './pages/ARFieldExplorer';
+import SourceDownload from './pages/SourceDownload';
 import { useEffect } from 'react';
 
 // Global system dark mode listener — applies 'dark' class to <html> automatically
@@ -71,6 +72,7 @@ const AuthenticatedApp = () => {
       <Route path="/admin-import" element={<AdminImport />} />
       <Route path="/admin" element={<AdminDashboard />} />
       <Route path="/ar" element={<ARFieldExplorer />} />
+      <Route path="/source" element={<SourceDownload />} />
       <Route path="/" element={
         <LayoutWrapper currentPageName={mainPageKey}>
           <MainPage />
