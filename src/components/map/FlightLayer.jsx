@@ -83,7 +83,7 @@ export default function FlightLayer({ opacity = 0.9 }) {
           ✈ Nalagam lete…
         </div>
       )}
-      {flights.map((f, i) => (
+      {flights.filter(f => f && Number.isFinite(f.lat) && Number.isFinite(f.lon)).map((f, i) => (
         <Marker
           key={`${f.icao24}-${i}`}
           position={[f.lat, f.lon]}
