@@ -3,6 +3,18 @@ import { base44 } from '@/api/base44Client';
 import { appParams } from '@/lib/app-params';
 import { createAxiosClient } from '@base44/sdk/dist/utils/axios-client';
 
+// ════════════════════════════════════════════════════════════════════════
+// ⚠️ TESTNI BYPASS (začasno) — za testiranje AI BREZ prijave in premium/paywall.
+//    Povozi login + premium. Za izklop: TEST_BYPASS = false.
+// ════════════════════════════════════════════════════════════════════════
+const TEST_BYPASS = true;
+if (TEST_BYPASS && typeof window !== 'undefined') {
+  try {
+    if (!localStorage.getItem("userRole")) localStorage.setItem("userRole", "admin");
+    if (!localStorage.getItem("userUsername")) localStorage.setItem("userUsername", "Test");
+  } catch {}
+}
+
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
@@ -18,6 +30,16 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const checkAppState = async () => {
+    // ⚠️ TESTNI BYPASS — aplikacija se naloži brez prijave (uporabnik = admin "Test").
+    if (TEST_BYPASS) {
+      setUser({ id: 'test-user', full_name: 'Test', email: 'test@local', role: 'admin' });
+      setIsAuthenticated(true);
+      setIsLoadingAuth(false);
+      setIsLoadingPublicSettings(false);
+      setAuthError(null);
+      return;
+    }
+
     try {
       setIsLoadingPublicSettings(true);
       setAuthError(null);
