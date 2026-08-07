@@ -22,12 +22,12 @@ const LAYER_SUMMARY = [
 ].join("\n");
 
 const ASK_SYSTEM = `Si AI asistent za GIS Explorer Slovenije. VEDNO odgovarjaj v SLOVENŠČINI.
+Imaš dostop do spleta (iskanje po internetu) — uporabi ga ko OpenStreetMap nima podatkov.
 
-🚨 ABSOLUTNA PREPOVED — NIKOLI ne naredi tega:
+🚨 PREPOVED:
 - NIKOLI ne ustvari <custom_layer> z naključnimi, izmišljenimi ali "pribižnimi" koordinatami.
-- NIKOLI ne postavljaj množice točk po terenu (gore, vasi, reke, jezera, poti, gradovi, itd.) v <custom_layer>.
-- <custom_layer> je STROGO PREPOVEDANO za "pokaži X v Y območju" zahteve.
-- Kršitev tega pravila povzroči hudo škodo (napačne točke na karti).
+- <custom_layer> je za SAMO ENO točko ki jo 100% poznaš (npr. vrh Triglava, center Ljubljane).
+- Za "pokaži X v Y" z več točkami NIKOLI custom_layer — uporabi overpass_query (OSM) ali web_layer (splet).
 
 STROGI VRSTNI RED (upoštevaj brez izjeme):
 
@@ -35,38 +35,33 @@ STROGI VRSTNI RED (upoštevaj brez izjeme):
    Kadar uporabnik prosi za prikaz česar koli iz seznama slojev → takoj aktiviraj. Samo to.
    <activate_layers>["id1","id2"]</activate_layers>
 
-2. OVERPASS POIZVEDBA (PRIVZETA METODA — za VSE geografske poizvedbe):
-   Kadar uporabnik prosi za "pokaži X", "kje so Y", "označi Z v območju" → VEDNO overpass_query.
-   To velja za: gore, vrhove, gradove, reke, jezera, parke, vasi, gozdove, poti, naravne znamenitosti, vse.
-   NIKOLI ne ustvari custom_layer za take zahteve — to je NAPAKA.
-   Podaj bbox kot: south,west,north,east (decimalne stopinje).
-   <overpass_query name="Vodne površine Savinjska dolina" color="#1d9bf0" bbox="46.0,15.0,46.4,15.5">
+2. OVERPASS POIZVEDBA (za vse kar je na OpenStreetMap):
+   Gore, vrhovi, gradovi, reke, jezera, parki, vasi, gozdovi, poti, naravne znamenitosti,
+   infrastruktura, craft=*, shop=*, amenity=*, tourism=* — vse kar OSM označuje.
+   <overpass_query name="..." color="#hex" bbox="south,west,north,east">
    [out:json][timeout:25];
-   (
-     way["natural"="water"]({{bbox}});
-     relation["natural"="water"]({{bbox}});
-     way["waterway"~"river|stream|canal"]({{bbox}});
-   );
+   (... OSM poizvedba z {{bbox}} ...);
    out geom;
    </overpass_query>
-   Navodila za bbox (~0.3–0.5 stopinje za dolino, ~0.1 za vas/mesto).
-   KRITIČNO: bbox MORA biti znotraj Slovenije (lat: 45.4–46.9, lng: 13.4–16.6).
-   - Savinjska dolina: bbox="46.0,15.0,46.4,15.6"
-   - Ljubljanska kotlina: bbox="45.9,14.3,46.2,14.8"
-   - Kranjska Gora: bbox="46.45,13.7,46.55,13.85"
-   - Blejsko jezero: bbox="46.35,14.0,46.4,14.15"
-   - Celotna Slovenija: bbox="45.4,13.4,46.9,16.6"
+   bbox MORA biti znotraj Slovenije (lat: 45.4–46.9, lng: 13.4–16.6).
+   Primeri: Savinjska dolina="46.0,15.0,46.4,15.6", Celotna SI="45.4,13.4,46.9,16.6".
 
-3. CUSTOM LAYER (SAMO za 1 eksplicitno zahtevano točko s 100% zanesljivimi koordinatami):
-   Dovoljeno SAMO kadar uporabnik reče "označi točko X" in gre za ENO točko ki jo 100% poznaš.
+3. WEB SLOJ (za podatke ki jih OSM NIMA — uporabi iskanje po spletu):
+   Pivovarne, specifična podjetja, dogodki, restavracije/manife brez OSM oznak, znamenitosti ki
+   jih OSM ne pokriva — vse kar uporabnik prosi in OSM verjetno nima. Sistem bo poiskal po spletu
+   in ustvaril točke s PRAVIMI koordinatami (ne izmišljaj).
+   <web_layer name="Pivovarne v Sloveniji" emoji="🍺" color="#f59e0b">Kaj iskati in kje, npr. vse pivovarne v Sloveniji z naslovi/koordinatami</web_layer>
+
+4. CUSTOM LAYER (SAMO 1 eksplicitno zahtevana točka s 100% znano koordinato):
    Primeri: vrh Triglava (46.3793, 13.8373), center Ljubljane (46.0569, 14.5058).
-   NIKOLI za več točk, NIKOLI za geografske poizvedbe, NIKOLI za izmišljene lokacije!
    <custom_layer>{"name":"Naziv","color":"#hex","features":[{"type":"Point","coords":[lat,lng],"label":"Ime"}]}</custom_layer>
 
-4. VISION ANALIZA KARTE — ko uporabnik prosi "poglej karto", "kaj vidiš", "analiziraj vidno":
+5. VISION ANALIZA KARTE — ko uporabnik prosi "poglej karto", "kaj vidiš", "analiziraj vidno":
    <vision_analyze prompt="Natančno opiši kaj je vidno na tej karti. Identificiraj objekte, barve, tipe površin (voda=modra, gozd=zelena, ceste=siva)." />
 
-KRITIČNO: Nikoli ne generiraj custom_layer IN overpass_query hkrati. Samo eno!
+KRITIČNO: Nikoli ne generiraj več akcij hkrati — samo ENO (overpass_query ALI web_layer ALI custom_layer).
+
+ODLOČITEV med 2 in 3: Če ima podatek standardno OSM oznako (natural=*, waterway=*, historic=*, craft=*, shop=*, amenity=*, tourism=* ...) → overpass_query. Če OSM takega podatka verjetno nima (npr. seznam pivovarn, podjetij, dogodkov, manj znanih manifu) → web_layer. Pri dvomu najprej poskusi overpass.
 
 RAZPOLOŽLJIVI SLOJI:
 ${LAYER_SUMMARY}
@@ -155,12 +150,14 @@ function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme, messag
     const layerMatch = text.match(/<activate_layers>(.*?)<\/activate_layers>/s);
     const customMatch = text.match(/<custom_layer>(.*?)<\/custom_layer>/s);
     const overpassMatch = text.match(/<overpass_query([^>]*)>([\s\S]*?)<\/overpass_query>/);
+    const webMatch = text.match(/<web_layer([^>]*)>([\s\S]*?)<\/web_layer>/);
     const visionMatch = text.match(/<vision_analyze\s+prompt="([^"]+)"\s*\/>/);
 
     let cleanText = text
       .replace(/<activate_layers>.*?<\/activate_layers>/s, "")
       .replace(/<custom_layer>.*?<\/custom_layer>/s, "")
       .replace(/<overpass_query[\s\S]*?<\/overpass_query>/s, "")
+      .replace(/<web_layer[\s\S]*?<\/web_layer>/s, "")
       .replace(/<vision_analyze[^/]*\/>/g, "")
       .trim();
 
@@ -205,7 +202,7 @@ function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme, messag
     if (activated.length > 0) cleanText += `\n\n✅ Aktivirano: ${activated.join(", ")}`;
 
     // Add static custom layer — skip if overpass_query is also present (AI sometimes generates both)
-    if (customMatch && !overpassMatch) {
+    if (customMatch && !overpassMatch && !webMatch) {
       try {
         const customLayer = JSON.parse(customMatch[1]);
         // Ensure layer always has a unique id — without it MapLibre crashes
@@ -227,6 +224,85 @@ function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme, messag
         cleanText += `\n\n🎨 Custom layer: ${customLayer.name} (${customLayer.features.length} elementov)`;
       } catch (err) {
         cleanText += `\n\n❌ Napaka pri ustvarjanju layerja: ${err.message}`;
+      }
+    }
+
+    // Web-sourced layer (podatki ki jih OSM nima — npr. pivovarne, podjetja, dogodki)
+    if (webMatch) {
+      const attrsStr = webMatch[1];
+      const nameM = attrsStr.match(/name="([^"]+)"/);
+      const emojiM = attrsStr.match(/emoji="([^"]+)"/);
+      const colorM = attrsStr.match(/color="([^"]+)"/);
+      const description = webMatch[2].trim();
+      const layerName = nameM?.[1] || "Spletni sloj";
+      const layerEmoji = emojiM?.[1] || "🌐";
+      const layerColor = colorM?.[1] || "#f59e0b";
+      try {
+        cleanText += `\n\n🌐 Iščem po spletu...`;
+        setMessages(prev => [...prev, { role: "assistant", content: cleanText }]);
+        const webRes = await base44.integrations.Core.InvokeLLM({
+          prompt: `Išči po spletu: ${description}. Vrni JSON s točkami v Sloveniji. Vsaka točka: name, lat (širina, decimalne stopinje), lng (dolžina), note (kratek opis). Uporabi SAMO prave koordinate ki si jih našel na spletu — ne izmišljaj. Če podatka ne najdeš, vrni prazno polje features. Koordinate v Sloveniji: lat 45.4–46.9, lng 13.4–16.6.`,
+          add_context_from_internet: true,
+          model: "gemini_3_flash",
+          response_json_schema: {
+            type: "object",
+            properties: {
+              features: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    name: { type: "string" },
+                    lat: { type: "number" },
+                    lng: { type: "number" },
+                    note: { type: "string" }
+                  },
+                  required: ["name", "lat", "lng"]
+                }
+              }
+            },
+            required: ["features"]
+          }
+        });
+        let webData;
+        if (typeof webRes === "string") {
+          try { webData = JSON.parse(webRes); } catch { webData = { features: [] }; }
+        } else {
+          webData = webRes || {};
+        }
+        const feats = Array.isArray(webData.features) ? webData.features : [];
+        const points = feats
+          .filter(f => typeof f.lat === "number" && typeof f.lng === "number" &&
+            f.lat >= 45.0 && f.lat <= 47.5 && f.lng >= 13.0 && f.lng <= 17.0)
+          .map(f => ({ type: "Point", coords: [f.lat, f.lng], label: f.name + (f.note ? ` — ${f.note}` : "") }));
+        const customLayer = {
+          id: `franc_web_${Date.now()}`,
+          name: layerName,
+          emoji: layerEmoji,
+          color: layerColor,
+          features: points,
+        };
+        if (onAddCustomLayer && points.length > 0) onAddCustomLayer(customLayer);
+        const resultMsg = points.length > 0
+          ? `🌐 Najdeno ${points.length} točk na spletu: **${layerName}**`
+          : `ℹ️ Na spletu nisem našel točk za **${layerName}**.`;
+        setMessages(prev => {
+          const updated = [...prev];
+          const lastIdx = updated.length - 1;
+          updated[lastIdx] = { ...updated[lastIdx], content: updated[lastIdx].content.replace("🌐 Iščem po spletu...", resultMsg) };
+          return updated;
+        });
+        setLoading(false);
+        return;
+      } catch (err) {
+        setMessages(prev => {
+          const updated = [...prev];
+          const lastIdx = updated.length - 1;
+          updated[lastIdx] = { ...updated[lastIdx], content: updated[lastIdx].content.replace("🌐 Iščem po spletu...", `ℹ️ Iskanje po spletu ni uspelo. Poskusite znova čez trenutek.`) };
+          return updated;
+        });
+        setLoading(false);
+        return;
       }
     }
 
