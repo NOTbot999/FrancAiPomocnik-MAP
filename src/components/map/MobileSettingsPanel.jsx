@@ -7,6 +7,8 @@ import MyTracks from "./MyTracks";
 import DeviceLink from "./DeviceLink";
 import ThemeCustomizer, { loadTheme } from "@/components/map/ThemeCustomizer";
 import { base44 } from "@/api/base44Client";
+import { CATEGORIES } from "@/components/map/SearchBar";
+import { getMarkerSize, setMarkerSize, getEmojiOverrides, setEmojiOverride } from "@/lib/searchCatSettings";
 
 
 
@@ -81,6 +83,14 @@ export default function MobileSettingsPanel({ onClose, prefs, setPrefs, gpsTrack
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
   const [theme, setTheme] = useState(loadTheme);
+  const [markerSize, setMarkerSizeState] = useState(() => getMarkerSize());
+  const selectableCats = CATEGORIES.filter(c => !c._municipalityLayer && !c._caveDbLayer);
+  const [emojiCatSel, setEmojiCatSel] = useState(() => selectableCats[0]?.id || "castle");
+  const [emojiInput, setEmojiInput] = useState(() => {
+    const ov = getEmojiOverrides();
+    const c = selectableCats[0] || { id: "castle", emoji: "🏰" };
+    return ov[c.id] || c.emoji || "";
+  });
   const username = localStorage.getItem("userUsername") || null;
   const accountId = localStorage.getItem("userAccountId") || null;
   const deviceId = getDeviceId();
@@ -266,6 +276,69 @@ export default function MobileSettingsPanel({ onClose, prefs, setPrefs, gpsTrack
             </div>
           </>
         )}
+      </div>
+
+      {/* Divider */}
+      <div className="mx-4 border-t border-slate-200 my-2" />
+
+      {/* Marker size + custom emoji */}
+      <div className="px-4 pb-2">
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Velikost označb</p>
+          <span className="text-[10px] font-bold text-emerald-600">{markerSize}px</span>
+        </div>
+        <Slider
+          value={[markerSize]}
+          min={10}
+          max={40}
+          step={1}
+          onValueChange={(v) => { setMarkerSize(v[0]); setMarkerSizeState(v[0]); }}
+          className="w-full"
+        />
+        <div className="flex justify-between mt-1">
+          <span className="text-[9px] text-slate-400">10px</span>
+          <span className="text-[9px] text-slate-400">40px</span>
+        </div>
+      </div>
+
+      <div className="px-4 pb-2">
+        <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Označba po izbiri</p>
+        <div className="flex gap-1.5 items-center">
+          <select
+            value={emojiCatSel}
+            onChange={(e) => {
+              const id = e.target.value;
+              setEmojiCatSel(id);
+              const ov = getEmojiOverrides();
+              const cat = selectableCats.find(c => c.id === id);
+              setEmojiInput(ov[id] || cat?.emoji || "");
+            }}
+            className="flex-1 min-w-0 text-xs rounded-lg border border-slate-200 bg-white px-1.5 py-1.5 outline-none text-slate-600"
+          >
+            {selectableCats.map(c => (
+              <option key={c.id} value={c.id}>{c.label}</option>
+            ))}
+          </select>
+          <input
+            value={emojiInput}
+            onChange={(e) => setEmojiInput(e.target.value)}
+            placeholder="emoji"
+            maxLength={4}
+            className="w-14 text-center text-base rounded-lg border border-slate-200 px-1 py-1.5 outline-none focus:border-emerald-400"
+          />
+        </div>
+        <div className="flex gap-1.5 mt-1.5">
+          <button
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => { e.stopPropagation(); setEmojiOverride(emojiCatSel, emojiInput); }}
+            className="flex-1 text-xs py-1.5 rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 transition"
+          >Uporabi</button>
+          <button
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => { e.stopPropagation(); setEmojiOverride(emojiCatSel, ""); const cat = selectableCats.find(c => c.id === emojiCatSel); setEmojiInput(cat?.emoji || ""); }}
+            className="flex-1 text-xs py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 transition text-slate-600"
+          >Počisti</button>
+        </div>
       </div>
 
       {/* Divider */}
