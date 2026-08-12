@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { usePrefetchCategories } from "@/hooks/usePrefetchCategories";
 import { base44 } from "@/api/base44Client";
 import { fetchOverpass } from "@/lib/overpass";
+import { loadCaves } from "./CaveLayer";
 import CategoryGrid from "./CategoryGrid";
 
 // ── All categories — each toggles a full-Slovenia layer ───────────────────────
@@ -164,12 +165,14 @@ async function searchNominatim(q) {
 }
 
 function getMainName(item) {
+  if (item._source) return item.display_name.split(",")[0];
   const a = item.address || {};
   if (a.house_number && a.road) return `${a.road} ${a.house_number}`;
   return item.display_name.split(",")[0];
 }
 
 function getSubtitle(item) {
+  if (item._source) return item._layerName || "";
   const a = item.address || {};
   const parts = [];
   if (a.road) parts.push(a.road);
@@ -179,7 +182,7 @@ function getSubtitle(item) {
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
-export default function SearchBar({ onLocationSelect, autoFocus, onAddCustomLayer, onRemoveCustomLayer, activeSearchLayers, onSearchLayersChange, customMenuLayers, customMenuActive, onToggleCustomMenuLayer, onDeleteCustomMenuLayer }) {
+export default function SearchBar({ onLocationSelect, autoFocus, onAddCustomLayer, onRemoveCustomLayer, activeSearchLayers, onSearchLayersChange, customMenuLayers, customMenuActive, onToggleCustomMenuLayer, onDeleteCustomMenuLayer, searchableLayers = [] }) {
   // Pre-warm Overpass cache for all categories in background on first render
   usePrefetchCategories(CATEGORIES);
 
@@ -220,13 +223,72 @@ export default function SearchBar({ onLocationSelect, autoFocus, onAddCustomLaye
     if (!q || q.length < 2) { setResults([]); return; }
     setIsSearching(true);
     try {
-      const data = await searchNominatim(q);
-      setResults(data);
+      const qlc = q.toLowerCase().trim();
+
+      // ── Layer feature search (gradovi, custom sloji, ...) ────────────────────
+      const layerMatches = [];
+      for (const layer of searchableLayers) {
+        if (!layer || !Array.isArray(layer.features)) continue;
+        const emoji = layer.emoji || (layer.name ? layer.name.split(" ")[0] : "📍");
+        for (const f of layer.features) {
+          if (!f || !Array.isArray(f.coords) || f.coords.length < 2) continue;
+          const lat = f.coords[0], lng = f.coords[1];
+          if (typeof lat !== "number" || typeof lng !== "number") continue;
+          const label = f.label || "";
+          if (label.toLowerCase().includes(qlc)) {
+            layerMatches.push({
+              lat, lon: lng,
+              display_name: label,
+              address: {},
+              _emoji: emoji,
+              _source: "layer",
+              _layerName: (layer.name || "").replace(/^\S+\s/, ""),
+            });
+          }
+          if (layerMatches.length >= 8) break;
+        }
+        if (layerMatches.length >= 8) break;
+      }
+
+      // ── Cave DB search (vedno, tudi brez aktivnega sloja) ───────────────────
+      let caveMatches = [];
+      try {
+        const caves = await loadCaves();
+        caveMatches = caves
+          .filter(c => c.name && c.name.toLowerCase().includes(qlc))
+          .slice(0, 8)
+          .map(c => ({
+            lat: parseFloat(c.latitude), lon: parseFloat(c.longitude),
+            display_name: c.name + (c.depth_m ? ` (${c.depth_m}m)` : ""),
+            address: {},
+            _emoji: "🕳️",
+            _source: "cave",
+            _layerName: "Jame",
+          }));
+      } catch {}
+
+      // ── Nominatim (naslovi, hišne št., občine, kraji) ────────────────────────
+      let nominatimData = [];
+      try { nominatimData = await searchNominatim(q); } catch {}
+
+      // Merge: layer/cave matches first, then Nominatim, dedup by coords
+      const seen = new Set();
+      const merged = [];
+      for (const item of [...layerMatches, ...caveMatches, ...nominatimData]) {
+        const lat = parseFloat(item.lat), lon = parseFloat(item.lon);
+        if (isNaN(lat) || isNaN(lon)) continue;
+        const key = `${lat.toFixed(4)},${lon.toFixed(4)}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        merged.push(item);
+        if (merged.length >= 12) break;
+      }
+      setResults(merged);
       setIsOpen(true);
     } finally {
       setIsSearching(false);
     }
-  }, []);
+  }, [searchableLayers]);
 
   const handleInput = (value) => {
     setQuery(value);
@@ -261,6 +323,8 @@ export default function SearchBar({ onLocationSelect, autoFocus, onAddCustomLaye
     setIsOpen(false);
     setResults([]);
   };
+
+  const resultEmoji = (item) => item._emoji || "📌";
 
   const activeCount = Object.keys(activeLayers).length;
 
@@ -349,7 +413,7 @@ export default function SearchBar({ onLocationSelect, autoFocus, onAddCustomLaye
                   highlighted === i ? "bg-emerald-50" : "hover:bg-slate-50"
                 }`}
               >
-                <span className="text-base shrink-0">📌</span>
+                <span className="text-base shrink-0">{resultEmoji(item)}</span>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-slate-800 truncate">{getMainName(item)}</p>
                   <p className="text-xs text-slate-400 truncate">{getSubtitle(item)}</p>

@@ -540,6 +540,7 @@ export default function MapViewer() {
           customMenuActive,
           onToggleCustomMenuLayer: handleToggleCustomLayerVisible,
           onDeleteCustomMenuLayer: handleDeleteCustomMenuLayer,
+          searchableLayers: customLayers,
           is3DOpen,
           on3DToggle: request3DToggle,
           isCollabOpen,
@@ -562,7 +563,7 @@ export default function MapViewer() {
         <>
           {/* Search bar — centered top */}
           <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[950] w-full max-w-md px-4">
-            <SearchBar onLocationSelect={(loc) => handleLocate(loc)} mapCenter={mapCenter} onAddCustomLayer={handleAddCustomLayer} onRemoveCustomLayer={handleRemoveCustomLayer} activeSearchLayers={activeSearchLayers} onSearchLayersChange={setActiveSearchLayers} customMenuLayers={customMenuLayers} customMenuActive={customMenuActive} onToggleCustomMenuLayer={handleToggleCustomLayerVisible} onDeleteCustomMenuLayer={handleDeleteCustomMenuLayer} />
+            <SearchBar onLocationSelect={(loc) => handleLocate(loc)} mapCenter={mapCenter} onAddCustomLayer={handleAddCustomLayer} onRemoveCustomLayer={handleRemoveCustomLayer} activeSearchLayers={activeSearchLayers} onSearchLayersChange={setActiveSearchLayers} customMenuLayers={customMenuLayers} customMenuActive={customMenuActive} onToggleCustomMenuLayer={handleToggleCustomLayerVisible} onDeleteCustomMenuLayer={handleDeleteCustomMenuLayer} searchableLayers={customLayers} />
           </div>
 
           {/* My Tracks panel */}
