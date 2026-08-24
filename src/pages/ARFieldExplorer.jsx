@@ -96,7 +96,10 @@ export default function ARFieldExplorer() {
         });
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
-          videoRef.current.onloadedmetadata = () => setStreamReady(true);
+          videoRef.current.onloadedmetadata = async () => {
+            try { await videoRef.current?.play(); } catch {}
+            setStreamReady(true);
+          };
         }
       } catch {
         setError("Kamere ni mogoče odpreti. Prosimo, dovolite dostop do kamere.");
@@ -111,8 +114,8 @@ export default function ARFieldExplorer() {
     if (!navigator.geolocation) { setError("Geolokacija ni podprta."); return; }
     watchIdRef.current = navigator.geolocation.watchPosition(
       (p) => setUserPos({ lat: p.coords.latitude, lng: p.coords.longitude }),
-      () => {},
-      { enableHighAccuracy: true, maximumAge: 2000 }
+      (err) => setError(`Lokacije ni mogoče pridobiti: ${err.message}`),
+      { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
     );
     return () => { if (watchIdRef.current) navigator.geolocation.clearWatch(watchIdRef.current); };
   }, []);
@@ -260,7 +263,7 @@ export default function ARFieldExplorer() {
     fetchData();
     const interval = setInterval(fetchData, 15000);
     return () => clearInterval(interval);
-  }, [userPos, radius]);
+  }, [userPos?.lat?.toFixed(3), userPos?.lng?.toFixed(3), radius]);
 
   // Load a category's features
   const loadCategory = useCallback(async (catId) => {
