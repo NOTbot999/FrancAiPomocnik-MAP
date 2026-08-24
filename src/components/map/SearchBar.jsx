@@ -64,7 +64,7 @@ export const CATEGORIES = [
 ];
 
 // Invalidate old cache for improved queries
-["fuel","atm","hospital","clinic","lake","racetrack","geocache","pitch","fitness","toilets","transmitter","speed_camera","post_office","tunnel","viaduct","motorway_tunnel","motorway_bridge","cross","helipad","mosque","synagogue"].forEach(id => {
+["fuel","atm","hospital","clinic","lake","racetrack","geocache","pitch","fitness","toilets","transmitter","speed_camera","post_office","tunnel","viaduct","motorway_tunnel","motorway_bridge","cross","helipad","mosque","synagogue","beach","bus_station","train_station","camp","aerodrome","cemetery","motorway_jct"].forEach(id => {
   try { localStorage.removeItem("slomapcat_" + id); } catch {}
 });
 // Invalidate OLD municipality cache formats only (stitching fix).
@@ -122,16 +122,33 @@ export async function fetchFullSloveniaLayer(cat) {
     : Promise.resolve(null);
 
   let features = null;
+  let fromServer = false;
   // Wait for server first (usually faster), then Overpass as fallback
   const serverResult = await serverPromise;
   if (serverResult && serverResult.length > 0) {
     features = serverResult;
+    fromServer = true;
   } else {
     features = await overpassPromise;
   }
   // Only persist non-empty results so a temporary failure never pins an empty layer for 7 days
   if (features && features.length > 0) {
     saveToStorage(cat.id, features);
+    // Save to server cache too (admin-only write; silently fails for regular users)
+    if (!fromServer) {
+      try {
+        const existing = await base44.entities.CachedLayer.filter({ category_id: cat.id });
+        if (existing && existing.length > 0) {
+          await base44.entities.CachedLayer.update(existing[0].id, {
+            features, feature_count: features.length, built_at: new Date().toISOString(),
+          });
+        } else {
+          await base44.entities.CachedLayer.create({
+            category_id: cat.id, features, feature_count: features.length, built_at: new Date().toISOString(),
+          });
+        }
+      } catch { /* non-admin user — skip server cache write */ }
+    }
   } else {
     try { localStorage.removeItem(LS_PREFIX + cat.id); } catch {}
   }

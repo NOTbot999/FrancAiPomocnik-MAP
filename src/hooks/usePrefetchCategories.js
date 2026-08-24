@@ -51,6 +51,21 @@ async function prefetchCategory(cat) {
     };
   }).filter(Boolean);
   saveToCache(cat.id, features);
+  // Save to server cache too (admin-only write; silently fails for regular users)
+  if (features.length > 0) {
+    try {
+      const existing = await base44.entities.CachedLayer.filter({ category_id: cat.id });
+      if (existing && existing.length > 0) {
+        await base44.entities.CachedLayer.update(existing[0].id, {
+          features, feature_count: features.length, built_at: new Date().toISOString(),
+        });
+      } else {
+        await base44.entities.CachedLayer.create({
+          category_id: cat.id, features, feature_count: features.length, built_at: new Date().toISOString(),
+        });
+      }
+    } catch { /* non-admin — skip */ }
+  }
 }
 
 // Run a pool of workers over the queue, each picking the next item until done

@@ -35,6 +35,23 @@ const CATEGORIES = [
   { id: "aerodrome",     query: `[out:json][timeout:30];(node["aeroway"="aerodrome"](45.4,13.4,46.9,16.6);way["aeroway"="aerodrome"](45.4,13.4,46.9,16.6););out center;` },
   { id: "cemetery",      query: `[out:json][timeout:30];(node["landuse"="cemetery"](45.4,13.4,46.9,16.6);way["landuse"="cemetery"](45.4,13.4,46.9,16.6););out center;` },
   { id: "motorway_jct",  query: `[out:json][timeout:30];node["highway"="motorway_junction"](45.4,13.4,46.9,16.6);out;` },
+  { id: "cross",         query: `[out:json][timeout:30];node["historic"="wayside_cross"](45.4,13.4,46.9,16.6);out;` },
+  { id: "helipad",       query: `[out:json][timeout:30];(node["aeroway"="helipad"](45.4,13.4,46.9,16.6);way["aeroway"="helipad"](45.4,13.4,46.9,16.6););out center;` },
+  { id: "mosque",        query: `[out:json][timeout:30];(node["amenity"="place_of_worship"]["religion"="muslim"](45.4,13.4,46.9,16.6);way["amenity"="place_of_worship"]["religion"="muslim"](45.4,13.4,46.9,16.6););out center;` },
+  { id: "synagogue",     query: `[out:json][timeout:30];(node["amenity"="place_of_worship"]["religion"="jewish"](45.4,13.4,46.9,16.6);way["amenity"="place_of_worship"]["religion"="jewish"](45.4,13.4,46.9,16.6););out center;` },
+  { id: "beach",         query: `[out:json][timeout:30];(node["natural"="beach"](45.4,13.4,46.9,16.6);way["natural"="beach"](45.4,13.4,46.9,16.6);relation["natural"="beach"](45.4,13.4,46.9,16.6););out center;` },
+  { id: "geocache",      query: `[out:json][timeout:45];(node["geocache"](45.4,13.4,46.9,16.6);node["tourism"="information"]["information"="geocache"](45.4,13.4,46.9,16.6););out;` },
+  { id: "racetrack",     query: `[out:json][timeout:30];(way["highway"="raceway"](45.4,13.4,46.9,16.6);way["leisure"="track"]["sport"="motorsport"](45.4,13.4,46.9,16.6);way["leisure"="track"]["sport"="karting"](45.4,13.4,46.9,16.6);way["leisure"="track"]["sport"="motor_autocross"](45.4,13.4,46.9,16.6);way["sport"="motorsport"](45.4,13.4,46.9,16.6););out center;` },
+  { id: "pitch",         query: `[out:json][timeout:45];(way["leisure"="pitch"](45.4,13.4,46.9,16.6);relation["leisure"="pitch"](45.4,13.4,46.9,16.6););out center;` },
+  { id: "fitness",       query: `[out:json][timeout:30];(node["leisure"="fitness_station"](45.4,13.4,46.9,16.6);way["leisure"="fitness_station"](45.4,13.4,46.9,16.6););out center;` },
+  { id: "toilets",       query: `[out:json][timeout:30];(node["amenity"="toilets"](45.4,13.4,46.9,16.6);way["amenity"="toilets"](45.4,13.4,46.9,16.6););out center;` },
+  { id: "transmitter",   query: `[out:json][timeout:30];(node["man_made"="communications_tower"](45.4,13.4,46.9,16.6);node["man_made"="tower"]["tower:type"="communication"](45.4,13.4,46.9,16.6);way["man_made"="tower"]["tower:type"="communication"](45.4,13.4,46.9,16.6);node["man_made"="mast"]["tower:type"="communication"](45.4,13.4,46.9,16.6););out center;` },
+  { id: "speed_camera",   query: `[out:json][timeout:30];node["highway"="speed_camera"](45.4,13.4,46.9,16.6);out;` },
+  { id: "post_office",   query: `[out:json][timeout:30];(node["amenity"="post_office"](45.4,13.4,46.9,16.6);way["amenity"="post_office"](45.4,13.4,46.9,16.6););out center;` },
+  { id: "tunnel",         query: `[out:json][timeout:45];(way["tunnel"="yes"]["highway"](45.4,13.4,46.9,16.6););out center;` },
+  { id: "viaduct",        query: `[out:json][timeout:45];(way["bridge"="yes"]["highway"]["bridge:name"](45.4,13.4,46.9,16.6);way["man_made"="bridge"](45.4,13.4,46.9,16.6);way["bridge"="yes"]["highway"]["bridge:structure"="arch"](45.4,13.4,46.9,16.6););out center;` },
+  { id: "motorway_tunnel", query: `[out:json][timeout:45];(way["highway"~"motorway|motorway_link|trunk|trunk_link"]["tunnel"="yes"](45.4,13.4,46.9,16.6););out center;` },
+  { id: "motorway_bridge", query: `[out:json][timeout:45];(way["highway"~"motorway|motorway_link|trunk|trunk_link"]["bridge"="yes"](45.4,13.4,46.9,16.6););out center;` },
 ];
 
 async function overpassFetch(query) {
