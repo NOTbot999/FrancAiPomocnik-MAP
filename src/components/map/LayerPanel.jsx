@@ -683,9 +683,9 @@ export default function LayerPanel({
               </div>
             </div>
 
-            <ScrollArea className="flex-1">
+            <div className="flex-1 min-h-0 overflow-y-auto">
               <PanelContent {...panelProps} />
-            </ScrollArea>
+            </div>
 
             {/* Footer */}
             <div className="px-4 py-3 border-t border-white/8 space-y-1">
