@@ -100,7 +100,7 @@ function addLayerToMap(map, layerId, config, opacity = 1) {
   try {
     if (!map.getSource(sourceId)) {
       // ArcGIS export servers typically cap at zoom 18; WMS at 19
-      const maxzoom = config.type === "arcgis_export" ? 18 : 19;
+      const maxzoom = config.maxNativeZoom ?? (config.type === "arcgis_export" ? 18 : 19);
       map.addSource(sourceId, {
         type: "raster",
         tiles: [tileUrl],
