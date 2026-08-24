@@ -592,17 +592,7 @@ export const OVERLAY_CATEGORIES = [
         thumbnail: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=80&h=60&fit=crop",
         description: "ESRI temno senčenje reliefa kot prekrivni sloj"
       },
-      {
-        id: "ol_maptiler_hillshade",
-        name: "Hillshade (MapTiler)",
-        type: "maptiler_tile",
-        urlTemplate: "https://api.maptiler.com/tiles/hillshade/{z}/{x}/{y}.webp?key={key}",
-        attribution: "&copy; MapTiler, &copy; OpenStreetMap contributors",
-        opacity: 0.75,
-        maxNativeZoom: 12,
-        thumbnail: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=80&h=60&fit=crop",
-        description: "Globalno senčenje reliefa — MapTiler, transparentni webp sloj (do zoom 12)"
-      },
+
       {
         id: "ol_waymarked_slopes",
         name: "Smučišča & Tereni (WaymarkedTrails)",
