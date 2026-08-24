@@ -2,13 +2,25 @@
   "name": "Cave",
   "type": "object",
   "properties": {
-    "cave_id": {
+    "catalog_number": {
       "type": "number",
-      "description": "Original cave ID from the registry"
+      "description": "Original catalog number from the registry"
     },
     "name": {
       "type": "string",
       "description": "Name of the cave"
+    },
+    "synonyms": {
+      "type": "string",
+      "description": "Alternative names"
+    },
+    "type_1": {
+      "type": "string",
+      "description": "Morphological type code 1"
+    },
+    "type_2": {
+      "type": "string",
+      "description": "Morphological type code 2"
     },
     "latitude": {
       "type": "number",
@@ -18,6 +30,10 @@
       "type": "number",
       "description": "Longitude coordinate"
     },
+    "entrance_elevation_m": {
+      "type": "number",
+      "description": "Entrance elevation in meters"
+    },
     "length_m": {
       "type": "number",
       "description": "Length in meters"
@@ -26,9 +42,45 @@
       "type": "number",
       "description": "Depth in meters"
     },
-    "area_m2": {
-      "type": "number",
-      "description": "Area in square meters"
+    "survey_method": {
+      "type": "string",
+      "description": "How the cave was surveyed (lidar, TK-50, etc.)"
+    },
+    "cadastral_municipality": {
+      "type": "string",
+      "description": "Cadastral municipality"
+    },
+    "administrative_unit": {
+      "type": "string",
+      "description": "Administrative unit (ob\u010dina)"
+    },
+    "entry_regime": {
+      "type": "string",
+      "description": "Entry regime (prost vstop, nadzorovan vstop, etc.)"
+    },
+    "access": {
+      "type": "string",
+      "description": "Access condition (dostop neoviran, zaklenjena, etc.)"
+    },
+    "general_condition": {
+      "type": "string",
+      "description": "General condition of the cave"
+    },
+    "archaeological": {
+      "type": "string",
+      "description": "Archaeological significance (da/ne)"
+    },
+    "cave_system": {
+      "type": "string",
+      "description": "Cave system name if part of one"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes"
+    },
+    "organization": {
+      "type": "string",
+      "description": "Surveying organization"
     }
   },
   "required": [
