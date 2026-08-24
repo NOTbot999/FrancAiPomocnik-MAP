@@ -465,6 +465,7 @@ export default function MapViewer() {
 
       {/* MapLibre 3D/2D-rotatable map — only mount when first opened to ensure container has dimensions */}
       {mapLibreEverOpened && <div style={{ position: "absolute", inset: 0, zIndex: isPinPicking && is3DOpen ? 980 : undefined, visibility: is3DOpen ? "visible" : "hidden", pointerEvents: is3DOpen ? "auto" : "none" }}>
+        <Suspense fallback={null}>
         <Map3DView
           ref={map3DRef}
           center={mapCenter}
@@ -485,6 +486,7 @@ export default function MapViewer() {
           gpsTrack={gpsTrack}
           onPinPicked={isPinPicking ? handlePinPicked : null}
         />
+        </Suspense>
       </div>}
 
       {/* Leaflet 2D map — hidden (not unmounted) when 3D is active to preserve state */}
@@ -570,17 +572,20 @@ export default function MapViewer() {
           {/* My Tracks panel */}
           {showMyTracks && (
             <div className="absolute right-20 bottom-8 z-[960]">
+              <Suspense fallback={null}>
               <MyTracks
                 gpsTrack={gpsTrack}
                 onLoadTrack={handleLoadTrack}
                 onClose={() => setShowMyTracks(false)}
               />
+              </Suspense>
             </div>
           )}
 
           {/* AI Panel — desktop */}
           {isAIOpen && (
             <div className="absolute right-20 bottom-8 z-[960]">
+              <Suspense fallback={null}>
               <AIPanel
                 onClose={() => setIsAIOpen(false)}
                 activeLayers={activeLayers}
@@ -608,34 +613,41 @@ export default function MapViewer() {
                 onAddCustomLayer={handleAddCustomLayer}
                 onRemoveCustomLayer={handleRemoveCustomLayer}
               />
+              </Suspense>
             </div>
           )}
           {isTrackAnalyzerOpen && (
             <div className="absolute right-20 bottom-72 z-[960]">
+              <Suspense fallback={null}>
               <TrackAnalyzer
                 gpsTrack={gpsTrack}
                 onClose={() => setIsTrackAnalyzerOpen(false)}
               />
+              </Suspense>
             </div>
           )}
           {/* Collab Panel — desktop */}
           {isCollabOpen && (
             <div className="absolute right-20 top-20 z-[960]">
+              <Suspense fallback={null}>
               <CollabPanel
                 onClose={() => setIsCollabOpen(false)}
                 onDropPin={(pins) => setCollabPins(pins)}
                 onFlyTo={(loc) => handleLocate(loc)}
               />
+              </Suspense>
             </div>
           )}
 
           {locationSummary && (
             <div className="absolute left-1/2 top-20 -translate-x-1/2 z-[960]">
+              <Suspense fallback={null}>
               <LocationSummarizer
                 latlng={locationSummary.latlng}
                 activeLayers={activeLayers}
                 onClose={() => setLocationSummary(null)}
               />
+              </Suspense>
             </div>
           )}
 
@@ -736,18 +748,21 @@ export default function MapViewer() {
       {/* Collab Panel — mobile */}
       {isMobile && isCollabOpen && (
         <div className="absolute bottom-4 left-3 right-3 z-[960] flex justify-center">
+          <Suspense fallback={null}>
           <CollabPanel
             isMobile
             onClose={() => setIsCollabOpen(false)}
             onDropPin={(pins) => setCollabPins(pins)}
             onFlyTo={(loc) => handleLocate(loc)}
           />
+          </Suspense>
         </div>
       )}
 
       {/* AI Panel — mobile */}
       {isMobile && isAIOpen && (
         <div className="absolute bottom-0 left-0 right-0 z-[960] flex justify-center pb-4 px-3">
+          <Suspense fallback={null}>
           <AIPanel
             onClose={() => setIsAIOpen(false)}
             activeLayers={activeLayers}
@@ -776,6 +791,7 @@ export default function MapViewer() {
             onAddCustomLayer={handleAddCustomLayer}
             onRemoveCustomLayer={handleRemoveCustomLayer}
           />
+          </Suspense>
         </div>
       )}
 
@@ -792,21 +808,25 @@ export default function MapViewer() {
       {/* TrackAnalyzer panel (mobile) */}
       {isMobile && isTrackAnalyzerOpen && (
         <div className="absolute bottom-4 right-12 z-[960]">
+          <Suspense fallback={null}>
           <TrackAnalyzer
             gpsTrack={gpsTrack}
             onClose={() => setIsTrackAnalyzerOpen(false)}
           />
+          </Suspense>
         </div>
       )}
 
       {/* My Tracks panel (mobile) */}
       {isMobile && showMyTracks && (
         <div className="absolute bottom-4 right-12 z-[960]">
+          <Suspense fallback={null}>
           <MyTracks
             gpsTrack={gpsTrack}
             onLoadTrack={handleLoadTrack}
             onClose={() => setShowMyTracks(false)}
           />
+          </Suspense>
         </div>
       )}
 
@@ -836,6 +856,7 @@ export default function MapViewer() {
       />
 
       {/* Navigation Panel — available on both mobile and desktop */}
+      <Suspense fallback={null}>
       <NavigationPanel
         onRouteResult={handleRouteResult}
         isOpen={isNavOpen}
@@ -849,6 +870,7 @@ export default function MapViewer() {
         pendingPick={pendingRoutePick}
         onPickApplied={() => { setPendingRoutePick(null); setRoutePickTarget(null); }}
       />
+      </Suspense>
 
 
       {/* User badge — top left on desktop, always single pill, does NOT overlap LayerPanel */}
