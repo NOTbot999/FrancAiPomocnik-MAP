@@ -111,9 +111,9 @@ export default function SearchCategoryLayer({ layer }) {
         if (d < bestDist) { bestDist = d; nearest = s; }
       }
       if (nearest) {
-        if (!tooltip._map) map.addLayer(tooltip);
         tooltip.setLatLng(L.latLng(nearest.lat, nearest.lng));
         tooltip.setContent(nearest.label || emojiFor());
+        if (!tooltip._map) map.addLayer(tooltip);
       } else if (tooltip._map) {
         map.removeLayer(tooltip);
       }
