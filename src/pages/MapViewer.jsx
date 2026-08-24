@@ -1,19 +1,19 @@
-import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import React, { useState, useCallback, useEffect, useRef, useMemo, lazy, Suspense } from "react";
 import AuthModal from "@/components/AuthModal";
 import MapContainerComponent from "@/components/map/MapContainer";
 import LayerPanel from "@/components/map/LayerPanel";
 import SearchBar from "@/components/map/SearchBar";
 import MobileTopBar from "@/components/map/MobileTopBar";
-import MyTracks from "@/components/map/MyTracks";
-import NavigationPanel from "@/components/map/NavigationPanel";
+const MyTracks = lazy(() => import("@/components/map/MyTracks"));
+const NavigationPanel = lazy(() => import("@/components/map/NavigationPanel"));
 import OfflineManager from "@/components/map/OfflineManager";
 import { OVERLAY_CATEGORIES } from "@/components/map/layerConfig";
 import { CATEGORIES } from "@/components/map/SearchBar";
 import { useIsMobile } from "@/hooks/use-mobile";
-import AIPanel from "@/components/map/AIPanel";
-import TrackAnalyzer from "@/components/map/TrackAnalyzer";
-import Map3DView from "@/components/map/Map3DView";
-import LocationSummarizer from "@/components/map/LocationSummarizer";
+const AIPanel = lazy(() => import("@/components/map/AIPanel"));
+const TrackAnalyzer = lazy(() => import("@/components/map/TrackAnalyzer"));
+const Map3DView = lazy(() => import("@/components/map/Map3DView"));
+const LocationSummarizer = lazy(() => import("@/components/map/LocationSummarizer"));
 import DesktopToolbar from "@/components/map/DesktopToolbar";
 import { useUserSettings } from "@/hooks/useUserSettings";
 import { base44 } from "@/api/base44Client";
@@ -21,7 +21,7 @@ import { scopedGet, scopedSet } from "@/lib/userPrefs";
 import Mobile3DMenu from "@/components/map/Mobile3DMenu";
 import MobileBottomNav from "@/components/map/MobileBottomNav";
 import { Layers, Locate, Navigation, Route, WifiOff, Brain, TrendingUp, Box, Users, Camera } from "lucide-react";
-import CollabPanel from "@/components/map/CollabPanel";
+const CollabPanel = lazy(() => import("@/components/map/CollabPanel"));
 import CollabPinsLayer from "@/components/map/CollabPinsLayer";
 import { reverseGeocode } from "@/lib/routing";
 import PremiumGateModal from "@/components/PremiumGateModal";
@@ -460,6 +460,7 @@ export default function MapViewer() {
   }, []);
 
   return (
+    <Suspense fallback={<div className="fixed inset-0 grid place-items-center bg-slate-950/70 text-white z-[10000]">Nalagam orodje…</div>}>
     <div className="relative w-full overflow-hidden" style={{ height: "calc(var(--vh, 1vh) * 100)", backgroundColor: is3DOpen ? "#000" : "#e8ede8", backgroundImage: is3DOpen ? "none" : "url('https://media.base44.com/images/public/69ad3ce309822f8e71f66838/b15473e19_5992128811794894233.jpg')", backgroundSize: "contain", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>
 
       {/* MapLibre 3D/2D-rotatable map — only mount when first opened to ensure container has dimensions */}
@@ -961,5 +962,6 @@ export default function MapViewer() {
         />
       )}
     </div>
+    </Suspense>
   );
 }
