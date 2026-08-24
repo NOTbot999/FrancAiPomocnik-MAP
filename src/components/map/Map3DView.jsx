@@ -337,7 +337,7 @@ const Map3DView = forwardRef(function Map3DView({
           zoom: zoom ?? 11,
           pitch: is3D ? 60 : 0,
           bearing: 0,
-          antialias: true,
+          antialias: false, // lower GPU cost on mobile; terrain remains enabled
           maxPitch: 85,
         });
 
@@ -485,7 +485,7 @@ const Map3DView = forwardRef(function Map3DView({
     const targetPitch = is3D ? 60 : 0;
     map.easeTo({ pitch: targetPitch, duration: 600 });
     setPitch(targetPitch);
-    if (is3D && apiKey) {
+    if (is3D) {
       setupTerrain(map, apiKey);
     } else {
       try { map.setTerrain(null); } catch {}
