@@ -115,7 +115,44 @@ function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme, messag
   };
 
 
-
+  // Private computer vision: runs in the browser, with no upload, subscription or model tokens.
+  const analyzeMapLocally = async (dataUrl) => {
+    const image = new Image();
+    image.src = dataUrl;
+    await new Promise((resolve, reject) => { image.onload = resolve; image.onerror = reject; });
+    const canvas = document.createElement('canvas');
+    canvas.width = 160; canvas.height = 100;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+    const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    let brightness = 0, green = 0, blue = 0, gray = 0, edges = 0, samples = 0;
+    const lum = new Float32Array(canvas.width * canvas.height);
+    for (let i = 0, p = 0; i < data.length; i += 4, p++) {
+      const r = data[i], g = data[i + 1], b = data[i + 2];
+      const l = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      lum[p] = l; brightness += l; samples++;
+      if (g > r * 1.12 && g > b * 1.08) green++;
+      if (b > r * 1.12 && b > g * 1.05) blue++;
+      if (Math.max(r, g, b) - Math.min(r, g, b) < 18) gray++;
+    }
+    for (let y = 1; y < canvas.height; y++) for (let x = 1; x < canvas.width; x++) {
+      const p = y * canvas.width + x;
+      if (Math.abs(lum[p] - lum[p - 1]) + Math.abs(lum[p] - lum[p - canvas.width]) > 70) edges++;
+    }
+    const pct = n => Math.round((n / samples) * 100);
+    const edgePct = Math.round((edges / ((canvas.width - 1) * (canvas.height - 1))) * 100);
+    const dominant = green > blue && green > gray ? 'vegetacija' : blue > gray ? 'voda/modri sloji' : 'urbane ali reliefne strukture';
+    return [
+      '**Lokalna računalniška analiza (brez nalaganja in brez tokenov)**',
+      `- Prevladuje: ${dominant}`,
+      `- Vegetacijski piksli: ${pct(green)} %`,
+      `- Vodni/modri piksli: ${pct(blue)} %`,
+      `- Nevtralni/sivi piksli: ${pct(gray)} %`,
+      `- Gostota robov in struktur: ${edgePct} %`,
+      `- Povprečna svetlost: ${Math.round(brightness / samples)}/255`,
+      'To je hitra slikovna meritev, ne generativna razlaga terena.',
+    ].join('\n');
+  };
   const executeOverpassQuery = async (queryStr, name, color, bbox) => {
     // Razreši {{bbox}} v dejanske meje (south,west,north,east)
     const bboxParts = bbox.split(",").map(Number);
@@ -168,14 +205,7 @@ function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme, messag
       setMessages(prev => [...prev, { role: "assistant", content: cleanText }]);
       const imgData = await captureMapImage();
       if (imgData) {
-        const blob = await (await fetch(imgData)).blob();
-        const file = new File([blob], "map.jpg", { type: "image/jpeg" });
-        const { file_url } = await base44.integrations.Core.UploadFile({ file });
-        const visionRes = await base44.integrations.Core.InvokeLLM({
-          prompt: `${visionPrompt}\nOdgovori v slovenščini. Bodi natančen in konkreten.`,
-          file_urls: [file_url], model: "gemini_3_flash"
-        });
-        const visionText = typeof visionRes === "string" ? visionRes : JSON.stringify(visionRes);
+        const visionText = await analyzeMapLocally(imgData);
         setMessages(prev => {
           const updated = [...prev];
           updated[updated.length - 1] = { role: "assistant", content: cleanText.replace("📸 Analiziram karto...", `📸 **Analiza karte:**\n\n${visionText}`) };
