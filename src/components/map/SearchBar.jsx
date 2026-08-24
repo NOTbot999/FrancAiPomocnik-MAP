@@ -257,14 +257,20 @@ export default function SearchBar({ onLocationSelect, autoFocus, onAddCustomLaye
         caveMatches = caves
           .filter(c => c.name && c.name.toLowerCase().includes(qlc))
           .slice(0, 8)
-          .map(c => ({
-            lat: parseFloat(c.latitude), lon: parseFloat(c.longitude),
-            display_name: c.name + (c.depth_m ? ` (${c.depth_m}m)` : ""),
-            address: {},
-            _emoji: "🕳️",
-            _source: "cave",
-            _layerName: "Jame",
-          }));
+          .map(c => {
+            const dim = [];
+            if (c.depth_m) dim.push(`${c.depth_m}m glob.`);
+            if (c.length_m) dim.push(`${c.length_m}m dol.`);
+            const sub = [c.administrative_unit, c.entry_regime].filter(Boolean).join(" · ");
+            return {
+              lat: parseFloat(c.latitude), lon: parseFloat(c.longitude),
+              display_name: c.name + (dim.length ? ` (${dim.join(", ")})` : ""),
+              address: { county: sub || "Jama" },
+              _emoji: "🕳️",
+              _source: "cave",
+              _layerName: "Jame",
+            };
+          });
       } catch {}
 
       // ── Nominatim (naslovi, hišne št., občine, kraji) ────────────────────────

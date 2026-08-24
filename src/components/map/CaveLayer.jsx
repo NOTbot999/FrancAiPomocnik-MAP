@@ -6,25 +6,7 @@ let caveCache = null;
 export async function loadCaves() {
   if (caveCache) return caveCache;
 
-  // 1. Try server-side CachedLayer first (fastest)
-  try {
-    const serverData = await base44.entities.CachedLayer.filter({ category_id: "cave" });
-    if (serverData && serverData.length > 0 && serverData[0].features?.length > 0) {
-      const features = serverData[0].features;
-      // Convert back to cave-like objects for cavesToLayerFeatures
-      caveCache = features.map(f => ({
-        latitude: f.coords[0],
-        longitude: f.coords[1],
-        name: f.label || "",
-        depth_m: f.depth_m || null,
-        length_m: f.length_m || null,
-        _fromCache: true,
-      }));
-      return caveCache;
-    }
-  } catch { /* fallback to DB */ }
-
-  // 2. Fallback: Load directly from Cave entity (paginated)
+  // Load directly from Cave entity (paginated) — 16k+ records
   const batchSize = 2000;
   let all = [];
   let skip = 0;
@@ -42,11 +24,24 @@ export async function loadCaves() {
 }
 
 export function cavesToLayerFeatures(caves) {
-  return caves.map(c => ({
-    type: "Point",
-    coords: [parseFloat(c.latitude), parseFloat(c.longitude)],
-    label: c.name + (c.depth_m ? ` (${c.depth_m}m globoka)` : "") + (c.length_m ? `, ${c.length_m}m dolga` : ""),
-    depth_m: c.depth_m,
-    length_m: c.length_m,
-  }));
+  return caves.map(c => {
+    const parts = [c.name];
+    if (c.synonyms) parts.push(`(${c.synonyms})`);
+    const dims = [];
+    if (c.depth_m) dims.push(`${c.depth_m}m globoka`);
+    if (c.length_m) dims.push(`${c.length_m}m dolga`);
+    if (c.entrance_elevation_m) dims.push(`${c.entrance_elevation_m}m nmv`);
+    if (dims.length) parts.push(`— ${dims.join(", ")}`);
+    if (c.entry_regime) parts.push(`[${c.entry_regime}]`);
+    return {
+      type: "Point",
+      coords: [parseFloat(c.latitude), parseFloat(c.longitude)],
+      label: parts.join(" "),
+      depth_m: c.depth_m,
+      length_m: c.length_m,
+      entrance_elevation_m: c.entrance_elevation_m,
+      entry_regime: c.entry_regime,
+      administrative_unit: c.administrative_unit,
+    };
+  });
 }
