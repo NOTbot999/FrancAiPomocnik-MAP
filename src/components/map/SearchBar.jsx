@@ -54,6 +54,7 @@ export const CATEGORIES = [
   { id: "transmitter",   label: "Oddajniki",      emoji: "📡", color: "#0ea5e9", query: `[out:json][timeout:30];(node["man_made"="communications_tower"](45.4,13.4,46.9,16.6);node["man_made"="tower"]["tower:type"="communication"](45.4,13.4,46.9,16.6);way["man_made"="tower"]["tower:type"="communication"](45.4,13.4,46.9,16.6);node["man_made"="mast"]["tower:type"="communication"](45.4,13.4,46.9,16.6););out center;` },
   { id: "speed_camera",   label: "Radarji",       emoji: "📷", color: "#dc2626", query: `[out:json][timeout:30];node["highway"="speed_camera"](45.4,13.4,46.9,16.6);out;` },
   { id: "post_office",   label: "Pošte",          emoji: "📮", color: "#8b5cf6", query: `[out:json][timeout:30];(node["amenity"="post_office"](45.4,13.4,46.9,16.6);way["amenity"="post_office"](45.4,13.4,46.9,16.6););out center;` },
+  { id: "sex_shop",      label: "Erotika",        emoji: "💋", color: "#db2777", query: `[out:json][timeout:30];(node["shop"="erotic"](45.4,13.4,46.9,16.6);way["shop"="erotic"](45.4,13.4,46.9,16.6);node["shop"="adult"](45.4,13.4,46.9,16.6);way["shop"="adult"](45.4,13.4,46.9,16.6););out center;` },
 
   // ── Infrastruktura: predori, vijadukti, mostovi ──────────────────────────────
   { id: "tunnel",         label: "Predori",        emoji: "🚇", color: "#1e293b", query: `[out:json][timeout:45];(way["tunnel"="yes"]["highway"](45.4,13.4,46.9,16.6););out center;` },
@@ -64,7 +65,7 @@ export const CATEGORIES = [
 ];
 
 // Invalidate old cache for improved queries
-["fuel","atm","hospital","clinic","lake","racetrack","geocache","pitch","fitness","toilets","transmitter","speed_camera","post_office","tunnel","viaduct","motorway_tunnel","motorway_bridge","cross","helipad","mosque","synagogue","beach","bus_station","train_station","camp","aerodrome","cemetery","motorway_jct"].forEach(id => {
+["fuel","atm","hospital","clinic","lake","racetrack","geocache","pitch","fitness","toilets","transmitter","speed_camera","post_office","sex_shop","tunnel","viaduct","motorway_tunnel","motorway_bridge","cross","helipad","mosque","synagogue","beach","bus_station","train_station","camp","aerodrome","cemetery","motorway_jct"].forEach(id => {
   try { localStorage.removeItem("slomapcat_" + id); } catch {}
 });
 // Invalidate OLD municipality cache formats only (stitching fix).
