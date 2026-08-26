@@ -6,6 +6,7 @@ import { base44 } from "@/api/base44Client";
 import { fetchOverpass } from "@/lib/overpass";
 import { loadCaves } from "./CaveLayer";
 import CategoryGrid from "./CategoryGrid";
+import { loadOpenChargeMap, loadWikidataCastles, loadWikidataMonuments, loadWikidataMuseums, loadWikipediaArticles } from "./ExternalLayers";
 
 // ── All categories — each toggles a full-Slovenia layer ───────────────────────
 export const CATEGORIES = [
@@ -61,6 +62,13 @@ export const CATEGORIES = [
   { id: "viaduct",        label: "Vijadukti",      emoji: "🌉", color: "#7c3aed", query: `[out:json][timeout:45];(way["bridge"="yes"]["highway"]["bridge:name"](45.4,13.4,46.9,16.6);way["man_made"="bridge"](45.4,13.4,46.9,16.6);way["bridge"="yes"]["highway"]["bridge:structure"="arch"](45.4,13.4,46.9,16.6););out center;` },
   { id: "motorway_tunnel", label: "AC predori",    emoji: "🕳️", color: "#0f172a", query: `[out:json][timeout:45];(way["highway"~"motorway|motorway_link|trunk|trunk_link"]["tunnel"="yes"](45.4,13.4,46.9,16.6););out center;` },
   { id: "motorway_bridge", label: "AC vijadukti",   emoji: "🏗️", color: "#5b21b6", query: `[out:json][timeout:45];(way["highway"~"motorway|motorway_link|trunk|trunk_link"]["bridge"="yes"](45.4,13.4,46.9,16.6););out center;` },
+
+  // ── Ne-OSM viri (OpenChargeMap, Wikidata, Wikipedia) ────────────────────────
+  { id: "ev_charging",     label: "Polnilnice",      emoji: "🔌", color: "#22c55e", _source: "openchargemap", query: "" },
+  { id: "wd_castles",      label: "Gradovi (WD)",    emoji: "🏰", color: "#b45309", _source: "wikidata_castles", query: "" },
+  { id: "wd_monuments",    label: "Spomeniki (WD)",  emoji: "🗿", color: "#92400e", _source: "wikidata_monuments", query: "" },
+  { id: "wd_museums",      label: "Muzeji (WD)",     emoji: "🏛️", color: "#a855f7", _source: "wikidata_museums", query: "" },
+  { id: "wiki_articles",   label: "Wikipedija",      emoji: "📖", color: "#3b82f6", _source: "wikipedia", query: "" },
 
 ];
 
@@ -118,9 +126,22 @@ export async function fetchFullSloveniaLayer(cat) {
     .then(d => (d?.length > 0 && d[0].features?.length > 0) ? d[0].features : null)
     .catch(() => null);
 
-  const overpassPromise = cat.query
-    ? fetchOverpass(cat.query).then(parseOverpass).catch(() => null)
-    : Promise.resolve(null);
+  let sourcePromise;
+  if (cat._source === "openchargemap") {
+    sourcePromise = loadOpenChargeMap().catch(() => null);
+  } else if (cat._source === "wikidata_castles") {
+    sourcePromise = loadWikidataCastles().catch(() => null);
+  } else if (cat._source === "wikidata_monuments") {
+    sourcePromise = loadWikidataMonuments().catch(() => null);
+  } else if (cat._source === "wikidata_museums") {
+    sourcePromise = loadWikidataMuseums().catch(() => null);
+  } else if (cat._source === "wikipedia") {
+    sourcePromise = loadWikipediaArticles().catch(() => null);
+  } else {
+    sourcePromise = cat.query
+      ? fetchOverpass(cat.query).then(parseOverpass).catch(() => null)
+      : Promise.resolve(null);
+  }
 
   let features = null;
   let fromServer = false;
@@ -130,7 +151,7 @@ export async function fetchFullSloveniaLayer(cat) {
     features = serverResult;
     fromServer = true;
   } else {
-    features = await overpassPromise;
+    features = await sourcePromise;
   }
   // Only persist non-empty results so a temporary failure never pins an empty layer for 7 days
   if (features && features.length > 0) {

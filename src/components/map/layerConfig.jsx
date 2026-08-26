@@ -188,6 +188,32 @@ export const OVERLAY_CATEGORIES = [
         thumbnail: "https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=80&h=60&fit=crop",
         description: "Nova ARSO topografska karta z OSM, GURS in PZS podatki"
       },
+      {
+        id: "gurs_parcels",
+        name: "Parcele (Kataster)",
+        type: "wms",
+        url: "https://ipi.eprostor.gov.si/wms-si-gurs-kn/ows",
+        layers: "SI.GURS.KN:PARCELE",
+        format: "image/png",
+        transparent: true,
+        version: "1.1.1",
+        opacity: 0.6,
+        thumbnail: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=80&h=60&fit=crop",
+        description: "Zemljiške parcele iz katastra nepremičnin GURS"
+      },
+      {
+        id: "gurs_buildings",
+        name: "Stavbe (Kataster)",
+        type: "wms",
+        url: "https://ipi.eprostor.gov.si/wms-si-gurs-kn/ows",
+        layers: "SI.GURS.KN:STAVBE",
+        format: "image/png",
+        transparent: true,
+        version: "1.1.1",
+        opacity: 0.7,
+        thumbnail: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=80&h=60&fit=crop",
+        description: "Stavbni objekti iz katastra nepremičnin GURS"
+      },
     ]
   },
 
