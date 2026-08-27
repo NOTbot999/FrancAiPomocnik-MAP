@@ -245,11 +245,11 @@ export default function UnifiedAnalysisPanel({
     const satelliteOk = !!satelliteUrl;
 
     const [terrainRes, urbexRes] = await Promise.all([
-      base44.integrations.Core.InvokeLLM({ prompt: TERRAIN_AI_PROMPT(osmText, placeName, analysisLat, analysisLng, km) }),
+      base44.integrations.Core.InvokeLLM({ prompt: TERRAIN_AI_PROMPT(osmText, placeName, analysisLat, analysisLng, km), model: "claude-sonnet-5" }),
       base44.integrations.Core.InvokeLLM({
         prompt: URBEX_AI_PROMPT(osmText, placeName, analysisLat, analysisLng, km, arcanumUrl, lidarOk, satelliteOk),
         file_urls: imageUrls.length > 0 ? imageUrls : undefined,
-        model: "claude_sonnet_4_6",
+        model: "claude-sonnet-5",
       }),
     ]);
     const terrainText = typeof terrainRes === "string" ? terrainRes : terrainRes?.content || "";

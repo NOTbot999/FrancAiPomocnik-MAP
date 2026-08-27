@@ -115,7 +115,7 @@ ${osmText}
 2. Naštej do 5 najpomembnejših točk z imenom in tipom.
 NE izmišljaj koordinat ali lokacij.`;
 
-    const res = await base44.integrations.Core.InvokeLLM({ prompt });
+    const res = await base44.integrations.Core.InvokeLLM({ prompt, model: "claude-sonnet-5" });
     const text = typeof res === "string" ? res : res?.content || "";
 
     // Custom sloji iz PRAVE OSM geometrije — ne LLM halucinacij

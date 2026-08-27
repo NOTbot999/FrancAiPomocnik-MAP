@@ -65,7 +65,7 @@ export default function AskMapPanel({ onClose, activeLayers, onToggleLayer, mapC
       const res = await base44.integrations.Core.InvokeLLM({
         prompt: `${SYSTEM_PROMPT}\n\n${contextNote}\n\nConversation so far:\n${history}\n\nUser: ${userMsg}\n\nAssistant:`,
         add_context_from_internet: true,
-        model: "gemini_3_flash"
+        model: "gemini_3_1_pro"
       });
 
       const text = typeof res === "string" ? res : res?.content || res?.text || JSON.stringify(res);

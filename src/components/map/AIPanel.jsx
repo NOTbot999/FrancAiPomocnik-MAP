@@ -179,7 +179,7 @@ function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme, messag
 
     const res = await base44.integrations.Core.InvokeLLM({
       prompt: `${ASK_SYSTEM}\n\n${context}\n\nZgodovina:\n${history}\n\nUporabnik: ${userMsg}\nAsistent:`,
-      add_context_from_internet: true, model: "gemini_3_flash"
+      add_context_from_internet: true, model: "gemini_3_1_pro"
     });
 
     const text = typeof res === "string" ? res : (res?.text || res?.content || JSON.stringify(res));
@@ -273,7 +273,7 @@ function AskTab({ activeLayers, onToggleLayer, mapCenter, mapZoom, theme, messag
         const webRes = await base44.integrations.Core.InvokeLLM({
           prompt: `Išči po spletu: ${description}. Vrni JSON s točkami v Sloveniji. Vsaka točka: name, lat (širina, decimalne stopinje), lng (dolžina), note (kratek opis). Uporabi SAMO prave koordinate ki si jih našel na spletu — ne izmišljaj. Če podatka ne najdeš, vrni prazno polje features. Koordinate v Sloveniji: lat 45.4–46.9, lng 13.4–16.6.`,
           add_context_from_internet: true,
-          model: "gemini_3_flash",
+          model: "gemini_3_1_pro",
           response_json_schema: {
             type: "object",
             properties: {

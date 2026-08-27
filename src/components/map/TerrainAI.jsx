@@ -45,7 +45,7 @@ Analyze this location in Slovenia thoroughly. Use internet context to get real d
     const res = await base44.integrations.Core.InvokeLLM({
       prompt,
       add_context_from_internet: true,
-      model: "gemini_3_flash",
+      model: "gemini_3_1_pro",
     });
 
     setResult(res);

@@ -50,7 +50,7 @@ Provide a JSON response:
   "quick_facts": ["fact 1", "fact 2", "fact 3"]
 }`,
           add_context_from_internet: true,
-          model: "gemini_3_flash",
+          model: "gemini_3_1_pro",
           response_json_schema: {
             type: "object",
             properties: {
