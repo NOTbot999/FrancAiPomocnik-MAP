@@ -1,0 +1,37 @@
+{
+  "name": "Zgradil cave cache po uvozu",
+  "description": "Samodejno zgradi cache layer za jame ko se kon\u010da uvoz",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "create"
+      ],
+      "entity_name": "Cave"
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "zgradil_cave_cache_po_uvozu",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "buildCaveCache",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "buildCaveCache"
+  }
+}
