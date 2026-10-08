@@ -50,22 +50,9 @@ async function prefetchCategory(cat) {
       label: el.tags?.name || el.tags?.["name:sl"] || el.tags?.ref || "",
     };
   }).filter(Boolean);
-  saveToCache(cat.id, features);
-  // Save to server cache too (admin-only write; silently fails for regular users)
-  if (features.length > 0) {
-    try {
-      const existing = await base44.entities.CachedLayer.filter({ category_id: cat.id });
-      if (existing && existing.length > 0) {
-        await base44.entities.CachedLayer.update(existing[0].id, {
-          features, feature_count: features.length, built_at: new Date().toISOString(),
-        });
-      } else {
-        await base44.entities.CachedLayer.create({
-          category_id: cat.id, features, feature_count: features.length, built_at: new Date().toISOString(),
-        });
-      }
-    } catch { /* non-admin — skip */ }
-  }
+  // Server cache is written only on explicit click (SearchBar) — writing here in
+  // parallel created hundreds of duplicate records that slowed layers to a halt.
+  if (features.length > 0) saveToCache(cat.id, features);
 }
 
 // Run a pool of workers over the queue, each picking the next item until done
