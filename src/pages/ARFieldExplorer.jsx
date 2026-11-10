@@ -240,7 +240,7 @@ export default function ARFieldExplorer() {
       try {
         const [pins, caves] = await Promise.all([
           base44.entities.CollabPin.list("-created_date", 50),
-          base44.entities.Cave.list("-created_date", 200),
+          loadCaves(),
         ]);
         setNearbyPins(
           (pins || [])

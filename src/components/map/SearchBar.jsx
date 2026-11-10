@@ -2,75 +2,17 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Search, X, Loader2, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePrefetchCategories } from "@/hooks/usePrefetchCategories";
-import { base44 } from "@/api/base44Client";
+import { base44, OFFLINE_MODE } from "@/api/base44Client";
 import { fetchOverpass } from "@/lib/overpass";
+import { loadBundled } from "@/lib/offlineData";
+import { CATEGORIES } from "@/data/categories";
+import { parseOverpassPoints } from "@/data/parsers";
 import { loadCaves } from "./CaveLayer";
 import CategoryGrid from "./CategoryGrid";
 import { loadOpenChargeMap, loadWikidataCastles, loadWikidataMonuments, loadWikidataMuseums, loadWikipediaArticles } from "./ExternalLayers";
 
-// ── All categories — each toggles a full-Slovenia layer ───────────────────────
-export const CATEGORIES = [
-  { id: "castle",        label: "Gradovi",        emoji: "🏰", color: "#b45309", query: `[out:json][timeout:30];(node["historic"="castle"](45.4,13.4,46.9,16.6);way["historic"="castle"](45.4,13.4,46.9,16.6););out center;` },
-  { id: "peak",          label: "Vrhovi",         emoji: "⛰️", color: "#6b7280", query: `[out:json][timeout:30];node["natural"="peak"](45.4,13.4,46.9,16.6);out;` },
-  { id: "waterfall",     label: "Slapovi",        emoji: "💧", color: "#0ea5e9", query: `[out:json][timeout:30];node["waterway"="waterfall"](45.4,13.4,46.9,16.6);out;` },
-  { id: "viewpoint",     label: "Razglediš.",     emoji: "👁️", color: "#8b5cf6", query: `[out:json][timeout:30];node["tourism"="viewpoint"](45.4,13.4,46.9,16.6);out;` },
-  { id: "cave",          label: "Jame",           emoji: "🕳️", color: "#78716c", _caveDbLayer: true, query: `` },
-  { id: "museum",        label: "Muzeji",         emoji: "🏛️", color: "#a855f7", query: `[out:json][timeout:30];(node["tourism"="museum"](45.4,13.4,46.9,16.6);way["tourism"="museum"](45.4,13.4,46.9,16.6););out center;` },
-  { id: "ruins",         label: "Ruševine",       emoji: "🗿", color: "#92400e", query: `[out:json][timeout:30];(node["historic"="ruins"](45.4,13.4,46.9,16.6);way["historic"="ruins"](45.4,13.4,46.9,16.6););out center;` },
-  { id: "spring",        label: "Izviri",         emoji: "💦", color: "#06b6d4", query: `[out:json][timeout:30];node["natural"="spring"](45.4,13.4,46.9,16.6);out;` },
-  { id: "lake",          label: "Jezera",         emoji: "🌊", color: "#3b82f6", query: `[out:json][timeout:45];(way["natural"="water"]["water"~"lake|reservoir|pond"](45.4,13.4,46.9,16.6);way["natural"="water"][!"water"](45.4,13.4,46.9,16.6);way["landuse"="reservoir"](45.4,13.4,46.9,16.6);relation["natural"="water"](45.4,13.4,46.9,16.6););out center;` },
-  { id: "park",          label: "Parki",          emoji: "🌳", color: "#22c55e", query: `[out:json][timeout:30];(way["leisure"="park"](45.4,13.4,46.9,16.6);relation["leisure"="park"](45.4,13.4,46.9,16.6););out center;` },
-  { id: "chapel",        label: "Kapelice",       emoji: "⛪", color: "#e879f9", query: `[out:json][timeout:30];(node["amenity"="place_of_worship"]["religion"="christian"]["building"~"chapel|wayside_shrine"](45.4,13.4,46.9,16.6);node["historic"="wayside_shrine"](45.4,13.4,46.9,16.6););out;` },
-  { id: "cross",         label: "Križi",          emoji: "✝️", color: "#a855f7", query: `[out:json][timeout:30];node["historic"="wayside_cross"](45.4,13.4,46.9,16.6);out;` },
-  { id: "helipad",       label: "Helikopter.",     emoji: "🚁", color: "#0ea5e9", query: `[out:json][timeout:30];(node["aeroway"="helipad"](45.4,13.4,46.9,16.6);way["aeroway"="helipad"](45.4,13.4,46.9,16.6););out center;` },
-  { id: "mosque",        label: "Mošeje",          emoji: "🕌", color: "#16a34a", query: `[out:json][timeout:30];(node["amenity"="place_of_worship"]["religion"="muslim"](45.4,13.4,46.9,16.6);way["amenity"="place_of_worship"]["religion"="muslim"](45.4,13.4,46.9,16.6););out center;` },
-  { id: "synagogue",     label: "Sinagoge",        emoji: "🕍", color: "#2563eb", query: `[out:json][timeout:30];(node["amenity"="place_of_worship"]["religion"="jewish"](45.4,13.4,46.9,16.6);way["amenity"="place_of_worship"]["religion"="jewish"](45.4,13.4,46.9,16.6););out center;` },
-  { id: "church",        label: "Cerkve",         emoji: "🕌", color: "#d946ef", query: `[out:json][timeout:30];(node["amenity"="place_of_worship"]["religion"="christian"](45.4,13.4,46.9,16.6);way["amenity"="place_of_worship"]["religion"="christian"](45.4,13.4,46.9,16.6););out center;` },
-  { id: "fuel",          label: "Bencinske",      emoji: "⛽", color: "#f59e0b", query: `[out:json][timeout:45];(node["amenity"="fuel"](45.4,13.4,46.9,16.6);way["amenity"="fuel"](45.4,13.4,46.9,16.6);node["fuel"="yes"](45.4,13.4,46.9,16.6););out center;` },
-  { id: "parking",       label: "Parkirišča",     emoji: "🅿️", color: "#6366f1", query: `[out:json][timeout:30];(node["amenity"="parking"](45.4,13.4,46.9,16.6);way["amenity"="parking"](45.4,13.4,46.9,16.6););out center;` },
-  { id: "supermarket",   label: "Živila",         emoji: "🛒", color: "#f97316", query: `[out:json][timeout:30];(node["shop"~"supermarket|grocery|convenience"](45.4,13.4,46.9,16.6);way["shop"~"supermarket|grocery|convenience"](45.4,13.4,46.9,16.6););out center;` },
-  { id: "atm",           label: "Bankomati",      emoji: "💳", color: "#84cc16", query: `[out:json][timeout:45];(node["amenity"="atm"](45.4,13.4,46.9,16.6);node["amenity"="bank"]["atm"!="no"](45.4,13.4,46.9,16.6);way["amenity"="bank"]["atm"!="no"](45.4,13.4,46.9,16.6););out center;` },
-  { id: "hospital",      label: "Bolnice",        emoji: "🏥", color: "#ec4899", query: `[out:json][timeout:45];(node["amenity"="hospital"](45.4,13.4,46.9,16.6);way["amenity"="hospital"](45.4,13.4,46.9,16.6);node["amenity"="health_post"](45.4,13.4,46.9,16.6);relation["amenity"="hospital"](45.4,13.4,46.9,16.6););out center;` },
-  { id: "clinic",        label: "Ambulante",      emoji: "🩺", color: "#14b8a6", query: `[out:json][timeout:45];(node["amenity"~"clinic|doctors|health_centre"](45.4,13.4,46.9,16.6);way["amenity"~"clinic|doctors|health_centre"](45.4,13.4,46.9,16.6);node["healthcare"~"centre|clinic|doctor|general_practitioner"](45.4,13.4,46.9,16.6);way["healthcare"~"centre|clinic"](45.4,13.4,46.9,16.6););out center;` },
-  { id: "dentist",       label: "Zobozdrav.",     emoji: "🦷", color: "#a855f7", query: `[out:json][timeout:30];(node["amenity"="dentist"](45.4,13.4,46.9,16.6);way["amenity"="dentist"](45.4,13.4,46.9,16.6););out center;` },
-  { id: "pharmacy",      label: "Lekarne",        emoji: "💊", color: "#10b981", query: `[out:json][timeout:30];(node["amenity"="pharmacy"](45.4,13.4,46.9,16.6);way["amenity"="pharmacy"](45.4,13.4,46.9,16.6););out center;` },
-  { id: "fire_station",  label: "Gasilci",        emoji: "🚒", color: "#ef4444", query: `[out:json][timeout:30];(node["amenity"="fire_station"](45.4,13.4,46.9,16.6);way["amenity"="fire_station"](45.4,13.4,46.9,16.6););out center;` },
-  { id: "police",        label: "Policija",       emoji: "🚔", color: "#3b82f6", query: `[out:json][timeout:30];(node["amenity"="police"](45.4,13.4,46.9,16.6);way["amenity"="police"](45.4,13.4,46.9,16.6););out center;` },
-  { id: "pipe",          label: "Pipe",           emoji: "🚰", color: "#0ea5e9", query: `[out:json][timeout:30];node["amenity"="drinking_water"](45.4,13.4,46.9,16.6);out;` },
-  { id: "bus_station",   label: "Avt. postaje",   emoji: "🚌", color: "#f59e0b", query: `[out:json][timeout:30];(node["amenity"="bus_station"](45.4,13.4,46.9,16.6);node["highway"="bus_stop"](45.4,13.4,46.9,16.6););out;` },
-  { id: "train_station", label: "Vlak postaje",   emoji: "🚂", color: "#78716c", query: `[out:json][timeout:30];(node["railway"="station"](45.4,13.4,46.9,16.6);node["railway"="halt"](45.4,13.4,46.9,16.6););out;` },
-  { id: "camp",          label: "Kampi",          emoji: "🏕️", color: "#22c55e", query: `[out:json][timeout:30];(node["tourism"="camp_site"](45.4,13.4,46.9,16.6);way["tourism"="camp_site"](45.4,13.4,46.9,16.6););out center;` },
-  { id: "aerodrome",     label: "Letališča",      emoji: "✈️", color: "#06b6d4", query: `[out:json][timeout:30];(node["aeroway"="aerodrome"](45.4,13.4,46.9,16.6);way["aeroway"="aerodrome"](45.4,13.4,46.9,16.6););out center;` },
-  { id: "cemetery",      label: "Pokopališča",    emoji: "⚰️", color: "#6b7280", query: `[out:json][timeout:30];(node["landuse"="cemetery"](45.4,13.4,46.9,16.6);way["landuse"="cemetery"](45.4,13.4,46.9,16.6););out center;` },
-  { id: "municipality",  label: "Občine",         emoji: "🏘️", color: "#b45309", _municipalityLayer: true, query: `` },
-  { id: "motorway_jct",  label: "AC uvozi",       emoji: "🛣️", color: "#64748b", query: `[out:json][timeout:30];node["highway"="motorway_junction"](45.4,13.4,46.9,16.6);out;` },
-
-  // ── Novi custom sloji (označi na karti) ──────────────────────────────────────
-  { id: "beach",         label: "Plaže",          emoji: "🏖️", color: "#fbbf24", query: `[out:json][timeout:30];(node["natural"="beach"](45.4,13.4,46.9,16.6);way["natural"="beach"](45.4,13.4,46.9,16.6);relation["natural"="beach"](45.4,13.4,46.9,16.6););out center;` },
-  { id: "geocache",      label: "Geocacher",      emoji: "🥾", color: "#84cc16", query: `[out:json][timeout:45];(node["geocache"](45.4,13.4,46.9,16.6);node["tourism"="information"]["information"="geocache"](45.4,13.4,46.9,16.6););out;` },
-  { id: "racetrack",     label: "Dirkališča",      emoji: "🏁", color: "#ef4444", query: `[out:json][timeout:30];(way["highway"="raceway"](45.4,13.4,46.9,16.6);way["leisure"="track"]["sport"="motorsport"](45.4,13.4,46.9,16.6);way["leisure"="track"]["sport"="karting"](45.4,13.4,46.9,16.6);way["leisure"="track"]["sport"="motor_autocross"](45.4,13.4,46.9,16.6);way["sport"="motorsport"](45.4,13.4,46.9,16.6););out center;` },
-  { id: "pitch",         label: "Šport. igrišča", emoji: "⚽", color: "#22c55e", query: `[out:json][timeout:45];(way["leisure"="pitch"](45.4,13.4,46.9,16.6);relation["leisure"="pitch"](45.4,13.4,46.9,16.6););out center;` },
-  { id: "fitness",       label: "Outdoor fitnes",  emoji: "💪", color: "#f97316", query: `[out:json][timeout:30];(node["leisure"="fitness_station"](45.4,13.4,46.9,16.6);way["leisure"="fitness_station"](45.4,13.4,46.9,16.6););out center;` },
-  { id: "toilets",       label: "Stranišča",      emoji: "🚻", color: "#64748b", query: `[out:json][timeout:30];(node["amenity"="toilets"](45.4,13.4,46.9,16.6);way["amenity"="toilets"](45.4,13.4,46.9,16.6););out center;` },
-  { id: "transmitter",   label: "Oddajniki",      emoji: "📡", color: "#0ea5e9", query: `[out:json][timeout:30];(node["man_made"="communications_tower"](45.4,13.4,46.9,16.6);node["man_made"="tower"]["tower:type"="communication"](45.4,13.4,46.9,16.6);way["man_made"="tower"]["tower:type"="communication"](45.4,13.4,46.9,16.6);node["man_made"="mast"]["tower:type"="communication"](45.4,13.4,46.9,16.6););out center;` },
-  { id: "speed_camera",   label: "Radarji",       emoji: "📷", color: "#dc2626", query: `[out:json][timeout:30];node["highway"="speed_camera"](45.4,13.4,46.9,16.6);out;` },
-  { id: "post_office",   label: "Pošte",          emoji: "📮", color: "#8b5cf6", query: `[out:json][timeout:30];(node["amenity"="post_office"](45.4,13.4,46.9,16.6);way["amenity"="post_office"](45.4,13.4,46.9,16.6););out center;` },
-  { id: "sex_shop",      label: "Erotika",        emoji: "💋", color: "#db2777", query: `[out:json][timeout:30];(node["shop"="erotic"](45.4,13.4,46.9,16.6);way["shop"="erotic"](45.4,13.4,46.9,16.6);node["shop"="adult"](45.4,13.4,46.9,16.6);way["shop"="adult"](45.4,13.4,46.9,16.6););out center;` },
-
-  // ── Infrastruktura: predori, vijadukti, mostovi ──────────────────────────────
-  { id: "tunnel",         label: "Predori",        emoji: "🚇", color: "#1e293b", query: `[out:json][timeout:45];(way["tunnel"="yes"]["highway"](45.4,13.4,46.9,16.6););out center;` },
-  { id: "viaduct",        label: "Vijadukti",      emoji: "🌉", color: "#7c3aed", query: `[out:json][timeout:45];(way["bridge"="yes"]["highway"]["bridge:name"](45.4,13.4,46.9,16.6);way["man_made"="bridge"](45.4,13.4,46.9,16.6);way["bridge"="yes"]["highway"]["bridge:structure"="arch"](45.4,13.4,46.9,16.6););out center;` },
-  { id: "motorway_tunnel", label: "AC predori",    emoji: "🕳️", color: "#0f172a", query: `[out:json][timeout:45];(way["highway"~"motorway|motorway_link|trunk|trunk_link"]["tunnel"="yes"](45.4,13.4,46.9,16.6););out center;` },
-  { id: "motorway_bridge", label: "AC vijadukti",   emoji: "🏗️", color: "#5b21b6", query: `[out:json][timeout:45];(way["highway"~"motorway|motorway_link|trunk|trunk_link"]["bridge"="yes"](45.4,13.4,46.9,16.6););out center;` },
-
-  // ── Ne-OSM viri (OpenChargeMap, Wikidata, Wikipedia) ────────────────────────
-  { id: "ev_charging",     label: "Polnilnice",      emoji: "🔌", color: "#22c55e", _source: "openchargemap", query: "" },
-  { id: "wd_castles",      label: "Gradovi (WD)",    emoji: "🏰", color: "#b45309", _source: "wikidata_castles", query: "" },
-  { id: "wd_monuments",    label: "Spomeniki (WD)",  emoji: "🗿", color: "#92400e", _source: "wikidata_monuments", query: "" },
-  { id: "wd_museums",      label: "Muzeji (WD)",     emoji: "🏛️", color: "#a855f7", _source: "wikidata_museums", query: "" },
-  { id: "wiki_articles",   label: "Wikipedija",      emoji: "📖", color: "#3b82f6", _source: "wikipedia", query: "" },
-
-];
+// Category definitions live in src/data/categories.js (shared with scripts/fetch-offline-data.mjs)
+export { CATEGORIES };
 
 // Invalidate old cache for improved queries
 ["fuel","atm","hospital","clinic","lake","racetrack","geocache","pitch","fitness","toilets","transmitter","speed_camera","post_office","sex_shop","tunnel","viaduct","motorway_tunnel","motorway_bridge","cross","helipad","mosque","synagogue","beach","bus_station","train_station","camp","aerodrome","cemetery","motorway_jct"].forEach(id => {
@@ -114,17 +56,22 @@ export async function fetchFullSloveniaLayer(cat) {
     layerCache[cat.id] = layer;
     return layer;
   }
-  // 3+4. Race server cache vs Overpass in parallel — whichever returns valid data first wins
-  const parseOverpass = (data) => (data.elements || []).map(el => {
-    const lat = el.lat ?? el.center?.lat;
-    const lon = el.lon ?? el.center?.lon;
-    if (!lat || !lon) return null;
-    return { type: "Point", coords: [lat, lon], label: el.tags?.name || el.tags?.["name:sl"] || el.tags?.ref || "" };
-  }).filter(Boolean);
+  // 3. Bundled /data/<id>.json (built by `npm run fetch-data`) — instant and works offline
+  const bundled = await loadBundled(cat.id);
+  if (bundled) {
+    const layer = { name: `${cat.emoji} ${cat.label}`, color: cat.color, emoji: cat.emoji, features: bundled, _categoryId: cat.id, _bundled: true };
+    layerCache[cat.id] = layer;
+    return layer;
+  }
 
-  const serverPromise = base44.entities.CachedLayer.filter({ category_id: cat.id })
-    .then(d => (d?.length > 0 && d[0].features?.length > 0) ? d[0].features : null)
-    .catch(() => null);
+  // 4+5. Race server cache vs Overpass in parallel — whichever returns valid data first wins
+  const parseOverpass = parseOverpassPoints;
+
+  const serverPromise = OFFLINE_MODE
+    ? Promise.resolve(null)
+    : base44.entities.CachedLayer.filter({ category_id: cat.id })
+        .then(d => (d?.length > 0 && d[0].features?.length > 0) ? d[0].features : null)
+        .catch(() => null);
 
   let sourcePromise;
   if (cat._source === "openchargemap") {
@@ -157,7 +104,7 @@ export async function fetchFullSloveniaLayer(cat) {
   if (features && features.length > 0) {
     saveToStorage(cat.id, features);
     // Save to server cache too (admin-only write; silently fails for regular users)
-    if (!fromServer) {
+    if (!fromServer && !OFFLINE_MODE) {
       try {
         const existing = await base44.entities.CachedLayer.filter({ category_id: cat.id });
         if (existing && existing.length > 0) {

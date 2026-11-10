@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Polyline, CircleMarker, Tooltip, LayerGroup, Marker } from "react-leaflet";
 import L from "leaflet";
 import { fetchOverpass } from "@/lib/overpass";
+import { H8_QUERY } from "@/data/categories";
 
 // TRETJA RAZVOJNA OS (3RO) — uradni podatki DARS + realna OSM geometrija
 //
@@ -125,8 +126,18 @@ export default function ThirdDevAxisLayer({ opacity = 0.85 }) {
         });
     }
 
+    async function loadFromBundled() {
+      const { loadBundled } = await import("@/lib/offlineData");
+      const h8Lines = await loadBundled("third_dev_axis");
+      if (!h8Lines || !h8Lines.length) return false;
+      setData({ h8Lines });
+      setLoading(false);
+      return true;
+    }
+
     async function loadFromServer() {
-      const { base44 } = await import("@/api/base44Client");
+      const { base44, OFFLINE_MODE } = await import("@/api/base44Client");
+      if (OFFLINE_MODE) return false;
       const rows = await base44.entities.CachedLayer.filter({ category_id: "third_dev_axis" });
       const row = rows && rows[0];
       if (!row || !row.features) return false;
@@ -157,12 +168,7 @@ export default function ThirdDevAxisLayer({ opacity = 0.85 }) {
 
     async function loadFromOSM() {
       // H8: vsi construction=trunk odseki z opening_date=2029 + way-i z name=H8
-      const qH8 = `[out:json][timeout:25];
-(
-  way["highway"="construction"]["construction"="trunk"]["opening_date"="2029"](45.0,13.0,47.0,17.0);
-  way["name"="H8"]["highway"="construction"](45.0,13.0,47.0,17.0);
-);
-out geom;`;
+      const qH8 = H8_QUERY;
       const json = await fetchOverpass(qH8);
       const ways = (json.elements || []).filter(e => e.type === "way" && e.geometry);
       const h8Lines = ways.map(w => (w.geometry || []).map(p => [p.lat, p.lon]));
@@ -173,6 +179,7 @@ out geom;`;
 
     (async () => {
       try {
+        if (await loadFromBundled()) return;
         if (await loadFromLocal()) return;
         if (await loadFromServer()) return;
         await loadFromOSM();

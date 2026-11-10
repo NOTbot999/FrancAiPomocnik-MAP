@@ -16,7 +16,7 @@ const Map3DView = lazy(() => import("@/components/map/Map3DView"));
 const LocationSummarizer = lazy(() => import("@/components/map/LocationSummarizer"));
 import DesktopToolbar from "@/components/map/DesktopToolbar";
 import { useUserSettings } from "@/hooks/useUserSettings";
-import { base44 } from "@/api/base44Client";
+import { base44, OFFLINE_MODE } from "@/api/base44Client";
 import { scopedGet, scopedSet } from "@/lib/userPrefs";
 import Mobile3DMenu from "@/components/map/Mobile3DMenu";
 import MobileBottomNav from "@/components/map/MobileBottomNav";
@@ -70,10 +70,12 @@ export default function MapViewer() {
   const wasNavOpenBeforePick = useRef(false);
 
   // Check premium status — read from UserAccount entity via backend (service role)
-  const [isPremium, setIsPremium] = useState(false);
+  const [isPremium, setIsPremium] = useState(OFFLINE_MODE);
   useEffect(() => {
     const checkPremium = async () => {
       try {
+        // Offline/standalone build: no accounts, every feature is available locally
+        if (OFFLINE_MODE) { setIsPremium(true); return; }
         const role = localStorage.getItem("userRole");
         if (role === "admin") { setIsPremium(true); return; }
 
@@ -461,7 +463,7 @@ export default function MapViewer() {
 
   return (
     <Suspense fallback={<div className="fixed inset-0 grid place-items-center bg-slate-950/70 text-white z-[10000]">Nalagam orodje…</div>}>
-    <div className="relative w-full overflow-hidden" style={{ height: "calc(var(--vh, 1vh) * 100)", backgroundColor: is3DOpen ? "#000" : "#e8ede8", backgroundImage: is3DOpen ? "none" : "url('https://media.base44.com/images/public/69ad3ce309822f8e71f66838/b15473e19_5992128811794894233.jpg')", backgroundSize: "contain", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>
+    <div className="relative w-full overflow-hidden" style={{ height: "calc(var(--vh, 1vh) * 100)", backgroundColor: is3DOpen ? "#000" : "#e8ede8", backgroundImage: is3DOpen ? "none" : "url('/bg.jpg')", backgroundSize: "contain", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>
 
       {/* MapLibre 3D/2D-rotatable map — only mount when first opened to ensure container has dimensions */}
       {mapLibreEverOpened && <div style={{ position: "absolute", inset: 0, zIndex: isPinPicking && is3DOpen ? 980 : undefined, visibility: is3DOpen ? "visible" : "hidden", pointerEvents: is3DOpen ? "auto" : "none" }}>

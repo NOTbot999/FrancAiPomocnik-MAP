@@ -1,7 +1,7 @@
 // Skupni Overpass klient — kliče Overpass API direktno iz brskalnika.
 // Server-side (backend funkcije) Overpass blokira (403/406), zato to izvajamo klient-side.
 
-const OVERPASS_MIRRORS = [
+export const OVERPASS_MIRRORS = [
   "https://overpass.kumi.systems/api/interpreter",
   "https://overpass.openstreetmap.fr/api/interpreter",
   "https://overpass-api.de/api/interpreter",
@@ -19,11 +19,13 @@ const OP_HEADERS = {
  * Pošlje Overpass QL poizvedbo in vrne JSON { elements: [...] }.
  * Preizkusi GET nato POST na vsakem zrcalu, dokler eno ne uspe.
  * @param {string} query  Overpass QL (brez {{bbox}} — že razresen)
+ * @param {number} timeoutMs  časovna omejitev na poskus
+ * @param {string[]} mirrors  vrstni red zrcal (privzeto OVERPASS_MIRRORS)
  */
-export async function fetchOverpass(query, timeoutMs = 25000) {
+export async function fetchOverpass(query, timeoutMs = 25000, mirrors = OVERPASS_MIRRORS) {
   const enc = encodeURIComponent(query);
   let lastErr = null;
-  for (const mirror of OVERPASS_MIRRORS) {
+  for (const mirror of mirrors) {
     for (const method of ["GET", "POST"]) {
       try {
         const controller = new AbortController();

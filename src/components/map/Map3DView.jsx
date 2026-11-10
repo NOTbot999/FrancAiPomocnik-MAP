@@ -1,3 +1,4 @@
+import "maplibre-gl/dist/maplibre-gl.css";
 import React, { useEffect, useRef, useState, useCallback, useImperativeHandle, forwardRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMapLibreLayers } from "./useMapLibreLayers";
@@ -297,21 +298,10 @@ const Map3DView = forwardRef(function Map3DView({
 
     const init = async () => {
       try {
+        // maplibre-gl is bundled locally (no CDN) so the 3D view also works offline
         if (!window.maplibregl) {
-          await new Promise((resolve, reject) => {
-            if (!document.querySelector('link[href*="maplibre-gl"]')) {
-              const link = document.createElement("link");
-              link.rel = "stylesheet";
-              link.href = "https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css";
-              document.head.appendChild(link);
-            }
-            const script = document.createElement("script");
-            script.src = "https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js";
-            script.crossOrigin = "anonymous";
-            script.onload = resolve;
-            script.onerror = reject;
-            document.head.appendChild(script);
-          });
+          const mod = await import("maplibre-gl");
+          window.maplibregl = mod.default || mod;
         }
         if (cancelled) return;
 

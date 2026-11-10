@@ -1,13 +1,15 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { base44, OFFLINE_MODE } from '@/api/base44Client';
 import { appParams } from '@/lib/app-params';
-import { createAxiosClient } from '@base44/sdk/dist/utils/axios-client';
 
 // ════════════════════════════════════════════════════════════════════════
+// Brez Base44 (OFFLINE_MODE, privzeto) aplikacija teče kot samostojna PWA:
+// ni prijave, uporabnik je lokalni "admin", vse funkcije so odklenjene.
+// Z VITE_OFFLINE_MODE=false se uporabi Base44 prijava.
 // ⚠️ TESTNI BYPASS (začasno) — za testiranje AI BREZ prijave in premium/paywall.
 //    Povozi login + premium. Za izklop: TEST_BYPASS = false.
 // ════════════════════════════════════════════════════════════════════════
-const TEST_BYPASS = true;
+const TEST_BYPASS = OFFLINE_MODE || true;
 if (TEST_BYPASS && typeof window !== 'undefined') {
   try {
     if (!localStorage.getItem("userRole")) localStorage.setItem("userRole", "admin");
@@ -32,7 +34,9 @@ export const AuthProvider = ({ children }) => {
   const checkAppState = async () => {
     // ⚠️ TESTNI BYPASS — aplikacija se naloži brez prijave (uporabnik = admin "Test").
     if (TEST_BYPASS) {
-      setUser({ id: 'test-user', full_name: 'Test', email: 'test@local', role: 'admin' });
+      setUser(OFFLINE_MODE
+        ? { id: 'local-user', full_name: 'Lokalni uporabnik', email: '', role: 'admin' }
+        : { id: 'test-user', full_name: 'Test', email: 'test@local', role: 'admin' });
       setIsAuthenticated(true);
       setIsLoadingAuth(false);
       setIsLoadingPublicSettings(false);
@@ -46,6 +50,7 @@ export const AuthProvider = ({ children }) => {
       
       // First, check app public settings (with token if available)
       // This will tell us if auth is required, user not registered, etc.
+      const { createAxiosClient } = await import('@base44/sdk/dist/utils/axios-client');
       const appClient = createAxiosClient({
         baseURL: `/api/apps/public`,
         headers: {

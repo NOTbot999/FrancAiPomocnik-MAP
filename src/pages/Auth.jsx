@@ -77,7 +77,7 @@ export default function Auth() {
     <div
       className="min-h-screen flex flex-col"
       style={{
-        backgroundImage: "url('https://media.base44.com/images/public/69ad3ce309822f8e71f66838/b15473e19_5992128811794894233.jpg')",
+        backgroundImage: "url('/bg.jpg')",
         backgroundSize: "contain",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",

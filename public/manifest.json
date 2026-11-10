@@ -1,0 +1,15 @@
+{
+  "name": "FrancAiMap — GIS Explorer Slovenije",
+  "short_name": "FrancAiMap",
+  "description": "Zemljevidi, sloji, jame in točke zanimanja po Sloveniji — deluje tudi brez povezave.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#e8ede8",
+  "theme_color": "#10b981",
+  "lang": "sl",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

@@ -2,6 +2,9 @@ import { useEffect, useRef } from "react";
 import { useMap } from "react-leaflet";
 import L from "leaflet";
 import { fetchOverpass } from "@/lib/overpass";
+import { loadBundled } from "@/lib/offlineData";
+import { MUNICIPALITY_QUERY, PLACES_QUERY } from "@/data/categories";
+import { parseMunicipalities, parsePlaces } from "@/data/parsers";
 
 const LS_KEY_MUN = "slomapcat_mun_v4";
 const LS_KEY_PLACES = "slomapcat_places_v2";
@@ -21,98 +24,20 @@ function saveCache(key, data) {
   try { localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data })); } catch {}
 }
 
-// Stitch way segments into closed rings
-function stitchWays(ways) {
-  if (!ways || ways.length === 0) return [];
-
-  // Build segments as arrays of [lat,lon]
-  const segments = ways.map(w => (w.geometry || []).map(g => [g.lat, g.lon]));
-  if (segments.length === 0) return [];
-  if (segments.length === 1) return segments[0];
-
-  // Greedy stitching
-  const result = [...segments[0]];
-  const remaining = segments.slice(1);
-
-  while (remaining.length > 0) {
-    const last = result[result.length - 1];
-    let bestIdx = -1;
-    let bestReverse = false;
-    let bestDist = Infinity;
-
-    for (let i = 0; i < remaining.length; i++) {
-      const seg = remaining[i];
-      if (!seg || seg.length === 0) continue;
-      const d1 = dist(last, seg[0]);
-      const d2 = dist(last, seg[seg.length - 1]);
-      if (d1 < bestDist) { bestDist = d1; bestIdx = i; bestReverse = false; }
-      if (d2 < bestDist) { bestDist = d2; bestIdx = i; bestReverse = true; }
-    }
-
-    if (bestIdx === -1) break;
-    const seg = remaining.splice(bestIdx, 1)[0];
-    const toAdd = bestReverse ? [...seg].reverse() : seg;
-    // Skip duplicate first point
-    result.push(...toAdd.slice(1));
-  }
-
-  return result;
-}
-
-function dist(a, b) {
-  if (!a || !b) return Infinity;
-  const dlat = a[0] - b[0];
-  const dlon = a[1] - b[1];
-  return dlat * dlat + dlon * dlon;
-}
-
-function relationToFeature(el) {
-  const name = el.tags?.name || el.tags?.["name:sl"] || "";
-  if (!name) return null;
-  // Area-filter (ISO3166-1=SI) je med Overpass zrcali nedosleden — na nekaterih
-  // vrne tudi obmejne avstrijske/hrvaške občine. Zanesljivo obdržimo samo slovenske
-  // občine (imajo ISO3166-2 = "SI-XXX").
-  const iso = el.tags?.["ISO3166-2"] || "";
-  if (!iso.startsWith("SI-")) return null;
-  const outerWays = (el.members || []).filter(m => m.type === "way" && m.role === "outer" && m.geometry?.length > 0);
-  const innerWays = (el.members || []).filter(m => m.type === "way" && m.role === "inner" && m.geometry?.length > 0);
-  if (outerWays.length === 0) return null;
-  const outerRing = stitchWays(outerWays);
-  if (outerRing.length < 4) return null;
-  const holes = innerWays.length > 0 ? [stitchWays(innerWays)] : [];
-  const lat = outerRing.reduce((s, c) => s + c[0], 0) / outerRing.length;
-  const lon = outerRing.reduce((s, c) => s + c[1], 0) / outerRing.length;
-  return { name, outerRing, holes, centroid: [lat, lon] };
-}
-
 async function fetchMunicipalities() {
-  // Area-filter (ISO3166-1=SI) na nekaterih zrcalih vrne tudi obmejne avstrijske
-  // občine (~196). Zato dodatno zahtevamo ISO3166-2=SI-* že na strežniku — tako
-  // dobimo samo ~212 slovenskih občin (~7 MB namesto ~14 MB), kar je hitreje in
-  // zanesljiveje. Odgovor se po prvi uspešni naložitvi shrani v 30-dnevni predpomnilnik.
-  const query = `[out:json][timeout:90];
-  area["ISO3166-1"="SI"]->.si;
-  relation(area.si)["admin_level"="8"]["boundary"="administrative"]["ISO3166-2"~"^SI-"];
-  out geom;`;
-  const data = await fetchOverpass(query, 90000);
-
-  const seen = new Map();
-  for (const el of data.elements || []) {
-    if (el.type !== "relation" || seen.has(el.id)) continue;
-    const f = relationToFeature(el);
-    if (f) seen.set(el.id, f);
-  }
-  return Array.from(seen.values());
+  // 1. Bundled /data/municipalities.json (npm run fetch-data) — works offline
+  const bundled = await loadBundled("municipalities");
+  if (bundled) return bundled;
+  // 2. Overpass. ISO3166-2=SI-* filter keeps only ~212 Slovenian municipalities (~7 MB).
+  const data = await fetchOverpass(MUNICIPALITY_QUERY, 90000);
+  return parseMunicipalities(data);
 }
 
 async function fetchPlaces() {
-  const query = `[out:json][timeout:30];node["place"~"town|village|hamlet"](45.4,13.3,46.9,16.7);out;`;
-  const data = await fetchOverpass(query);
-  return (data.elements || []).map(el => ({
-    lat: el.lat, lon: el.lon,
-    name: el.tags?.name || "",
-    place: el.tags?.place || "village",
-  })).filter(el => el.lat && el.lon);
+  const bundled = await loadBundled("places");
+  if (bundled) return bundled;
+  const data = await fetchOverpass(PLACES_QUERY);
+  return parsePlaces(data);
 }
 
 export default function MunicipalityLayer({ visible }) {
