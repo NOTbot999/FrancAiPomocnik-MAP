@@ -166,5 +166,6 @@ export function parseWikipedia(data) {
     type: "Point",
     coords: [g.lat, g.lon],
     label: g.title || "",
+    pageid: g.pageid,
   }));
 }

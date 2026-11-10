@@ -1,11 +1,311 @@
 {
-  "built_at": "2026-11-10T15:11:54.975Z",
+  "built_at": "2026-11-10T15:30:27.434Z",
   "files": {
     "caves": {
       "count": 13344,
       "bytes": 1682695,
       "built_at": "2026-11-10T15:11:54.972Z",
       "kind": "caves"
+    },
+    "municipalities": {
+      "count": 212,
+      "bytes": 4972458,
+      "built_at": "2026-11-10T15:19:39.196Z",
+      "kind": "overpass"
+    },
+    "castle": {
+      "count": 513,
+      "bytes": 38620,
+      "built_at": "2026-11-10T15:20:00.030Z",
+      "kind": "overpass"
+    },
+    "peak": {
+      "count": 15223,
+      "bytes": 1063283,
+      "built_at": "2026-11-10T15:20:14.775Z",
+      "kind": "overpass"
+    },
+    "waterfall": {
+      "count": 497,
+      "bytes": 33405,
+      "built_at": "2026-11-10T15:20:19.766Z",
+      "kind": "overpass"
+    },
+    "viewpoint": {
+      "count": 1814,
+      "bytes": 117323,
+      "built_at": "2026-11-10T15:20:24.664Z",
+      "kind": "overpass"
+    },
+    "museum": {
+      "count": 675,
+      "bytes": 56552,
+      "built_at": "2026-11-10T15:20:38.634Z",
+      "kind": "overpass"
+    },
+    "ruins": {
+      "count": 826,
+      "bytes": 56384,
+      "built_at": "2026-11-10T15:20:56.994Z",
+      "kind": "overpass"
+    },
+    "spring": {
+      "count": 1534,
+      "bytes": 99262,
+      "built_at": "2026-11-10T15:21:02.589Z",
+      "kind": "overpass"
+    },
+    "lake": {
+      "count": 11816,
+      "bytes": 732057,
+      "built_at": "2026-11-10T15:21:23.961Z",
+      "kind": "overpass"
+    },
+    "park": {
+      "count": 2506,
+      "bytes": 167091,
+      "built_at": "2026-11-10T15:21:33.766Z",
+      "kind": "overpass"
+    },
+    "chapel": {
+      "count": 6004,
+      "bytes": 391132,
+      "built_at": "2026-11-10T15:21:42.355Z",
+      "kind": "overpass"
+    },
+    "cross": {
+      "count": 4657,
+      "bytes": 287287,
+      "built_at": "2026-11-10T15:21:48.078Z",
+      "kind": "overpass"
+    },
+    "helipad": {
+      "count": 129,
+      "bytes": 8453,
+      "built_at": "2026-11-10T15:21:54.678Z",
+      "kind": "overpass"
+    },
+    "mosque": {
+      "count": 12,
+      "bytes": 970,
+      "built_at": "2026-11-10T15:22:11.053Z",
+      "kind": "overpass"
+    },
+    "synagogue": {
+      "count": 6,
+      "bytes": 472,
+      "built_at": "2026-11-10T15:22:16.895Z",
+      "kind": "overpass"
+    },
+    "church": {
+      "count": 5904,
+      "bytes": 469903,
+      "built_at": "2026-11-10T15:22:27.027Z",
+      "kind": "overpass"
+    },
+    "fuel": {
+      "count": 1283,
+      "bytes": 95142,
+      "built_at": "2026-11-10T15:22:35.730Z",
+      "kind": "overpass"
+    },
+    "parking": {
+      "count": 33704,
+      "bytes": 2073335,
+      "built_at": "2026-11-10T15:22:50.008Z",
+      "kind": "overpass"
+    },
+    "supermarket": {
+      "count": 3749,
+      "bytes": 259850,
+      "built_at": "2026-11-10T15:22:58.639Z",
+      "kind": "overpass"
+    },
+    "atm": {
+      "count": 2779,
+      "bytes": 190873,
+      "built_at": "2026-11-10T15:23:08.279Z",
+      "kind": "overpass"
+    },
+    "hospital": {
+      "count": 174,
+      "bytes": 15549,
+      "built_at": "2026-11-10T15:23:18.586Z",
+      "kind": "overpass"
+    },
+    "clinic": {
+      "count": 1268,
+      "bytes": 105027,
+      "built_at": "2026-11-10T15:23:43.407Z",
+      "kind": "overpass"
+    },
+    "dentist": {
+      "count": 372,
+      "bytes": 30139,
+      "built_at": "2026-11-10T15:23:51.507Z",
+      "kind": "overpass"
+    },
+    "pharmacy": {
+      "count": 962,
+      "bytes": 72270,
+      "built_at": "2026-11-10T15:23:59.565Z",
+      "kind": "overpass"
+    },
+    "fire_station": {
+      "count": 1679,
+      "bytes": 132772,
+      "built_at": "2026-11-10T15:24:07.361Z",
+      "kind": "overpass"
+    },
+    "police": {
+      "count": 382,
+      "bytes": 32810,
+      "built_at": "2026-11-10T15:24:14.212Z",
+      "kind": "overpass"
+    },
+    "pipe": {
+      "count": 2978,
+      "bytes": 185967,
+      "built_at": "2026-11-10T15:24:20.628Z",
+      "kind": "overpass"
+    },
+    "bus_station": {
+      "count": 20025,
+      "bytes": 1550629,
+      "built_at": "2026-11-10T15:24:41.237Z",
+      "kind": "overpass"
+    },
+    "train_station": {
+      "count": 568,
+      "bytes": 40936,
+      "built_at": "2026-11-10T15:24:48.456Z",
+      "kind": "overpass"
+    },
+    "camp": {
+      "count": 313,
+      "bytes": 24224,
+      "built_at": "2026-11-10T15:24:55.356Z",
+      "kind": "overpass"
+    },
+    "aerodrome": {
+      "count": 64,
+      "bytes": 5456,
+      "built_at": "2026-11-10T15:25:01.151Z",
+      "kind": "overpass"
+    },
+    "cemetery": {
+      "count": 1720,
+      "bytes": 119996,
+      "built_at": "2026-11-10T15:25:09.334Z",
+      "kind": "overpass"
+    },
+    "motorway_jct": {
+      "count": 647,
+      "bytes": 48098,
+      "built_at": "2026-11-10T15:25:19.002Z",
+      "kind": "overpass"
+    },
+    "beach": {
+      "count": 325,
+      "bytes": 21619,
+      "built_at": "2026-11-10T15:25:28.218Z",
+      "kind": "overpass"
+    },
+    "racetrack": {
+      "count": 197,
+      "bytes": 13182,
+      "built_at": "2026-11-10T15:26:00.067Z",
+      "kind": "overpass"
+    },
+    "pitch": {
+      "count": 10210,
+      "bytes": 635465,
+      "built_at": "2026-11-10T15:26:13.545Z",
+      "kind": "overpass"
+    },
+    "fitness": {
+      "count": 634,
+      "bytes": 40235,
+      "built_at": "2026-11-10T15:26:23.567Z",
+      "kind": "overpass"
+    },
+    "toilets": {
+      "count": 1558,
+      "bytes": 95008,
+      "built_at": "2026-11-10T15:26:30.871Z",
+      "kind": "overpass"
+    },
+    "transmitter": {
+      "count": 2002,
+      "bytes": 123681,
+      "built_at": "2026-11-10T15:26:45.011Z",
+      "kind": "overpass"
+    },
+    "speed_camera": {
+      "count": 790,
+      "bytes": 52502,
+      "built_at": "2026-11-10T15:27:12.647Z",
+      "kind": "overpass"
+    },
+    "post_office": {
+      "count": 907,
+      "bytes": 69505,
+      "built_at": "2026-11-10T15:27:25.368Z",
+      "kind": "overpass"
+    },
+    "sex_shop": {
+      "count": 28,
+      "bytes": 1975,
+      "built_at": "2026-11-10T15:27:30.436Z",
+      "kind": "overpass"
+    },
+    "tunnel": {
+      "count": 3440,
+      "bytes": 222555,
+      "built_at": "2026-11-10T15:27:42.614Z",
+      "kind": "overpass"
+    },
+    "viaduct": {
+      "count": 1652,
+      "bytes": 104603,
+      "built_at": "2026-11-10T15:27:58.106Z",
+      "kind": "overpass"
+    },
+    "motorway_tunnel": {
+      "count": 225,
+      "bytes": 16727,
+      "built_at": "2026-11-10T15:28:10.369Z",
+      "kind": "overpass"
+    },
+    "motorway_bridge": {
+      "count": 1607,
+      "bytes": 111053,
+      "built_at": "2026-11-10T15:28:22.838Z",
+      "kind": "overpass"
+    },
+    "wd_castles": {
+      "count": 246,
+      "bytes": 19493,
+      "built_at": "2026-11-10T15:28:41.690Z",
+      "kind": "external"
+    },
+    "wd_monuments": {
+      "count": 1000,
+      "bytes": 73046,
+      "built_at": "2026-11-10T15:28:53.362Z",
+      "kind": "external"
+    },
+    "wd_museums": {
+      "count": 91,
+      "bytes": 8062,
+      "built_at": "2026-11-10T15:29:03.398Z",
+      "kind": "external"
+    },
+    "ev_charging": {
+      "count": 1223,
+      "bytes": 80856,
+      "built_at": "2026-11-10T15:30:03.976Z",
+      "kind": "overpass"
     }
   }
 }

@@ -90,8 +90,10 @@ export const CAVES_SOURCE_URL =
   "https://media.base44.com/files/public/69ad3ce309822f8e71f66838/9cc867130_kataster_jame_13344.json";
 
 // ── Non-OSM sources ─────────────────────────────────────────────────────────
+// OpenChargeMap now requires an API key (?key=…). Without one, EV chargers come from OSM instead.
 export const OPENCHARGEMAP_URL =
   "https://api.openchargemap.io/v3/poi/?output=json&countrycode=SI&maxresults=2000&compact=true";
+export const EV_CHARGING_OSM_QUERY = `[out:json][timeout:45];(node["amenity"="charging_station"](45.4,13.4,46.9,16.6);way["amenity"="charging_station"](45.4,13.4,46.9,16.6););out center;`;
 
 export const WIKIDATA_SPARQL_URL = "https://query.wikidata.org/sparql";
 
@@ -122,10 +124,12 @@ export const WIKIDATA_QUERIES = {
     } LIMIT 500`,
 };
 
-export const WIKIPEDIA_GEOSEARCH_URL =
-  `https://sl.wikipedia.org/w/api.php?action=query&list=geosearch` +
-  `&gsbbox=${SI_BBOX.minLat},${SI_BBOX.minLon}%7C${SI_BBOX.maxLat},${SI_BBOX.maxLon}` +
-  `&gslimit=500&format=json&origin=*`;
+// MediaWiki geosearch bbox is "top|left|bottom|right" (max 500 results per call)
+export function wikipediaGeosearchUrl(top = SI_BBOX.maxLat, left = SI_BBOX.minLon, bottom = SI_BBOX.minLat, right = SI_BBOX.maxLon) {
+  return `https://sl.wikipedia.org/w/api.php?action=query&list=geosearch` +
+    `&gsbbox=${top}%7C${left}%7C${bottom}%7C${right}&gslimit=500&format=json&origin=*`;
+}
+export const WIKIPEDIA_GEOSEARCH_URL = wikipediaGeosearchUrl();
 
 // Bundled data file ids that are not plain POI categories
 export const EXTRA_DATASETS = ["caves", "municipalities", "places", "third_dev_axis"];

@@ -15,7 +15,7 @@ import path from "node:path";
 
 import {
   CATEGORIES, MUNICIPALITY_QUERY, PLACES_QUERY, H8_QUERY, CAVES_SOURCE_URL,
-  OPENCHARGEMAP_URL, WIKIDATA_SPARQL_URL, WIKIDATA_QUERIES, WIKIPEDIA_GEOSEARCH_URL,
+  OPENCHARGEMAP_URL, EV_CHARGING_OSM_QUERY, WIKIDATA_SPARQL_URL, WIKIDATA_QUERIES, wikipediaGeosearchUrl, SI_BBOX,
 } from "../src/data/categories.js";
 import {
   parseOverpassPoints, normalizeCave, parseMunicipalities, parsePlaces, parseH8Lines,
@@ -43,17 +43,21 @@ const only = onlyIdx >= 0 ? new Set((args[onlyIdx + 1] || "").split(",").filter(
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-async function fetchJson(url, init = {}, tries = 3) {
+async function fetchJson(url, init = {}, tries = 4) {
   let lastErr;
   for (let i = 0; i < tries; i++) {
     try {
-      const res = await fetch(url, { ...init, headers: { Accept: "application/json", "User-Agent": "SloveniaGISExplorer/1.0 offline-data", ...(init.headers || {}) } });
-      if (res.status === 429 || res.status >= 500) throw new Error(`HTTP ${res.status}`);
+      const res = await fetch(url, { ...init, headers: { Accept: "application/json", "User-Agent": "SloveniaGISExplorer/1.0 offline-data (contact: github FrancAiPomocnik-MAP)", ...(init.headers || {}) } });
+      if (res.status === 429) {
+        const retryAfter = parseInt(res.headers.get("retry-after") || "0", 10);
+        await sleep(Math.max(retryAfter * 1000, 15000 * (i + 1))); // rate limited: wait and retry
+        throw new Error("HTTP 429");
+      }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return await res.json();
     } catch (e) {
       lastErr = e;
-      await sleep(2000 * (i + 1));
+      if (!/429/.test(String(e.message))) await sleep(2000 * (i + 1));
     }
   }
   throw lastErr;
@@ -95,7 +99,14 @@ datasets.push({ id: "third_dev_axis", kind: "overpass", run: async () => parseH8
 for (const cat of CATEGORIES) {
   if (cat._caveDbLayer || cat._municipalityLayer) continue;
   if (cat._source === "openchargemap") {
-    datasets.push({ id: cat.id, kind: "external", run: async () => parseOpenChargeMap(await fetchJson(OPENCHARGEMAP_URL)) });
+    // OpenChargeMap needs an API key (OPENCHARGEMAP_API_KEY); otherwise use OSM charging stations
+    const ocmKey = process.env.OPENCHARGEMAP_API_KEY;
+    datasets.push({
+      id: cat.id, kind: ocmKey ? "external" : "overpass",
+      run: async () => ocmKey
+        ? parseOpenChargeMap(await fetchJson(`${OPENCHARGEMAP_URL}&key=${encodeURIComponent(ocmKey)}`))
+        : parseOverpassPoints(await overpass(EV_CHARGING_OSM_QUERY)),
+    });
   } else if (cat._source?.startsWith("wikidata_")) {
     const sparql = WIKIDATA_QUERIES[cat.id];
     datasets.push({
@@ -103,7 +114,24 @@ for (const cat of CATEGORIES) {
       run: async () => parseWikidata(await fetchJson(`${WIKIDATA_SPARQL_URL}?format=json&query=${encodeURIComponent(sparql)}`, { headers: { Accept: "application/sparql-results+json" } })),
     });
   } else if (cat._source === "wikipedia") {
-    datasets.push({ id: cat.id, kind: "external", run: async () => parseWikipedia(await fetchJson(WIKIPEDIA_GEOSEARCH_URL)) });
+    // geosearch returns at most 500 hits per call → sweep Slovenia in 0.25° cells and dedupe by pageid
+    datasets.push({
+      id: cat.id, kind: "external",
+      run: async () => {
+        const STEP = 0.25;
+        const byId = new Map();
+        for (let lat = SI_BBOX.minLat; lat < SI_BBOX.maxLat; lat += STEP) {
+          for (let lon = SI_BBOX.minLon; lon < SI_BBOX.maxLon; lon += STEP) {
+            const top = Math.min(lat + STEP, SI_BBOX.maxLat), right = Math.min(lon + STEP, SI_BBOX.maxLon);
+            const url = wikipediaGeosearchUrl(top.toFixed(3), lon.toFixed(3), lat.toFixed(3), right.toFixed(3));
+            const feats = parseWikipedia(await fetchJson(url));
+            for (const f of feats) byId.set(f.pageid ?? `${f.coords[0]},${f.coords[1]}`, f);
+            await sleep(1200); // be polite to the Wikimedia API
+          }
+        }
+        return Array.from(byId.values()).map(({ pageid: _p, ...f }) => f);
+      },
+    });
   } else if (cat.query) {
     datasets.push({ id: cat.id, kind: "overpass", run: async () => parseOverpassPoints(await overpass(cat.query)) });
   }
