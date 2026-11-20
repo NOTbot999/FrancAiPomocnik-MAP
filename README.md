@@ -32,6 +32,19 @@ Vir jam je javna datoteka katastra, POI kategorije pridejo iz Overpass (OSM) —
 rotira med zrcali in spoštuje omejitve (zaporedno, z zamikom). Datoteke v `public/data` se
 commitajo v repozitorij, da svež klon deluje offline.
 
+## Namizna aplikacija (Windows)
+
+1. Razširi `FrancMap-1.3.0-Windows.zip` kamorkoli (npr. v Dokumente).
+2. Zaženi `FrancMap-1.3.0\FrancMap.exe`.
+3. Windows SmartScreen lahko opozori, ker aplikacija ni podpisana: *Več informacij → Vseeno zaženi*.
+
+Aplikacija vsebuje vse podatke (jame, POI, občine) in deluje brez povezave; ploščice kart
+se shranjujejo med uporabo ali prek plošče *Brez povezave*. Nastavitve in shranjene ploščice
+ostanejo med zagoni.
+
+Ponovna gradnja: na Windows zaženi `build.bat` (ali `npm run desktop:win`), zip nastane v
+mapi `release\`. Na Linuxu: `npm run desktop:linux`. Razvoj: `npm run desktop:dev`.
+
 ## Razvoj
 
 ```bash

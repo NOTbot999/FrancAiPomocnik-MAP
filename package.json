@@ -10,7 +10,10 @@
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p ./jsconfig.json",
     "preview": "vite preview",
-    "fetch-data": "node scripts/fetch-offline-data.mjs"
+    "fetch-data": "node scripts/fetch-offline-data.mjs",
+    "desktop:dev": "vite build && electron desktop/main.cjs",
+    "desktop:win": "node scripts/build-desktop.mjs win32",
+    "desktop:linux": "node scripts/build-desktop.mjs linux"
   },
   "dependencies": {
     "@base44/sdk": "^0.8.57",
@@ -81,6 +84,7 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@electron/packager": "^18.3.6",
     "@eslint/js": "^9.19.0",
     "@types/node": "^22.13.5",
     "@types/react": "^18.2.66",
@@ -88,6 +92,7 @@
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
     "baseline-browser-mapping": "^2.8.32",
+    "electron": "^33.2.1",
     "eslint": "^9.19.0",
     "eslint-plugin-react": "^7.37.4",
     "eslint-plugin-react-hooks": "^5.0.0",

@@ -1,0 +1,8 @@
+{
+  "name": "francmap",
+  "productName": "FrancMap",
+  "version": "1.3.0",
+  "description": "FrancMap — GIS Explorer Slovenije (namizna aplikacija, deluje tudi brez povezave)",
+  "main": "main.cjs",
+  "private": true
+}

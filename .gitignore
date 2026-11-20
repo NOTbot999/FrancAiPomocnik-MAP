@@ -29,3 +29,6 @@ dist-ssr
 
 .env
 base44/.app.jsonc
+
+# Desktop app build output
+release
