@@ -23,6 +23,8 @@ const P = {
   chevron: '<path d="m9 6 6 6-6 6"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',
   minus: '<path d="M5 12h14"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  image: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/>',
   menu: '<path d="M4 6h16M4 12h16M4 18h16"/>',
   chevronUp: '<path d="m6 15 6-6 6 6"/>',
   grip: '<circle cx="9" cy="6" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/>',

@@ -485,3 +485,24 @@ label.check { display: flex; align-items: center; gap: 8px; cursor: pointer; }
   #app { grid-template-rows: var(--top-h) 1fr; grid-template-areas: "top" "map"; }
   #panel { bottom: 0; padding-bottom: env(safe-area-inset-bottom); }
 }
+
+/* ── layer list: picture view ("Slike") ── */
+.view-seg { padding: 2px; }
+.view-seg button { padding: 4px 7px; }
+.view-seg svg.i { width: 15px; height: 15px; }
+.layer-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 2px; }
+.layer-card { position: relative; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--surface-2); cursor: pointer; min-width: 0; }
+.layer-card:hover { border-color: color-mix(in srgb, var(--accent) 60%, var(--border)); }
+.layer-card.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+.layer-card .lt { position: relative; aspect-ratio: 4 / 3; background: #d6dbe1; overflow: hidden; }
+.layer-card .lt img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.layer-card .lt-icon { display: grid; place-items: center; color: var(--text-3); background: var(--surface-3); }
+.layer-card .lt-icon svg.i { width: 30px; height: 30px; }
+.layer-card .lc-name { padding: 5px 7px 6px; font-size: 12px; font-weight: 600; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: calc(2 * 1.25em + 11px); }
+.layer-card.broken .lc-name { color: var(--danger); }
+.layer-card.broken .lt { opacity: .4; filter: grayscale(1); }
+.layer-card .lc-check { position: absolute; top: 6px; left: 6px; width: 22px; height: 22px; border-radius: 6px; display: grid; place-items: center; background: rgba(15, 23, 42, .55); color: transparent; border: 1.5px solid rgba(255, 255, 255, .8); }
+.layer-card.on .lc-check { background: var(--accent); border-color: var(--accent); color: #fff; }
+.layer-card .lc-check svg.i { width: 14px; height: 14px; stroke-width: 3; }
+.layer-card .star { position: absolute; top: 4px; right: 4px; background: rgba(15, 23, 42, .55); color: #fff; border-radius: 7px; }
+.layer-card .star.on { color: #fbbf24; }

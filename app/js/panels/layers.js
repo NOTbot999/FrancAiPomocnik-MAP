@@ -13,6 +13,25 @@ function thumbUrl(id) {
   return `${tileHost(TILE_SUBDOMAINS[0])}/tiles/${id}/9/${x}/${y}`;
 }
 
+// Picture view ("Slike"): a map tile of Ljubljana with the layer on top of the current base map.
+// Layers that only draw from a certain zoom are shown at that zoom.
+const PREVIEW_AT = [46.045, 14.505];
+function tileAt(id, z, x, y) {
+  if (IS_WEB) return tileUrl(state.layerIndex[id], z, x, y);
+  return `${tileHost(TILE_SUBDOMAINS[(x + y) % TILE_SUBDOMAINS.length])}/tiles/${id}/${z}/${x}/${y}`;
+}
+function previewHtml(l) {
+  if (!["wms", "tile", "arcgis_export"].includes(l.type)) {
+    return `<div class="lt lt-icon">${icon(l.type === "live_flights" ? "navigation" : "route")}</div>`;
+  }
+  const z = Math.max(l.minZoom || 0, 13);
+  const { x, y } = tileXY(PREVIEW_AT[0], PREVIEW_AT[1], z);
+  return `<div class="lt">
+    <img src="${tileAt(state.settings.base, z, x, y)}" alt="" loading="lazy" decoding="async" onerror="this.style.visibility='hidden'">
+    <img src="${tileAt(l.id, z, x, y)}" alt="" loading="lazy" decoding="async" onerror="this.style.visibility='hidden'">
+  </div>`;
+}
+
 function legendUrl(cfg) {
   if (cfg.type !== "wms") return null;
   const lyr = cfg.layers.split(",")[0];
@@ -62,6 +81,19 @@ export const layersPanel = {
         <button class="icon-btn sm star ${s.favorites.includes(l.id) ? "on" : ""}" data-fav="${l.id}" title="Priljubljen">${icon("star")}</button>
       </div>`;
 
+    const card = (l) => `
+      <div class="layer-card ${isOverlayOn(l.id) ? "on" : ""} ${isBroken(l.id) ? "broken" : ""}" data-toggle-name="${l.id}" title="${esc(brokenReason(l.id) || l.description || l.name)}">
+        ${previewHtml(l)}
+        <span class="lc-check">${icon("check")}</span>
+        <button class="icon-btn sm star ${s.favorites.includes(l.id) ? "on" : ""}" data-fav="${l.id}" title="Priljubljen">${icon("star")}</button>
+        <div class="lc-name">${esc(layerName(l))}</div>
+      </div>`;
+    const thumbs = s.layerView === "thumbs";
+    const list = (layers) => thumbs ? `<div class="layer-grid">${layers.map(card).join("")}</div>` : layers.map(row).join("");
+    const viewSeg = `<div class="seg view-seg" role="group" aria-label="Prikaz slojev">
+        <button class="${thumbs ? "" : "on"}" data-view="list" title="Seznam (samo imena)">${icon("menu")}</button>
+        <button class="${thumbs ? "on" : ""}" data-view="thumbs" title="Slike (predogled sloja na karti)">${icon("image")}</button></div>`;
+
     const favs = s.favorites.map((id) => state.layerIndex[id]).filter((l) => l && !l.isBase);
     const cats = db.categories.map((c) => {
       const layers = c.layers.filter((l) => !q || l.name.toLowerCase().includes(q) || (l.description || "").toLowerCase().includes(q));
@@ -70,7 +102,7 @@ export const layersPanel = {
       const open = q || s.openCats.includes(c.id);
       return `<div class="cat ${open ? "open" : ""}" data-cat="${c.id}">
         <button class="cat-head" data-cat-toggle="${c.id}">${icon("chevron", "chev")}<span>${esc(c.name)}</span><span class="n">${n ? n + "/" + c.layers.length : c.layers.length}</span></button>
-        <div class="cat-body">${layers.map(row).join("")}</div>
+        <div class="cat-body">${list(layers)}</div>
       </div>`;
     }).join("");
 
@@ -89,9 +121,9 @@ export const layersPanel = {
         </div>
         <div id="active-list">${activeHtml}</div>
       </div>
-      ${favs.length ? `<div class="section"><div class="section-title">Priljubljeni</div><div class="card" style="padding:4px">${favs.map(row).join("")}</div></div>` : ""}
+      ${favs.length ? `<div class="section"><div class="section-title">Priljubljeni</div><div class="card" style="padding:4px">${list(favs)}</div></div>` : ""}
       <div class="section">
-        <div class="section-title"><span>Vsi sloji</span><button class="btn sm" id="health-run" title="Ponovno preveri, kateri viri delujejo" ${state.healthRunning ? "disabled" : ""}>${icon("refresh")} Preveri</button></div>
+        <div class="section-title"><span>Vsi sloji</span><span class="row">${viewSeg}<button class="btn sm" id="health-run" title="Ponovno preveri, kateri viri delujejo" ${state.healthRunning ? "disabled" : ""}>${icon("refresh")} Preveri</button></span></div>
         ${healthLine ? `<div class="help">${healthLine}</div>` : ""}
         <input type="text" class="field" id="layer-filter" placeholder="Filtriraj sloje…" value="${esc(filter)}">
         <div style="margin-top:8px">${cats || `<div class="empty">Ni zadetkov.</div>`}</div>
@@ -105,9 +137,10 @@ export const layersPanel = {
 
     // events
     el.onclick = (e) => {
-      const t = e.target.closest("[data-base],[data-off],[data-vis],[data-fav],[data-cat-toggle],[data-toggle-name],[data-zoomto],#clear-overlays,#toggle-legends,#health-run");
+      const t = e.target.closest("[data-base],[data-off],[data-vis],[data-fav],[data-cat-toggle],[data-toggle-name],[data-zoomto],[data-view],#clear-overlays,#toggle-legends,#health-run");
       if (!t) return;
-      if (t.dataset.base) { setBase(t.dataset.base); }
+      if (t.dataset.view) { s.layerView = t.dataset.view; saveSettings(); this.render(el); }
+      else if (t.dataset.base) { setBase(t.dataset.base); }
       else if (t.dataset.zoomto) map.setZoom(+t.dataset.zoomto);
       else if (t.id === "health-run") emit("health-run");
       else if (t.dataset.off) toggleOverlay(t.dataset.off, false);
