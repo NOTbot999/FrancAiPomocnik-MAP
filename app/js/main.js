@@ -36,7 +36,6 @@ function openPanel(id) {
   $("#panel").classList.toggle("layers-mode", id === "layers");      // original dark layer menu
   $("#panel").classList.toggle("settings-mode", id === "settings");
   $("#panel-title").innerHTML = id === "layers" ? `<span class="ph-icon">${icon("layers")}</span>${p.title}` : p.title;
-  $$("#rail button").forEach((b) => b.classList.toggle("active", b.dataset.panel === id));
   p.onOpen?.();
   renderPanel();
   $("#panel-body").scrollTop = 0;
@@ -50,7 +49,6 @@ function closePanel({ keepTools = false } = {}) {
   current = null;
   $("#panel").classList.add("hidden");
   document.body.classList.toggle("panel-open", false);
-  $$("#rail button").forEach((b) => b.classList.remove("active"));
   renderFab();
   setTimeout(() => map.invalidateSize({ pan: false }), 0);
 }
@@ -61,14 +59,12 @@ function renderPanel() {
   hydrateIcons($("#panel-body"));
 }
 
-function updateBadges() {
-  const counts = { layers: state.settings.overlays.length, poi: state.settings.pois.length, draw: getDrawings().length };
-  $$("#rail button").forEach((b) => {
-    b.querySelector(".count")?.remove();
-    const n = counts[b.dataset.panel];
-    if (n) b.insertAdjacentHTML("beforeend", `<span class="count">${n}</span>`);
-  });
+// counts on the column's buttons (layers, points, drawings); "any" = total, shown on the folded toggle
+function badgeCount(id) {
+  const c = { layers: state.settings.overlays.length, poi: state.settings.pois.length, draw: getDrawings().length };
+  return id === "any" ? c.layers + c.poi + c.draw : c[id] || 0;
 }
+function updateBadges() { renderFab(); }
 
 function updateNetBadge(st) {
   const b = $("#net-badge");
@@ -185,18 +181,13 @@ async function boot() {
       poi: current === "poi", draw: current === "draw", compare: current === "compare",
       gps: isRecording(), lidar: isOverlayOn("gurs_lidar"),
     })[id] || false,
-    badge: (id) => (id === "layers" ? state.settings.overlays.length : 0),
+    badge: badgeCount,
     onMoved: saveSettings,      // column dragged to a new spot
   });
   on("gps-tracking", renderFab);
   on("collab", renderFab);
 
-  // rail / panel
-  $("#rail").addEventListener("click", (e) => {
-    const b = e.target.closest("[data-panel]");
-    if (!b) return;
-    current === b.dataset.panel ? closePanel() : openPanel(b.dataset.panel);
-  });
+  // panel
   $("#panel-close").onclick = closePanel;
   $("#theme-btn").onclick = () => {
     state.settings.theme = document.documentElement.dataset.theme === "dark" ? "light" : "dark";

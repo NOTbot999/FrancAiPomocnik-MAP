@@ -474,3 +474,14 @@ label.check { display: flex; align-items: center; gap: 8px; cursor: pointer; }
 
 /* fast point layer (pointlayer.js): pointer over a cave / POI dot */
 .leaflet-container.fm-pt-hover, .leaflet-container.fm-pt-hover .leaflet-interactive { cursor: pointer !important; }
+
+/* ── 1.5.2: the left bar is merged into the right button column (ui/fab.js) ── */
+:root { --rail-w: 0px; }
+#app { grid-template-areas: "top top top" "rail panel map" "status status status"; }
+.fab-fold { color: var(--accent); }
+.fab-col.folded .fab-fold { background: var(--accent); color: #fff; border-color: var(--accent); }
+@media (max-width: 700px) {
+  :root { --nav-h: 0px; }
+  #app { grid-template-rows: var(--top-h) 1fr; grid-template-areas: "top" "map"; }
+  #panel { bottom: 0; padding-bottom: env(safe-area-inset-bottom); }
+}

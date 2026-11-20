@@ -1,7 +1,7 @@
 // Browser-only backend for the web version (spletna različica): no local server, so the app talks
 // to the map services directly and keeps settings / drawings / tracks in this browser's storage.
 // Mirrors the endpoints of app.py (desktop) and Backend.java (Android) that make sense on the web.
-const VERSION = "1.5.1";
+const VERSION = "1.5.2";
 const OVERPASS_MIRRORS = [
   "https://overpass-api.de/api/interpreter",
   "https://overpass.private.coffee/api/interpreter",
