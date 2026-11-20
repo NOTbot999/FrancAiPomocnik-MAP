@@ -7,10 +7,11 @@ import { overpass } from "../api.js";
 import { esc, toast, fmtNum, fmtLatLng, toD96, $ } from "../util.js";
 import { icon } from "../icons.js";
 import { pointPopup } from "../popup.js";
+import { PointLayer } from "../pointlayer.js";
 
 const loaded = new Map();   // catId -> { features, layer }
 const loading = new Set();
-let renderer;
+const showGen = new Map();  // catId -> latest showCategory() call (older overlapping calls bail out)
 let panelEl = null;
 
 export function poiCategories() { return state.db.pois; }
@@ -105,26 +106,27 @@ export async function loadCategory(cat, { force = false, silent = false } = {}) 
 export async function showCategory(id, force = false) {
   const cat = state.db.pois.find((c) => c.id === id);
   if (!cat) return;
+  const gen = (showGen.get(id) || 0) + 1;
+  showGen.set(id, gen);
   let features;
   try { features = await loadCategory(cat, { force }); } catch { return; }
-  if (!state.settings.pois.includes(id)) return; // toggled off while loading
+  if (showGen.get(id) !== gen) return;               // a newer call (filter change, refresh) took over
+  if (!state.settings.pois.includes(id)) return;     // toggled off while loading
   hideLayer(id);
-  renderer ||= L.canvas({ padding: 0.4, pane: "vectors" });
-  const layer = L.featureGroup();
   const isCave = id === "cave";
-  for (const f of features) {
-    // caves: marker size grows with cave length (log scale) so big systems stand out
-    const ms = state.settings.ui?.markerSize || 18;   // "Velikost označb" (px diameter)
-    const radius = isCave ? ms / 6 + Math.min(6, Math.log10((f.len || 0) + 1) * 1.5) * ms / 18 : ms / 3;
-    const m = L.circleMarker([f.lat, f.lng], {
-      renderer, radius, weight: isCave ? 1 : 2, color: isCave ? "#3b1d06" : "#fff", fillColor: isCave ? "#f59e0b" : cat.color, fillOpacity: 0.95, bubblingMouseEvents: false,
-    });
-    m.bindTooltip(isCave ? caveTooltip(f) : `${emo(cat)} ${esc(f.name || cat.label)}`, { direction: "top", offset: [0, -6] });
-    m.on("click", () => isCave
+  const ms = state.settings.ui?.markerSize || 18;    // "Velikost označb" (px diameter)
+  // caves: marker size grows with cave length (log scale) so big systems stand out
+  const points = features.map((f) => ({
+    lat: f.lat, lng: f.lng, f,
+    r: isCave ? ms / 6 + Math.min(6, Math.log10((f.len || 0) + 1) * 1.5) * ms / 18 : ms / 3,
+    w: isCave ? 1 : 2, stroke: isCave ? "#3b1d06" : "#fff", fill: isCave ? "#f59e0b" : cat.color,
+  }));
+  const layer = new PointLayer(points, {
+    tooltip: ({ f }) => isCave ? caveTooltip(f) : `${emo(cat)} ${esc(f.name || cat.label)}`,
+    onClick: ({ f }) => isCave
       ? pointPopup([f.lat, f.lng], { title: `${emo(cat)} ${f.name}`, subtitle: `Kataster jam · št. ${f.ref}`, tags: f.tags })
-      : pointPopup([f.lat, f.lng], { title: `${emo(cat)} ${f.name || cat.label}`, subtitle: cat.label, tags: f.tags }));
-    layer.addLayer(m);
-  }
+      : pointPopup([f.lat, f.lng], { title: `${emo(cat)} ${f.name || cat.label}`, subtitle: cat.label, tags: f.tags }),
+  });
   layer.addTo(map);
   loaded.set(id, { features, layer });
   if (isCave && caveDb && features.length < caveDb.count && !quietReload) {

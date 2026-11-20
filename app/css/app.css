@@ -471,3 +471,6 @@ label.check { display: flex; align-items: center; gap: 8px; cursor: pointer; }
 @media (max-width: 700px) {
   body.panel-open .fab-col { max-height: calc(100% - min(64dvh, 560px) - 12px); }
 }
+
+/* fast point layer (pointlayer.js): pointer over a cave / POI dot */
+.leaflet-container.fm-pt-hover, .leaflet-container.fm-pt-hover .leaflet-interactive { cursor: pointer !important; }
