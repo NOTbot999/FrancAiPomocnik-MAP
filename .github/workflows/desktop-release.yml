@@ -1,16 +1,23 @@
 # Builds the FrancMap Windows desktop app on a Windows runner and publishes it as a
 # GitHub Release, so it can be downloaded from a public link without an account.
-# Trigger: push a tag like v1.3.0 (or run manually from the Actions tab with a tag name).
+# Triggers: a push that changes the desktop app or this workflow, a pushed tag like v1.3.0,
+# or a manual run from the Actions tab. The release tag is v<version from desktop/package.json>
+# unless a tag push or a manual input says otherwise; gh creates the tag if it is missing.
 name: Desktop release (Windows)
 
 on:
   push:
+    branches: ["**"]
     tags: ["v*"]
+    paths:
+      - "desktop/**"
+      - "scripts/build-desktop.mjs"
+      - ".github/workflows/desktop-release.yml"
   workflow_dispatch:
     inputs:
       tag:
-        description: "Release tag to create/update (e.g. v1.3.0)"
-        required: true
+        description: "Release tag to create/update (default: v<desktop/package.json version>)"
+        required: false
 
 permissions:
   contents: write
@@ -36,8 +43,12 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.event.inputs.tag || github.ref_name }}
+          INPUT_TAG: ${{ github.event.inputs.tag }}
         run: |
+          if [ -n "$INPUT_TAG" ]; then TAG="$INPUT_TAG"
+          elif [ "$GITHUB_REF_TYPE" = "tag" ]; then TAG="$GITHUB_REF_NAME"
+          else TAG="v$(node -p "require('./desktop/package.json').version")"; fi
+          echo "Release tag: $TAG"
           ZIP=$(ls release/*.zip)
           NOTES="FrancMap for Windows. Download the zip, unzip it anywhere and run FrancMap.exe.
           If Windows SmartScreen warns (unsigned app): More info -> Run anyway.
