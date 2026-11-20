@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="sl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Franc Map — zemljevid Slovenije z uradnimi kartami, katastrom jam in delom brez signala.">
+<style>[hidden]{display:none!important}</style>
+<title>Franc Map</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: contour-map hero (canvas) → download dock → feature grid → screenshots rail → requirements table → sources.
+   Palette and accent come from the app itself (navy surfaces, teal accent, teal→sea-blue logo gradient). Dark-first. */
+:root {
+  --bg: #0b1220;          /* app navy */
+  --bg-2: #111a2c;        /* raised surface */
+  --line: #22304b;        /* hairlines, contour ink */
+  --fg: #e6ecf5;
+  --fg-2: #a5b2c8;
+  --fg-3: #6d7d98;
+  --accent: #2dd4bf;      /* app teal */
+  --accent-ink: #042f2e;
+  --sea: #0369a1;         /* logo gradient end */
+  --amber: #f59e0b;       /* cave markers */
+  --contour: rgba(45, 212, 191, .16);
+  --shadow: 0 18px 50px rgba(0, 0, 0, .45);
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "Inter", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", "Cascadia Mono", Consolas, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #f3f6f9; --bg-2: #ffffff; --line: #d7dfe9; --fg: #0f172a; --fg-2: #46546b; --fg-3: #7b889c;
+    --accent: #0d9488; --accent-ink: #ffffff; --sea: #0369a1; --amber: #d97706;
+    --contour: rgba(13, 148, 136, .16); --shadow: 0 18px 44px rgba(15, 23, 42, .14); color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #f3f6f9; --bg-2: #ffffff; --line: #d7dfe9; --fg: #0f172a; --fg-2: #46546b; --fg-3: #7b889c;
+  --accent: #0d9488; --accent-ink: #ffffff; --sea: #0369a1; --amber: #d97706;
+  --contour: rgba(13, 148, 136, .16); --shadow: 0 18px 44px rgba(15, 23, 42, .14); color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.55 var(--body); -webkit-font-smoothing: antialiased; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { font-family: var(--display); margin: 0; text-wrap: balance; letter-spacing: -.02em; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+.eyebrow { font: 600 12px/1 var(--body); letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
+.mono { font-family: var(--mono); font-size: 13px; }
+
+/* ── preview ribbon ── */
+.ribbon { background: color-mix(in srgb, var(--amber) 16%, var(--bg)); border-bottom: 1px solid color-mix(in srgb, var(--amber) 40%, transparent); color: var(--fg); font-size: 13px; }
+.ribbon .wrap { padding-block: 8px; display: flex; gap: 8px; align-items: center; }
+.ribbon b { color: var(--amber); }
+
+/* ── nav ── */
+.nav .wrap { display: flex; align-items: center; gap: 14px; padding-block: 18px; }
+.logo { width: 38px; height: 38px; border-radius: 11px; display: grid; place-items: center; font: 800 20px var(--display); color: #fff; background: linear-gradient(135deg, #14b8a6, var(--sea)); box-shadow: 0 6px 18px rgba(3, 105, 161, .35); }
+.brand { font: 700 19px var(--display); }
+.brand small { display: block; font: 500 12px var(--body); color: var(--fg-3); letter-spacing: 0; }
+.nav nav { margin-left: auto; display: flex; gap: 22px; font-size: 14px; color: var(--fg-2); }
+.nav nav a { text-decoration: none; }
+.nav nav a:hover { color: var(--fg); }
+
+/* ── hero with contour canvas ── */
+.hero { position: relative; overflow: hidden; border-bottom: 1px solid var(--line); }
+#contours { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.hero .wrap { position: relative; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: 40px; align-items: center; padding-block: 56px 64px; }
+.hero h1 { font-size: clamp(38px, 6.2vw, 72px); line-height: .98; font-weight: 800; }
+.hero h1 em { font-style: normal; background: linear-gradient(100deg, var(--accent), var(--sea)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.lede { font-size: 18px; color: var(--fg-2); max-width: 34em; margin: 18px 0 26px; }
+.coord { display: inline-flex; gap: 10px; flex-wrap: wrap; align-items: center; padding: 7px 12px; border: 1px solid var(--line); border-radius: 8px; background: color-mix(in srgb, var(--bg-2) 80%, transparent); color: var(--fg-2); }
+.coord b { color: var(--fg); font-weight: 500; }
+.cta-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
+.btn { display: inline-flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 20px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg-2); color: var(--fg); font: 600 15px var(--body); text-decoration: none; cursor: pointer; transition: transform .12s, border-color .12s, background .12s; }
+.btn:hover { border-color: var(--accent); transform: translateY(-1px); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn svg { width: 20px; height: 20px; flex: none; }
+.phone-stack { position: relative; height: 470px; }
+.phone { position: absolute; width: 214px; border-radius: 28px; padding: 7px; background: #05080f; box-shadow: var(--shadow); border: 1px solid #263248; }
+.phone img { display: block; width: 100%; border-radius: 22px; }
+.phone.a { right: 150px; top: 18px; transform: rotate(-5deg); }
+.phone.b { right: 0; top: 0; transform: rotate(4deg); }
+
+/* ── download dock ── */
+.section { padding-block: 64px; }
+.sec-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px 24px; margin-bottom: 26px; }
+.sec-head h2 { font-size: clamp(28px, 4vw, 40px); }
+.sec-head p { margin: 0; color: var(--fg-2); max-width: 36em; }
+.dl-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
+.dl { display: flex; flex-direction: column; gap: 14px; padding: 20px; border-radius: 16px; border: 1px solid var(--line); background: var(--bg-2); min-width: 0; }
+.dl .top { display: flex; align-items: center; gap: 12px; }
+.dl .os { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); }
+.dl .os svg { width: 24px; height: 24px; }
+.dl h3 { font-size: 21px; }
+.dl .meta { font-size: 13px; color: var(--fg-3); }
+.dl .spec { font-size: 14px; color: var(--fg-2); margin: 0; flex: 1; }
+.dl .btn { justify-content: center; width: 100%; }
+.dl.soon { background: transparent; border-style: dashed; }
+.dl.soon .os { background: color-mix(in srgb, var(--fg-3) 14%, transparent); color: var(--fg-3); }
+.dl.soon h3, .dl.soon .spec { color: var(--fg-3); }
+.dl.soon .btn { cursor: not-allowed; color: var(--fg-3); background: transparent; border-style: dashed; }
+.dl.soon .btn:hover { transform: none; border-color: var(--line); }
+.tag { align-self: flex-start; font: 600 11px var(--body); letter-spacing: .08em; text-transform: uppercase; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--line); color: var(--fg-3); }
+.tag.live { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 50%, transparent); }
+.note { margin-top: 14px; min-height: 22px; font-size: 14px; color: var(--amber); }
+
+/* ── features ── */
+.feat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 28px 34px; }
+.feat { min-width: 0; }
+.feat .num { font: 800 34px/1 var(--display); color: var(--accent); font-variant-numeric: tabular-nums; }
+.feat h3 { font-size: 19px; margin: 8px 0 6px; }
+.feat p { margin: 0; color: var(--fg-2); font-size: 15px; }
+
+/* ── screenshots rail ── */
+.rail { display: flex; gap: 18px; overflow-x: auto; padding: 4px 2px 18px; scroll-snap-type: x mandatory; }
+.shot { flex: none; scroll-snap-align: start; margin: 0; }
+.shot img { display: block; border-radius: 16px; border: 1px solid var(--line); box-shadow: var(--shadow); max-width: 100%; }
+.shot.p img { width: 230px; }
+.shot.d img { width: min(560px, 82vw); }
+.shot figcaption { margin-top: 10px; font-size: 13px; color: var(--fg-3); }
+
+/* ── requirements table ── */
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; }
+table { width: 100%; border-collapse: collapse; font-size: 15px; min-width: 560px; }
+th, td { text-align: left; padding: 13px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: 600 12px var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--fg-3); background: var(--bg-2); }
+tr:last-child td { border-bottom: 0; }
+td.muted { color: var(--fg-3); }
+
+footer { border-top: 1px solid var(--line); color: var(--fg-3); font-size: 13px; }
+footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; gap: 10px 28px; justify-content: space-between; }
+
+@media (max-width: 860px) {
+  .hero .wrap { grid-template-columns: 1fr; padding-block: 36px 44px; }
+  .phone-stack { height: 380px; max-width: 380px; width: 100%; margin: 0 auto; }
+  .phone { width: 172px; }
+  .phone.a { right: auto; left: 0; }
+  .nav nav { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .btn { transition: none; } }
+</style>
+
+</head>
+<body>
+<div class="ribbon" id="ribbon" hidden><div class="wrap"><b>Predogled</b> To je predogled strani — spletna različica in prenosi delujejo, ko je stran objavljena.</div></div>
+
+<header class="nav"><div class="wrap">
+  <div class="logo" aria-hidden="true">F</div>
+  <div class="brand">Franc Map<small>Franc AI Pomočnik MAP</small></div>
+  <nav aria-label="Glavni meni"><a href="#prenesi">Prenos</a><a href="#funkcije">Funkcije</a><a href="#posnetki">Posnetki</a><a href="#zahteve">Zahteve</a></nav>
+</div></header>
+
+<section class="hero">
+  <canvas id="contours" aria-hidden="true"></canvas>
+  <div class="wrap">
+    <div>
+      <div class="eyebrow">Zemljevid Slovenije · računalnik in telefon</div>
+      <h1>Slovenija na dlani — <em>tudi brez signala.</em></h1>
+      <p class="lede">Uradne karte GURS, LIDAR, kataster jam, poti, skupno delo in prostor za AI v eni aplikaciji. Odpri jo v brskalniku ali namesti — v aplikaciji ostane vse, kar vidiš, shranjeno tudi brez signala.</p>
+      <div class="coord mono" title="Postojnska jama, kataster št. 747"><span>Postojnska jama</span><b>45.78272, 14.20366</b><span>D96/TM</span><b>e 438078 n 71737</b></div>
+      <div class="cta-row">
+        <a class="btn primary" data-link="web" id="cta-web" href="app/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>Odpri spletno različico</a>
+        <a class="btn" href="#prenesi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Prenesi aplikacijo</a>
+      </div>
+    </div>
+    <div class="phone-stack" aria-label="Posnetka zaslona na telefonu">
+      <div class="phone a"><img src="img/phone-caves.jpg" alt="13.344 jam iz katastra na karti Slovenije"></div>
+      <div class="phone b"><img src="img/phone-cave.jpg" alt="Podrobnosti jame: kataster, dolžina, globina, koordinate"></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="prenesi"><div class="wrap">
+  <div class="sec-head">
+    <div><div class="eyebrow">Različica 1.5.0</div><h2>Izberi svojo napravo</h2></div>
+    <p>Brez računa, brez namestitve s skrbniškimi pravicami. Podatki ostanejo na tvoji napravi.</p>
+  </div>
+  <div class="dl-grid">
+    <article class="dl">
+      <div class="top"><div class="os"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 5.5 10.5 4.4v7.1H3zM11.5 4.3 21 3v8.5h-9.5zM3 12.5h7.5v7.1L3 18.5zM11.5 12.5H21V21l-9.5-1.3z"/></svg></div>
+        <div><h3>Windows</h3><div class="meta">ZIP · 13 MB</div></div></div>
+      <span class="tag live">Na voljo</span>
+      <p class="spec">Windows 10 in 11 (64-bit). Razpakiraj in zaženi <span class="mono">FrancMap.exe</span>.</p>
+      <a class="btn primary" data-link="windows" id="dl-windows" href="downloads/FrancMap-1.5.0-Windows.zip" download><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Prenesi za Windows</a>
+    </article>
+    <article class="dl">
+      <div class="top"><div class="os"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7.2 3.6 8.6 6a7 7 0 0 1 6.8 0l1.4-2.4.9.5-1.4 2.4A6.8 6.8 0 0 1 19 12H5a6.8 6.8 0 0 1 2.7-5.5L6.3 4.1zM9 9.2a.9.9 0 1 0 0 1.8.9.9 0 0 0 0-1.8m6 0a.9.9 0 1 0 0 1.8.9.9 0 0 0 0-1.8M5 13h14v6.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 19.5z"/></svg></div>
+        <div><h3>Android</h3><div class="meta">APK · 0,6 MB</div></div></div>
+      <span class="tag live">Na voljo</span>
+      <p class="spec">Android 8.0 ali novejši. Ob namestitvi dovoli »namestitev neznanih aplikacij«.</p>
+      <a class="btn primary" data-link="android" id="dl-android" href="downloads/FrancMap-1.5.0-Android.apk" download><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Prenesi za Android</a>
+    </article>
+    <article class="dl soon">
+      <div class="top"><div class="os"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5c-2.2 0-3.4 1.9-3.4 4.4 0 1.4.4 2.4.1 3.4-.5 1.6-3.2 3.7-3.2 7.1 0 .9.3 1.7.8 2.3-.6.3-1.1.8-1.1 1.4 0 .9 1.6.9 3 .9 1.1 0 2-.3 2.5-.8.4.1.9.2 1.3.2s.9-.1 1.3-.2c.5.5 1.4.8 2.5.8 1.4 0 3-.1 3-.9 0-.6-.5-1.1-1.1-1.4.5-.6.8-1.4.8-2.3 0-3.4-2.7-5.5-3.2-7.1-.3-1 .1-2 .1-3.4 0-2.5-1.2-4.4-3.4-4.4z"/></svg></div>
+        <div><h3>Linux</h3><div class="meta">AppImage · v pripravi</div></div></div>
+      <span class="tag">Kmalu</span>
+      <p class="spec">Različica za Linux je v načrtu.</p>
+      <button class="btn" disabled aria-disabled="true" id="dl-linux">Kmalu na voljo</button>
+    </article>
+    <article class="dl soon">
+      <div class="top"><div class="os"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.4 12.6c0-2.5 2-3.6 2.1-3.7-1.2-1.7-3-1.9-3.6-2-1.5-.2-3 .9-3.8.9s-2-.9-3.3-.8a4.9 4.9 0 0 0-4.1 2.5c-1.8 3.1-.5 7.6 1.3 10.1.8 1.2 1.8 2.6 3.1 2.5 1.2 0 1.7-.8 3.2-.8s1.9.8 3.2.8 2.2-1.2 3-2.5c1-1.4 1.3-2.7 1.4-2.8-.1 0-2.6-1-2.5-4.2M14 5.2c.7-.8 1.1-1.9 1-3-1 0-2.1.6-2.8 1.4-.6.7-1.2 1.8-1 2.9 1 .1 2.1-.5 2.8-1.3"/></svg></div>
+        <div><h3>Apple</h3><div class="meta">macOS · iPhone · v pripravi</div></div></div>
+      <span class="tag">Kmalu</span>
+      <p class="spec">Različici za Mac in iPhone sta v načrtu.</p>
+      <button class="btn" disabled aria-disabled="true" id="dl-apple">Kmalu na voljo</button>
+    </article>
+  </div>
+  <div class="note" id="dl-note" role="status" aria-live="polite"></div>
+</div></section>
+
+<section class="section" id="funkcije" style="padding-top:0"><div class="wrap">
+  <div class="sec-head"><div><div class="eyebrow">Kaj zna</div><h2>Narejeno za teren</h2></div></div>
+  <div class="feat-grid">
+    <div class="feat"><div class="num">88</div><h3>Slojev karte</h3><p>Ortofoto, LIDAR senčenje, kataster parcel, GJI omrežja, Natura 2000 in zgodovinski posnetki. Nedelujoči viri so označeni z X.</p></div>
+    <div class="feat"><div class="num">13.344</div><h3>Jam iz katastra</h3><p>Vsaka jama s številko katastra, dolžino in globino. Filtri za najdaljše in najgloblje, iskanje po imenu.</p></div>
+    <div class="feat"><div class="num">0 kB</div><h3>Potrebnega signala</h3><p>Karte, iskanja, poti in točke se shranijo ob ogledu. Območja lahko prenese vnaprej za cel izlet.</p></div>
+    <div class="feat"><div class="num">Splet</div><h3>Tudi v brskalniku</h3><p>Spletna različica deluje brez namestitve. Gumbe na karti lahko prestaviš kamorkoli na zaslonu.</p></div>
+    <div class="feat"><div class="num">AI</div><h3>Prostor za asistenta</h3><p>Vtičniki z dostopom do karte, vidnih točk, jam in sledi ter pripravljenim pogovornim oknom.</p></div>
+    <div class="feat"><div class="num">D96</div><h3>Slovenske koordinate</h3><p>WGS84 in D96/TM povsod: v vrstici stanja, ob lokaciji in pri iskanju koordinat.</p></div>
+    <div class="feat"><div class="num">Wi-Fi</div><h3>Skupno delo</h3><p>Ekipa v istem omrežju deli oznake, risbe, lokacijo in sporočila. Brez oblaka in brez računa.</p></div>
+  </div>
+</div></section>
+
+<section class="section" id="posnetki" style="padding-top:0"><div class="wrap">
+  <div class="sec-head"><div><div class="eyebrow">Posnetki zaslona</div><h2>Telefon in računalnik</h2></div><p>Posneto v aplikaciji 1.4–1.5.</p></div>
+  <div class="rail" tabindex="0" aria-label="Posnetki zaslona, drsi vodoravno">
+    <figure class="shot p"><img src="img/phone-map.jpg" alt="Karta na telefonu" loading="lazy"><figcaption>Karta in spodnji meni</figcaption></figure>
+    <figure class="shot d"><img src="img/desk-layers.jpg" alt="Meni slojev v namizni aplikaciji" loading="lazy"><figcaption>Sloji karte na računalniku</figcaption></figure>
+    <figure class="shot d"><img src="img/desk-web.jpg" alt="Spletna različica v brskalniku" loading="lazy"><figcaption>Spletna različica v brskalniku</figcaption></figure>
+  </div>
+</div></section>
+
+<section class="section" id="zahteve" style="padding-top:0"><div class="wrap">
+  <div class="sec-head"><div><div class="eyebrow">Sistemske zahteve</div><h2>Kje deluje</h2></div></div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Naprava</th><th>Sistem</th><th>Velikost</th><th>Stanje</th></tr></thead>
+    <tbody>
+      <tr><td>Spletna različica</td><td>Sodoben brskalnik (Chrome, Edge, Firefox, Safari); karte brez povezave samo v aplikaciji</td><td>—</td><td>Na voljo</td></tr>
+      <tr><td>Windows</td><td>Windows 10 ali 11, 64-bit, Edge WebView2</td><td>13 MB</td><td>Na voljo</td></tr>
+      <tr><td>Android</td><td>Android 8.0+, posodobljen Android System WebView</td><td>0,6 MB</td><td>Na voljo</td></tr>
+      <tr><td>Linux</td><td>—</td><td>—</td><td class="muted">Kmalu</td></tr>
+      <tr><td>Apple (Mac, iPhone)</td><td>—</td><td>—</td><td class="muted">Kmalu</td></tr>
+    </tbody>
+  </table></div>
+</div></section>
+
+<footer><div class="wrap">
+  <span>Franc Map 1.5.0 · Franc AI Pomočnik MAP</span>
+  <span>Viri: © OpenStreetMap · GURS · ARSO · EEA · Esri · BRouter · Open-Meteo · kataster jam</span>
+</div></footer>
+
+<script>
+// Links work on the real site. Inside the Claude preview nothing is hosted yet → explain instead.
+(function () {
+  const preview = /claude|anthropic/.test(location.hostname);
+  if (!preview) return;
+  document.getElementById("ribbon").hidden = false;
+  const note = document.getElementById("dl-note");
+  const names = { web: "Spletna različica", windows: "Prenos za Windows", android: "Prenos za Android" };
+  document.querySelectorAll("[data-link]").forEach((a) => a.addEventListener("click", (e) => {
+    e.preventDefault();
+    note.textContent = `${names[a.dataset.link]} se odpre na objavljeni strani (mapa site/ — gostovanje GitHub Pages ali podobno).`;
+    if (a.dataset.link === "web") document.getElementById("prenesi").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  }));
+})();
+
+// Contour lines drawn from a smooth height field (marching squares) — the hero's terrain
+(function () {
+  const cv = document.getElementById("contours");
+  const ctx = cv.getContext("2d");
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // a few gaussian "hills" give a Slovenian-hill-country look
+  const hills = Array.from({ length: 7 }, (_, i) => ({ x: (i * 0.173 + 0.11) % 1, y: (i * 0.389 + 0.27) % 1, r: 0.12 + (i % 3) * 0.07, h: 0.6 + (i % 4) * 0.25 }));
+  const height = (x, y, t) => {
+    let v = 0;
+    for (const p of hills) { const dx = x - p.x - Math.sin(t + p.y * 6) * 0.01, dy = y - p.y; v += p.h * Math.exp(-(dx * dx + dy * dy) / (2 * p.r * p.r)); }
+    return v + 0.08 * Math.sin(x * 9 + y * 4);
+  };
+  function draw(t) {
+    const dpr = Math.min(2, devicePixelRatio || 1);
+    const W = cv.clientWidth, H = cv.clientHeight;
+    if (!W || !H) return;
+    cv.width = W * dpr; cv.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const color = getComputedStyle(document.documentElement).getPropertyValue("--contour").trim() || "rgba(45,212,191,.16)";
+    const step = 14, cols = Math.ceil(W / step) + 1, rows = Math.ceil(H / step) + 1;
+    const f = new Float32Array(cols * rows);
+    for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) f[j * cols + i] = height(i * step / W, j * step / H * (H / W) * 1.6, t);
+    ctx.strokeStyle = color;
+    for (let k = 1; k <= 14; k++) {
+      const lv = k * 0.11;
+      ctx.lineWidth = k % 5 === 0 ? 1.6 : 0.9;   // index contours are heavier, as on a topographic map
+      ctx.beginPath();
+      for (let j = 0; j < rows - 1; j++) for (let i = 0; i < cols - 1; i++) {
+        const a = f[j * cols + i], b = f[j * cols + i + 1], c = f[(j + 1) * cols + i + 1], d = f[(j + 1) * cols + i];
+        const idx = (a > lv) | ((b > lv) << 1) | ((c > lv) << 2) | ((d > lv) << 3);
+        if (idx === 0 || idx === 15) continue;
+        const x = i * step, y = j * step, lerp = (p, q) => (lv - p) / (q - p);
+        const pts = { t: [x + lerp(a, b) * step, y], r: [x + step, y + lerp(b, c) * step], b: [x + lerp(d, c) * step, y + step], l: [x, y + lerp(a, d) * step] };
+        const segs = { 1: ["l", "t"], 2: ["t", "r"], 3: ["l", "r"], 4: ["r", "b"], 5: ["l", "t", "r", "b"], 6: ["t", "b"], 7: ["l", "b"], 8: ["b", "l"], 9: ["t", "b"], 10: ["t", "r", "b", "l"], 11: ["r", "b"], 12: ["r", "l"], 13: ["t", "r"], 14: ["l", "t"] }[idx];
+        for (let s = 0; s < segs.length; s += 2) { ctx.moveTo(...pts[segs[s]]); ctx.lineTo(...pts[segs[s + 1]]); }
+      }
+      ctx.stroke();
+    }
+  }
+  let t = 0;
+  draw(t);
+  addEventListener("resize", () => draw(t));
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => draw(t));
+  if (!reduce) { let last = 0; const loop = (ms) => { if (ms - last > 120) { t += 0.012; draw(t); last = ms; } requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
+})();
+</script>
+
+</body>
+</html>
