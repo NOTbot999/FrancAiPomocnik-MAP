@@ -229,13 +229,15 @@ async function boot() {
   map.on("zoomend", () => { if (current === "layers" && state.settings.overlays.some((o) => state.layerIndex[o.id]?.minZoom)) renderPanel(); });
 
   // layer health (which sources work) — checked by the backend in the background
+  let waitPolls = 0;   // no result yet (first start / web version): keep asking for up to ~3 min
   const pollHealth = async () => {
     try {
       const h = await api("/api/health");
+      const changed = JSON.stringify(h.results || {}) !== JSON.stringify(state.health) || h.running !== state.healthRunning;
       state.health = h.results || {};
       state.healthRunning = h.running;
-      if (current === "layers" || current === "compare") renderPanel();
-      if (h.running) setTimeout(pollHealth, 3000);
+      if (changed && (current === "layers" || current === "compare")) renderPanel();   // don't disturb typing in the filter
+      if (h.running || (!h.checked && waitPolls++ < 60)) setTimeout(pollHealth, 3000);
     } catch { /* ignore */ }
   };
   on("health-run", async () => { await api("/api/health/run", { method: "POST", body: {} }); state.healthRunning = true; renderPanel(); setTimeout(pollHealth, 1500); });

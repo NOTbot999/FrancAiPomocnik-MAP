@@ -91,7 +91,7 @@ export const comparePanel = {
       <div class="section">
         <div class="section-title">Hitre izbire</div>
         <div class="row wrap">
-          <button class="btn sm" data-q="dof_1990_1994|dof_2022_2024">1990 ↔ 2024</button>
+          <button class="btn sm" data-q="dof_1990_1994|dof_2022_2024">1996 ↔ 2024</button>
           <button class="btn sm" data-q="dof_2006|dof_2022_2024">2006 ↔ 2024</button>
           <button class="btn sm" data-q="satellite|lidar_hillshade">Satelit ↔ LIDAR</button>
           <button class="btn sm" data-q="osm|gurs_orthophoto">OSM ↔ Ortofoto</button>

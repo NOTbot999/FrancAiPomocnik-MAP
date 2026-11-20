@@ -1,7 +1,7 @@
 // Browser-only backend for the web version (spletna različica): no local server, so the app talks
 // to the map services directly and keeps settings / drawings / tracks in this browser's storage.
 // Mirrors the endpoints of app.py (desktop) and Backend.java (Android) that make sense on the web.
-const VERSION = "1.5.3";
+const VERSION = "1.5.4";
 const OVERPASS_MIRRORS = [
   "https://overpass-api.de/api/interpreter",
   "https://overpass.private.coffee/api/interpreter",
@@ -59,6 +59,7 @@ export function tileUrl(cfg, z, x, y) {
     }
     const q = new URLSearchParams({ SERVICE: "WMS", REQUEST: "GetMap", VERSION: ver, LAYERS: cfg.layers, STYLES: "", FORMAT: cfg.format || "image/png",
       TRANSPARENT: cfg.transparent === false ? "FALSE" : "TRUE", WIDTH: 256, HEIGHT: 256, [ver === "1.3.0" ? "CRS" : "SRS"]: crs, BBOX: bbox });
+    if (cfg.time) q.set("TIME", cfg.time);   // WMS time dimension (GURS historical orthophoto)
     return cfg.url + (cfg.url.includes("?") ? "&" : "?") + q;
   }
   if (cfg.type === "arcgis_export") {
@@ -104,6 +105,67 @@ async function overpass(query) {
   }
 }
 
+// ── layer health (which map sources work) — like check_layer() in app.py, but from the browser:
+// a sample tile per layer is loaded as an <img>; a source that answers with an error page
+// (e.g. ARSO during maintenance) fails to decode → the layer is marked "X Name X".
+// Results are kept for 6 h in this browser.
+const HEALTH_MAX_AGE = 6 * 3600;
+const HEALTH_PTS = [[46.0569, 14.5058], [46.2389, 14.3556], [46.5547, 15.6459]];   // Ljubljana, Kranj, Maribor
+const savedHealth = lsGet("health");
+const health = { checked: 0, results: {}, ...(savedHealth?.version === VERSION ? savedHealth : {}), running: false };
+let healthScheduled = false;
+
+function probeImage(url, ms = 15000) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const t = setTimeout(() => { img.src = ""; resolve("timeout"); }, ms);
+    img.onload = () => { clearTimeout(t); resolve(img.naturalWidth ? "ok" : "empty"); };
+    img.onerror = () => { clearTimeout(t); resolve("error"); };
+    img.src = url;
+  });
+}
+
+async function checkLayerWeb(cfg) {
+  const z = Math.max(cfg.minZoom || 0, 13);
+  let last = "error";
+  for (const [lat, lng] of HEALTH_PTS) {
+    const n = 2 ** z, x = Math.floor((lng + 180) / 360 * n);
+    const y = Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * n);
+    last = await probeImage(tileUrl(cfg, z, x, y));
+    if (last === "ok") return { status: "ok" };
+  }
+  return { status: "fail", detail: last === "timeout" ? "Ni odziva (vir ne deluje)" : "Strežnik ne vrača slike (vir ne deluje)" };
+}
+
+async function runHealthWeb() {
+  if (health.running) return;
+  health.running = true;
+  try {
+    const todo = Object.values(await layerIndex()).filter((l) => ["tile", "wms", "arcgis_export"].includes(l.type));
+    let i = 0;
+    const worker = async () => {
+      while (i < todo.length) {
+        const l = todo[i++];
+        health.results[l.id] = await checkLayerWeb(l);
+      }
+    };
+    await Promise.all(Array.from({ length: 6 }, worker));
+    health.checked = Date.now() / 1000;
+    lsSet("health", { checked: health.checked, version: VERSION, results: health.results });
+  } finally {
+    health.running = false;
+  }
+}
+
+function healthStatus() {
+  // first call after page load: re-check when the saved result is old, after the map's own tiles had a head start
+  if (!healthScheduled && !health.running && Date.now() / 1000 - health.checked > HEALTH_MAX_AGE) {
+    healthScheduled = true;
+    setTimeout(runHealthWeb, 8000);
+  }
+  return { running: health.running, checked: health.checked, results: health.results };
+}
+
 const APP_ONLY = "Na voljo samo v aplikaciji za Windows ali Android.";
 
 /** Handle an /api/… call in the browser. Returns { status, text }. */
@@ -112,8 +174,8 @@ export async function webApi(method, path, body) {
   const p = u.pathname.replace(/^.*\/api\//, "/api/");
   try {
     if (p === "/api/status") return json(200, { online: navigator.onLine, forcedOffline: false, version: VERSION, dataDir: "ta brskalnik", job: null, platform: "web" });
-    if (p === "/api/health") return json(200, { running: false, checked: 0, results: {} });
-    if (p === "/api/health/run") return json(200, { running: false });
+    if (p === "/api/health") return json(200, healthStatus());
+    if (p === "/api/health/run") { runHealthWeb(); return json(200, { running: true }); }
     if (p.startsWith("/api/store/")) {
       const name = p.slice("/api/store/".length);
       if (method === "GET") return json(200, lsGet(name));
