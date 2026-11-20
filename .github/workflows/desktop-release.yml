@@ -1,0 +1,49 @@
+# Builds the FrancMap Windows desktop app on a Windows runner and publishes it as a
+# GitHub Release, so it can be downloaded from a public link without an account.
+# Trigger: push a tag like v1.3.0 (or run manually from the Actions tab with a tag name).
+name: Desktop release (Windows)
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to create/update (e.g. v1.3.0)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Build Windows app
+        run: npm run desktop:win
+
+      - name: Publish release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.inputs.tag || github.ref_name }}
+        run: |
+          ZIP=$(ls release/*.zip)
+          NOTES="FrancMap for Windows. Download the zip, unzip it anywhere and run FrancMap.exe.
+          If Windows SmartScreen warns (unsigned app): More info -> Run anyway.
+          Works offline: caves, points of interest and municipalities are bundled."
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$ZIP" --clobber
+          else
+            gh release create "$TAG" "$ZIP" --title "FrancMap $TAG (Windows)" --notes "$NOTES" --target "$GITHUB_SHA"
+          fi
