@@ -1,11 +1,11 @@
-import { map } from "../map.js";
-import { store } from "../api.js";
-import { state, on, emit } from "../state.js";
-import { esc, uid, pathLength, polygonArea, fmtDist, fmtArea, COLORS, toast, saveTextFile, openTextFiles, $, h } from "../util.js";
-import { icon } from "../icons.js";
-import { setHint, setActions, cancelPick, pinIcon } from "../tools.js";
-import { toGeoJSON, toGPX, toKML, parseFile } from "../geoio.js";
-import { showProfile } from "../profile.js";
+import { map } from "../map/map.js";
+import { store } from "../services/api.js";
+import { state, on, emit } from "../runtime/state.js";
+import { esc, uid, pathLength, polygonArea, fmtDist, fmtArea, COLORS, toast, saveTextFile, openTextFiles, $, h } from "../shared/util.js";
+import { icon } from "../shared/icons.js";
+import { setHint, setActions, cancelPick, pinIcon } from "../shared/tools.js";
+import { toGeoJSON, toGPX, toKML, parseFile } from "./geoio.js";
+import { showProfile } from "../explore/profile.js";
 
 let features = [];
 let projects = [];

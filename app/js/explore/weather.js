@@ -3,8 +3,8 @@
 //   weather  — temperature / wind / cloud cover over Slovenia from Open-Meteo (a coarse grid,
 //              interpolated into a smooth image; wind as arrows)
 //   rainviewer — precipitation radar and infrared satellite clouds from RainViewer (tiles)
-import { fetchJSON } from "./api.js";
-import { esc, toast } from "./util.js";
+import { openMeteo, rainviewer as radar } from "../services/external.js";
+import { esc, toast } from "../shared/util.js";
 
 // ── Open-Meteo grid (one request shared by all weather layers, cached 30 min) ──
 const G = { s: 45.3, n: 46.9, w: 13.3, e: 16.7, rows: 9, cols: 12 };
@@ -22,10 +22,7 @@ function gridPoints() {
 function loadGrid() {
   if (gridCache && Date.now() - gridCache.at < REFRESH_MS) return gridCache.promise;
   const pts = gridPoints();
-  const url = "https://api.open-meteo.com/v1/forecast?latitude=" + pts.map((p) => p[0]).join(",")
-    + "&longitude=" + pts.map((p) => p[1]).join(",")
-    + "&current=temperature_2m,wind_speed_10m,wind_direction_10m,cloud_cover&timezone=Europe%2FLjubljana";
-  const promise = fetchJSON(url, 1800).then((res) => {
+  const promise = openMeteo.currentGrid(pts).then((res) => {
     const list = Array.isArray(res) ? res : [res];
     if (list.length !== pts.length) throw new Error("nepopolni podatki");
     return {
@@ -148,7 +145,7 @@ function rainviewer(kind, opacity) {
   let op = opacity, tiles = null, timer = null;
   async function refresh() {
     try {
-      const j = await fetchJSON("https://api.rainviewer.com/public/weather-maps.json", 300);
+      const j = await radar.maps();
       const frame = (kind === "satellite" ? j.satellite?.infrared : j.radar?.past)?.at(-1);
       if (!frame) throw new Error("ni posnetka");
       const url = kind === "satellite"

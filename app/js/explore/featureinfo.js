@@ -1,11 +1,11 @@
 // Podatki ob kliku na karto: for active GURS (e-prostor) WMS layers, ask the server what lies under
 // the click (WMS GetFeatureInfo, JSON) and show it in a popup — e.g. a water pipe or sewer from the
 // utility cadastre (GJI). The public service only returns IDs and type codes, no pipe diameter.
-import { map } from "./map.js";
-import { state } from "./state.js";
-import { fetchJSON } from "./api.js";
-import { esc, copyText, fmtLatLng, toD96 } from "./util.js";
-import { icon } from "./icons.js";
+import { map } from "../map/map.js";
+import { state } from "../runtime/state.js";
+import { fetchJSON } from "../services/api.js";
+import { esc, copyText, fmtLatLng, toD96 } from "../shared/util.js";
+import { icon } from "../shared/icons.js";
 
 const GURS_HOST = /(^|\.)ipi\.eprostor\.gov\.si$/;
 const PX = 101;               // size of the query window around the click (pixels)

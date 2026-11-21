@@ -1,7 +1,7 @@
-import { tileTemplate, TILE_SUBDOMAINS, IS_WEB } from "./api.js";
-import { tileUrl } from "./webbackend.js";
-import { state, emit, saveSettings, SLOVENIA_BOUNDS } from "./state.js";
-import { createSpecialLayer } from "./special.js";
+import { tileTemplate, TILE_SUBDOMAINS, IS_WEB } from "../services/api.js";
+import { tileUrl } from "../services/webbackend.js";
+import { state, emit, saveSettings, SLOVENIA_BOUNDS } from "../runtime/state.js";
+import { createSpecialLayer } from "../explore/special.js";
 
 export let map;
 let baseLayer = null;

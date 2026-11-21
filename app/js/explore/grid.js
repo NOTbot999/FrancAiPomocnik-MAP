@@ -3,7 +3,7 @@
 // Drawn per map tile on canvas, so it stays sharp and exactly aligned at any zoom.
 //   zoom ≥ 11: every 1 km line (10 km lines thicker)   zoom 8–10: 10 km lines only
 //   zoom ≥ 13: cell labels  E_N (km)
-import { toD96, fromD96 } from "./util.js";
+import { toD96, fromD96 } from "../shared/util.js";
 
 const TILE = 256;
 

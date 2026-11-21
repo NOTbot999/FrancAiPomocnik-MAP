@@ -1,13 +1,14 @@
-import { map } from "../map.js";
-import { fetchJSON, store } from "../api.js";
-import { on, emit } from "../state.js";
-import { esc, debounce, fmtDist, fmtDur, toast, saveTextFile, $, $$ } from "../util.js";
-import { icon } from "../icons.js";
-import { pickPoint, pinIcon } from "../tools.js";
-import { geocode, localMatches } from "../search.js";
-import { showProfile, elevationStats } from "../profile.js";
-import { toGPX } from "../geoio.js";
-import { addFeature } from "./draw.js";
+import { map } from "../map/map.js";
+import { store } from "../services/api.js";
+import { routing } from "../services/external.js";
+import { on, emit } from "../runtime/state.js";
+import { esc, debounce, fmtDist, fmtDur, toast, saveTextFile, $, $$ } from "../shared/util.js";
+import { icon } from "../shared/icons.js";
+import { pickPoint, pinIcon } from "../shared/tools.js";
+import { geocode, localMatches } from "./search.js";
+import { showProfile, elevationStats } from "./profile.js";
+import { toGPX } from "../create/geoio.js";
+import { addFeature } from "../create/draw.js";
 
 const PROFILES = [
   { id: "foot", label: "Peš", em: "🥾", brouter: "hiking-mountain" },
@@ -65,9 +66,7 @@ function drawWaypoints() {
 }
 
 async function brouter(points, prof, alt) {
-  const lonlats = points.map((p) => `${p[1].toFixed(6)},${p[0].toFixed(6)}`).join("|");
-  const url = `https://brouter.de/brouter?lonlats=${lonlats}&profile=${prof}&alternativeidx=${alt}&format=geojson`;
-  const geo = await fetchJSON(url, 30 * 86400);
+  const geo = await routing.brouter(points, prof, alt);
   const f = geo?.features?.[0];
   if (!f) throw new Error(typeof geo === "string" ? geo.slice(0, 120) : "Ni poti");
   const pts = f.geometry.coordinates.map((c) => [c[1], c[0], c[2] ?? null]);
@@ -75,8 +74,7 @@ async function brouter(points, prof, alt) {
 }
 
 async function osrm(points) {
-  const url = `https://router.project-osrm.org/route/v1/driving/${points.map((p) => `${p[1]},${p[0]}`).join(";")}?overview=full&geometries=geojson`;
-  const d = await fetchJSON(url, 30 * 86400);
+  const d = await routing.osrm(points);
   const r = d.routes?.[0];
   if (!r) throw new Error("Ni poti");
   return { pts: r.geometry.coordinates.map((c) => [c[1], c[0], null]), meters: r.distance, seconds: r.duration, ascend: null };

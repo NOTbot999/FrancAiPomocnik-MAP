@@ -1,13 +1,13 @@
-import { state, saveSettings, emit, on } from "../state.js";
+import { state, saveSettings, emit, on } from "../runtime/state.js";
 
 // category emoji, honouring "Označba po izbiri" overrides from the settings menu
 export const emo = (cat) => state.settings.ui?.emoji?.[cat.id] || cat.emoji;
-import { map } from "../map.js";
-import { overpass } from "../api.js";
-import { esc, toast, fmtNum, fmtLatLng, toD96, $ } from "../util.js";
-import { icon } from "../icons.js";
-import { pointPopup } from "../popup.js";
-import { PointLayer } from "../pointlayer.js";
+import { map } from "../map/map.js";
+import { overpass } from "../services/external.js";
+import { esc, toast, fmtNum, fmtLatLng, toD96, $ } from "../shared/util.js";
+import { icon } from "../shared/icons.js";
+import { pointPopup } from "./popup.js";
+import { PointLayer } from "../map/pointlayer.js";
 
 const loaded = new Map();   // catId -> { features, layer }
 const loading = new Set();
@@ -154,6 +154,9 @@ export function togglePoi(id, force) {
 }
 
 export function restorePois() {
+  // categories that no longer exist (removed from the list) are dropped from the saved selection
+  const known = new Set(state.db.pois.map((c) => c.id));
+  state.settings.pois = state.settings.pois.filter((id) => known.has(id));
   for (const id of state.settings.pois) showCategory(id);
 }
 

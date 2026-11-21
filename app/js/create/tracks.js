@@ -1,10 +1,10 @@
-import { map } from "../map.js";
-import { store } from "../api.js";
-import { emit } from "../state.js";
-import { esc, uid, haversine, fmtDist, fmtDur, toast, openTextFiles, saveTextFile, COLORS } from "../util.js";
-import { icon } from "../icons.js";
-import { parseFile, toGPX } from "../geoio.js";
-import { showProfile, elevationStats } from "../profile.js";
+import { map } from "../map/map.js";
+import { store } from "../services/api.js";
+import { emit } from "../runtime/state.js";
+import { esc, uid, haversine, fmtDist, fmtDur, toast, openTextFiles, saveTextFile, COLORS } from "../shared/util.js";
+import { icon } from "../shared/icons.js";
+import { parseFile, toGPX } from "./geoio.js";
+import { showProfile, elevationStats } from "../explore/profile.js";
 
 let tracks = [];
 let group;

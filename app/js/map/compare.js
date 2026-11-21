@@ -1,8 +1,8 @@
 // Swipe comparison of two raster layers (e.g. historical orthophotos 1990 vs 2024)
-import { map, makeRasterLayer } from "../map.js";
-import { state, layerName } from "../state.js";
-import { esc, $, h } from "../util.js";
-import { icon } from "../icons.js";
+import { map, makeRasterLayer } from "./map.js";
+import { state, layerName } from "../runtime/state.js";
+import { esc, $, h } from "../shared/util.js";
+import { icon } from "../shared/icons.js";
 
 let left = "dof_1990_1994", right = "dof_2022_2024";
 let layerA = null, layerB = null, active = false, pos = 0.5;

@@ -1,11 +1,11 @@
 // Skupno delo (shared work) — live sessions on the same Wi-Fi or through a server address,
 // plus workspace files for sharing by any other channel.
-import { map } from "../map.js";
-import { api, IS_ANDROID, IS_WEB } from "../api.js";
-import { state, saveSettings, emit, on } from "../state.js";
-import { esc, uid, toast, saveTextFile, openTextFiles, copyText, $ } from "../util.js";
-import { icon } from "../icons.js";
-import { pinIcon } from "../tools.js";
+import { map } from "../map/map.js";
+import { api, IS_ANDROID, IS_WEB } from "../services/api.js";
+import { state, saveSettings, emit, on } from "../runtime/state.js";
+import { esc, uid, toast, saveTextFile, openTextFiles, copyText, $ } from "../shared/util.js";
+import { icon } from "../shared/icons.js";
+import { pinIcon } from "../shared/tools.js";
 import { getDrawings, addFeature } from "./draw.js";
 import { getTracks, addTracks } from "./tracks.js";
 

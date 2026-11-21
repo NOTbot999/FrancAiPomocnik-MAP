@@ -1,16 +1,15 @@
 // Global search: coordinates (WGS84 / D96), local POIs + drawings, Nominatim geocoder
-import { map } from "./map.js";
-import { fetchJSON } from "./api.js";
-import { esc, debounce, parseCoords, $, fmtLatLng } from "./util.js";
-import { getLoadedFeatures, getCaves } from "./panels/poi.js";
-import { getDrawings } from "./panels/draw.js";
+import { map } from "../map/map.js";
+import { nominatim } from "../services/external.js";
+import { esc, debounce, parseCoords, $, fmtLatLng } from "../shared/util.js";
+import { getLoadedFeatures, getCaves } from "./poi.js";
+import { getDrawings } from "../create/draw.js";
 import { pointPopup } from "./popup.js";
 
 const TYPE_EMOJI = { city: "🏙️", town: "🏘️", village: "🏡", hamlet: "🏠", peak: "⛰️", river: "🌊", lake: "💧", water: "💧", house: "🏠", residential: "🛣️", road: "🛣️", castle: "🏰", church: "⛪", restaurant: "🍽️", hotel: "🏨", school: "🏫", station: "🚉", forest: "🌲", wood: "🌲", administrative: "🗺️" };
 
 export async function geocode(q, limit = 8) {
-  const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=${limit}&addressdetails=1&countrycodes=si,hr,at,it,hu&viewbox=13.3,46.9,16.7,45.4&accept-language=sl`;
-  const res = await fetchJSON(url, 30 * 86400);
+  const res = await nominatim.search(q, limit);
   return (res || []).map((r) => {
     const a = r.address || {};
     const name = r.name || r.display_name.split(",")[0];

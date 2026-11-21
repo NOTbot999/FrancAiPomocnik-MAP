@@ -1,6 +1,6 @@
 // Shared interactive-tool helpers: hint bubble, on-map action buttons, one-shot point picking
-import { map } from "./map.js";
-import { emit } from "./state.js";
+import { map } from "../map/map.js";
+import { emit } from "../runtime/state.js";
 import { $, esc } from "./util.js";
 
 let pickCleanup = null;

@@ -1,4 +1,4 @@
-import { store } from "./api.js";
+import { store } from "../services/api.js";
 
 export const SLOVENIA_CENTER = [46.1512, 14.9955];
 export const SLOVENIA_BOUNDS = [[45.42, 13.37], [46.88, 16.62]];

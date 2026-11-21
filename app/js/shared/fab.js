@@ -1,9 +1,9 @@
 // Floating map buttons (right column) — the app's only menu (the old left bar was merged into it):
 // grip + fold toggle on top, settings gear, then the user's buttons in their chosen order,
 // each can be hidden, all scaled by "Velikost gumbov".
-import { state } from "../state.js";
-import { icon } from "../icons.js";
-import { esc } from "../util.js";
+import { state } from "../runtime/state.js";
+import { icon } from "./icons.js";
+import { esc } from "./util.js";
 
 export const FAB_BUTTONS = [
   { id: "layers", label: "Sloji", icon: "layers" },

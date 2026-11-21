@@ -1,7 +1,7 @@
 // Elevation profile drawer (canvas chart, hover syncs a marker on the map)
-import { map } from "./map.js";
-import { fetchJSON } from "./api.js";
-import { haversine, fmtDist, $, toast } from "./util.js";
+import { map } from "../map/map.js";
+import { openMeteo } from "../services/external.js";
+import { haversine, fmtDist, $, toast } from "../shared/util.js";
 
 let data = null;     // { pts: [[lat,lng,ele]], dist: [m] }
 let hoverMarker = null;
@@ -23,8 +23,7 @@ export async function sampleElevations(pts, maxSamples = 200) {
   const out = [];
   for (let i = 0; i < samples.length; i += 100) {
     const chunk = samples.slice(i, i + 100);
-    const url = `https://api.open-meteo.com/v1/elevation?latitude=${chunk.map((p) => p[0].toFixed(5)).join(",")}&longitude=${chunk.map((p) => p[1].toFixed(5)).join(",")}`;
-    const res = await fetchJSON(url, 365 * 86400);
+    const res = await openMeteo.elevation(chunk);
     chunk.forEach((p, k) => out.push([p[0], p[1], res.elevation?.[k] ?? null]));
   }
   return out;

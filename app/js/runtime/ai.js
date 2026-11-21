@@ -2,15 +2,15 @@
 //   export default { name: "…", description: "…", activate(api) { … }, deactivate?() }
 // `api` gives safe access to the map and data plus a ready-made chat UI, so an AI model
 // (local or online) can be connected without touching the app. See plugins/primer-asistent.js.
-import { map } from "../map.js";
-import { state, saveSettings } from "../state.js";
-import { fetchJSON, store } from "../api.js";
-import { esc, uid, toast, openTextFiles, haversine, h, $ } from "../util.js";
-import { icon } from "../icons.js";
-import { getCaves, getLoadedFeatures } from "./poi.js";
-import { getDrawings, addFeature } from "./draw.js";
-import { getTracks } from "./tracks.js";
-import { geocode } from "../search.js";
+import { map } from "../map/map.js";
+import { state, saveSettings } from "./state.js";
+import { fetchJSON, store } from "../services/api.js";
+import { esc, uid, toast, openTextFiles, haversine, h, $ } from "../shared/util.js";
+import { icon } from "../shared/icons.js";
+import { getCaves, getLoadedFeatures } from "../explore/poi.js";
+import { getDrawings, addFeature } from "../create/draw.js";
+import { getTracks } from "../create/tracks.js";
+import { geocode } from "../explore/search.js";
 
 const running = new Map();   // plugin id -> { mod, host }
 let panelEl = null;

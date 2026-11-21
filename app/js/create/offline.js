@@ -1,10 +1,10 @@
-import { map } from "../map.js";
-import { api, store, IS_WEB } from "../api.js";
-import { state, emit, layerName } from "../state.js";
-import { esc, fmtBytes, fmtNum, toast, $, $$ } from "../util.js";
-import { icon } from "../icons.js";
-import { pickPoint } from "../tools.js";
-import { loadCategory } from "./poi.js";
+import { map } from "../map/map.js";
+import { api, store, IS_WEB } from "../services/api.js";
+import { state, emit, layerName } from "../runtime/state.js";
+import { esc, fmtBytes, fmtNum, toast, $, $$ } from "../shared/util.js";
+import { icon } from "../shared/icons.js";
+import { pickPoint } from "../shared/tools.js";
+import { loadCategory } from "../explore/poi.js";
 
 let panelEl;
 let bbox = null;          // [s, w, n, e]

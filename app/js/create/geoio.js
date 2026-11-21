@@ -1,7 +1,7 @@
 // GPX / KML / GeoJSON import & export
 // Internal feature: { id, type: "marker"|"line"|"polygon", name, color, note, coords }
 //   marker coords: [lat, lng]; line/polygon: [[lat, lng, ele?, time?], ...]
-import { esc, uid, COLORS } from "./util.js";
+import { esc, uid, COLORS } from "../shared/util.js";
 
 const xmlEsc = (s) => esc(s);
 

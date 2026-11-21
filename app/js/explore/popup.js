@@ -1,9 +1,9 @@
 // Shared map popups: POI details and "what's here" location info
-import { map } from "./map.js";
-import { emit, state } from "./state.js";
-import { fetchJSON } from "./api.js";
-import { esc, fmtLatLng, toD96, copyText, h } from "./util.js";
-import { icon } from "./icons.js";
+import { map } from "../map/map.js";
+import { emit, state } from "../runtime/state.js";
+import { nominatim, openMeteo } from "../services/external.js";
+import { esc, fmtLatLng, toD96, copyText, h } from "../shared/util.js";
+import { icon } from "../shared/icons.js";
 
 const TAG_LABELS = {
   "cave:ref": "Kataster št.", "cave:length": "Dolžina", "cave:depth": "Globina",
@@ -72,7 +72,7 @@ export async function locationInfo(latlng) {
   const el = p.getElement();
   const set = (id, v) => { const x = el?.querySelector("#" + id); if (x) x.innerHTML = v; };
 
-  fetchJSON(`https://nominatim.openstreetmap.org/reverse?lat=${lat.toFixed(6)}&lon=${lng.toFixed(6)}&format=json&addressdetails=1&namedetails=1&zoom=18&accept-language=sl`, 30 * 86400)
+  nominatim.reverse(lat, lng)
     .then((d) => {
       const a = d.address || {};
       const place = a.village || a.town || a.city || a.hamlet || a.suburb || a.municipality || "";
@@ -83,11 +83,11 @@ export async function locationInfo(latlng) {
     })
     .catch(() => set("li-title", "Neznana lokacija <span class='muted small'>(brez povezave)</span>"));
 
-  fetchJSON(`https://api.open-meteo.com/v1/elevation?latitude=${lat.toFixed(5)}&longitude=${lng.toFixed(5)}`, 365 * 86400)
+  openMeteo.elevation([[lat, lng]])
     .then((d) => set("li-ele", d.elevation?.[0] != null ? `${Math.round(d.elevation[0])} m` : "—"))
     .catch(() => set("li-ele", "—"));
 
-  fetchJSON(`https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(3)}&longitude=${lng.toFixed(3)}&current=temperature_2m,weather_code,wind_speed_10m,precipitation&timezone=auto`, 900)
+  openMeteo.current(lat, lng)
     .then((d) => {
       const c = d.current || {};
       set("li-wx", `${weatherEmoji(c.weather_code)} ${Math.round(c.temperature_2m)} °C · veter ${Math.round(c.wind_speed_10m)} km/h`);

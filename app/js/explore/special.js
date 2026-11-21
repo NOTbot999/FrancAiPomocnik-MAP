@@ -1,6 +1,6 @@
 // Special vector overlays: 3. razvojna os (3RO) and live flights (ADS-B via adsb.lol)
-import { overpass, fetchJSON } from "./api.js";
-import { esc, toast } from "./util.js";
+import { overpass, flights as adsb } from "../services/external.js";
+import { esc, toast } from "../shared/util.js";
 import { createWeatherLayer } from "./weather.js";
 import { createGridLayer } from "./grid.js";
 
@@ -91,7 +91,7 @@ function flights(opacity) {
 
   async function refresh() {
     try {
-      const data = await fetchJSON("https://api.adsb.lol/v2/lat/46.15/lon/14.99/dist/200", 45);
+      const data = await adsb.aroundSlovenia();
       const seen = new Set();
       for (const a of data.ac || []) {
         if (a.lat == null || a.lon == null || a.lat < SLO.lamin || a.lat > SLO.lamax || a.lon < SLO.lomin || a.lon > SLO.lomax) continue;

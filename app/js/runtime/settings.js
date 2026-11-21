@@ -1,12 +1,12 @@
 // "Nastavitve karte" — modelled on the original app's settings menu (MobileSettingsPanel):
 // on-screen buttons (order + visibility), button size, scale bar, marker size, custom emoji per
 // category, GPS tracks, interface colours, device linking — plus the desktop-only general settings.
-import { map, scaleControl } from "../map.js";
-import { state, saveSettings, emit } from "../state.js";
-import { esc, toast, $, $$ } from "../util.js";
-import { icon } from "../icons.js";
-import { netStatus } from "./offline.js";
-import { FAB_BUTTONS, renderFab, resetFabPos } from "../ui/fab.js";
+import { map, scaleControl } from "../map/map.js";
+import { state, saveSettings, emit } from "./state.js";
+import { esc, toast, $, $$ } from "../shared/util.js";
+import { icon } from "../shared/icons.js";
+import { netStatus } from "../create/offline.js";
+import { FAB_BUTTONS, renderFab, resetFabPos } from "../shared/fab.js";
 
 export function applyTheme() {
   const t = state.settings.theme;

@@ -1,9 +1,9 @@
-import { state, saveSettings, emit, isBroken, layerName, brokenReason } from "../state.js";
-import { map, setBase, setBaseOpacity, toggleOverlay, setOverlayOpacity, setOverlayVisible, moveOverlay, isOverlayOn, tileXY, syncOverlays } from "../map.js";
-import { TOKEN, TILE_SUBDOMAINS, tileHost, IS_WEB, proxiedImage } from "../api.js";
-import { tileUrl } from "../webbackend.js";
-import { esc, h, $, $$ } from "../util.js";
-import { icon } from "../icons.js";
+import { state, saveSettings, emit, isBroken, layerName, brokenReason } from "../runtime/state.js";
+import { map, setBase, setBaseOpacity, toggleOverlay, setOverlayOpacity, setOverlayVisible, moveOverlay, isOverlayOn, tileXY, syncOverlays } from "./map.js";
+import { TOKEN, TILE_SUBDOMAINS, tileHost, IS_WEB, proxiedImage } from "../services/api.js";
+import { tileUrl } from "../services/webbackend.js";
+import { esc, h, $, $$ } from "../shared/util.js";
+import { icon } from "../shared/icons.js";
 
 let filter = "";
 
