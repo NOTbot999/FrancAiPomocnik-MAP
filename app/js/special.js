@@ -2,6 +2,7 @@
 import { overpass, fetchJSON } from "./api.js";
 import { esc, toast } from "./util.js";
 import { createWeatherLayer } from "./weather.js";
+import { createGridLayer } from "./grid.js";
 
 const emojiIcon = (emoji, size = 18) => L.divIcon({
   html: `<div class="emoji-marker" style="font-size:${size}px">${emoji}</div>`,
@@ -12,6 +13,7 @@ export function createSpecialLayer(cfg, opacity) {
   if (cfg.type === "third_dev_axis") return thirdDevAxis(opacity);
   if (cfg.type === "live_flights") return flights(opacity);
   if (cfg.type === "weather" || cfg.type === "rainviewer") return createWeatherLayer(cfg, opacity);
+  if (cfg.type === "grid_d96") return createGridLayer(cfg, opacity);
   return L.layerGroup();
 }
 

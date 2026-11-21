@@ -83,6 +83,13 @@
    "description": "Topografske karte, kataster, ortofoto, LIDAR in raba tal",
    "layers": [
     {
+     "id": "grid_d96_1km",
+     "name": "Mreža 1 × 1 km (D96/TM)",
+     "type": "grid_d96",
+     "opacity": 1.0,
+     "description": "Črna mreža kvadratov 1 × 1 km v državnem koordinatnem sistemu D96/TM (enaki kvadrati kot LIDAR in DOF). Od povečave 11 vsak km, od 13 z oznako celice (spodnji levi vogal v km, npr. 462_101). Celica pod kazalcem je izpisana v vrstici spodaj."
+    },
+    {
      "id": "gurs_dejanska_raba",
      "name": "Dejanska raba (kataster)",
      "type": "wms",

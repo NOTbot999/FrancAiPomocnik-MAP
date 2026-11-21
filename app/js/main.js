@@ -6,6 +6,7 @@ import { initSearch } from "./search.js";
 import { initProfile } from "./profile.js";
 import { locationInfo } from "./popup.js";
 import { initFeatureInfo } from "./featureinfo.js";
+import { d96Cell } from "./grid.js";
 import { layersPanel } from "./panels/layers.js";
 import { poiPanel, restorePois, loadCaves } from "./panels/poi.js";
 import { drawPanel, initDraw, startTool, stopTool, drawKeydown, getDrawings } from "./panels/draw.js";
@@ -222,7 +223,8 @@ async function boot() {
     raf = requestAnimationFrame(() => {
       raf = 0;
       sbC.textContent = fmtLatLng(e.latlng.lat, e.latlng.lng, state.settings.coordFormat);
-      sbD.textContent = "D96/TM " + fmtD96(e.latlng.lat, e.latlng.lng);
+      sbD.textContent = "D96/TM " + fmtD96(e.latlng.lat, e.latlng.lng)
+        + (isOverlayOn("grid_d96_1km") ? `  ·  celica ${d96Cell(e.latlng.lat, e.latlng.lng).id}` : "");
     });
   });
   const zoomText = () => { sbZ.textContent = `Povečava ${map.getZoom()}`; };
