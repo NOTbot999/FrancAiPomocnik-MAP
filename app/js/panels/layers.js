@@ -22,7 +22,8 @@ function tileAt(id, z, x, y) {
 }
 function previewHtml(l) {
   if (!["wms", "tile", "arcgis_export"].includes(l.type)) {
-    return `<div class="lt lt-icon">${icon(l.type === "live_flights" ? "navigation" : "route")}</div>`;
+    const ic = { live_flights: "navigation", weather: "sun", rainviewer: "sun" }[l.type] || "route";
+    return `<div class="lt lt-icon">${icon(ic)}</div>`;
   }
   const z = Math.max(l.minZoom || 0, 13);
   const { x, y } = tileXY(PREVIEW_AT[0], PREVIEW_AT[1], z);

@@ -100,13 +100,14 @@ async function prefetchPois() {
 
 function refresh() { if (panelEl?.isConnected) offlinePanel.render(panelEl); }
 
-const rasterLayers = () => Object.values(state.layerIndex).filter((l) => !["third_dev_axis", "live_flights"].includes(l.type));
+const RASTER = ["tile", "wms", "arcgis_export"];   // live/vector layers (3RO, flights, weather) can't be saved as tiles
+const rasterLayers = () => Object.values(state.layerIndex).filter((l) => RASTER.includes(l.type));
 
 export const offlinePanel = {
   id: "offline",
   title: "Brez povezave",
   onOpen() {
-    if (!selLayers) selLayers = new Set([state.settings.base, ...state.settings.overlays.map((o) => o.id)].filter((id) => state.layerIndex[id] && !["third_dev_axis", "live_flights"].includes(state.layerIndex[id].type)));
+    if (!selLayers) selLayers = new Set([state.settings.base, ...state.settings.overlays.map((o) => o.id)].filter((id) => state.layerIndex[id] && RASTER.includes(state.layerIndex[id].type)));
     loadStats();
   },
   onClose() { rect && map.removeLayer(rect); rect = null; bbox = null; },

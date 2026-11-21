@@ -11,7 +11,7 @@ let labels = [];
 function rasterOptions(selected) {
   const groups = [`<optgroup label="Osnovne karte">${state.db.base.map((l) => `<option value="${l.id}" ${l.id === selected ? "selected" : ""}>${esc(layerName(l))}</option>`).join("")}</optgroup>`];
   for (const c of state.db.categories) {
-    const ls = c.layers.filter((l) => !["third_dev_axis", "live_flights"].includes(l.type));
+    const ls = c.layers.filter((l) => ["tile", "wms", "arcgis_export"].includes(l.type));
     groups.push(`<optgroup label="${esc(c.name)}">${ls.map((l) => `<option value="${l.id}" ${l.id === selected ? "selected" : ""}>${esc(layerName(l))}</option>`).join("")}</optgroup>`);
   }
   return groups.join("");

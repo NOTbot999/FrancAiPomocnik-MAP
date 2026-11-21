@@ -5,6 +5,7 @@ import { $, $$, h, esc, fmtLatLng, fmtD96, toD96, copyText, toast, fmtNum } from
 import { initSearch } from "./search.js";
 import { initProfile } from "./profile.js";
 import { locationInfo } from "./popup.js";
+import { initFeatureInfo } from "./featureinfo.js";
 import { layersPanel } from "./panels/layers.js";
 import { poiPanel, restorePois, loadCaves } from "./panels/poi.js";
 import { drawPanel, initDraw, startTool, stopTool, drawKeydown, getDrawings } from "./panels/draw.js";
@@ -151,6 +152,7 @@ async function boot() {
   restorePois();
   loadCaves(); // local cave cadastre for search (≈0.7 MB, loads in background)
   initPlugins();
+  initFeatureInfo();   // podatki ob kliku na sloje GURS (npr. vodovod, kanalizacija)
 
   // ── floating map buttons (original-app style) ──
   const togglePanel = (id) => (current === id ? closePanel() : openPanel(id));

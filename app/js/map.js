@@ -202,9 +202,9 @@ export function syncOverlays() {
     let layer = overlayLayers.get(id);
     const cfg = state.layerIndex[id];
     if (!layer) {
-      layer = cfg.type === "third_dev_axis" || cfg.type === "live_flights"
-        ? createSpecialLayer(cfg, o.opacity)
-        : makeRasterLayer(cfg, { opacity: o.opacity, zIndex: o.z });
+      layer = ["tile", "wms", "arcgis_export"].includes(cfg.type)
+        ? makeRasterLayer(cfg, { opacity: o.opacity, zIndex: o.z })
+        : createSpecialLayer(cfg, o.opacity);   // 3RO, flights, weather
       overlayLayers.set(id, layer);
       layer.addTo(map);
     }

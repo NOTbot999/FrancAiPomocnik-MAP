@@ -10,10 +10,13 @@
   },
   {
    "id": "carto_voyager",
-   "name": "Carto Voyager",
+   "name": "Esri Ulice",
    "type": "tile",
-   "url": "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
-   "attribution": "&copy; OpenStreetMap &copy; CARTO"
+   "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
+   "attribution": "&copy; Esri, HERE, Garmin, OpenStreetMap",
+   "maxNativeZoom": 19,
+   "description": "Ulična karta (Esri) — nadomešča Carto Voyager, ki zdaj zahteva ključ",
+   "purgeBefore": 1795199291
   },
   {
    "id": "satellite",
@@ -42,8 +45,11 @@
    "id": "dark",
    "name": "Temna",
    "type": "tile",
-   "url": "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-   "attribution": "&copy; CartoDB"
+   "url": "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+   "attribution": "&copy; Esri",
+   "maxNativeZoom": 16,
+   "description": "Temno siva podlaga (Esri)",
+   "purgeBefore": 1795199291
   },
   {
    "id": "lidar_hillshade",
@@ -266,7 +272,7 @@
     },
     {
      "id": "openinframap_water",
-     "name": "Vodovod & Kanalizacija",
+     "name": "Vodovod & Kanalizacija (GJI)",
      "type": "wms",
      "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
      "layers": "SI.GURS.KGI:LINIJE_VODOVOD_G,SI.GURS.KGI:LINIJE_KANALIZACIJA_G",
@@ -274,7 +280,7 @@
      "transparent": true,
      "version": "1.3.0",
      "opacity": 0.8,
-     "description": "Vodotoki iz ARSO registra voda (vidno od povečave 16)",
+     "description": "Vodovod in kanalizacija iz katastra gospodarske javne infrastrukture GURS (vidno od povečave 16)",
      "minZoom": 16
     },
     {
@@ -329,23 +335,27 @@
     },
     {
      "id": "carto_roads_only",
-     "name": "Ceste (samo ceste)",
+     "name": "Ceste z imeni (Esri)",
      "type": "tile",
-     "url": "https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png",
-     "attribution": "&copy; CARTO, &copy; OpenStreetMap",
+     "url": "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}",
+     "attribution": "&copy; Esri, HERE, OpenStreetMap",
      "transparent": true,
      "opacity": 0.85,
-     "description": "Samo oznake cest in ulic (transparentni sloj)"
+     "description": "Ceste in imena ulic brez ozadja (prozoren sloj, Esri)",
+     "maxNativeZoom": 19,
+     "purgeBefore": 1795199291
     },
     {
      "id": "osm_roads_transparent",
-     "name": "Ceste & Infrastruktura (OSM)",
+     "name": "Imena krajev in meje (Esri)",
      "type": "tile",
-     "url": "https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png",
-     "attribution": "&copy; CARTO, &copy; OpenStreetMap",
+     "url": "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",
+     "attribution": "&copy; Esri, HERE",
      "transparent": true,
      "opacity": 0.75,
-     "description": "Cestna mreža brez ozadja — za prekrivanje na satelitu ali LIDARu"
+     "description": "Imena krajev in upravne meje brez ozadja — za prekrivanje na satelitu ali LIDARu",
+     "maxNativeZoom": 19,
+     "purgeBefore": 1795199291
     }
    ]
   },
@@ -435,12 +445,14 @@
     },
     {
      "id": "ol_carto_voyager",
-     "name": "Carto Voyager",
+     "name": "Esri Ulice",
      "type": "tile",
-     "url": "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
-     "attribution": "&copy; OpenStreetMap &copy; CARTO",
+     "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
+     "attribution": "&copy; Esri, HERE, Garmin, OpenStreetMap",
      "opacity": 0.9,
-     "description": "Carto Voyager kot prekrivni sloj"
+     "description": "Ulična karta Esri kot prekrivni sloj (nadomešča Carto Voyager)",
+     "maxNativeZoom": 19,
+     "purgeBefore": 1795199291
     },
     {
      "id": "ol_satellite",
@@ -474,10 +486,12 @@
      "id": "ol_dark",
      "name": "Temna",
      "type": "tile",
-     "url": "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-     "attribution": "&copy; CartoDB",
+     "url": "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+     "attribution": "&copy; Esri",
      "opacity": 0.9,
-     "description": "Temna karta kot prekrivni sloj"
+     "description": "Temno siva karta (Esri) kot prekrivni sloj",
+     "maxNativeZoom": 16,
+     "purgeBefore": 1795199291
     },
     {
      "id": "ol_lidar",
@@ -531,6 +545,16 @@
      "opacity": 0.9,
      "transparent": true,
      "description": "Smučišča in terenski tereni iz WaymarkedTrails"
+    },
+    {
+     "id": "esri_hillshade",
+     "name": "Senčenje reliefa (svet)",
+     "type": "tile",
+     "url": "https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}",
+     "opacity": 0.45,
+     "maxNativeZoom": 16,
+     "attribution": "&copy; Esri",
+     "description": "Senčenje reliefa za ves svet, brez API ključa (Esri) — nadomešča MapTiler Hillshade"
     }
    ]
   },
@@ -1188,12 +1212,14 @@
     },
     {
      "id": "stamen_toner",
-     "name": "Toner (visok kontrast)",
+     "name": "Svetla siva (visok kontrast)",
      "type": "tile",
-     "url": "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-     "attribution": "&copy; CartoDB, &copy; OpenStreetMap",
+     "url": "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+     "attribution": "&copy; Esri",
      "opacity": 0.85,
-     "description": "Visokokontrastna svetla karta — izpostavi ceste in zgradbe"
+     "description": "Svetlo siva karta (Esri) — izpostavi ceste in zgradbe",
+     "maxNativeZoom": 16,
+     "purgeBefore": 1795199291
     },
     {
      "id": "lidar_overlay",
@@ -1207,6 +1233,57 @@
      "description": "LIDAR kot overlay (GURS) — jarki, nasipi, temelji zgradb",
      "layers": "SI.GURS.ZPDZ:LIDAR",
      "version": "1.3.0"
+    }
+   ]
+  },
+  {
+   "id": "vreme",
+   "name": "Vreme",
+   "layers": [
+    {
+     "id": "wx_radar",
+     "name": "Padavine – radar",
+     "type": "rainviewer",
+     "kind": "radar",
+     "opacity": 0.7,
+     "live": true,
+     "description": "Zadnji radarski posnetek padavin (RainViewer), osvežuje se vsakih 10 minut — brez API ključa"
+    },
+    {
+     "id": "wx_satellite",
+     "name": "Oblaki – satelit",
+     "type": "rainviewer",
+     "kind": "satellite",
+     "opacity": 0.6,
+     "live": true,
+     "description": "Infrardeči satelitski posnetek oblakov (RainViewer) — brez API ključa"
+    },
+    {
+     "id": "wx_temp",
+     "name": "Temperatura",
+     "type": "weather",
+     "kind": "temp",
+     "opacity": 0.55,
+     "live": true,
+     "description": "Trenutna temperatura zraka nad Slovenijo (Open-Meteo), osvežuje se vsakih 30 minut — nadomešča OpenWeatherMap"
+    },
+    {
+     "id": "wx_wind",
+     "name": "Veter",
+     "type": "weather",
+     "kind": "wind",
+     "opacity": 0.9,
+     "live": true,
+     "description": "Trenutna hitrost in smer vetra (Open-Meteo) — puščice kažejo, kam piha"
+    },
+    {
+     "id": "wx_clouds",
+     "name": "Oblačnost",
+     "type": "weather",
+     "kind": "clouds",
+     "opacity": 0.6,
+     "live": true,
+     "description": "Trenutna pokritost neba z oblaki v % (Open-Meteo) — nadomešča OpenWeatherMap"
     }
    ]
   }

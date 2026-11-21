@@ -1,6 +1,7 @@
 // Special vector overlays: 3. razvojna os (3RO) and live flights (ADS-B via adsb.lol)
 import { overpass, fetchJSON } from "./api.js";
 import { esc, toast } from "./util.js";
+import { createWeatherLayer } from "./weather.js";
 
 const emojiIcon = (emoji, size = 18) => L.divIcon({
   html: `<div class="emoji-marker" style="font-size:${size}px">${emoji}</div>`,
@@ -10,6 +11,7 @@ const emojiIcon = (emoji, size = 18) => L.divIcon({
 export function createSpecialLayer(cfg, opacity) {
   if (cfg.type === "third_dev_axis") return thirdDevAxis(opacity);
   if (cfg.type === "live_flights") return flights(opacity);
+  if (cfg.type === "weather" || cfg.type === "rainviewer") return createWeatherLayer(cfg, opacity);
   return L.layerGroup();
 }
 
