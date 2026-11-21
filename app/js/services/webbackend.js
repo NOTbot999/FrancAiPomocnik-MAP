@@ -1,7 +1,7 @@
 // Browser-only backend for the web version (spletna različica): no local server, so the app talks
 // to the map services directly and keeps settings / drawings / tracks in this browser's storage.
 // Mirrors the endpoints of app.py (desktop) and Backend.java (Android) that make sense on the web.
-const VERSION = "1.5.8";
+const VERSION = "1.5.9";
 const OVERPASS_MIRRORS = [
   "https://overpass-api.de/api/interpreter",
   "https://overpass.private.coffee/api/interpreter",
@@ -67,6 +67,7 @@ export function tileUrl(cfg, z, x, y) {
     const b = sr === 4326 ? bounds4326(z, x, y) : bounds3857(z, x, y);
     const q = new URLSearchParams({ bbox: b.map((v) => v.toFixed(8)).join(","), bboxSR: sr, imageSR: cfg.imageSR || sr, size: "256,256", f: "image",
       format: cfg.format || (transparent ? "png32" : "jpg"), transparent: String(transparent) });
+    if (cfg.layers) q.set("layers", cfg.layers);   // sub-layer selection, e.g. "show:5664"
     return `${cfg.url}?${q}`;
   }
   return "";

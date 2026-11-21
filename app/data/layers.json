@@ -65,14 +65,13 @@
   },
   {
    "id": "arso_topo_nova",
-   "name": "ARSO Topo",
+   "name": "Topografska karta",
    "type": "arcgis_export",
-   "bboxSR": 4326,
-   "imageSR": 4326,
-   "attribution": "&copy; ARSO",
-   "url": "https://gis.arso.gov.si/arcgis/rest/services/Topografske_karte_ARSO_nova/MapServer/export",
+   "url": "https://geohub.gov.si/ags/rest/services/TEMELJNE_KARTE/GH_MDP_TOPO_KARTA_SI/MapServer/export",
    "transparent": false,
-   "format": "jpg"
+   "attribution": "&copy; GeoHub (RS)",
+   "format": "jpg",
+   "description": "Topografska karta Slovenije (GeoHub) — nadomešča ARSO topografsko karto"
   }
  ],
  "categories": [
@@ -158,13 +157,12 @@
      "id": "arso_lidar_fishnet",
      "name": "LIDAR pokritost (mreža)",
      "type": "arcgis_export",
-     "url": "https://gis.arso.gov.si/arcgis/rest/services/Lidar_fishnet_D96/MapServer/export",
-     "opacity": 0.6,
-     "bboxSR": 4326,
-     "imageSR": 4326,
+     "url": "https://geohub.gov.si/ags/rest/services/TEMELJNE_VSEBINE/GH_Mreze_listov_kart/MapServer/export",
      "transparent": true,
-     "format": "png32",
-     "description": "Mreža LIDAR blokov — katera območja so bila snemana"
+     "attribution": "&copy; GeoHub (RS)",
+     "layers": "show:1486,1487",
+     "description": "LIDAR bloki in mreža D96 (GeoHub)",
+     "opacity": 0.6
     },
     {
      "id": "gurs_dtk25",
@@ -196,15 +194,14 @@
     },
     {
      "id": "arso_topo_overlay",
-     "name": "ARSO Topografska karta",
+     "name": "Topografska karta",
      "type": "arcgis_export",
-     "url": "https://gis.arso.gov.si/arcgis/rest/services/Topografske_karte_ARSO_nova/MapServer/export",
-     "opacity": 0.9,
-     "bboxSR": 4326,
-     "imageSR": 4326,
+     "url": "https://geohub.gov.si/ags/rest/services/TEMELJNE_KARTE/GH_MDP_TOPO_KARTA_SI/MapServer/export",
      "transparent": false,
+     "attribution": "&copy; GeoHub (RS)",
      "format": "jpg",
-     "description": "Nova ARSO topografska karta z OSM, GURS in PZS podatki"
+     "description": "Topografska karta Slovenije (GeoHub) — nadomešča ARSO topografsko karto",
+     "opacity": 0.9
     },
     {
      "id": "gurs_parcels",
@@ -375,62 +372,91 @@
     {
      "id": "arso_vode_povrsine",
      "name": "Vodne površine (jezera, reke)",
-     "type": "wms",
-     "url": "https://gis.arso.gov.si/geoserver/ARSO/wms",
-     "layers": "ARSO:VODE_MM_PVOPV_KEM_ST_2020",
-     "format": "image/png",
+     "type": "arcgis_export",
+     "url": "https://geohub.gov.si/ags/rest/services/DRSV/Hidrografija/MapServer/export",
      "transparent": true,
-     "version": "1.1.1",
-     "opacity": 0.85,
-     "description": "Vodne površine iz ARSO registra voda — jezera, akumulacije, ribniki"
+     "attribution": "&copy; GeoHub (RS)",
+     "layers": "show:4202,4205,4201",
+     "description": "Površinske vode, vodotoki in imena voda (Direkcija za vode, GeoHub)",
+     "opacity": 0.85
     },
     {
      "id": "arso_poplave",
      "name": "Poplavna območja",
-     "type": "wms",
-     "url": "https://gis.arso.gov.si/geoserver/ARSO/wms",
-     "layers": "ARSO:PV_OPO",
-     "format": "image/png",
+     "type": "arcgis_export",
+     "url": "https://geohub.gov.si/ags/rest/services/DRSV/Opozorilna_KP_new/MapServer/export",
      "transparent": true,
-     "version": "1.1.1",
-     "opacity": 0.6,
-     "description": "Poplavna tvegana območja iz ARSO"
+     "attribution": "&copy; GeoHub (RS)",
+     "layers": "show:4016,4017,4018",
+     "description": "Opozorilna karta poplav: pogoste, redke in katastrofalne poplave (Direkcija za vode, GeoHub)",
+     "opacity": 0.6
     },
     {
      "id": "arso_jame_epo",
-     "name": "Lokacije jam (EPO_PNT)",
-     "type": "wms",
-     "url": "https://gis.arso.gov.si/geoserver/ARSO/wms",
-     "layers": "ARSO:EPO_PNT",
-     "format": "image/png",
+     "name": "Ekološko pomembna območja – jame",
+     "type": "arcgis_export",
+     "url": "https://geohub.gov.si/ags/rest/services/DRSV/Zavarovana_in_varovana_obmocja_po_ZON/MapServer/export",
      "transparent": true,
-     "version": "1.1.1",
-     "opacity": 0.8,
-     "description": "Ekološko pomembne jamske točke iz registra ARSO"
+     "attribution": "&copy; GeoHub (RS)",
+     "layers": "show:5664",
+     "sparse": true,
+     "description": "Ekološko pomembna območja — jame (GeoHub)",
+     "opacity": 0.8
     },
     {
      "id": "arso_epo_plg",
-     "name": "Kraška območja (EPO_PLG)",
-     "type": "wms",
-     "url": "https://gis.arso.gov.si/geoserver/ARSO/wms",
-     "layers": "ARSO:EPO_PLG",
-     "format": "image/png",
+     "name": "Ekološko pomembna območja",
+     "type": "arcgis_export",
+     "url": "https://geohub.gov.si/ags/rest/services/DRSV/Zavarovana_in_varovana_obmocja_po_ZON/MapServer/export",
      "transparent": true,
-     "version": "1.1.1",
-     "opacity": 0.5,
-     "description": "Ekološko pomembna območja vključno s kraškimi conami"
+     "attribution": "&copy; GeoHub (RS)",
+     "layers": "show:5665",
+     "description": "Ekološko pomembna območja (GeoHub)",
+     "opacity": 0.5
     },
     {
      "id": "arso_naravne_vrednote",
-     "name": "Naravne vrednote (NV_PLG)",
-     "type": "wms",
-     "url": "https://gis.arso.gov.si/geoserver/ARSO/wms",
-     "layers": "ARSO:NV_PLG",
-     "format": "image/png",
+     "name": "Naravne vrednote",
+     "type": "arcgis_export",
+     "url": "https://geohub.gov.si/ags/rest/services/DRSV/Zavarovana_in_varovana_obmocja_po_ZON/MapServer/export",
      "transparent": true,
-     "version": "1.1.1",
-     "opacity": 0.5,
-     "description": "Register naravnih vrednot (vključuje jame)"
+     "attribution": "&copy; GeoHub (RS)",
+     "layers": "show:5673,5671,5672",
+     "sparse": true,
+     "description": "Naravne vrednote — območja, točke in jame (GeoHub)",
+     "opacity": 0.5
+    },
+    {
+     "id": "geozs_plazovi",
+     "name": "Plazovi (GeoZS)",
+     "type": "arcgis_export",
+     "url": "https://geohub.gov.si/ags/rest/services/DRSV/Terensko_preverjeni_zemeljski_in_hribinski_plazovi__GeoZS/MapServer/export",
+     "transparent": true,
+     "attribution": "&copy; GeoHub (RS)",
+     "sparse": true,
+     "opacity": 0.9,
+     "description": "Terensko preverjeni zemeljski in hribinski plazovi (Geološki zavod, GeoHub)"
+    },
+    {
+     "id": "poplave_2023",
+     "name": "Poplavljena območja avgust 2023",
+     "type": "arcgis_export",
+     "url": "https://geohub.gov.si/ags/rest/services/TEMELJNI_RASTRI/Poplavljena_obmocja_avgust_2023/MapServer/export",
+     "transparent": true,
+     "attribution": "&copy; GeoHub (RS)",
+     "opacity": 0.7,
+     "description": "Območja, poplavljena ob poplavah avgusta 2023 (GeoHub)"
+    },
+    {
+     "id": "vodovarstvena",
+     "name": "Vodovarstvena območja",
+     "type": "arcgis_export",
+     "url": "https://geohub.gov.si/ags/rest/services/DRSV/Varstvo_voda/MapServer/export",
+     "transparent": true,
+     "attribution": "&copy; GeoHub (RS)",
+     "layers": "show:5361,5362",
+     "opacity": 0.6,
+     "description": "Vodovarstvena območja po uredbah vlade in občinskih odlokih (Direkcija za vode, GeoHub)"
     }
    ]
   },
@@ -515,15 +541,14 @@
     },
     {
      "id": "ol_arso_topo",
-     "name": "ARSO Topo",
+     "name": "Topografska karta",
      "type": "arcgis_export",
-     "url": "https://gis.arso.gov.si/arcgis/rest/services/Topografske_karte_ARSO_nova/MapServer/export",
-     "opacity": 0.9,
-     "bboxSR": 4326,
-     "imageSR": 4326,
+     "url": "https://geohub.gov.si/ags/rest/services/TEMELJNE_KARTE/GH_MDP_TOPO_KARTA_SI/MapServer/export",
      "transparent": false,
+     "attribution": "&copy; GeoHub (RS)",
      "format": "jpg",
-     "description": "ARSO topografska karta kot prekrivni sloj"
+     "description": "Topografska karta Slovenije (GeoHub) — nadomešča ARSO topografsko karto",
+     "opacity": 0.9
     },
     {
      "id": "ol_esri_hillshade",
@@ -585,15 +610,14 @@
     },
     {
      "id": "arso_erozija",
-     "name": "Degradirana / erozijo ogrožena območja",
+     "name": "Erozijska in plazljiva območja",
      "type": "arcgis_export",
-     "url": "https://gis.arso.gov.si/arcgis/rest/services/Degradirana_obmocja/MapServer/export",
-     "bboxSR": 4326,
-     "imageSR": 4326,
+     "url": "https://geohub.gov.si/ags/rest/services/DRSV/Ogrozena_obmocja/MapServer/export",
      "transparent": true,
-     "format": "png32",
-     "opacity": 0.55,
-     "description": "Območja ogrožena z erozijo tal iz ARSO"
+     "attribution": "&copy; GeoHub (RS)",
+     "layers": "show:4401,4402",
+     "description": "Erozijska in plazljiva območja (opozorilna karta, Direkcija za vode, GeoHub)",
+     "opacity": 0.55
     },
     {
      "id": "gurs_katastrske_obcine",
@@ -697,14 +721,14 @@
     {
      "id": "arso_hidroloske_postaje",
      "name": "Hidrološke merilne postaje",
-     "type": "wms",
-     "url": "https://gis.arso.gov.si/geoserver/ARSO/wms",
-     "layers": "ARSO:HM_PNT",
-     "format": "image/png",
+     "type": "arcgis_export",
+     "url": "https://geohub.gov.si/ags/rest/services/DRSV/Monitoring_voda/MapServer/export",
      "transparent": true,
-     "version": "1.1.1",
-     "opacity": 0.9,
-     "description": "Mreža hidroloških merilnih postaj ARSO na vodotokih"
+     "attribution": "&copy; GeoHub (RS)",
+     "layers": "show:5643,5644,5645",
+     "sparse": true,
+     "description": "Hidrološke merilne postaje — tekoče, stoječe in podzemne vode (GeoHub)",
+     "opacity": 0.9
     }
    ]
   },
@@ -901,7 +925,8 @@
      "version": "1.3.0",
      "opacity": 0.85,
      "description": "Žičnice in vlečnice iz katastra GJI (vidno od povečave 16)",
-     "minZoom": 16
+     "minZoom": 16,
+     "sparse": true
     },
     {
      "id": "gji_parkirisca",
@@ -939,7 +964,8 @@
      "version": "1.3.0",
      "opacity": 0.85,
      "description": "Letališka infrastruktura iz katastra GJI (vidno od povečave 16)",
-     "minZoom": 16
+     "minZoom": 16,
+     "sparse": true
     },
     {
      "id": "osm_transit",
@@ -989,26 +1015,25 @@
     {
      "id": "zvkds_rkd_tocke",
      "name": "Kulturna dediščina — enote (točke)",
-     "type": "wms",
-     "url": "https://gis.arso.gov.si/geoserver/ARSO/wms",
-     "layers": "ARSO:KD_PNT",
-     "format": "image/png",
+     "type": "arcgis_export",
+     "url": "https://geohub.gov.si/ags/rest/services/MK/ISKD/MapServer/export",
      "transparent": true,
-     "version": "1.1.1",
-     "opacity": 0.9,
-     "description": "Točke kulturne dediščine iz ARSO geoportala"
+     "attribution": "&copy; GeoHub (RS)",
+     "layers": "show:3314",
+     "sparse": true,
+     "description": "Register nepremične kulturne dediščine — točke (Ministrstvo za kulturo, GeoHub)",
+     "opacity": 0.9
     },
     {
      "id": "zvkds_rkd_obmocja",
      "name": "Kulturna dediščina — območja",
-     "type": "wms",
-     "url": "https://gis.arso.gov.si/geoserver/ARSO/wms",
-     "layers": "ARSO:KD_PLG",
-     "format": "image/png",
+     "type": "arcgis_export",
+     "url": "https://geohub.gov.si/ags/rest/services/MK/ISKD/MapServer/export",
      "transparent": true,
-     "version": "1.1.1",
-     "opacity": 0.5,
-     "description": "Območja kulturne dediščine iz ARSO geoportala"
+     "attribution": "&copy; GeoHub (RS)",
+     "layers": "show:3312",
+     "description": "Register nepremične kulturne dediščine — območja (Ministrstvo za kulturo, GeoHub)",
+     "opacity": 0.5
     },
     {
      "id": "arso_zavarovana_obmocja",
@@ -1038,26 +1063,36 @@
     {
      "id": "arso_nv_tocke",
      "name": "Naravne vrednote (točke)",
-     "type": "wms",
-     "url": "https://gis.arso.gov.si/geoserver/ARSO/wms",
-     "layers": "ARSO:ZOS_NV_PNT_JAME",
-     "format": "image/png",
+     "type": "arcgis_export",
+     "url": "https://geohub.gov.si/ags/rest/services/DRSV/Zavarovana_in_varovana_obmocja_po_ZON/MapServer/export",
      "transparent": true,
-     "version": "1.1.1",
-     "opacity": 0.85,
-     "description": "Točkovne naravne vrednote — jame, izviri, posebna drevesa, geotopi"
+     "attribution": "&copy; GeoHub (RS)",
+     "layers": "show:5671,5672",
+     "sparse": true,
+     "description": "Naravne vrednote — točke in jame (GeoHub)",
+     "opacity": 0.85
     },
     {
      "id": "arso_nv_obmocja",
      "name": "Naravne vrednote (območja)",
-     "type": "wms",
-     "url": "https://gis.arso.gov.si/geoserver/ARSO/wms",
-     "layers": "ARSO:NV_PLG",
-     "format": "image/png",
+     "type": "arcgis_export",
+     "url": "https://geohub.gov.si/ags/rest/services/DRSV/Zavarovana_in_varovana_obmocja_po_ZON/MapServer/export",
      "transparent": true,
-     "version": "1.1.1",
-     "opacity": 0.45,
-     "description": "Območja naravnih vrednot — reke, doline, kraški svet"
+     "attribution": "&copy; GeoHub (RS)",
+     "layers": "show:5673",
+     "description": "Naravne vrednote — območja (GeoHub)",
+     "opacity": 0.45
+    },
+    {
+     "id": "mk_arheo",
+     "name": "Arheološke raziskave",
+     "type": "arcgis_export",
+     "url": "https://geohub.gov.si/ags/rest/services/MK/MK_ARHEO/MapServer/export",
+     "transparent": true,
+     "attribution": "&copy; GeoHub (RS)",
+     "layers": "show:3692,3694",
+     "opacity": 0.75,
+     "description": "Izvedene arheološke raziskave in raziskave v teku (Ministrstvo za kulturo, GeoHub)"
     }
    ]
   },
@@ -1284,6 +1319,91 @@
      "description": "Trenutna pokritost neba z oblaki v % (Open-Meteo) — nadomešča OpenWeatherMap"
     }
    ]
+  },
+  {
+   "id": "prostorski",
+   "name": "Prostorski načrti",
+   "layers": [
+    {
+     "id": "pis_nrp",
+     "name": "Namenska raba (veljavni OPN)",
+     "type": "wms",
+     "url": "https://ipi.eprostor.gov.si/wms-si-mnvp-pa/ows",
+     "layers": "SI.MNVP.PA:NRP_OPN",
+     "format": "image/png",
+     "transparent": true,
+     "version": "1.3.0",
+     "opacity": 0.6,
+     "attribution": "&copy; MNVP / PIS",
+     "description": "Namenska raba prostora iz veljavnih občinskih prostorskih načrtov (PIS)"
+    },
+    {
+     "id": "pis_eup",
+     "name": "Enote urejanja prostora (OPN)",
+     "type": "wms",
+     "url": "https://ipi.eprostor.gov.si/wms-si-mnvp-pa/ows",
+     "layers": "SI.MNVP.PA:EUP_OPN,SI.MNVP.PA:PEUP_OPN",
+     "format": "image/png",
+     "transparent": true,
+     "version": "1.3.0",
+     "opacity": 0.8,
+     "attribution": "&copy; MNVP / PIS",
+     "description": "Enote in podenote urejanja prostora iz veljavnih OPN (PIS)"
+    },
+    {
+     "id": "pis_reg",
+     "name": "Regulacijske črte in površine (OPN)",
+     "type": "wms",
+     "url": "https://ipi.eprostor.gov.si/wms-si-mnvp-pa/ows",
+     "layers": "SI.MNVP.PA:REG_POVRSINE_OPN,SI.MNVP.PA:REG_CRTE_OPN",
+     "format": "image/png",
+     "transparent": true,
+     "version": "1.3.0",
+     "opacity": 0.9,
+     "attribution": "&copy; MNVP / PIS",
+     "description": "Regulacijske črte in površine iz veljavnih OPN (PIS)",
+     "sparse": true
+    },
+    {
+     "id": "pis_v_pripravi",
+     "name": "Prostorski akti v pripravi",
+     "type": "wms",
+     "url": "https://ipi.eprostor.gov.si/wms-si-mnvp-pa/ows",
+     "layers": "SI.MNVP.PA:OBM_PA_V_PRIPRAVI",
+     "format": "image/png",
+     "transparent": true,
+     "version": "1.3.0",
+     "opacity": 0.6,
+     "attribution": "&copy; MNVP / PIS",
+     "description": "Območja občinskih prostorskih aktov, ki so v pripravi (aktivni postopki, PIS)"
+    },
+    {
+     "id": "pis_dpn",
+     "name": "Državni prostorski načrti v pripravi",
+     "type": "wms",
+     "url": "https://ipi.eprostor.gov.si/wms-si-mnvp-pa/ows",
+     "layers": "SI.MNVP.PA:DPN_P",
+     "format": "image/png",
+     "transparent": true,
+     "version": "1.3.0",
+     "opacity": 0.6,
+     "attribution": "&copy; MNVP / PIS",
+     "description": "Območja državnih prostorskih načrtov v pripravi (PIS)"
+    },
+    {
+     "id": "pis_zakljuceni",
+     "name": "Zaključeni prostorski akti",
+     "type": "wms",
+     "url": "https://ipi.eprostor.gov.si/wms-si-mnvp-pa/ows",
+     "layers": "SI.MNVP.PA:OBM_PA_ZAKLJUCENI",
+     "format": "image/png",
+     "transparent": true,
+     "version": "1.3.0",
+     "opacity": 0.6,
+     "attribution": "&copy; MNVP / PIS",
+     "description": "Območja zaključenih (sprejetih) prostorskih aktov (PIS)"
+    }
+   ]
   }
  ],
  "pois": [
@@ -1460,7 +1580,8 @@
    "label": "Hidranti",
    "emoji": "🧯",
    "color": "#dc2626",
-   "query": "[out:json][timeout:90];node[\"emergency\"=\"fire_hydrant\"](45.4,13.4,46.9,16.6);out;"
+   "query": "[out:json][timeout:90];node[\"emergency\"=\"fire_hydrant\"](45.4,13.4,46.9,16.6);out;",
+   "source": "gji"
   },
   {
    "id": "police",
