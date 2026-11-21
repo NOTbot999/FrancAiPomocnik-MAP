@@ -7,6 +7,7 @@ import { esc } from "./util.js";
 
 export const FAB_BUTTONS = [
   { id: "layers", label: "Sloji", icon: "layers" },
+  { id: "legend", label: "Legenda", icon: "legend" },
   { id: "zoom", label: "Zoom", icon: "plus" },
   { id: "search", label: "Iskanje", icon: "search" },
   { id: "locate", label: "Moja lokacija", icon: "locate" },

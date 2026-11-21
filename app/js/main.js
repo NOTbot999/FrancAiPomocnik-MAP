@@ -18,6 +18,7 @@ import { settingsPanel, applyTheme, applyScaleBar } from "./runtime/settings.js"
 import { collabPanel, isCollabConnected } from "./create/collab.js";
 import { aiPanel, initPlugins } from "./runtime/ai.js";
 import { initFab, renderFab, normalizeUiPrefs } from "./shared/fab.js";
+import { initLegend, toggleLegend, isLegendOpen } from "./map/legend.js";
 import { toggleRecording, isRecording } from "./create/tracks.js";
 import { toggleOverlay, isOverlayOn } from "./map/map.js";
 import { cancelPick } from "./shared/tools.js";
@@ -161,6 +162,7 @@ async function boot() {
     actions: {
       settings: () => togglePanel("settings"),
       layers: () => togglePanel("layers"),
+      legend: () => { toggleLegend(); renderFab(); },
       zoomIn: () => map.zoomIn(1),
       zoomOut: () => map.zoomOut(1),
       search: () => { $("#search-input").focus(); $("#search-input").select(); },
@@ -182,13 +184,14 @@ async function boot() {
       settings: current === "settings", layers: current === "layers", nav: current === "route", offline: current === "offline",
       ai: current === "ai", trackanalyzer: current === "tracks", collab: current === "collab" || isCollabConnected(),
       poi: current === "poi", draw: current === "draw", compare: current === "compare",
-      gps: isRecording(), lidar: isOverlayOn("gurs_lidar"),
+      gps: isRecording(), lidar: isOverlayOn("gurs_lidar"), legend: isLegendOpen(),
     })[id] || false,
     badge: badgeCount,
     onMoved: saveSettings,      // column dragged to a new spot
   });
   on("gps-tracking", renderFab);
   on("collab", renderFab);
+  initLegend($("#map-wrap"));   // "Legenda" box: what colours / symbols of the visible layers mean
 
   // panel
   $("#panel-close").onclick = closePanel;

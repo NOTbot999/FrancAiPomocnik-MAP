@@ -4,6 +4,7 @@ import { TOKEN, TILE_SUBDOMAINS, tileHost, IS_WEB, proxiedImage } from "../servi
 import { tileUrl } from "../services/webbackend.js";
 import { esc, h, $, $$ } from "../shared/util.js";
 import { icon } from "../shared/icons.js";
+import { legendHtml } from "./legend.js";
 
 let filter = "";
 
@@ -60,7 +61,7 @@ export const layersPanel = {
     const active = [...s.overlays].reverse();
     const activeHtml = active.length ? active.map((o) => {
       const cfg = state.layerIndex[o.id];
-      const lg = s.showLegends && legendUrl(cfg);
+
       return `<div class="active-layer" draggable="true" data-id="${o.id}">
         <div class="row">
           <span class="grip" title="Povleci za vrstni red">${icon("grip")}</span>
@@ -71,7 +72,7 @@ export const layersPanel = {
         ${cfg.minZoom && map.getZoom() < cfg.minZoom ? `<button class="zoom-hint" data-zoomto="${cfg.minZoom}">${icon("zoom")} Viden od povečave ${cfg.minZoom} — klikni za približanje</button>` : ""}
         ${isBroken(o.id) ? `<div class="broken-hint">${esc(brokenReason(o.id))}</div>` : ""}
         <div class="op"><input type="range" min="0" max="1" step="0.05" value="${o.opacity}" data-op="${o.id}"><span>${Math.round(o.opacity * 100)}%</span></div>
-        ${lg ? `<img class="legend-img" src="${lg}" alt="" loading="lazy" onerror="this.remove()">` : ""}
+        ${s.showLegends ? `<div class="legend-slot" data-legend="${o.id}"></div>` : ""}
       </div>`;
     }).join("") : `<div class="help">Ni vklopljenih slojev. Izberi jih spodaj — vrstni red spreminjaš s potegom.</div>`;
 
@@ -116,7 +117,7 @@ export const layersPanel = {
       <div class="section">
         <div class="section-title"><span>Aktivni sloji (${s.overlays.length})</span>
           <span class="row">
-            <button class="btn sm" id="toggle-legends" title="Legende WMS slojev">${icon("legend")} ${s.showLegends ? "Skrij legende" : "Legende"}</button>
+            <button class="btn sm" id="toggle-legends" title="Legende aktivnih slojev">${icon("legend")} ${s.showLegends ? "Skrij legende" : "Legende"}</button>
             ${s.overlays.length ? `<button class="btn sm danger" id="clear-overlays">Počisti</button>` : ""}
           </span>
         </div>
@@ -135,6 +136,11 @@ export const layersPanel = {
            ["Old Maps Online", "https://www.oldmapsonline.org/en/Slovenia"], ["e-Prostor javni vpogled", "https://ipi.eprostor.gov.si/jv/"]]
           .map(([l, u]) => `<a href="${u}" target="_blank" rel="noopener">${icon("link")} ${l}</a>`).join("")}
       </div>`;
+
+    // legends of active layers (async: GeoHub legends come from the bundled file)
+    for (const slot of $$("[data-legend]", el)) {
+      legendHtml(state.layerIndex[slot.dataset.legend]).then((html) => { slot.innerHTML = html || '<div class="lg-note">Ta vir nima legende.</div>'; });
+    }
 
     // events
     el.onclick = (e) => {

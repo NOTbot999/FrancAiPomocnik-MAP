@@ -69,7 +69,7 @@ function fieldImage(cells, key, color) {
   return cv.toDataURL("image/png");
 }
 
-const TEMP_STOPS = [[-20, [91, 33, 182]], [-10, [37, 99, 235]], [0, [56, 189, 248]], [8, [52, 211, 153]],
+export const TEMP_STOPS = [[-20, [91, 33, 182]], [-10, [37, 99, 235]], [0, [56, 189, 248]], [8, [52, 211, 153]],
   [15, [163, 230, 53]], [22, [250, 204, 21]], [28, [249, 115, 22]], [35, [220, 38, 38]], [42, [127, 29, 29]]];
 function tempColor(t) {
   if (t <= TEMP_STOPS[0][0]) return [...TEMP_STOPS[0][1], 190];
@@ -86,8 +86,10 @@ const cloudColor = (c) => [236, 241, 247, Math.round(Math.max(0, Math.min(100, c
 
 const DIRS = ["S", "SV", "V", "JV", "J", "JZ", "Z", "SZ"];
 const dirName = (deg) => DIRS[Math.round(((deg % 360) + 360) % 360 / 45) % 8];
+// [upper limit km/h, colour] — also drawn in the map legend (map/legend.js)
+export const WIND_STEPS = [[10, "#22c55e"], [20, "#84cc16"], [30, "#eab308"], [45, "#f97316"], [65, "#dc2626"], [Infinity, "#7e22ce"]];
 function windColor(kmh) {
-  return kmh < 10 ? "#22c55e" : kmh < 20 ? "#84cc16" : kmh < 30 ? "#eab308" : kmh < 45 ? "#f97316" : kmh < 65 ? "#dc2626" : "#7e22ce";
+  return WIND_STEPS.find(([v]) => kmh < v)[1];
 }
 const fmtTime = (iso) => (iso ? iso.replace("T", " ob ").replace(/^(\d+)-(\d+)-(\d+)/, (_, y, m, d) => `${+d}. ${+m}. ${y}`) : "");
 
