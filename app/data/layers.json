@@ -1250,15 +1250,6 @@
      "description": "Zadnji radarski posnetek padavin (RainViewer), osvežuje se vsakih 10 minut — brez API ključa"
     },
     {
-     "id": "wx_satellite",
-     "name": "Oblaki – satelit",
-     "type": "rainviewer",
-     "kind": "satellite",
-     "opacity": 0.6,
-     "live": true,
-     "description": "Infrardeči satelitski posnetek oblakov (RainViewer) — brez API ključa"
-    },
-    {
      "id": "wx_temp",
      "name": "Temperatura",
      "type": "weather",
