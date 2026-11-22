@@ -9,6 +9,7 @@ import { geocode, localMatches } from "./search.js";
 import { showProfile, elevationStats } from "./profile.js";
 import { toGPX } from "../create/geoio.js";
 import { addFeature } from "../create/draw.js";
+import { showAlongPath, pathButtonsHtml, splitCount } from "../create/midpoint.js";
 
 const PROFILES = [
   { id: "foot", label: "Peš", em: "🥾", brouter: "hiking-mountain" },
@@ -185,6 +186,7 @@ export const routePanel = {
           <button class="btn sm" id="r-gpx">${icon("download")} GPX</button>
           <button class="btn sm" id="r-save">${icon("save")} Shrani v risbe</button>
         </div>
+        <div class="row wrap" style="margin-top:6px">${pathButtonsHtml("data-r")}</div>
       </div>` : ""}
       <div class="help" style="margin-top:14px">Usmerjanje: BRouter (OSM). Izračunane poti se shranijo in so na voljo tudi brez povezave. Desni klik na karto → »Pot do sem«.</div>`;
 
@@ -204,6 +206,7 @@ export const routePanel = {
       const name = `${wps[0].label} → ${wps[wps.length - 1].label}`;
       if (t.id === "r-prof") showProfile(name, s.pts, ALT_COLORS[result.sel % 3]);
       if (t.id === "r-gpx") saveTextFile("pot.gpx", toGPX([{ type: "line", name, coords: s.pts }], name), "application/gpx+xml");
+      if (d.r === "mid" || d.r === "split") showAlongPath(s.pts, name, d.r === "mid" ? 2 : splitCount(t));
       if (t.id === "r-save") { addFeature({ type: "line", name, coords: s.pts, color: ALT_COLORS[result.sel % 3] }); toast("Pot shranjena med risbe", "ok"); }
     };
 

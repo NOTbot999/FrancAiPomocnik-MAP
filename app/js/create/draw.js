@@ -7,6 +7,7 @@ import { icon } from "../shared/icons.js";
 import { setHint, setActions, cancelPick, pinIcon } from "../shared/tools.js";
 import { toGeoJSON, toGPX, toKML, parseFile } from "./geoio.js";
 import { showProfile } from "../explore/profile.js";
+import { showCentre, showAlongPath, showMidpoints, centroid, clearMidpoints, hasMidpoints, pathButtonsHtml, splitCount, pointLetter } from "./midpoint.js";
 
 let features = [];
 let projects = [];
@@ -24,6 +25,7 @@ export async function initDraw() {
   [features, projects] = await Promise.all([store.get("drawings", []), store.get("projects", [])]);
   renderAll();
   on("add-marker", ({ latlng, name }) => addFeature({ type: "marker", coords: latlng, name: name || "Oznaka" }, true));
+  on("midpoints", () => refreshPanel());
 }
 
 const persist = () => store.set("drawings", features);
@@ -130,8 +132,10 @@ function openFeaturePopup(f, at) {
     ${f.type === "marker" ? pinInfoHtml(f) : `<div class="small muted">${measureText(f)}</div>`}
     <div class="row wrap" style="gap:4px">${swatches}</div>
     <textarea class="field" data-k="note" placeholder="Opomba…">${esc(f.note || "")}</textarea>
+    ${f.type === "line" ? `<div class="actions">${pathButtonsHtml("data-a")}</div>` : ""}
     <div class="actions">
       ${f.type === "line" ? `<button class="btn sm" data-a="profile">${icon("mountain")} Profil</button>` : ""}
+      ${f.type === "polygon" ? `<button class="btn sm" data-a="centre" title="Središče območja">🎯 Središče</button>` : ""}
       ${f.type !== "marker" ? `<button class="btn sm" data-a="edit">${icon("edit")} Uredi točke</button>` : `<button class="btn sm" data-a="copy" title="Ime, koordinate WGS84 in D96/TM, nadmorska višina in opomba">${icon("copy")} Kopiraj vse</button><button class="btn sm" data-a="move">${icon("edit")} Premakni</button><button class="btn sm" data-a="route">${icon("route")} Pot do sem</button>`}
       <button class="btn sm danger" data-a="del">${icon("trash")}</button>
     </div></div>`;
@@ -149,8 +153,10 @@ function openFeaturePopup(f, at) {
   el.addEventListener("click", (e) => {
     const c = e.target.closest("[data-color]");
     if (c) { updateFeature(f.id, { color: c.dataset.color }); map.closePopup(); return openFeaturePopup(f, pos); }
-    const a = e.target.closest("[data-a]")?.dataset.a;
+    const btn = e.target.closest("[data-a]"), a = btn?.dataset.a;
     if (!a) return;
+    if (a === "mid" || a === "split") { map.closePopup(); showAlongPath(f.coords, f.name, a === "mid" ? 2 : splitCount(btn)); return; }
+    if (a === "centre") { map.closePopup(); showMidpoints([{ latlng: centroid(f.coords), title: `Središče ${f.name}`, info: `Povprečje ${f.coords.length} oglišč območja` }]); return; }
     if (a === "copy") {   // keep the popup open
       ensureElevation(f).then(() => copyText(pinCopyText(f), `${f.name} (koordinate in višina)`));
       return;
@@ -211,6 +217,7 @@ const TOOL_INFO = {
   polygon: { hint: "Klikaj oglišča območja · dvoklik ali <kbd>Enter</kbd> konča" },
   "measure-line": { hint: "Merjenje razdalje · klikaj točke · <kbd>Enter</kbd> konča" },
   "measure-area": { hint: "Merjenje površine · klikaj oglišča · <kbd>Enter</kbd> konča" },
+  midpoint: { hint: "Sredina · klikaj 2 ali več točk (klik na oznako jo uporabi) · <kbd>Enter</kbd> izračuna" },
 };
 
 export function startTool(kind) {
@@ -262,6 +269,13 @@ function onClick(e) {
   if (tool.kind === "marker") { addFeature({ type: "marker", coords: p }, true); stopTool(); return; }
   const last = tool.pts[tool.pts.length - 1];
   if (last && map.latLngToContainerPoint(last).distanceTo(e.containerPoint) < 4) return; // dblclick duplicate
+  if (tool.kind === "midpoint") {
+    const cp = e.containerPoint;
+    const hit = features.find((f) => f.type === "marker" && map.latLngToContainerPoint(f.coords).distanceTo(cp) < 16);
+    tool.names ||= [];
+    if (hit) { p[0] = hit.coords[0]; p[1] = hit.coords[1]; }
+    tool.names.push(hit ? hit.name : pointLetter(tool.pts.length));
+  }
   tool.pts.push(p);
   drawPreview(p);
 }
@@ -272,6 +286,18 @@ function onDbl(e) { L.DomEvent.stop(e); finishTool(); }
 function drawPreview(cursor) {
   const pts = [...tool.pts, cursor];
   tool.preview.clearLayers();
+  if (tool.kind === "midpoint") {   // points + live centre
+    tool.pts.forEach((p, i) => L.marker(p, { pane: "top", interactive: false, icon: L.divIcon({ className: "", iconSize: [22, 22], iconAnchor: [11, 11],
+      html: `<div class="emoji-marker mid-pt">${esc(tool.names?.[i]?.length <= 2 ? tool.names[i] : pointLetter(i))}</div>` }) }).addTo(tool.preview));
+    if (tool.pts.length >= 2) {
+      const c = centroid(tool.pts);
+      tool.pts.forEach((p) => L.polyline([p, c], { color: "#e11d48", weight: 2, dashArray: "5,6", interactive: false, pane: "vectors" }).addTo(tool.preview));
+      L.circleMarker(c, { radius: 6, color: "#fff", weight: 2, fillColor: "#e11d48", fillOpacity: 1, interactive: false, pane: "top" }).addTo(tool.preview);
+    }
+    L.tooltip({ permanent: true, direction: "right", offset: [12, 0], className: "measure-label" }).setLatLng(cursor)
+      .setContent(tool.pts.length < 2 ? `Točk: ${tool.pts.length} — klikni še ${2 - tool.pts.length}` : `Točk: ${tool.pts.length} · Enter = sredina`).addTo(tool.preview);
+    return;
+  }
   const c = tool.kind.startsWith("measure") ? "#f97316" : color;
   if (isArea() && pts.length > 2) L.polygon(pts, { color: c, weight: 2.5, dashArray: "6,5", fillOpacity: 0.15, interactive: false, pane: "vectors" }).addTo(tool.preview);
   else L.polyline(pts, { color: c, weight: 3, dashArray: "6,5", interactive: false, pane: "vectors" }).addTo(tool.preview);
@@ -285,6 +311,7 @@ function finishTool() {
   const { kind, pts } = tool;
   const need = isArea() ? 3 : 2;
   if (pts.length < need) { stopTool(); return; }
+  if (kind === "midpoint") { const names = tool.names || []; stopTool(); showCentre(pts, names); return; }
   if (kind === "measure-line" || kind === "measure-area") {
     measureResult = { kind, pts };
     stopTool();
@@ -400,7 +427,8 @@ export const drawPanel = {
         <div class="section-title">Riši</div>
         <div class="seg">${tb("marker", "marker", "Oznaka")}${tb("line", "line", "Črta")}${tb("polygon", "polygon", "Območje")}</div>
         <div class="section-title" style="margin-top:12px">Meri</div>
-        <div class="seg">${tb("measure-line", "ruler", "Razdalja")}${tb("measure-area", "area", "Površina")}</div>
+        <div class="seg">${tb("measure-line", "ruler", "Razdalja")}${tb("measure-area", "area", "Površina")}${tb("midpoint", "crosshair", "Sredina")}</div>
+        ${hasMidpoints() ? `<div class="row" style="margin-top:6px"><span class="small muted grow">🎯 Sredina je prikazana na karti.</span><button class="btn sm" id="mid-clear">Skrij</button></div>` : ""}
         ${mr}
         <div class="row" style="margin-top:10px"><span class="small muted">Barva</span>
           ${COLORS.map((c) => `<button class="swatch" data-pick="${c}" style="background:${c};width:18px;height:18px;border:2px solid ${c === color ? "var(--text)" : "transparent"}"></button>`).join("")}
@@ -457,6 +485,7 @@ export const drawPanel = {
         case "d-import": importFiles(); break;
         case "p-save": saveProject($("#p-name", el).value.trim()); break;
         case "m-clear": clearMeasure(); break;
+        case "mid-clear": clearMidpoints(); refreshPanel(); break;
         case "m-keep": { const { kind, pts } = measureResult; clearMeasure(); addFeature({ type: kind === "measure-area" ? "polygon" : "line", coords: pts }, true); break; }
         case "m-prof": showProfile("Meritev", measureResult.pts, "#f97316"); break;
       }

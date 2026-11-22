@@ -564,3 +564,10 @@ label.check { display: flex; align-items: center; gap: 8px; cursor: pointer; }
 #map.fm-rotated .leaflet-tooltip { background: transparent; border-color: transparent; box-shadow: none; padding: 0; }
 #map.fm-rotated .leaflet-tooltip::before { display: none; }
 #map.fm-rotated .tt-in { rotate: var(--fm-neg); background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 4px; box-shadow: var(--shadow); padding: 6px; }
+
+/* midpoints (create/midpoint.js) */
+.mid-marker { width: 30px; height: 30px; border-radius: 50%; background: #fff; border: 2.5px solid #e11d48; box-shadow: 0 2px 6px rgba(0,0,0,.4); display: grid; place-items: center; font-size: 16px; position: relative; }
+.mid-marker b { position: absolute; right: -8px; top: -8px; min-width: 16px; height: 16px; padding: 0 3px; border-radius: 8px; background: #e11d48; color: #fff; font: 700 10px/16px system-ui, sans-serif; }
+.mid-pt { width: 22px; height: 22px; border-radius: 50%; background: #e11d48; color: #fff; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.4); display: grid; place-items: center; font: 700 11px/1 system-ui, sans-serif; }
+.mid-row { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.mid-row .mid-n { width: 56px; height: 28px; padding: 2px 6px; }

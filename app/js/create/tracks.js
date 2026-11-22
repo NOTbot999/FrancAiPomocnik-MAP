@@ -5,6 +5,7 @@ import { esc, uid, haversine, fmtDist, fmtDur, toast, openTextFiles, saveTextFil
 import { icon } from "../shared/icons.js";
 import { parseFile, toGPX } from "./geoio.js";
 import { showProfile, elevationStats } from "../explore/profile.js";
+import { showAlongPath, pathButtonsHtml, splitCount } from "./midpoint.js";
 
 let tracks = [];
 let group;
@@ -149,7 +150,8 @@ export const tracksPanel = {
           <button class="btn sm" data-a="zoom">${icon("zoom")} Približaj</button>
           <button class="btn sm" data-a="gpx">${icon("download")} GPX</button>
           <button class="btn sm danger" data-a="del">${icon("trash")} Izbriši</button>
-        </div></div>`;
+        </div>
+        <div class="row wrap" style="margin-top:6px">${pathButtonsHtml("data-a")}</div></div>`;
     }
     el.innerHTML = `
       <div class="section row">
@@ -183,6 +185,7 @@ export const tracksPanel = {
       const a = t.dataset.a;
       if (!a || !sel) return;
       if (a === "profile") showProfile(sel.name, sel.coords, sel.color);
+      if (a === "mid" || a === "split") showAlongPath(sel.coords, sel.name, a === "mid" ? 2 : splitCount(t));
       if (a === "zoom") select(sel.id, true);
       if (a === "gpx") saveTextFile(`${sel.name.replace(/[\\/:*?"<>|]/g, "_")}.gpx`, toGPX([{ type: "line", name: sel.name, coords: sel.coords }], sel.name), "application/gpx+xml");
       if (a === "del" && confirm(`Izbrišem sled »${sel.name}«?`)) {
