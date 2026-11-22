@@ -39,7 +39,7 @@ export function initMap(el) {
 
   map.on("moveend", () => {
     const c = map.getCenter();
-    state.settings.view = { center: [+c.lat.toFixed(5), +c.lng.toFixed(5)], zoom: map.getZoom() };
+    state.settings.view = { center: [+c.lat.toFixed(5), +c.lng.toFixed(5)], zoom: map.getZoom(), bearing: state.settings.view?.bearing || 0 };
     saveSettings();
   });
 
@@ -73,8 +73,7 @@ function installDoubleTapZoom() {
     if (last && e.timeStamp - last.t < 320 && Math.hypot(e.clientX - last.x, e.clientY - last.y) < 40) {
       last = null;
       if (!map.doubleClickZoom.enabled()) return;
-      const r = el.getBoundingClientRect();
-      const pt = L.point(e.clientX - r.left, e.clientY - r.top);
+      const pt = map.mouseEventToContainerPoint(e);   // rotation-aware
       map.setZoomAround(map.containerPointToLatLng(pt), Math.min(map.getMaxZoom(), Math.round(map.getZoom()) + 1));
       suppressDblclickUntil = Date.now() + 500;
     } else last = { t: e.timeStamp, x: e.clientX, y: e.clientY };

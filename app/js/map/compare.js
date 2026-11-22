@@ -1,5 +1,6 @@
 // Swipe comparison of two raster layers (e.g. historical orthophotos 1990 vs 2024)
 import { map, makeRasterLayer } from "./map.js";
+import { setBearing } from "./rotate.js";
 import { state, layerName } from "../runtime/state.js";
 import { esc, $, h } from "../shared/util.js";
 import { icon } from "../shared/icons.js";
@@ -33,6 +34,7 @@ function clip() {
 
 function start() {
   stop();
+  setBearing(0);   // the swipe divides the screen vertically — needs a north-up map
   active = true;
   layerA = makeRasterLayer(state.layerIndex[left], { pane: "cmpA", opacity: 1 }).addTo(map);
   layerB = makeRasterLayer(state.layerIndex[right], { pane: "cmpB", opacity: 1 }).addTo(map);

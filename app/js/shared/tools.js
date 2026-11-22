@@ -61,7 +61,7 @@ export function pickPoint(hint = "Klikni na karto") {
 export function pinIcon(color, label = "") {
   return L.divIcon({
     className: "",
-    html: `<div class="pin-marker" style="background:${color}"><span>${label}</span></div>`,
+    html: `<div class="pin-wrap"><div class="pin-marker" style="background:${color}"><span>${label}</span></div></div>`,
     iconSize: [26, 26], iconAnchor: [13, 30], popupAnchor: [0, -28], tooltipAnchor: [0, -26],
   });
 }

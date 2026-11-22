@@ -131,8 +131,7 @@ export const PointLayer = L.Layer.extend({
   // nearest point under the cursor (topmost = largest wins ties)
   _hit(e) {
     if (!this._grid || this._map._animatingZoom) return null;
-    const r = this._map.getContainer().getBoundingClientRect();
-    const lp = this._map.containerPointToLayerPoint([e.clientX - r.left, e.clientY - r.top]);
+    const lp = this._map.containerPointToLayerPoint(this._map.mouseEventToContainerPoint(e));   // rotation-aware
     const x = lp.x - this._min.x, y = lp.y - this._min.y;
     const cx = (x / CELL) | 0, cy = (y / CELL) | 0;
     let best = null, bestD = Infinity;

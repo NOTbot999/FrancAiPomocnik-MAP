@@ -58,7 +58,7 @@ export function applyScaleBar() {
 }
 
 const SHORTCUTS = [
-  ["Ctrl + K", "Iskanje"], ["W / A / S / D", "Premik karte (Shift = hitreje)"],
+  ["Ctrl + K", "Iskanje"], ["W / A / S / D", "Premik karte (Shift = hitreje)"], ["Q / E", "Zasukaj karto (gumb kompas vrne sever)"],
   ["L / P / N / R / T / C / O", "Sloji / Točke / Pot / Riši / Sledi / Primerjaj / Offline"],
   ["M", "Meri razdaljo"], ["Shift + M", "Meri površino"], ["Esc", "Prekliči orodje / zapri"], ["Enter", "Končaj črto ali območje"],
   ["Backspace", "Odstrani zadnjo točko"], ["Desni klik / dolg pritisk", "Meni lokacije"], ["Dvoklik / dvojni dotik", "Povečaj"],

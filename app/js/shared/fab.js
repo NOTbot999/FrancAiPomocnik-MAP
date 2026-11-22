@@ -9,6 +9,7 @@ export const FAB_BUTTONS = [
   { id: "layers", label: "Sloji", icon: "layers" },
   { id: "legend", label: "Legenda", icon: "legend" },
   { id: "zoom", label: "Zoom", icon: "plus" },
+  { id: "compass", label: "Kompas", icon: "compass" },
   { id: "search", label: "Iskanje", icon: "search" },
   { id: "locate", label: "Moja lokacija", icon: "locate" },
   { id: "gps", label: "GPS sled", icon: "navigation" },
@@ -36,7 +37,13 @@ export function normalizeUiPrefs() {
   const ids = FAB_BUTTONS.map((b) => b.id);
   if (!ui.order?.length) { ui.order = [...ids]; ui.hidden = [...DEFAULT_HIDDEN]; ui.railMerged = true; return; }
   ui.order = ui.order.filter((id) => ids.includes(id));
-  for (const id of ids) if (!ui.order.includes(id)) { ui.order.push(id); if (DEFAULT_HIDDEN.includes(id)) ui.hidden.push(id); }
+  // a new button goes right after its predecessor in FAB_BUTTONS (e.g. compass next to zoom), not at the very end
+  ids.forEach((id, i) => {
+    if (ui.order.includes(id)) return;
+    const prev = ids.slice(0, i).reverse().find((x) => ui.order.includes(x));
+    ui.order.splice(prev ? ui.order.indexOf(prev) + 1 : ui.order.length, 0, id);
+    if (DEFAULT_HIDDEN.includes(id)) ui.hidden.push(id);
+  });
   if (!ui.railMerged) {   // 1.5.2: the left bar is gone → its panels must be reachable from the column
     ui.hidden = ui.hidden.filter((id) => !FROM_RAIL.includes(id));
     ui.railMerged = true;
@@ -169,5 +176,6 @@ export function renderFab() {
     } else parts.push(btn(id, b.icon, b.label));
   }
   el.innerHTML = parts.join("");
+  opts.afterRender?.(el);
   placeFab();
 }

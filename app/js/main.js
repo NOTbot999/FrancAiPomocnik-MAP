@@ -19,6 +19,7 @@ import { collabPanel, isCollabConnected } from "./create/collab.js";
 import { aiPanel, initPlugins } from "./runtime/ai.js";
 import { initFab, renderFab, normalizeUiPrefs } from "./shared/fab.js";
 import { initLegend, toggleLegend, isLegendOpen } from "./map/legend.js";
+import { initRotate, rotateBy, resetNorth, toggleCompassFollow, getBearing, isFollowingCompass, onBearing, screenToMap } from "./map/rotate.js";
 import { toggleRecording, isRecording } from "./create/tracks.js";
 import { toggleOverlay, isOverlayOn } from "./map/map.js";
 import { cancelPick } from "./shared/tools.js";
@@ -28,6 +29,16 @@ if (IS_ANDROID) document.documentElement.classList.add("android");
 const PANELS = Object.fromEntries([layersPanel, poiPanel, routePanel, drawPanel, tracksPanel, comparePanel, offlinePanel, collabPanel, aiPanel, settingsPanel].map((p) => [p.id, p]));
 let current = null;
 const PAN_KEYS = { KeyW: [0, -1], KeyS: [0, 1], KeyA: [-1, 0], KeyD: [1, 0] };
+const ROT_KEYS = { KeyQ: -1, KeyE: 1 };   // turn the map anticlockwise / clockwise
+// compass button: needle points to map north; shows the angle when rotated
+function updateCompass() {
+  const b = document.querySelector('.fab-col [data-fab="compass"]');
+  if (!b) return;
+  const svg = b.querySelector("svg");
+  if (svg) svg.style.transform = `rotate(${getBearing()}deg)`;
+  b.classList.toggle("on", isFollowingCompass());
+  b.title = getBearing() ? `Zasukano ${Math.round(getBearing())}° — klik vrne sever` : "Kompas — klik: sledi kompasu naprave · Q / E ali dva prsta: zasukaj";
+}
 const panHeld = new Set();
 let panRaf = 0, panFast = false;
 
@@ -147,6 +158,7 @@ async function boot() {
   applyTheme();
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change", applyTheme);
   initMap($("#map"));
+  initRotate();   // map rotation (compass button, Q / E, two-finger twist)
   applyScaleBar();
   hydrateIcons();
   initProfile();
@@ -166,6 +178,7 @@ async function boot() {
       settings: () => togglePanel("settings"),
       layers: () => togglePanel("layers"),
       legend: () => { toggleLegend(); renderFab(); },
+      compass: () => { if (isFollowingCompass() || !getBearing()) toggleCompassFollow(); else resetNorth(); },
       zoomIn: () => map.zoomIn(1),
       zoomOut: () => map.zoomOut(1),
       search: () => { $("#search-input").focus(); $("#search-input").select(); },
@@ -187,14 +200,16 @@ async function boot() {
       settings: current === "settings", layers: current === "layers", nav: current === "route", offline: current === "offline",
       ai: current === "ai", trackanalyzer: current === "tracks", collab: current === "collab" || isCollabConnected(),
       poi: current === "poi", draw: current === "draw", compare: current === "compare",
-      gps: isRecording(), lidar: isOverlayOn("gurs_lidar"), legend: isLegendOpen(),
+      gps: isRecording(), lidar: isOverlayOn("gurs_lidar"), legend: isLegendOpen(), compass: isFollowingCompass(),
     })[id] || false,
     badge: badgeCount,
+    afterRender: updateCompass,
     onMoved: saveSettings,      // column dragged to a new spot
   });
   on("gps-tracking", renderFab);
   on("collab", renderFab);
-  initLegend($("#map-wrap"));   // "Legenda" box: what colours / symbols of the visible layers mean
+  initLegend($("#map-wrap"));
+  onBearing(updateCompass);   // "Legenda" box: what colours / symbols of the visible layers mean
 
   // panel
   $("#panel-close").onclick = closePanel;
@@ -270,7 +285,17 @@ async function boot() {
     }
     if (e.ctrlKey || e.altKey || e.metaKey) return;
     // W/A/S/D (physical keys, so QWERTZ/QWERTY both work): pan the map while held; never touches tools or drawings
-    if (PAN_KEYS[e.code]) { e.preventDefault(); panFast = e.shiftKey; panHeld.add(e.code); panRaf ||= requestAnimationFrame(panLoop); return; }
+    if (ROT_KEYS[e.code] || PAN_KEYS[e.code]) {
+      e.preventDefault();
+      panFast = e.shiftKey;
+      if (!e.repeat && !panHeld.has(e.code)) {   // a short tap still does a clear step; holding keeps going smoothly
+        if (ROT_KEYS[e.code]) rotateBy(ROT_KEYS[e.code] * (e.shiftKey ? 15 : 5));
+        else { const [x, y] = PAN_KEYS[e.code]; map.panBy(screenToMap(x * 60, y * 60), { animate: false }); }
+      }
+      panHeld.add(e.code);
+      panRaf ||= requestAnimationFrame(panLoop);
+      return;
+    }
     const k = e.key.toLowerCase();
     // panels that would cancel a drawing in progress don't toggle while drawing (use Esc / Enter first)
     const map2 = { l: "layers", p: "poi", n: "route", r: "draw", t: "tracks", c: "compare", o: "offline" };
@@ -288,10 +313,11 @@ async function boot() {
   function panLoop() {
     panRaf = 0;
     if (!panHeld.size) return;
-    let dx = 0, dy = 0;
-    for (const c of panHeld) { dx += PAN_KEYS[c][0]; dy += PAN_KEYS[c][1]; }
+    let dx = 0, dy = 0, rot = 0;
+    for (const c of panHeld) { if (PAN_KEYS[c]) { dx += PAN_KEYS[c][0]; dy += PAN_KEYS[c][1]; } else rot += ROT_KEYS[c] || 0; }
     const sp = panFast ? 26 : 11;
-    if (dx || dy) map.panBy([dx * sp, dy * sp], { animate: false });
+    if (rot) rotateBy(rot * (panFast ? 4 : 1.5));
+    if (dx || dy) map.panBy(screenToMap(dx * sp, dy * sp), { animate: false });   // "up" = up on screen, also when rotated
     panRaf = requestAnimationFrame(panLoop);
   }
 
