@@ -5,10 +5,41 @@
 //   new PointLayer(points, { tooltip(p) → html, onClick(p) })
 //   points: [{ lat, lng, r, fill, stroke, w, ...anything }]   (larger r is drawn on top)
 
+import { getBearing, onBearing, offBearing } from "./rotate.js";
+
 const CELL = 32;   // hit-test grid size (px)
+// Emoji badges (category emoji on a round badge with a coloured rim) instead of dots, as soon as the
+// view is close enough to read them; far out, thousands of points stay plain dots.
+const EMOJI_MIN_ZOOM = 12;
+const EMOJI_MAX_VISIBLE = 3000;
+const EMOJI_FONT = '"Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji","Twemoji Mozilla",sans-serif';
+const sprites = new Map();   // "emoji|rim|size|dpr" → canvas
+
+function badgeSprite(emoji, rim, R, dpr, faded) {
+  const key = `${emoji}|${rim}|${R}|${dpr}|${faded ? 1 : 0}`;
+  let c = sprites.get(key);
+  if (c) return c;
+  const S = Math.ceil((R + 3) * 2);
+  c = document.createElement("canvas");
+  c.width = c.height = S * dpr;
+  const x = c.getContext("2d");
+  x.scale(dpr, dpr);
+  x.shadowColor = "rgba(0,0,0,.35)"; x.shadowBlur = 3; x.shadowOffsetY = 1;
+  x.beginPath(); x.arc(S / 2, S / 2, R, 0, Math.PI * 2);
+  x.fillStyle = faded ? "#e5e7eb" : "#ffffff"; x.fill();
+  x.shadowColor = "transparent";
+  x.lineWidth = Math.max(2, R / 5); x.strokeStyle = rim; x.stroke();
+  x.globalAlpha = faded ? 0.55 : 1;
+  x.font = `${Math.round(R * 1.15)}px ${EMOJI_FONT}`;
+  x.textAlign = "center"; x.textBaseline = "middle";
+  x.fillText(emoji, S / 2, S / 2 + R * 0.08);
+  c._s = S;
+  sprites.set(key, c);
+  return c;
+}
 
 export const PointLayer = L.Layer.extend({
-  options: { pane: "vectors", padding: 0.4 },
+  options: { pane: "vectors", padding: 0.4, emojiSize: 12 },
 
   initialize(points, opts) {
     L.setOptions(this, opts);
@@ -40,6 +71,7 @@ export const PointLayer = L.Layer.extend({
     c.style.pointerEvents = "none";            // events are read from the map container
     if (map.options.zoomAnimation) L.DomUtil.addClass(c, "leaflet-zoom-animated");
     this.getPane().appendChild(c);
+    c.style.zIndex = String(Math.max(1, 200000 - this._pts.length));   // fewer points (e.g. fire stations) draw above dense layers (hydrants)
     this._ctx = c.getContext("2d");
     const el = map.getContainer();
     this._onMoveDom = (e) => this._hover(e);
@@ -48,6 +80,8 @@ export const PointLayer = L.Layer.extend({
     el.addEventListener("mousemove", this._onMoveDom, { passive: true });
     el.addEventListener("click", this._onClickDom, true);   // capture: a hit wins over the map's own click
     el.addEventListener("mouseleave", this._onLeave);
+    this._onBearing = () => { if (this._emojiMode) this._reset(); };
+    onBearing(this._onBearing);
     this._reset();
   },
 
@@ -56,6 +90,7 @@ export const PointLayer = L.Layer.extend({
     el.removeEventListener("mousemove", this._onMoveDom);
     el.removeEventListener("click", this._onClickDom, true);
     el.removeEventListener("mouseleave", this._onLeave);
+    offBearing(this._onBearing);
     this._hideTip();
     L.DomUtil.remove(this._canvas);
     this._canvas = this._ctx = this._grid = null;
@@ -106,6 +141,59 @@ export const PointLayer = L.Layer.extend({
     ctx.clearRect(0, 0, dim.x, dim.y);
     const grid = this._grid = new Map();
     const W = dim.x, H = dim.y, TAU = Math.PI * 2;
+    const R = this.options.emojiSize;
+    // emoji badges when close enough and not too crowded (count what's on screen first)
+    this._emojiMode = false;
+    if (this._zoom >= EMOJI_MIN_ZOOM && this._pts.some((p) => p.emoji)) {
+      let n = 0;
+      for (const pt of this._pts) {
+        const x = pt._wx * scale - ox, y = pt._wy * scale - oy;
+        if (x > -R && y > -R && x < W + R && y < H + R && ++n > EMOJI_MAX_VISIBLE) break;
+      }
+      this._emojiMode = n <= EMOJI_MAX_VISIBLE;
+    }
+    if (this._emojiMode) {
+      const turn = -getBearing() * Math.PI / 180;   // keep the emoji upright on a rotated map
+      // declutter: a badge only where it doesn't cover another badge; the rest stay small dots
+      const D = R * 1.75, occ = new Map(), badges = [], dots = [];
+      for (let i = this._pts.length - 1; i >= 0; i--) {   // large (important) points claim space first
+        const pt = this._pts[i];
+        const x = pt._wx * scale - ox, y = pt._wy * scale - oy;
+        if (x < -R || y < -R || x > W + R || y > H + R) continue;
+        pt._cx = x; pt._cy = y;
+        const k = ((x / CELL) | 0) + "," + ((y / CELL) | 0);
+        let cell = grid.get(k);
+        if (!cell) grid.set(k, cell = []);
+        cell.push(pt);
+        const gx = Math.floor(x / D), gy = Math.floor(y / D);
+        let free = true;
+        for (let a = -1; a <= 1 && free; a++) for (let b = -1; b <= 1 && free; b++) {
+          for (const q of occ.get((gx + a) + "," + (gy + b)) || []) if (Math.hypot(q._cx - x, q._cy - y) < D) { free = false; break; }
+        }
+        if (free) {
+          const ok = gx + "," + gy;
+          if (!occ.has(ok)) occ.set(ok, []);
+          occ.get(ok).push(pt);
+          pt._hr = R + 2; badges.push(pt);
+        } else { pt._hr = Math.max(pt.r, 6) + 2; dots.push(pt); }
+      }
+      // dots underneath …
+      ctx.globalAlpha = 0.95;
+      for (const pt of dots) {
+        const r = Math.min(pt.r, R * 0.45);
+        ctx.beginPath(); ctx.arc(pt._cx, pt._cy, r, 0, TAU);
+        ctx.fillStyle = pt.fill; ctx.fill();
+        if (pt.w) { ctx.lineWidth = 1.2; ctx.strokeStyle = "#ffffff"; ctx.stroke(); }
+      }
+      ctx.globalAlpha = 1;
+      // … emoji badges on top (drawn small → large)
+      for (let i = badges.length - 1; i >= 0; i--) {
+        const pt = badges[i], spr = badgeSprite(pt.emoji || "•", pt.fill, R, dpr, pt.faded), s = spr._s;
+        if (turn) { ctx.save(); ctx.translate(pt._cx, pt._cy); ctx.rotate(turn); ctx.drawImage(spr, -s / 2, -s / 2, s, s); ctx.restore(); }
+        else ctx.drawImage(spr, pt._cx - s / 2, pt._cy - s / 2, s, s);
+      }
+      return;
+    }
     for (const g of this._groups) {
       ctx.beginPath();
       let any = false;
@@ -140,7 +228,7 @@ export const PointLayer = L.Layer.extend({
       if (!cell) continue;
       for (const p of cell) {
         const d = Math.hypot(p._cx - x, p._cy - y);
-        const reach = Math.max(p.r, 6) + 2;   // small dots stay easy to hit (touch)
+        const reach = this._emojiMode ? (p._hr || this.options.emojiSize + 2) : Math.max(p.r, 6) + 2;   // small dots stay easy to hit (touch)
         if (d <= reach && d - p.r * 0.01 <= bestD) { best = p; bestD = d; }
       }
     }
@@ -158,7 +246,7 @@ export const PointLayer = L.Layer.extend({
     this._map.getContainer().classList.toggle("fm-pt-hover", !!p && !this._toolActive());
     if (!p || !this.options.tooltip) return this._hideTip();
     this._tip ||= L.tooltip({ direction: "top", opacity: 1 });
-    this._tip.options.offset = [0, -p.r];
+    this._tip.options.offset = [0, -(this._emojiMode ? this.options.emojiSize : p.r)];
     this._tip.setLatLng([p.lat, p.lng]).setContent(this.options.tooltip(p));
     if (!this._map.hasLayer(this._tip)) this._map.openTooltip(this._tip);
   },

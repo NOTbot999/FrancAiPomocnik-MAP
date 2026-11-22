@@ -21,6 +21,7 @@ const listeners = new Set();
 export const getBearing = () => bearing;
 export const isFollowingCompass = () => following;
 export const onBearing = (fn) => listeners.add(fn);
+export const offBearing = (fn) => listeners.delete(fn);
 const norm = (d) => ((d % 360) + 360) % 360;
 const comparing = () => !document.getElementById("compare-slider")?.classList.contains("hidden");
 

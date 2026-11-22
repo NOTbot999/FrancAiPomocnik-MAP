@@ -168,15 +168,17 @@ export async function showCategory(id, force = false) {
   const isCave = id === "cave", isHyd = id === "hydrant";
   const ms = state.settings.ui?.markerSize || 18;    // "Velikost označb" (px diameter)
   // caves: marker size grows with cave length (log scale) so big systems stand out
+  const em = emo(cat);   // shown on a badge when zoomed in (rim colour = category / hydrant type)
   const points = features.map((f) => isHyd ? {
-    lat: f.lat, lng: f.lng, f, r: ms / 4, w: 1.5, stroke: "#ffffff",
+    lat: f.lat, lng: f.lng, f, r: ms / 4, w: 1.5, stroke: "#ffffff", emoji: em, faded: f.abandoned,
     fill: f.abandoned ? HYD_COLOR.abandoned : HYD_COLOR[f.type],
   } : {
-    lat: f.lat, lng: f.lng, f,
+    lat: f.lat, lng: f.lng, f, emoji: em,
     r: isCave ? ms / 6 + Math.min(6, Math.log10((f.len || 0) + 1) * 1.5) * ms / 18 : ms / 3,
     w: isCave ? 1 : 2, stroke: isCave ? "#3b1d06" : "#fff", fill: isCave ? "#f59e0b" : cat.color,
   });
   const layer = new PointLayer(points, {
+    emojiSize: Math.round(Math.max(10, ms * 0.65)),   // "Velikost označb" also sizes the emoji badges
     tooltip: ({ f }) => isCave ? caveTooltip(f) : isHyd ? hydrantTooltip(f) : `${emo(cat)} ${esc(f.name || cat.label)}`,
     onClick: ({ f }) => isHyd
       ? pointPopup([f.lat, f.lng], { title: `${emo(cat)} Hidrant — ${HYD_TYPE[f.type]}`, subtitle: "Zbirni kataster GJI", tags: hydrantTags(f) })
