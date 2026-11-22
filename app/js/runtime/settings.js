@@ -58,8 +58,9 @@ export function applyScaleBar() {
 }
 
 const SHORTCUTS = [
-  ["Ctrl + K", "Iskanje"], ["L / P / N / D / T / C / O", "Sloji / Točke / Pot / Riši / Sledi / Primerjaj / Offline"],
-  ["M", "Meri razdaljo"], ["A", "Meri površino"], ["Esc", "Prekliči orodje / zapri"], ["Enter", "Končaj črto ali območje"],
+  ["Ctrl + K", "Iskanje"], ["W / A / S / D", "Premik karte (Shift = hitreje)"],
+  ["L / P / N / R / T / C / O", "Sloji / Točke / Pot / Riši / Sledi / Primerjaj / Offline"],
+  ["M", "Meri razdaljo"], ["Shift + M", "Meri površino"], ["Esc", "Prekliči orodje / zapri"], ["Enter", "Končaj črto ali območje"],
   ["Backspace", "Odstrani zadnjo točko"], ["Desni klik / dolg pritisk", "Meni lokacije"], ["Dvoklik / dvojni dotik", "Povečaj"],
 ];
 

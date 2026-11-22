@@ -147,9 +147,10 @@ export function toast(msg, kind = "", ms = 2800) {
   setTimeout(() => el.remove(), ms);
 }
 
-export async function copyText(text) {
-  if (IS_ANDROID) { androidCopy(text); toast("Kopirano: " + text, "ok", 1800); return; }
-  try { await navigator.clipboard.writeText(text); toast("Kopirano: " + text, "ok", 1800); }
+export async function copyText(text, label) {
+  const msg = "Kopirano: " + (label || text);
+  if (IS_ANDROID) { androidCopy(text); toast(msg, "ok", 1800); return; }
+  try { await navigator.clipboard.writeText(text); toast(msg, "ok", 1800); }
   catch { toast("Kopiranje ni uspelo", "err"); }
 }
 

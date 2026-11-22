@@ -1,7 +1,8 @@
 import { map } from "../map/map.js";
 import { store } from "../services/api.js";
 import { state, on, emit } from "../runtime/state.js";
-import { esc, uid, pathLength, polygonArea, fmtDist, fmtArea, COLORS, toast, saveTextFile, openTextFiles, $, h } from "../shared/util.js";
+import { esc, uid, pathLength, polygonArea, fmtDist, fmtArea, COLORS, toast, saveTextFile, openTextFiles, $, h, toD96, copyText } from "../shared/util.js";
+import { openMeteo } from "../services/external.js";
 import { icon } from "../shared/icons.js";
 import { setHint, setActions, cancelPick, pinIcon } from "../shared/tools.js";
 import { toGeoJSON, toGPX, toKML, parseFile } from "./geoio.js";
@@ -92,24 +93,55 @@ function zoomTo(f) {
   else map.flyToBounds(L.latLngBounds(f.coords.map((p) => [p[0], p[1]])), { padding: [60, 60], duration: 0.6 });
 }
 
+// Marker details: WGS84, D96/TM and elevation (Open-Meteo, cached on the marker so it also works offline)
+const eleKey = (f) => `${f.coords[0].toFixed(5)},${f.coords[1].toFixed(5)}`;
+const fmtEle = (f) => (f.ele != null && f.eleAt === eleKey(f) ? `${Math.round(f.ele)} m` : null);
+function pinInfoHtml(f) {
+  const [lat, lng] = f.coords, { e, n } = toD96(lat, lng);
+  return `<div class="pin-info">
+    <span>WGS84</span><b>${lat.toFixed(6)}, ${lng.toFixed(6)}</b>
+    <span>D96/TM</span><b>e ${Math.round(e)}, n ${Math.round(n)}</b>
+    <span>Nadm. višina</span><b data-ele>${fmtEle(f) || '<span class="muted">nalagam …</span>'}</b>
+  </div>`;
+}
+async function ensureElevation(f) {
+  if (fmtEle(f)) return fmtEle(f);
+  try {
+    const d = await openMeteo.elevation([f.coords]);
+    const v = d.elevation?.[0];
+    if (v == null) return null;
+    f.ele = v; f.eleAt = eleKey(f);
+    persist();
+    return fmtEle(f);
+  } catch { return null; }
+}
+function pinCopyText(f) {
+  const [lat, lng] = f.coords, { e, n } = toD96(lat, lng);
+  return [f.name, `WGS84: ${lat.toFixed(6)}, ${lng.toFixed(6)}`, `D96/TM: e ${Math.round(e)}, n ${Math.round(n)}`,
+    `Nadmorska višina: ${fmtEle(f) || "ni podatka"}`, f.note ? `Opomba: ${f.note}` : ""].filter(Boolean).join("\n");
+}
+
 function openFeaturePopup(f, at) {
   selected = f.id;
   const pos = at || (f.type === "marker" ? f.coords : layerOf.get(f.id).getBounds().getCenter());
   const swatches = COLORS.map((c) => `<button class="swatch" style="background:${c};width:18px;height:18px;border:2px solid ${c === f.color ? "var(--text)" : "transparent"}" data-color="${c}"></button>`).join("");
   const html = `<div class="pop stack" style="min-width:240px">
     <input class="field" data-k="name" value="${esc(f.name)}" placeholder="Ime">
-    <div class="small muted">${measureText(f)}</div>
+    ${f.type === "marker" ? pinInfoHtml(f) : `<div class="small muted">${measureText(f)}</div>`}
     <div class="row wrap" style="gap:4px">${swatches}</div>
     <textarea class="field" data-k="note" placeholder="Opomba…">${esc(f.note || "")}</textarea>
     <div class="actions">
       ${f.type === "line" ? `<button class="btn sm" data-a="profile">${icon("mountain")} Profil</button>` : ""}
-      ${f.type !== "marker" ? `<button class="btn sm" data-a="edit">${icon("edit")} Uredi točke</button>` : `<button class="btn sm" data-a="move">${icon("edit")} Premakni</button><button class="btn sm" data-a="route">${icon("route")} Pot do sem</button>`}
+      ${f.type !== "marker" ? `<button class="btn sm" data-a="edit">${icon("edit")} Uredi točke</button>` : `<button class="btn sm" data-a="copy" title="Ime, koordinate WGS84 in D96/TM, nadmorska višina in opomba">${icon("copy")} Kopiraj vse</button><button class="btn sm" data-a="move">${icon("edit")} Premakni</button><button class="btn sm" data-a="route">${icon("route")} Pot do sem</button>`}
       <button class="btn sm danger" data-a="del">${icon("trash")}</button>
     </div></div>`;
   const p = L.popup({ maxWidth: 320, autoPanPadding: [40, 40] }).setLatLng(pos).setContent(html).openOn(map);
   renderFeature(f);
   refreshPanel();
   const el = p.getElement();
+  if (f.type === "marker" && !fmtEle(f)) {
+    ensureElevation(f).then((txt) => { const s = el.querySelector("[data-ele]"); if (s) s.textContent = txt || "ni podatka"; });
+  }
   el.addEventListener("input", (e) => {
     const k = e.target.dataset.k;
     if (k) { f[k] = e.target.value; persist(); refreshPanel(); layerOf.get(f.id)?.setTooltipContent(`<b>${esc(f.name)}</b><br>${measureText(f)}`); }
@@ -119,6 +151,10 @@ function openFeaturePopup(f, at) {
     if (c) { updateFeature(f.id, { color: c.dataset.color }); map.closePopup(); return openFeaturePopup(f, pos); }
     const a = e.target.closest("[data-a]")?.dataset.a;
     if (!a) return;
+    if (a === "copy") {   // keep the popup open
+      ensureElevation(f).then(() => copyText(pinCopyText(f), `${f.name} (koordinate in višina)`));
+      return;
+    }
     map.closePopup();
     if (a === "del") deleteFeature(f.id);
     if (a === "profile") showProfile(f.name, f.coords, f.color);
@@ -196,6 +232,9 @@ export function startTool(kind) {
   map.on("dblclick", onDbl);
   refreshPanel();
 }
+
+// a drawing / measuring tool or vertex editing is in progress (keyboard shortcuts must not cancel it)
+export const isDrawing = () => !!tool || !!editing;
 
 export function stopTool() {
   if (!tool) return;

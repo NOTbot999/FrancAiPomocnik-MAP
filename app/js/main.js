@@ -9,7 +9,7 @@ import { initFeatureInfo } from "./explore/featureinfo.js";
 import { d96Cell } from "./explore/grid.js";
 import { layersPanel } from "./map/layers.js";
 import { poiPanel, restorePois, loadCaves } from "./explore/poi.js";
-import { drawPanel, initDraw, startTool, stopTool, drawKeydown, getDrawings } from "./create/draw.js";
+import { drawPanel, initDraw, startTool, stopTool, drawKeydown, getDrawings, isDrawing } from "./create/draw.js";
 import { routePanel, initRoute } from "./explore/route.js";
 import { tracksPanel, initTracks } from "./create/tracks.js";
 import { comparePanel, initCompare } from "./map/compare.js";
@@ -27,6 +27,9 @@ if (IS_ANDROID) document.documentElement.classList.add("android");
 
 const PANELS = Object.fromEntries([layersPanel, poiPanel, routePanel, drawPanel, tracksPanel, comparePanel, offlinePanel, collabPanel, aiPanel, settingsPanel].map((p) => [p.id, p]));
 let current = null;
+const PAN_KEYS = { KeyW: [0, -1], KeyS: [0, 1], KeyA: [-1, 0], KeyD: [1, 0] };
+const panHeld = new Set();
+let panRaf = 0, panFast = false;
 
 function openPanel(id) {
   if (current === id) return renderPanel();
@@ -266,12 +269,31 @@ async function boot() {
       return closePanel();
     }
     if (e.ctrlKey || e.altKey || e.metaKey) return;
+    // W/A/S/D (physical keys, so QWERTZ/QWERTY both work): pan the map while held; never touches tools or drawings
+    if (PAN_KEYS[e.code]) { e.preventDefault(); panFast = e.shiftKey; panHeld.add(e.code); panRaf ||= requestAnimationFrame(panLoop); return; }
     const k = e.key.toLowerCase();
-    const map2 = { l: "layers", p: "poi", n: "route", d: "draw", t: "tracks", c: "compare", o: "offline" };
-    if (map2[k]) { current === map2[k] ? closePanel() : openPanel(map2[k]); return; }
-    if (k === "m") { openPanel("draw"); startTool("measure-line"); }
-    if (k === "a") { openPanel("draw"); startTool("measure-area"); }
+    // panels that would cancel a drawing in progress don't toggle while drawing (use Esc / Enter first)
+    const map2 = { l: "layers", p: "poi", n: "route", r: "draw", t: "tracks", c: "compare", o: "offline" };
+    if (map2[k]) {
+      if (isDrawing() && current === "draw") return toast("Najprej končaj risanje (Enter) ali ga prekliči (Esc).", "", 2200);
+      current === map2[k] ? closePanel({ keepTools: isDrawing() }) : openPanel(map2[k]);
+      return;
+    }
+    if (k === "m" && !isDrawing()) { openPanel("draw"); startTool(e.shiftKey ? "measure-area" : "measure-line"); }
   });
+  document.addEventListener("keyup", (e) => { panHeld.delete(e.code); panFast = e.shiftKey; });
+  window.addEventListener("blur", () => panHeld.clear());
+
+  // smooth keyboard panning (W/A/S/D)
+  function panLoop() {
+    panRaf = 0;
+    if (!panHeld.size) return;
+    let dx = 0, dy = 0;
+    for (const c of panHeld) { dx += PAN_KEYS[c][0]; dy += PAN_KEYS[c][1]; }
+    const sp = panFast ? 26 : 11;
+    if (dx || dy) map.panBy([dx * sp, dy * sp], { animate: false });
+    panRaf = requestAnimationFrame(panLoop);
+  }
 
   // network status polling
   let cacheNoteShown = "";

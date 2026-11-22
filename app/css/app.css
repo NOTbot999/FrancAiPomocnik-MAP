@@ -545,3 +545,8 @@ label.check { display: flex; align-items: center; gap: 8px; cursor: pointer; }
 .lg-note { font-size: 11.5px; color: var(--text-2); }
 .legend-slot { display: grid; gap: 4px; margin-top: 6px; font-size: 12px; }
 @media (max-width: 700px) { .map-legend { left: 8px; bottom: 30px; width: auto; right: 70px; max-height: 45%; } body.panel-open .map-legend { display: none; } }
+
+/* marker popup details (create/draw.js) */
+.pin-info { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; font-size: 12px; align-items: baseline; }
+.pin-info > span { color: var(--text-3); }
+.pin-info b { font-family: "Cascadia Mono", Consolas, monospace; font-weight: 500; font-size: 11.5px; user-select: text; }
