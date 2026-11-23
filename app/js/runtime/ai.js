@@ -11,6 +11,8 @@ import { getCaves, getLoadedFeatures } from "../explore/poi.js";
 import { getDrawings, addFeature } from "../create/draw.js";
 import { getTracks } from "../create/tracks.js";
 import { geocode } from "../explore/search.js";
+import { trafficReportText, loadTrafficReport } from "../explore/traffic.js";
+import { stationsOf } from "../explore/stations.js";
 
 const running = new Map();   // plugin id -> { mod, host }
 let panelEl = null;
@@ -37,6 +39,10 @@ function makeApi(plugin, host) {
       return out.sort((a, z) => a.distance_m - z.distance_m).slice(0, limit);
     },
     getCaves, getDrawings, getTracks,
+    // "kaj je na cestah?" — latest NAP traffic report as text (null when not set up)
+    async getTrafficReport() { await loadTrafficReport(); return trafficReportText(); },
+    // ARSO stations already loaded by the "Vremenske postaje" layers: kind = "meteo" | "voda" | "zrak"
+    getWeatherStations: (kind = "meteo") => stationsOf(kind).map((s) => ({ id: s.id, name: s.name, lat: s.lat, lng: s.lng, ...s.props })),
     activeLayers: () => ({ base: state.settings.base, overlays: state.settings.overlays.map((o) => state.layerIndex[o.id]?.name) }),
     flyTo: (lat, lng, zoom = 15) => map.flyTo([lat, lng], zoom),
     addMarker: (lat, lng, name = "AI oznaka", note = "") => addFeature({ type: "marker", coords: [lat, lng], name, note }),

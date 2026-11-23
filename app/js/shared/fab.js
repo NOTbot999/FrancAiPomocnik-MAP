@@ -20,6 +20,7 @@ export const FAB_BUTTONS = [
   { id: "trackanalyzer", label: "Sledi GPX", icon: "footprints" },
   { id: "lidar", label: "LIDAR Terrain", icon: "mountain" },
   { id: "collab", label: "Skupno delo", icon: "users" },
+  { id: "traffic", label: "Promet v živo", icon: "traffic" },
   // 3D pogled removed; AR pogled disabled (code kept in tools/disabled/ar.js)
   { id: "poi", label: "Točke zanimanja", icon: "pin" },
   { id: "draw", label: "Risanje", icon: "pencil" },

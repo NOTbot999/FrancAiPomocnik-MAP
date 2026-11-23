@@ -1404,6 +1404,108 @@
      "description": "Območja zaključenih (sprejetih) prostorskih aktov (PIS)"
     }
    ]
+  },
+  {
+   "id": "vremenske",
+   "name": "Vremenske postaje",
+   "layers": [
+    {
+     "id": "arso_meteo",
+     "name": "Vremenske postaje — Meteo",
+     "type": "arso_stations",
+     "kind": "meteo",
+     "opacity": 1,
+     "live": true,
+     "description": "Meteorološke postaje ARSO (glavne in samodejne): temperatura, vlaga, veter, tlak, sneg, oblačnost. Osvežitev na 15 min."
+    },
+    {
+     "id": "arso_voda",
+     "name": "Vremenske postaje — Voda",
+     "type": "arso_stations",
+     "kind": "voda",
+     "opacity": 1,
+     "live": true,
+     "description": "Hidrološke postaje ARSO: vodostaj, pretok, temperatura vode; rdeče, ko pretok doseže 1. visokovodni pretok."
+    },
+    {
+     "id": "arso_zrak",
+     "name": "Vremenske postaje — Zrak",
+     "type": "arso_stations",
+     "kind": "zrak",
+     "opacity": 1,
+     "live": true,
+     "description": "Postaje za kakovost zraka ARSO: PM10, PM2,5, O₃, NO₂, SO₂, CO (urni podatki)."
+    }
+   ]
+  },
+  {
+   "id": "promet_zivo",
+   "name": "Promet v živo",
+   "layers": [
+    {
+     "id": "nap_dogodki",
+     "name": "Prometni dogodki",
+     "type": "nap",
+     "dataset": "dogodki",
+     "opacity": 1,
+     "live": true,
+     "description": "NAP Slovenija — Prometni dogodki (CC BY-SA 4.0). Potrebna je prijava v NAP (panel Promet v živo)."
+    },
+    {
+     "id": "nap_dela",
+     "name": "Dela na cesti",
+     "type": "nap",
+     "dataset": "dela",
+     "opacity": 1,
+     "live": true,
+     "description": "NAP Slovenija — Delo na cesti (slovenski GeoJSON) (CC BY-SA 4.0). Potrebna je prijava v NAP (panel Promet v živo)."
+    },
+    {
+     "id": "nap_stevci",
+     "name": "Števci prometa",
+     "type": "nap",
+     "dataset": "stevci",
+     "opacity": 1,
+     "live": true,
+     "description": "NAP Slovenija — Števci prometa (slovenski GeoJSON) (CC BY-SA 4.0). Potrebna je prijava v NAP (panel Promet v živo)."
+    },
+    {
+     "id": "nap_kamere",
+     "name": "Cestne kamere",
+     "type": "nap",
+     "dataset": "kamere",
+     "opacity": 1,
+     "live": true,
+     "description": "NAP Slovenija — Cestne kamere (GeoJSON) (CC BY-SA 4.0). Potrebna je prijava v NAP (panel Promet v živo)."
+    },
+    {
+     "id": "nap_veter",
+     "name": "Veter",
+     "type": "nap",
+     "dataset": "veter",
+     "opacity": 1,
+     "live": true,
+     "description": "NAP Slovenija — Veter (GeoJSON) (CC BY-SA 4.0). Potrebna je prijava v NAP (panel Promet v živo)."
+    },
+    {
+     "id": "nap_meja",
+     "name": "Zastoji na meji",
+     "type": "nap",
+     "dataset": "meja",
+     "opacity": 1,
+     "live": true,
+     "description": "NAP Slovenija — Zastoji na meji (GeoJSON) (CC BY-SA 4.0). Potrebna je prijava v NAP (panel Promet v živo)."
+    },
+    {
+     "id": "nap_pocivalisca",
+     "name": "Počivališča",
+     "type": "nap",
+     "dataset": "pocivalisca",
+     "opacity": 1,
+     "live": true,
+     "description": "NAP Slovenija — Počivališča (GeoJSON) (CC BY-SA 4.0). Potrebna je prijava v NAP (panel Promet v živo)."
+    }
+   ]
   }
  ],
  "pois": [

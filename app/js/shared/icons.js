@@ -26,6 +26,7 @@ const P = {
   check: '<path d="M20 6 9 17l-5-5"/>',
   image: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/>',
   compass: '<circle cx="12" cy="12" r="10"/><path d="M12 4.5 15 12H9Z" fill="#ef4444" stroke="#ef4444"/><path d="M12 19.5 9 12h6Z"/>',
+  traffic: '<rect x="8" y="2" width="8" height="20" rx="3"/><circle cx="12" cy="7" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="17" r="1.6"/>',
   grid: '<rect x="3" y="3" width="18" height="18" rx="1"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/>',
   menu: '<path d="M4 6h16M4 12h16M4 18h16"/>',
   chevronUp: '<path d="m6 15 6-6 6 6"/>',

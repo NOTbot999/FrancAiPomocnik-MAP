@@ -53,6 +53,15 @@ export async function legendHtml(cfg) {
   if (cfg.type === "grid_d96") {
     return `<div class="lg-note">Kvadrati 1 × 1 km v sistemu D96/TM (enaki kot LIDAR in DOF). Oznaka celice, npr. 462_101, je spodnji levi vogal v km (vzhod_sever).</div>`;
   }
+  if (cfg.type === "arso_stations" && cfg.kind === "meteo") {
+    return items([[dot("#2563eb"), "pod 0 °C"], [dot("#16a34a"), "0–20 °C"], [dot("#f97316"), "20–30 °C"], [dot("#dc2626"), "nad 30 °C"], [dot("#94a3b8"), "ni meritve"]])
+      + `<div class="lg-note">Številka v krogu = temperatura. Ko je pomanjšano, so bližnje postaje združene (število postaj).</div>`;
+  }
+  if (cfg.type === "arso_stations" && cfg.kind === "voda") return items([[dot("#2563eb"), "pretok pod 1. visokovodnim pretokom"], [dot("#dc2626"), "pretok ≥ 1. visokovodni pretok"]]);
+  if (cfg.type === "arso_stations" && cfg.kind === "zrak") {
+    return items([[dot("#16a34a"), "PM10 pod 20 µg/m³"], [dot("#eab308"), "PM10 20–50 µg/m³"], [dot("#dc2626"), "PM10 nad 50 µg/m³"], [dot("#94a3b8"), "ni meritve"]]);
+  }
+  if (cfg.type === "nap") return `<div class="lg-note">Promet: NAP Slovenija (CC BY-SA 4.0). Barve po vrsti dogodka bodo dodane, ko bodo znana imena polj; zdaj so vsi elementi sivi.</div>`;
   if (cfg.type === "live_flights") return items([[dot("#2563eb"), "letalo v zraku"], [dot("#94a3b8"), "na tleh"]]);
   return "";
 }

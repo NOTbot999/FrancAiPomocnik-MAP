@@ -3,6 +3,8 @@ import { overpass, flights as adsb } from "../services/external.js";
 import { esc, toast } from "../shared/util.js";
 import { createWeatherLayer } from "./weather.js";
 import { createGridLayer } from "./grid.js";
+import { createStationsLayer } from "./stations.js";
+import { createNapLayer } from "./traffic.js";
 
 const emojiIcon = (emoji, size = 18) => L.divIcon({
   html: `<div class="emoji-marker" style="font-size:${size}px">${emoji}</div>`,
@@ -14,6 +16,8 @@ export function createSpecialLayer(cfg, opacity) {
   if (cfg.type === "live_flights") return flights(opacity);
   if (cfg.type === "weather" || cfg.type === "rainviewer") return createWeatherLayer(cfg, opacity);
   if (cfg.type === "grid_d96") return createGridLayer(cfg, opacity);
+  if (cfg.type === "arso_stations") return createStationsLayer(cfg, opacity);   // Vremenske postaje (ARSO)
+  if (cfg.type === "nap") return createNapLayer(cfg, opacity);                  // Promet v živo (NAP)
   return L.layerGroup();
 }
 

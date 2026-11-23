@@ -1,0 +1,17 @@
+{
+ "_opis": "Promet v živo — nabori NAP Slovenija (nap.si). Vse nastavitve na enem mestu: backend (app.py / nap_proxy.py, Android Backend.java) in aplikacija berejo to datoteko. Koda nabora je na nap.si pri naboru pod »Več«. Prazna koda = »ni nastavljeno« (se ne kliče); kodo lahko vpišeš tudi v aplikaciji (Nastavitve → Promet v živo), brez spremembe kode.",
+ "atribucija": "Promet: NAP Slovenija (CC BY-SA 4.0)",
+ "tokenUrl": "https://b2b.nap.si/uc/user/token",
+ "dataUrl": "https://b2b.nap.si/data/",
+ "cacheSekund": 60,
+ "DATASETS": {
+  "dogodki":     { "code": "b2b.events.geojson.sl_SI", "ime": "Prometni dogodki", "vklop": true,  "osvezi": 60 },
+  "dela":        { "code": "", "ime": "Dela na cesti",    "vklop": true,  "osvezi": 300,   "opomba": "Delo na cesti (slovenski GeoJSON)" },
+  "stevci":      { "code": "", "ime": "Števci prometa",   "vklop": false, "osvezi": 300,   "opomba": "Števci prometa (slovenski GeoJSON)" },
+  "kamere":      { "code": "", "ime": "Cestne kamere",    "vklop": false, "osvezi": 600,   "opomba": "Cestne kamere (GeoJSON)" },
+  "veter":       { "code": "", "ime": "Veter",            "vklop": false, "osvezi": 300,   "opomba": "Veter (GeoJSON)" },
+  "meja":        { "code": "", "ime": "Zastoji na meji",  "vklop": false, "osvezi": 120,   "opomba": "Zastoji na meji (GeoJSON)" },
+  "pocivalisca": { "code": "", "ime": "Počivališča",      "vklop": false, "osvezi": 86400, "opomba": "Počivališča (GeoJSON)" },
+  "porocilo":    { "code": "", "ime": "Prometno poročilo", "tip": "json", "osvezi": 300,  "opomba": "Prometno poročilo (JSON) — besedilo, ne sloj" }
+ }
+}

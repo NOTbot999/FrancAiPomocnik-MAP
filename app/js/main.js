@@ -19,6 +19,7 @@ import { collabPanel, isCollabConnected } from "./create/collab.js";
 import { aiPanel, initPlugins } from "./runtime/ai.js";
 import { initFab, renderFab, normalizeUiPrefs } from "./shared/fab.js";
 import { initLegend, toggleLegend, isLegendOpen } from "./map/legend.js";
+import { trafficPanel } from "./explore/traffic.js";
 import { initRotate, rotateBy, resetNorth, toggleCompassFollow, getBearing, isFollowingCompass, onBearing, screenToMap } from "./map/rotate.js";
 import { toggleRecording, isRecording } from "./create/tracks.js";
 import { toggleOverlay, isOverlayOn } from "./map/map.js";
@@ -26,7 +27,7 @@ import { cancelPick } from "./shared/tools.js";
 import { api, IS_ANDROID } from "./services/api.js";
 if (IS_ANDROID) document.documentElement.classList.add("android");
 
-const PANELS = Object.fromEntries([layersPanel, poiPanel, routePanel, drawPanel, tracksPanel, comparePanel, offlinePanel, collabPanel, aiPanel, settingsPanel].map((p) => [p.id, p]));
+const PANELS = Object.fromEntries([layersPanel, poiPanel, routePanel, drawPanel, tracksPanel, comparePanel, offlinePanel, collabPanel, aiPanel, settingsPanel, trafficPanel].map((p) => [p.id, p]));
 let current = null;
 const PAN_KEYS = { KeyW: [0, -1], KeyS: [0, 1], KeyA: [-1, 0], KeyD: [1, 0] };
 const ROT_KEYS = { KeyQ: -1, KeyE: 1 };   // turn the map anticlockwise / clockwise
@@ -191,6 +192,7 @@ async function boot() {
       trackanalyzer: () => togglePanel("tracks"),
       lidar: () => { toggleOverlay("gurs_lidar"); renderFab(); toast(isOverlayOn("gurs_lidar") ? "LIDAR senčenje vklopljeno" : "LIDAR senčenje izklopljeno", "", 1500); },
       collab: () => togglePanel("collab"),
+      traffic: () => togglePanel("traffic"),
       poi: () => togglePanel("poi"),
       draw: () => togglePanel("draw"),
       compare: () => togglePanel("compare"),
@@ -200,7 +202,7 @@ async function boot() {
       settings: current === "settings", layers: current === "layers", nav: current === "route", offline: current === "offline",
       ai: current === "ai", trackanalyzer: current === "tracks", collab: current === "collab" || isCollabConnected(),
       poi: current === "poi", draw: current === "draw", compare: current === "compare",
-      gps: isRecording(), lidar: isOverlayOn("gurs_lidar"), legend: isLegendOpen(), compass: isFollowingCompass(),
+      gps: isRecording(), lidar: isOverlayOn("gurs_lidar"), legend: isLegendOpen(), traffic: current === "traffic", compass: isFollowingCompass(),
     })[id] || false,
     badge: badgeCount,
     afterRender: updateCompass,

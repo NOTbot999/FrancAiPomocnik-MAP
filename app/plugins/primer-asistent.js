@@ -17,7 +17,8 @@ export default {
     const ai = await api.storage.get("ai", null);
 
     async function askModel(question, history) {
-      const context = { view: api.getView(), layers: api.activeLayers(), features: api.getVisibleFeatures(80) };
+      const context = { view: api.getView(), layers: api.activeLayers(), features: api.getVisibleFeatures(80),
+        trafficReport: api.getTrafficReport ? await api.getTrafficReport() : null };
       const res = await api.http(ai.url, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${ai.key}` },
@@ -35,6 +36,9 @@ export default {
       const t = q.toLowerCase();
       const feats = api.getVisibleFeatures(2000);
       const caves = feats.filter((f) => f.kind === "jama");
+      if (/cest|promet|zastoj|nesreč|zapor/.test(t) && api.getTrafficReport) {
+        return api.getTrafficReport().then((r) => r || "Prometno poročilo ni na voljo — v panelu »Promet v živo« vpiši prijavo NAP in kodo nabora »Prometno poročilo«.");
+      }
       if (/najglob/.test(t) && caves.length) {
         const c = [...caves].sort((a, b) => b.depth_m - a.depth_m)[0];
         api.flyTo(c.lat, c.lng, 15);

@@ -1,7 +1,7 @@
 // Browser-only backend for the web version (spletna različica): no local server, so the app talks
 // to the map services directly and keeps settings / drawings / tracks in this browser's storage.
 // Mirrors the endpoints of app.py (desktop) and Backend.java (Android) that make sense on the web.
-const VERSION = "1.6.4";
+const VERSION = "1.7.0";
 const OVERPASS_MIRRORS = [
   "https://overpass-api.de/api/interpreter",
   "https://overpass.private.coffee/api/interpreter",
@@ -192,6 +192,7 @@ export async function webApi(method, path, body) {
     if (p === "/api/cache/clear") return json(200, { layers: [], http: { entries: 0, bytes: 0 }, fileBytes: 0, path: "", web: true });
     if (p === "/api/offline/status") return json(200, null);
     if (p.startsWith("/api/offline/")) return json(400, { error: APP_ONLY });
+    if (p.startsWith("/api/nap/")) return json(400, { error: "Promet v živo (NAP) potrebuje prijavo prek strežnika — na voljo v aplikaciji za Windows in Android.", status: 400 });
     if (p === "/api/collab/hostinfo") return json(200, { hosting: false });
     if (p === "/api/collab/host") return json(400, { error: APP_ONLY });
     if (p === "/api/collab/call") {
