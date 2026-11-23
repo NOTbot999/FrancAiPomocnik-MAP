@@ -5,6 +5,7 @@ import { createSpecialLayer } from "../explore/special.js";
 
 export let map;
 let baseLayer = null;
+const retiring = new Set();      // previous base layers kept until the new one has loaded
 const overlayLayers = new Map(); // id -> leaflet layer
 const SI_BOUNDS = L.latLngBounds([[45.25, 13.2], [46.98, 16.75]]);
 
@@ -93,24 +94,72 @@ function installDoubleTapZoom() {
 function injectLidarFilter() {
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   svg.setAttribute("style", "position:absolute;width:0;height:0;overflow:hidden");
-  svg.innerHTML = `<defs><filter id="lidar-sharpen" color-interpolation-filters="linearRGB">
-    <feConvolveMatrix order="3" kernelMatrix="0 -0.5 0 -0.5 3 -0.5 0 -0.5 0" preserveAlpha="true"/></filter></defs>`;
+  // filter region = the tile itself and edgeMode="duplicate": otherwise the kernel reads the
+  // transparent pixels outside each tile and paints a bright seam along every tile border
+  svg.innerHTML = `<defs><filter id="lidar-sharpen" color-interpolation-filters="linearRGB" x="0" y="0" width="100%" height="100%">
+    <feConvolveMatrix order="3" kernelMatrix="0 -0.5 0 -0.5 3 -0.5 0 -0.5 0" edgeMode="duplicate" preserveAlpha="true"/></filter></defs>`;
   document.body.appendChild(svg);
   const st = document.createElement("style");
-  st.textContent = ".fm-enhance img{filter:contrast(1.3) brightness(1.04) url(#lidar-sharpen)}";
+  // filter the whole layer as one picture, not each tile: Chromium ignores edgeMode for an SVG
+  // filter on a single <img>, so per-tile sharpening drew a seam along every tile border
+  st.textContent = ".fm-enhance{filter:contrast(1.3) brightness(1.04) url(#lidar-sharpen)}";
   document.head.appendChild(st);
 }
 
+// A tile layer that doesn't give up on a tile after one failure. Leaflet leaves a failed tile as a
+// permanent hole; here a failed tile is asked again (up to maxRetries, with a short back-off).
+// With hedgeMs set (web version, flaky WMS servers that sometimes hang ~30 s), a tile that hasn't
+// arrived in time is re-requested too — the same tile usually comes back at once on a second try.
+const RetryTileLayer = L.TileLayer.extend({
+  options: { maxRetries: 3, hedgeMs: 0 },
+  createTile(coords, done) {
+    const tile = L.TileLayer.prototype.createTile.call(this, coords, done);
+    tile._fmTries = 0;
+    tile._fmUrl = tile.src;
+    this._fmArm(tile);
+    return tile;
+  },
+  _fmArm(tile) {
+    clearTimeout(tile._fmTimer);
+    if (this.options.hedgeMs) tile._fmTimer = setTimeout(() => { if (!tile._fmLoaded) this._fmRetry(tile, 0); }, this.options.hedgeMs);
+  },
+  _fmRetry(tile, delay) {
+    if (tile._fmTries >= this.options.maxRetries) return false;
+    tile._fmTries++;
+    setTimeout(() => {
+      if (!this._map || tile._fmLoaded) return;
+      const u = tile._fmUrl;
+      tile.src = u + (u.includes("?") ? "&" : "?") + "_r=" + tile._fmTries;
+      this._fmArm(tile);
+    }, delay);
+    return true;
+  },
+  _tileOnLoad(done, tile) {
+    tile._fmLoaded = true;
+    clearTimeout(tile._fmTimer);
+    return L.TileLayer.prototype._tileOnLoad.call(this, done, tile);
+  },
+  _tileOnError(done, tile, e) {
+    clearTimeout(tile._fmTimer);
+    if (this._fmRetry(tile, 500 * (tile._fmTries + 1))) return;
+    return L.TileLayer.prototype._tileOnError.call(this, done, tile, e);
+  },
+});
+
 // Web version: a tile layer whose URLs are built in the browser (WMS / ArcGIS / XYZ) instead of
 // coming from the local cache server.
-const DirectTileLayer = L.TileLayer.extend({
+const DirectTileLayer = RetryTileLayer.extend({
   getTileUrl(coords) { return tileUrl(this.options.cfg, coords.z, coords.x, coords.y); },
 });
 
 export function makeRasterLayer(cfg, opts = {}) {
   const regional = cfg.type === "wms" || cfg.type === "arcgis_export";
-  const make = IS_WEB ? (url, o) => new DirectTileLayer(url, { ...o, cfg }) : L.tileLayer;
+  const make = IS_WEB ? (url, o) => new DirectTileLayer(url, { ...o, cfg }) : (url, o) => new RetryTileLayer(url, o);
   return make(IS_WEB ? "" : tileTemplate(cfg.id), {
+    // the apps' local server already races duplicate requests (app.py / Backend.java); in the
+    // browser-only web version re-ask a slow regional WMS tile ourselves
+    hedgeMs: IS_WEB && regional ? 2500 : 0,
+    maxRetries: IS_WEB && regional ? 4 : 3,
     subdomains: TILE_SUBDOMAINS,
     maxZoom: 20,
     maxNativeZoom: cfg.maxNativeZoom || 19,
@@ -131,10 +180,23 @@ export function makeRasterLayer(cfg, opts = {}) {
 export function setBase(id, initial = false) {
   const cfg = state.layerIndex[id];
   if (!cfg) return;
-  if (baseLayer) map.removeLayer(baseLayer);
-  baseLayer = makeRasterLayer(cfg, { pane: "tilePane", opacity: state.settings.baseOpacity });
-  baseLayer.addTo(map);
-  baseLayer.bringToBack();
+  // Cross-fade: the old base stays underneath until the new one has loaded the visible tiles
+  // (or 10 s passed), so switching never leaves an empty screen while tiles arrive.
+  if (baseLayer) {
+    const old = baseLayer;
+    retiring.add(old);
+    old.setZIndex(0);
+    old.off("load");
+  }
+  const next = makeRasterLayer(cfg, { pane: "tilePane", opacity: state.settings.baseOpacity, zIndex: 1 });
+  baseLayer = next;
+  const retire = () => {
+    for (const l of retiring) map.removeLayer(l);
+    retiring.clear();
+  };
+  next.once("load", retire);
+  setTimeout(() => { if (baseLayer === next) retire(); }, 10000);
+  next.addTo(map);
   state.settings.base = id;
   if (!initial) { saveSettings(); emit("layers-changed"); }
 }
