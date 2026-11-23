@@ -9,16 +9,6 @@
    "noBulk": true
   },
   {
-   "id": "carto_voyager",
-   "name": "Esri Ulice",
-   "type": "tile",
-   "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
-   "attribution": "&copy; Esri, HERE, Garmin, OpenStreetMap",
-   "maxNativeZoom": 19,
-   "description": "Ulična karta (Esri) — nadomešča Carto Voyager, ki zdaj zahteva ključ",
-   "purgeBefore": 1795199291
-  },
-  {
    "id": "satellite",
    "name": "Satelit",
    "type": "tile",
@@ -35,23 +25,6 @@
    "maxZoom": 21
   },
   {
-   "id": "esri_topo",
-   "name": "ESRI Topo",
-   "type": "tile",
-   "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
-   "attribution": "&copy; Esri"
-  },
-  {
-   "id": "dark",
-   "name": "Temna",
-   "type": "tile",
-   "url": "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
-   "attribution": "&copy; Esri",
-   "maxNativeZoom": 16,
-   "description": "Temno siva podlaga (Esri)",
-   "purgeBefore": 1795199291
-  },
-  {
    "id": "lidar_hillshade",
    "name": "LIDAR Senčenje",
    "type": "wms",
@@ -62,207 +35,56 @@
    "format": "image/jpeg",
    "layers": "SI.GURS.ZPDZ:LIDAR",
    "version": "1.3.0"
-  },
-  {
-   "id": "arso_topo_nova",
-   "name": "Topografska karta",
-   "type": "arcgis_export",
-   "url": "https://geohub.gov.si/ags/rest/services/TEMELJNE_KARTE/GH_MDP_TOPO_KARTA_SI/MapServer/export",
-   "transparent": false,
-   "attribution": "&copy; GeoHub (RS)",
-   "format": "jpg",
-   "description": "Topografska karta Slovenije (GeoHub) — nadomešča ARSO topografsko karto"
   }
  ],
  "categories": [
   {
-   "id": "karte",
-   "name": "Karte & Kataster",
+   "id": "osnovni",
+   "name": "Podlage & relief",
    "icon": "Map",
-   "description": "Topografske karte, kataster, ortofoto, LIDAR in raba tal",
+   "description": "Druge podlage kot prekrivni sloji in senčenje reliefa",
    "layers": [
     {
-     "id": "grid_d96_1km",
-     "name": "Mreža 1 × 1 km (D96/TM)",
-     "type": "grid_d96",
-     "opacity": 1.0,
-     "description": "Črna mreža kvadratov 1 × 1 km v državnem koordinatnem sistemu D96/TM (enaki kvadrati kot LIDAR in DOF). Od povečave 11 vsak km, od 13 z oznako celice (spodnji levi vogal v km, npr. 462_101). Celica pod kazalcem je izpisana v vrstici spodaj."
+     "id": "ol_carto_voyager",
+     "name": "Esri Ulice",
+     "type": "tile",
+     "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
+     "attribution": "&copy; Esri, HERE, Garmin, OpenStreetMap",
+     "opacity": 0.9,
+     "description": "Ulična karta Esri kot prekrivni sloj (nadomešča Carto Voyager)",
+     "maxNativeZoom": 19,
+     "purgeBefore": 1795199291
     },
     {
-     "id": "gurs_dejanska_raba",
-     "name": "Dejanska raba (kataster)",
-     "type": "wms",
-     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
-     "layers": "SI.GURS.KN:DEJANSKE_RABE",
-     "format": "image/png",
-     "transparent": true,
-     "version": "1.3.0",
-     "opacity": 0.65,
-     "description": "Dejanska raba zemljišč iz katastra nepremičnin (nadomešča MKGP RABA) (vidno od povečave 16)",
-     "minZoom": 16
+     "id": "ol_esri_topo",
+     "name": "ESRI Topo",
+     "type": "tile",
+     "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
+     "attribution": "&copy; Esri",
+     "opacity": 0.9,
+     "description": "ESRI World Topo kot prekrivni sloj"
     },
     {
-     "id": "gurs_namenska_raba",
-     "name": "Namenska raba prostora",
-     "type": "wms",
-     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
-     "layers": "SI.GURS.KN:NAMENSKE_RABE",
-     "format": "image/png",
-     "transparent": true,
-     "version": "1.3.0",
-     "opacity": 0.6,
-     "description": "Namenska raba iz prostorskih aktov občin (vidno od povečave 14)",
-     "minZoom": 14
+     "id": "ol_dark",
+     "name": "Temna podlaga",
+     "type": "tile",
+     "url": "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+     "attribution": "&copy; Esri",
+     "opacity": 0.9,
+     "description": "Temno siva karta (Esri) kot prekrivni sloj",
+     "maxNativeZoom": 16,
+     "purgeBefore": 1795199291
     },
     {
-     "id": "gurs_orthophoto",
-     "name": "Ortofoto DOF050 (50 cm)",
-     "type": "wms",
-     "url": "https://ipi.eprostor.gov.si/wms-si-gurs-dts/ows",
-     "layers": "SI.GURS.ZPDZ:DOF050",
-     "format": "image/jpeg",
-     "transparent": false,
-     "version": "1.1.1",
-     "opacity": 1.0,
-     "description": "Aeroposnetki ortofoto 50 cm ločljivosti za Slovenijo (vidno od povečave 9)",
-     "minZoom": 9
-    },
-    {
-     "id": "gurs_orthophoto_025",
-     "name": "Ortofoto DOF025 (25 cm)",
-     "type": "wms",
-     "url": "https://ipi.eprostor.gov.si/wms-si-gurs-dts/ows",
-     "layers": "SI.GURS.ZPDZ:DOF025",
-     "format": "image/jpeg",
-     "transparent": false,
-     "version": "1.1.1",
-     "opacity": 1.0,
-     "description": "Visokoločljivi ortofoto 25 cm (vidno od povečave 9)",
-     "minZoom": 9
-    },
-    {
-     "id": "gurs_lidar",
-     "name": "LIDAR Senčenje (<1 m)",
-     "type": "wms",
-     "url": "https://ipi.eprostor.gov.si/wms-si-gurs-dts/ows",
+     "id": "stamen_toner",
+     "name": "Svetla siva (visok kontrast)",
+     "type": "tile",
+     "url": "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+     "attribution": "&copy; Esri",
      "opacity": 0.85,
-     "enhance": true,
-     "transparent": false,
-     "format": "image/jpeg",
-     "description": "LIDAR senčenje reliefa (GURS) — državno aerolasersko snemanje",
-     "layers": "SI.GURS.ZPDZ:LIDAR",
-     "version": "1.3.0"
-    },
-    {
-     "id": "arso_lidar_fishnet",
-     "name": "LIDAR pokritost (mreža)",
-     "type": "arcgis_export",
-     "url": "https://geohub.gov.si/ags/rest/services/TEMELJNE_VSEBINE/GH_Mreze_listov_kart/MapServer/export",
-     "transparent": true,
-     "attribution": "&copy; GeoHub (RS)",
-     "layers": "show:1486,1487",
-     "description": "LIDAR bloki in mreža D96 (GeoHub)",
-     "opacity": 0.6
-    },
-    {
-     "id": "gurs_dtk25",
-     "name": "TTN5/TTN10 (1:5k–1:10k)",
-     "type": "wms",
-     "url": "https://ipi.eprostor.gov.si/wms-si-gurs-dts/ows",
-     "layers": "SI.GURS.DK:TTN5_TTN10",
-     "format": "image/jpeg",
-     "transparent": false,
-     "version": "1.1.1",
-     "opacity": 1.0,
-     "tileSize": 256,
-     "description": "Osnovna topografska karta 1:5.000–1:10.000 (zoom 13+) (vidno od povečave 16)",
-     "crs": "EPSG:3794",
-     "minZoom": 16
-    },
-    {
-     "id": "gurs_dtk50",
-     "name": "DTK50 (1:50.000)",
-     "type": "wms",
-     "url": "https://ipi.eprostor.gov.si/wms-si-gurs-dts/wms",
-     "layers": "SI.GURS.DK:DTK50",
-     "format": "image/jpeg",
-     "transparent": false,
-     "version": "1.1.1",
-     "opacity": 1.0,
-     "tileSize": 256,
-     "description": "Uradna slovenska topografska karta 1:50.000"
-    },
-    {
-     "id": "arso_topo_overlay",
-     "name": "Topografska karta",
-     "type": "arcgis_export",
-     "url": "https://geohub.gov.si/ags/rest/services/TEMELJNE_KARTE/GH_MDP_TOPO_KARTA_SI/MapServer/export",
-     "transparent": false,
-     "attribution": "&copy; GeoHub (RS)",
-     "format": "jpg",
-     "description": "Topografska karta Slovenije (GeoHub) — nadomešča ARSO topografsko karto",
-     "opacity": 0.9
-    },
-    {
-     "id": "gurs_parcels",
-     "name": "Parcele (Kataster)",
-     "type": "wms",
-     "url": "https://ipi.eprostor.gov.si/wms-si-gurs-kn/ows",
-     "layers": "SI.GURS.KN:PARCELE",
-     "format": "image/png",
-     "transparent": true,
-     "version": "1.1.1",
-     "opacity": 0.6,
-     "description": "Zemljiške parcele iz katastra nepremičnin GURS (vidno od povečave 16)",
-     "minZoom": 16
-    },
-    {
-     "id": "gurs_buildings",
-     "name": "Stavbe (Kataster)",
-     "type": "wms",
-     "url": "https://ipi.eprostor.gov.si/wms-si-gurs-kn/ows",
-     "layers": "SI.GURS.KN:STAVBE",
-     "format": "image/png",
-     "transparent": true,
-     "version": "1.1.1",
-     "opacity": 0.7,
-     "description": "Stavbni objekti iz katastra nepremičnin GURS (vidno od povečave 17)",
-     "minZoom": 17
-    }
-   ]
-  },
-  {
-   "id": "infrastruktura",
-   "name": "Infrastruktura & Poti",
-   "icon": "Route",
-   "description": "Kolesarske poti, pohodniške steze, železnica, daljnovodi, vodovod",
-   "layers": [
-    {
-     "id": "cycling_routes",
-     "name": "Kolesarske poti",
-     "type": "tile",
-     "url": "https://tile.waymarkedtrails.org/cycling/{z}/{x}/{y}.png",
-     "transparent": true,
-     "opacity": 0.9,
-     "description": "Označene kolesarske poti"
-    },
-    {
-     "id": "hiking_routes",
-     "name": "Pohodniške poti",
-     "type": "tile",
-     "url": "https://tile.waymarkedtrails.org/hiking/{z}/{x}/{y}.png",
-     "transparent": true,
-     "opacity": 0.9,
-     "description": "Označene pohodniške steze"
-    },
-    {
-     "id": "railway_lines",
-     "name": "Železnica",
-     "type": "tile",
-     "url": "https://tiles.openrailwaymap.org/standard/{z}/{x}/{y}.png",
-     "transparent": true,
-     "opacity": 0.9,
-     "description": "Železniške proge OpenRailwayMap"
+     "description": "Svetlo siva karta (Esri) — izpostavi ceste in zgradbe",
+     "maxNativeZoom": 16,
+     "purgeBefore": 1795199291
     },
     {
      "id": "humanitarian_osm",
@@ -275,67 +97,61 @@
      "noBulk": true
     },
     {
-     "id": "openinframap_water",
-     "name": "Vodovod & Kanalizacija (GJI)",
-     "type": "wms",
-     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
-     "layers": "SI.GURS.KGI:LINIJE_VODOVOD_G,SI.GURS.KGI:LINIJE_KANALIZACIJA_G",
-     "format": "image/png",
-     "transparent": true,
-     "version": "1.3.0",
+     "id": "ol_osm",
+     "name": "OpenStreetMap (prekrivno)",
+     "type": "tile",
+     "url": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+     "attribution": "&copy; OpenStreetMap",
+     "opacity": 0.9,
+     "description": "OpenStreetMap kot prekrivni sloj",
+     "noBulk": true
+    },
+    {
+     "id": "ol_satellite",
+     "name": "Satelit (prekrivno)",
+     "type": "tile",
+     "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+     "attribution": "&copy; Esri, Maxar",
+     "opacity": 0.9,
+     "description": "Satelitski posnetek kot prekrivni sloj"
+    },
+    {
+     "id": "ol_topo",
+     "name": "OpenTopoMap (prekrivno)",
+     "type": "tile",
+     "url": "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
+     "attribution": "&copy; OpenTopoMap",
+     "maxNativeZoom": 17,
+     "opacity": 0.9,
+     "description": "Topografska karta kot prekrivni sloj"
+    },
+    {
+     "id": "esri_hillshade",
+     "name": "Senčenje reliefa (svet)",
+     "type": "tile",
+     "url": "https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}",
+     "opacity": 0.45,
+     "maxNativeZoom": 16,
+     "attribution": "&copy; Esri",
+     "description": "Senčenje reliefa za ves svet, brez API ključa (Esri) — nadomešča MapTiler Hillshade"
+    },
+    {
+     "id": "ol_esri_hillshade",
+     "name": "Hillshade (ESRI Global)",
+     "type": "tile",
+     "url": "https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}",
+     "attribution": "&copy; Esri, USGS, NGA, NASA",
      "opacity": 0.8,
-     "description": "Vodovod in kanalizacija iz katastra gospodarske javne infrastrukture GURS (vidno od povečave 16)",
-     "minZoom": 16
+     "description": "ESRI globalno senčenje reliefa kot prekrivni sloj"
     },
     {
-     "id": "slopes_waymarked",
-     "name": "Smučišča & Tereni",
+     "id": "ol_esri_hillshade_dark",
+     "name": "Hillshade Dark (ESRI)",
      "type": "tile",
-     "url": "https://tile.waymarkedtrails.org/slopes/{z}/{x}/{y}.png",
-     "attribution": "&copy; WaymarkedTrails, &copy; OpenStreetMap",
-     "transparent": true,
-     "opacity": 0.9,
-     "description": "Smučišča, tekaški tereni in zimske poti iz OSM"
-    },
-    {
-     "id": "mtb_waymarked",
-     "name": "MTB poti",
-     "type": "tile",
-     "url": "https://tile.waymarkedtrails.org/mtb/{z}/{x}/{y}.png",
-     "attribution": "&copy; WaymarkedTrails, &copy; OpenStreetMap",
-     "transparent": true,
-     "opacity": 0.9,
-     "description": "Označene MTB kolesarske poti"
-    },
-    {
-     "id": "equestrian_waymarked",
-     "name": "Konjeniške poti",
-     "type": "tile",
-     "url": "https://tile.waymarkedtrails.org/riding/{z}/{x}/{y}.png",
-     "attribution": "&copy; WaymarkedTrails, &copy; OpenStreetMap",
-     "transparent": true,
-     "opacity": 0.9,
-     "description": "Označene konjeniške poti"
-    },
-    {
-     "id": "openrailway_maxspeed",
-     "name": "Železnica — hitrosti",
-     "type": "tile",
-     "url": "https://tiles.openrailwaymap.org/maxspeed/{z}/{x}/{y}.png",
-     "attribution": "&copy; OpenRailwayMap",
-     "transparent": true,
-     "opacity": 0.85,
-     "description": "Železniške proge z barvnim prikazom hitrosti"
-    },
-    {
-     "id": "openrailway_signals",
-     "name": "Železnica — signali",
-     "type": "tile",
-     "url": "https://tiles.openrailwaymap.org/signals/{z}/{x}/{y}.png",
-     "attribution": "&copy; OpenRailwayMap",
-     "transparent": true,
-     "opacity": 0.85,
-     "description": "Železniški signali in varnostni sistemi"
+     "url": "https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade_Dark/MapServer/tile/{z}/{y}/{x}",
+     "attribution": "&copy; Esri, USGS, NGA, NASA",
+     "opacity": 0.8,
+     "description": "ESRI temno senčenje reliefa kot prekrivni sloj"
     },
     {
      "id": "carto_roads_only",
@@ -364,183 +180,13 @@
    ]
   },
   {
-   "id": "narava",
-   "name": "Narava & Okolje",
-   "icon": "Trees",
-   "description": "Jame, naravne vrednote, vreme, ekološka območja",
-   "layers": [
-    {
-     "id": "arso_vode_povrsine",
-     "name": "Vodne površine (jezera, reke)",
-     "type": "arcgis_export",
-     "url": "https://geohub.gov.si/ags/rest/services/DRSV/Hidrografija/MapServer/export",
-     "transparent": true,
-     "attribution": "&copy; GeoHub (RS)",
-     "layers": "show:4202,4205,4201",
-     "description": "Površinske vode, vodotoki in imena voda (Direkcija za vode, GeoHub)",
-     "opacity": 0.85
-    },
-    {
-     "id": "arso_poplave",
-     "name": "Poplavna območja",
-     "type": "arcgis_export",
-     "url": "https://geohub.gov.si/ags/rest/services/DRSV/Opozorilna_KP_new/MapServer/export",
-     "transparent": true,
-     "attribution": "&copy; GeoHub (RS)",
-     "layers": "show:4016,4017,4018",
-     "description": "Opozorilna karta poplav: pogoste, redke in katastrofalne poplave (Direkcija za vode, GeoHub)",
-     "opacity": 0.6
-    },
-    {
-     "id": "arso_jame_epo",
-     "name": "Ekološko pomembna območja – jame",
-     "type": "arcgis_export",
-     "url": "https://geohub.gov.si/ags/rest/services/DRSV/Zavarovana_in_varovana_obmocja_po_ZON/MapServer/export",
-     "transparent": true,
-     "attribution": "&copy; GeoHub (RS)",
-     "layers": "show:5664",
-     "sparse": true,
-     "description": "Ekološko pomembna območja — jame (GeoHub)",
-     "opacity": 0.8
-    },
-    {
-     "id": "arso_epo_plg",
-     "name": "Ekološko pomembna območja",
-     "type": "arcgis_export",
-     "url": "https://geohub.gov.si/ags/rest/services/DRSV/Zavarovana_in_varovana_obmocja_po_ZON/MapServer/export",
-     "transparent": true,
-     "attribution": "&copy; GeoHub (RS)",
-     "layers": "show:5665",
-     "description": "Ekološko pomembna območja (GeoHub)",
-     "opacity": 0.5
-    },
-    {
-     "id": "arso_naravne_vrednote",
-     "name": "Naravne vrednote",
-     "type": "arcgis_export",
-     "url": "https://geohub.gov.si/ags/rest/services/DRSV/Zavarovana_in_varovana_obmocja_po_ZON/MapServer/export",
-     "transparent": true,
-     "attribution": "&copy; GeoHub (RS)",
-     "layers": "show:5673,5671,5672",
-     "sparse": true,
-     "description": "Naravne vrednote — območja, točke in jame (GeoHub)",
-     "opacity": 0.5
-    },
-    {
-     "id": "geozs_plazovi",
-     "name": "Plazovi (GeoZS)",
-     "type": "arcgis_export",
-     "url": "https://geohub.gov.si/ags/rest/services/DRSV/Terensko_preverjeni_zemeljski_in_hribinski_plazovi__GeoZS/MapServer/export",
-     "transparent": true,
-     "attribution": "&copy; GeoHub (RS)",
-     "sparse": true,
-     "opacity": 0.9,
-     "description": "Terensko preverjeni zemeljski in hribinski plazovi (Geološki zavod, GeoHub)"
-    },
-    {
-     "id": "poplave_2023",
-     "name": "Poplavljena območja avgust 2023",
-     "type": "arcgis_export",
-     "url": "https://geohub.gov.si/ags/rest/services/TEMELJNI_RASTRI/Poplavljena_obmocja_avgust_2023/MapServer/export",
-     "transparent": true,
-     "attribution": "&copy; GeoHub (RS)",
-     "opacity": 0.7,
-     "description": "Območja, poplavljena ob poplavah avgusta 2023 (GeoHub)"
-    },
-    {
-     "id": "vodovarstvena",
-     "name": "Vodovarstvena območja",
-     "type": "arcgis_export",
-     "url": "https://geohub.gov.si/ags/rest/services/DRSV/Varstvo_voda/MapServer/export",
-     "transparent": true,
-     "attribution": "&copy; GeoHub (RS)",
-     "layers": "show:5361,5362",
-     "opacity": 0.6,
-     "description": "Vodovarstvena območja po uredbah vlade in občinskih odlokih (Direkcija za vode, GeoHub)"
-    }
-   ]
-  },
-  {
-   "id": "osnovni",
-   "name": "Osnovni sloji",
+   "id": "karte",
+   "name": "Topografske karte & mreže",
    "icon": "Map",
-   "description": "Osnovne karte kot prekrivni sloji (OSM, satelit, topo, LIDAR...)",
+   "description": "Uradne topografske karte GURS in koordinatna mreža",
    "layers": [
     {
-     "id": "ol_osm",
-     "name": "OpenStreetMap",
-     "type": "tile",
-     "url": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-     "attribution": "&copy; OpenStreetMap",
-     "opacity": 0.9,
-     "description": "OpenStreetMap kot prekrivni sloj",
-     "noBulk": true
-    },
-    {
-     "id": "ol_carto_voyager",
-     "name": "Esri Ulice",
-     "type": "tile",
-     "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
-     "attribution": "&copy; Esri, HERE, Garmin, OpenStreetMap",
-     "opacity": 0.9,
-     "description": "Ulična karta Esri kot prekrivni sloj (nadomešča Carto Voyager)",
-     "maxNativeZoom": 19,
-     "purgeBefore": 1795199291
-    },
-    {
-     "id": "ol_satellite",
-     "name": "Satelit",
-     "type": "tile",
-     "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-     "attribution": "&copy; Esri, Maxar",
-     "opacity": 0.9,
-     "description": "Satelitski posnetek kot prekrivni sloj"
-    },
-    {
-     "id": "ol_topo",
-     "name": "OpenTopoMap",
-     "type": "tile",
-     "url": "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
-     "attribution": "&copy; OpenTopoMap",
-     "maxNativeZoom": 17,
-     "opacity": 0.9,
-     "description": "Topografska karta kot prekrivni sloj"
-    },
-    {
-     "id": "ol_esri_topo",
-     "name": "ESRI Topo",
-     "type": "tile",
-     "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
-     "attribution": "&copy; Esri",
-     "opacity": 0.9,
-     "description": "ESRI World Topo kot prekrivni sloj"
-    },
-    {
-     "id": "ol_dark",
-     "name": "Temna",
-     "type": "tile",
-     "url": "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
-     "attribution": "&copy; Esri",
-     "opacity": 0.9,
-     "description": "Temno siva karta (Esri) kot prekrivni sloj",
-     "maxNativeZoom": 16,
-     "purgeBefore": 1795199291
-    },
-    {
-     "id": "ol_lidar",
-     "name": "LIDAR Senčenje",
-     "type": "wms",
-     "url": "https://ipi.eprostor.gov.si/wms-si-gurs-dts/ows",
-     "opacity": 0.8,
-     "enhance": true,
-     "transparent": false,
-     "format": "image/jpeg",
-     "description": "LIDAR senčenje (GURS) kot prekrivni sloj",
-     "layers": "SI.GURS.ZPDZ:LIDAR",
-     "version": "1.3.0"
-    },
-    {
-     "id": "ol_arso_topo",
+     "id": "arso_topo_overlay",
      "name": "Topografska karta",
      "type": "arcgis_export",
      "url": "https://geohub.gov.si/ags/rest/services/TEMELJNE_KARTE/GH_MDP_TOPO_KARTA_SI/MapServer/export",
@@ -551,431 +197,39 @@
      "opacity": 0.9
     },
     {
-     "id": "ol_esri_hillshade",
-     "name": "Hillshade (ESRI Global)",
-     "type": "tile",
-     "url": "https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}",
-     "attribution": "&copy; Esri, USGS, NGA, NASA",
-     "opacity": 0.8,
-     "description": "ESRI globalno senčenje reliefa kot prekrivni sloj"
-    },
-    {
-     "id": "ol_esri_hillshade_dark",
-     "name": "Hillshade Dark (ESRI)",
-     "type": "tile",
-     "url": "https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade_Dark/MapServer/tile/{z}/{y}/{x}",
-     "attribution": "&copy; Esri, USGS, NGA, NASA",
-     "opacity": 0.8,
-     "description": "ESRI temno senčenje reliefa kot prekrivni sloj"
-    },
-    {
-     "id": "ol_waymarked_slopes",
-     "name": "Smučišča & Tereni (WaymarkedTrails)",
-     "type": "tile",
-     "url": "https://tile.waymarkedtrails.org/slopes/{z}/{x}/{y}.png",
-     "attribution": "&copy; WaymarkedTrails, &copy; OpenStreetMap",
-     "opacity": 0.9,
-     "transparent": true,
-     "description": "Smučišča in terenski tereni iz WaymarkedTrails"
-    },
-    {
-     "id": "esri_hillshade",
-     "name": "Senčenje reliefa (svet)",
-     "type": "tile",
-     "url": "https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}",
-     "opacity": 0.45,
-     "maxNativeZoom": 16,
-     "attribution": "&copy; Esri",
-     "description": "Senčenje reliefa za ves svet, brez API ključa (Esri) — nadomešča MapTiler Hillshade"
-    }
-   ]
-  },
-  {
-   "id": "geologija",
-   "name": "Geologija & Tla",
-   "icon": "Mountain",
-   "description": "Geološka karta, pedološka karta, kamninska podlaga, plazovi",
-   "layers": [
-    {
-     "id": "arso_tla_pedoloski",
-     "name": "Pedološka karta tal",
-     "type": "arcgis_export",
-     "url": "https://gis.arso.gov.si/arcgis/rest/services/Tla/MapServer/export",
-     "bboxSR": 4326,
-     "imageSR": 4326,
-     "transparent": true,
-     "format": "png32",
-     "opacity": 0.6,
-     "description": "Pedološka karta tal — tipi tal po Sloveniji"
-    },
-    {
-     "id": "arso_erozija",
-     "name": "Erozijska in plazljiva območja",
-     "type": "arcgis_export",
-     "url": "https://geohub.gov.si/ags/rest/services/DRSV/Ogrozena_obmocja/MapServer/export",
-     "transparent": true,
-     "attribution": "&copy; GeoHub (RS)",
-     "layers": "show:4401,4402",
-     "description": "Erozijska in plazljiva območja (opozorilna karta, Direkcija za vode, GeoHub)",
-     "opacity": 0.55
-    },
-    {
-     "id": "gurs_katastrske_obcine",
-     "name": "Katastrske občine",
+     "id": "gurs_dtk50",
+     "name": "DTK50 (1:50.000)",
      "type": "wms",
-     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
-     "layers": "SI.GURS.KN:KATASTRSKE_OBCINE",
-     "format": "image/png",
-     "transparent": true,
-     "version": "1.3.0",
-     "opacity": 0.5,
-     "description": "Meje katastrskih občin iz GURS (vidno od povečave 12)",
-     "minZoom": 12
+     "url": "https://ipi.eprostor.gov.si/wms-si-gurs-dts/wms",
+     "layers": "SI.GURS.DK:DTK50",
+     "format": "image/jpeg",
+     "transparent": false,
+     "version": "1.1.1",
+     "opacity": 1.0,
+     "tileSize": 256,
+     "description": "Uradna slovenska topografska karta 1:50.000"
     },
     {
-     "id": "gurs_bonitete",
-     "name": "Bonitete kmetijskih zemljišč",
+     "id": "gurs_dtk25",
+     "name": "TTN5/TTN10 (1:5k–1:10k)",
      "type": "wms",
-     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
-     "layers": "SI.GURS.KN:BONITETE",
-     "format": "image/png",
-     "transparent": true,
-     "version": "1.3.0",
-     "opacity": 0.6,
-     "description": "Bonitete parcel — kakovost kmetijskih zemljišč (vidno od povečave 16)",
+     "url": "https://ipi.eprostor.gov.si/wms-si-gurs-dts/ows",
+     "layers": "SI.GURS.DK:TTN5_TTN10",
+     "format": "image/jpeg",
+     "transparent": false,
+     "version": "1.1.1",
+     "opacity": 1.0,
+     "tileSize": 256,
+     "description": "Osnovna topografska karta 1:5.000–1:10.000 (zoom 13+) (vidno od povečave 16)",
+     "crs": "EPSG:3794",
      "minZoom": 16
     },
     {
-     "id": "gurs_gozdno_gosp",
-     "name": "Gozdno-gospodarska območja",
-     "type": "wms",
-     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
-     "layers": "SI.GURS.KN:GOZDNO_GOSP_OBM",
-     "format": "image/png",
-     "transparent": true,
-     "version": "1.3.0",
-     "opacity": 0.5,
-     "description": "Gozdna gospodarska območja, rastiščni koeficient in odprtost (vidno od povečave 12)",
-     "minZoom": 12
-    }
-   ]
-  },
-  {
-   "id": "energija",
-   "name": "Energija & GJI",
-   "icon": "Zap",
-   "description": "Električno omrežje, kanalizacija, telekomunikacije, cevovodi iz katastra GJI",
-   "layers": [
-    {
-     "id": "gji_elektrika",
-     "name": "Električno omrežje (GJI)",
-     "type": "wms",
-     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
-     "layers": "SI.GURS.KGI:LINIJE_ELEKTRICNA_ENERGIJA_G",
-     "format": "image/png",
-     "transparent": true,
-     "version": "1.3.0",
-     "opacity": 0.85,
-     "description": "Električna energija — linije iz katastra gospodarske infrastrukture GURS (vidno od povečave 16)",
-     "minZoom": 16
-    },
-    {
-     "id": "gji_kanalizacija",
-     "name": "Kanalizacija (GJI)",
-     "type": "wms",
-     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
-     "layers": "SI.GURS.KGI:LINIJE_KANALIZACIJA_G",
-     "format": "image/png",
-     "transparent": true,
-     "version": "1.3.0",
-     "opacity": 0.8,
-     "description": "Kanalizacijska omrežja iz katastra GJI (vidno od povečave 16)",
-     "minZoom": 16
-    },
-    {
-     "id": "gji_komunikacije",
-     "name": "Telekomunikacije (GJI)",
-     "type": "wms",
-     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
-     "layers": "SI.GURS.KGI:LINIJE_ELEKTRONSKE_KOMUNIKACIJE_G",
-     "format": "image/png",
-     "transparent": true,
-     "version": "1.3.0",
-     "opacity": 0.8,
-     "description": "Elektronske komunikacije iz katastra GJI (vidno od povečave 16)",
-     "minZoom": 16
-    },
-    {
-     "id": "gji_nafta",
-     "name": "Naftovodi & Plinovodi (GJI)",
-     "type": "wms",
-     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
-     "layers": "SI.GURS.KGI:LINIJE_NAFTA_IN_NAFTNI_DERIVATI_G,SI.GURS.KGI:LINIJE_ZEMELJSKI_PLIN_G",
-     "format": "image/png",
-     "transparent": true,
-     "version": "1.3.0",
-     "opacity": 0.8,
-     "description": "Nafta in plin — cevovodi iz katastra GJI (vidno od povečave 16)",
-     "minZoom": 16
-    },
-    {
-     "id": "arso_hidroloske_postaje",
-     "name": "Hidrološke merilne postaje",
-     "type": "arcgis_export",
-     "url": "https://geohub.gov.si/ags/rest/services/DRSV/Monitoring_voda/MapServer/export",
-     "transparent": true,
-     "attribution": "&copy; GeoHub (RS)",
-     "layers": "show:5643,5644,5645",
-     "sparse": true,
-     "description": "Hidrološke merilne postaje — tekoče, stoječe in podzemne vode (GeoHub)",
-     "opacity": 0.9
-    }
-   ]
-  },
-  {
-   "id": "rpe_naslovi",
-   "name": "Naslovi & Stavbe",
-   "icon": "Home",
-   "description": "Hišne številke, etaže, parcele, kohezijske regije iz GURS katastra",
-   "layers": [
-    {
-     "id": "rpe_obcine",
-     "name": "Občine (meje)",
-     "type": "wms",
-     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
-     "layers": "SI.GURS.RPE:OBCINE",
-     "format": "image/png",
-     "transparent": true,
-     "version": "1.3.0",
-     "opacity": 0.8,
-     "description": "Meje občin iz registra prostorskih enot (RPE) (vidno od povečave 9)",
-     "minZoom": 9
-    },
-    {
-     "id": "rpe_naselja",
-     "name": "Naselja",
-     "type": "wms",
-     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
-     "layers": "SI.GURS.RPE:NASELJA",
-     "format": "image/png",
-     "transparent": true,
-     "version": "1.3.0",
-     "opacity": 0.6,
-     "description": "Meje naselij (RPE) (vidno od povečave 10)",
-     "minZoom": 10
-    },
-    {
-     "id": "rpe_ulice",
-     "name": "Ulice",
-     "type": "wms",
-     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
-     "layers": "SI.GURS.RPE:ULICE",
-     "format": "image/png",
-     "transparent": true,
-     "version": "1.3.0",
-     "opacity": 0.8,
-     "description": "Ulice iz registra prostorskih enot (vidno od povečave 16)",
-     "minZoom": 16
-    },
-    {
-     "id": "rpe_upravne_enote",
-     "name": "Upravne enote",
-     "type": "wms",
-     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
-     "layers": "SI.GURS.RPE:UPRAVNE_ENOTE",
-     "format": "image/png",
-     "transparent": true,
-     "version": "1.3.0",
-     "opacity": 0.6,
-     "description": "Meje upravnih enot (vidno od povečave 10)",
-     "minZoom": 10
-    },
-    {
-     "id": "rpe_stat_regije",
-     "name": "Statistične regije",
-     "type": "wms",
-     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
-     "layers": "SI.GURS.RPE:STATISTICNE_REGIJE",
-     "format": "image/png",
-     "transparent": true,
-     "version": "1.3.0",
-     "opacity": 0.5,
-     "description": "Statistične regije Slovenije (vidno od povečave 10)",
-     "minZoom": 10
-    },
-    {
-     "id": "rpe_postni",
-     "name": "Poštni okoliši",
-     "type": "wms",
-     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
-     "layers": "SI.GURS.RPE:POSTNI_OKOLISI",
-     "format": "image/png",
-     "transparent": true,
-     "version": "1.3.0",
-     "opacity": 0.6,
-     "description": "Meje poštnih okolišev (vidno od povečave 10)",
-     "minZoom": 10
-    },
-    {
-     "id": "rpe_solski",
-     "name": "Šolski okoliši",
-     "type": "wms",
-     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
-     "layers": "SI.GURS.RPE:SOLSKI_OKOLISI",
-     "format": "image/png",
-     "transparent": true,
-     "version": "1.3.0",
-     "opacity": 0.6,
-     "description": "Meje šolskih okolišev (vidno od povečave 12)",
-     "minZoom": 12
-    },
-    {
-     "id": "rpe_hs_tocke",
-     "name": "Hišne številke",
-     "type": "wms",
-     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
-     "layers": "SI.GURS.KN:HISNE_STEVILKE",
-     "format": "image/png",
-     "transparent": true,
-     "version": "1.3.0",
-     "opacity": 0.9,
-     "description": "Hišne številke iz katastra (vidno od povečave 16)",
-     "minZoom": 16
-    },
-    {
-     "id": "rpe_gradbene_parcele",
-     "name": "Gradbene parcele",
-     "type": "wms",
-     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
-     "layers": "SI.GURS.KN:GRADBENE_PARCELE",
-     "format": "image/png",
-     "transparent": true,
-     "version": "1.3.0",
-     "opacity": 0.65,
-     "description": "Gradbene parcele iz katastra nepremičnin (vidno od povečave 16)",
-     "minZoom": 16
-    },
-    {
-     "id": "rpe_krajevne_skupnosti",
-     "name": "Krajevne skupnosti",
-     "type": "wms",
-     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
-     "layers": "SI.GURS.RPE:KRAJEVNE_SKUPNOSTI",
-     "format": "image/png",
-     "transparent": true,
-     "version": "1.3.0",
-     "opacity": 0.5,
-     "description": "Meje krajevnih skupnosti iz RPE (vidno od povečave 12)",
-     "minZoom": 12
-    },
-    {
-     "id": "rpe_kohezijske_regije",
-     "name": "Kohezijske regije",
-     "type": "wms",
-     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
-     "layers": "SI.GURS.RPE:KOHEZIJSKE_REGIJE",
-     "format": "image/png",
-     "transparent": true,
-     "version": "1.3.0",
-     "opacity": 0.45,
-     "description": "Kohezijske regije Slovenije (Vzhodna / Zahodna) (vidno od povečave 9)",
-     "minZoom": 9
-    },
-    {
-     "id": "gurs_drzavna_meja",
-     "name": "Državna meja",
-     "type": "wms",
-     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
-     "layers": "SI.GURS.EDM:DRZAVNA_MEJA",
-     "format": "image/png",
-     "transparent": true,
-     "version": "1.3.0",
-     "opacity": 0.9,
-     "description": "Uradna meja Republike Slovenije"
-    }
-   ]
-  },
-  {
-   "id": "promet",
-   "name": "Promet & Ceste",
-   "icon": "Car",
-   "description": "Ceste, kolesarsko omrežje, letališča, javni promet iz GJI katastra",
-   "layers": [
-    {
-     "id": "gji_zeleznice",
-     "name": "Železnice (GJI)",
-     "type": "wms",
-     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
-     "layers": "SI.GURS.KGI:LINIJE_ZELEZNICE_G",
-     "format": "image/png",
-     "transparent": true,
-     "version": "1.3.0",
-     "opacity": 0.85,
-     "description": "Železniška infrastruktura iz katastra GJI (vidno od povečave 16)",
-     "minZoom": 16
-    },
-    {
-     "id": "gji_zicnice",
-     "name": "Žičnice (GJI)",
-     "type": "wms",
-     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
-     "layers": "SI.GURS.KGI:LINIJE_ZICNICE_G",
-     "format": "image/png",
-     "transparent": true,
-     "version": "1.3.0",
-     "opacity": 0.85,
-     "description": "Žičnice in vlečnice iz katastra GJI (vidno od povečave 16)",
-     "minZoom": 16,
-     "sparse": true
-    },
-    {
-     "id": "gji_parkirisca",
-     "name": "Parkirišča (GJI)",
-     "type": "wms",
-     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
-     "layers": "SI.GURS.KGI:PARKIRISCA",
-     "format": "image/png",
-     "transparent": true,
-     "version": "1.3.0",
-     "opacity": 0.7,
-     "description": "Parkirišča iz katastra GJI"
-    },
-    {
-     "id": "gji_ceste",
-     "name": "Ceste (GJI kataster)",
-     "type": "wms",
-     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
-     "layers": "SI.GURS.KGI:LINIJE_CESTE_G",
-     "format": "image/png",
-     "transparent": true,
-     "version": "1.3.0",
-     "opacity": 0.8,
-     "description": "Cestno omrežje iz katastra gospodarske infrastrukture GURS (vidno od povečave 13)",
-     "minZoom": 13
-    },
-    {
-     "id": "gji_letalisca",
-     "name": "Letališka infrastruktura (GJI)",
-     "type": "wms",
-     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
-     "layers": "SI.GURS.KGI:LINIJE_LETALISCA_G",
-     "format": "image/png",
-     "transparent": true,
-     "version": "1.3.0",
-     "opacity": 0.85,
-     "description": "Letališka infrastruktura iz katastra GJI (vidno od povečave 16)",
-     "minZoom": 16,
-     "sparse": true
-    },
-    {
-     "id": "osm_transit",
-     "name": "Javni promet (OSM)",
-     "type": "tile",
-     "url": "https://tile.memomaps.de/tilegen/{z}/{x}/{y}.png",
-     "attribution": "&copy; MeMoMaps, &copy; OpenStreetMap",
-     "transparent": true,
-     "opacity": 0.85,
-     "description": "Linije javnega prevoza — avtobusi, vlaki iz OSM"
+     "id": "grid_d96_1km",
+     "name": "Mreža 1 × 1 km (D96/TM)",
+     "type": "grid_d96",
+     "opacity": 1.0,
+     "description": "Črna mreža kvadratov 1 × 1 km v državnem koordinatnem sistemu D96/TM (enaki kvadrati kot LIDAR in DOF). Od povečave 11 vsak km, od 13 z oznako celice (spodnji levi vogal v km, npr. 462_101). Celica pod kazalcem je izpisana v vrstici spodaj."
     },
     {
      "id": "gurs_geodetske_tocke_gps",
@@ -989,119 +243,65 @@
      "opacity": 0.9,
      "description": "GNSS geodetske točke iz državnega koordinatnega sistema (vidno od povečave 12)",
      "minZoom": 12
-    },
+    }
+   ]
+  },
+  {
+   "id": "lidar_orto",
+   "name": "LIDAR & ortofoto",
+   "icon": "Mountain",
+   "description": "Aktualni letalski posnetki in LIDAR senčenje",
+   "layers": [
     {
-     "id": "third_dev_axis",
-     "name": "3. razvojna os (nova hitra cesta)",
-     "type": "third_dev_axis",
+     "id": "gurs_lidar",
+     "name": "LIDAR senčenje (<1 m)",
+     "type": "wms",
+     "url": "https://ipi.eprostor.gov.si/wms-si-gurs-dts/ows",
      "opacity": 0.85,
-     "description": "Tretja razvojna os — bodoča hitra cesta od Holmca (AT meja) preko Slovenj Gradca, Velenja in Šentruperta, ter od Novega mesta preko Gorjancev, Metlike do Črnomlja (HR meja). Severni krak v gradnji, južni v načrtovanju."
+     "enhance": true,
+     "transparent": false,
+     "format": "image/jpeg",
+     "description": "LIDAR senčenje reliefa (GURS) — državno aerolasersko snemanje",
+     "layers": "SI.GURS.ZPDZ:LIDAR",
+     "version": "1.3.0"
     },
     {
-     "id": "live_flights",
-     "name": "Leti v realnem času (Flightradar24)",
-     "type": "live_flights",
-     "opacity": 0.9,
-     "description": "Pozicije letal v zraku nad Slovenijo v realnem času (OpenSky Network — brezplačna alternativa Flightradar24). Ikone letal rotirane v smeri leta, osvežitev vsako minuto."
-    }
-   ]
-  },
-  {
-   "id": "dediscina",
-   "name": "Arheologija & Dediščina",
-   "icon": "Landmark",
-   "description": "Kulturna dediščina, arheološka najdišča, register nepremičnin kulturne dediščine",
-   "layers": [
-    {
-     "id": "zvkds_rkd_tocke",
-     "name": "Kulturna dediščina — enote (točke)",
+     "id": "arso_lidar_fishnet",
+     "name": "LIDAR pokritost (mreža)",
      "type": "arcgis_export",
-     "url": "https://geohub.gov.si/ags/rest/services/MK/ISKD/MapServer/export",
+     "url": "https://geohub.gov.si/ags/rest/services/TEMELJNE_VSEBINE/GH_Mreze_listov_kart/MapServer/export",
      "transparent": true,
      "attribution": "&copy; GeoHub (RS)",
-     "layers": "show:3314",
-     "sparse": true,
-     "description": "Register nepremične kulturne dediščine — točke (Ministrstvo za kulturo, GeoHub)",
-     "opacity": 0.9
+     "layers": "show:1486,1487",
+     "description": "LIDAR bloki in mreža D96 (GeoHub)",
+     "opacity": 0.6
     },
     {
-     "id": "zvkds_rkd_obmocja",
-     "name": "Kulturna dediščina — območja",
-     "type": "arcgis_export",
-     "url": "https://geohub.gov.si/ags/rest/services/MK/ISKD/MapServer/export",
-     "transparent": true,
-     "attribution": "&copy; GeoHub (RS)",
-     "layers": "show:3312",
-     "description": "Register nepremične kulturne dediščine — območja (Ministrstvo za kulturo, GeoHub)",
-     "opacity": 0.5
-    },
-    {
-     "id": "arso_zavarovana_obmocja",
-     "name": "Zavarovana območja narave",
+     "id": "gurs_orthophoto",
+     "name": "Ortofoto DOF050 (50 cm)",
      "type": "wms",
-     "url": "https://bio.discomap.eea.europa.eu/arcgis/services/ProtectedSites/CDDA_Dyna_WM/MapServer/WMSServer",
-     "layers": "0,1",
-     "format": "image/png",
-     "transparent": true,
-     "version": "1.3.0",
-     "opacity": 0.5,
-     "description": "Zavarovana območja narave (EEA CDDA) — parki, rezervati (vidno od povečave 8)",
-     "minZoom": 8
+     "url": "https://ipi.eprostor.gov.si/wms-si-gurs-dts/ows",
+     "layers": "SI.GURS.ZPDZ:DOF050",
+     "format": "image/jpeg",
+     "transparent": false,
+     "version": "1.1.1",
+     "opacity": 1.0,
+     "description": "Aeroposnetki ortofoto 50 cm ločljivosti za Slovenijo (vidno od povečave 9)",
+     "minZoom": 9
     },
     {
-     "id": "arso_natura2000_plg",
-     "name": "Natura 2000 območja",
+     "id": "gurs_orthophoto_025",
+     "name": "Ortofoto DOF025 (25 cm)",
      "type": "wms",
-     "url": "https://bio.discomap.eea.europa.eu/arcgis/services/ProtectedSites/Natura2000Sites/MapServer/WMSServer",
-     "layers": "0",
-     "format": "image/png",
-     "transparent": true,
-     "version": "1.3.0",
-     "opacity": 0.45,
-     "description": "Natura 2000 (EEA) — ptice in habitati"
+     "url": "https://ipi.eprostor.gov.si/wms-si-gurs-dts/ows",
+     "layers": "SI.GURS.ZPDZ:DOF025",
+     "format": "image/jpeg",
+     "transparent": false,
+     "version": "1.1.1",
+     "opacity": 1.0,
+     "description": "Visokoločljivi ortofoto 25 cm (vidno od povečave 9)",
+     "minZoom": 9
     },
-    {
-     "id": "arso_nv_tocke",
-     "name": "Naravne vrednote (točke)",
-     "type": "arcgis_export",
-     "url": "https://geohub.gov.si/ags/rest/services/DRSV/Zavarovana_in_varovana_obmocja_po_ZON/MapServer/export",
-     "transparent": true,
-     "attribution": "&copy; GeoHub (RS)",
-     "layers": "show:5671,5672",
-     "sparse": true,
-     "description": "Naravne vrednote — točke in jame (GeoHub)",
-     "opacity": 0.85
-    },
-    {
-     "id": "arso_nv_obmocja",
-     "name": "Naravne vrednote (območja)",
-     "type": "arcgis_export",
-     "url": "https://geohub.gov.si/ags/rest/services/DRSV/Zavarovana_in_varovana_obmocja_po_ZON/MapServer/export",
-     "transparent": true,
-     "attribution": "&copy; GeoHub (RS)",
-     "layers": "show:5673",
-     "description": "Naravne vrednote — območja (GeoHub)",
-     "opacity": 0.45
-    },
-    {
-     "id": "mk_arheo",
-     "name": "Arheološke raziskave",
-     "type": "arcgis_export",
-     "url": "https://geohub.gov.si/ags/rest/services/MK/MK_ARHEO/MapServer/export",
-     "transparent": true,
-     "attribution": "&copy; GeoHub (RS)",
-     "layers": "show:3692,3694",
-     "opacity": 0.75,
-     "description": "Izvedene arheološke raziskave in raziskave v teku (Ministrstvo za kulturo, GeoHub)"
-    }
-   ]
-  },
-  {
-   "id": "zgodovinski",
-   "name": "Zgodovinski & Urbex",
-   "icon": "History",
-   "description": "Zgodovinski ortofoto ARSO, primerjava let, iskanje opuščenih objektov",
-   "layers": [
     {
      "id": "dof_2022_2024",
      "name": "Ortofoto 2022–2024 (najnovejši)",
@@ -1116,7 +316,15 @@
      "opacity": 1.0,
      "attribution": "&copy; GURS",
      "description": "GURS zgodovinski ortofoto (DOF050), posnetki 2022–2024 — kjer ni posnetka, se vidi spodnja karta"
-    },
+    }
+   ]
+  },
+  {
+   "id": "zgodovinski",
+   "name": "Zgodovinski ortofoto",
+   "icon": "History",
+   "description": "Posnetki od 1990 naprej — primerjava let, opuščeni objekti",
+   "layers": [
     {
      "id": "dof_2019",
      "name": "Ortofoto 2019",
@@ -1251,79 +459,127 @@
      "opacity": 1.0,
      "attribution": "&copy; GURS",
      "description": "GURS zgodovinski ortofoto (DOF050), posnetki 1990–1996 — kjer ni posnetka, se vidi spodnja karta"
-    },
-    {
-     "id": "stamen_toner",
-     "name": "Svetla siva (visok kontrast)",
-     "type": "tile",
-     "url": "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}",
-     "attribution": "&copy; Esri",
-     "opacity": 0.85,
-     "description": "Svetlo siva karta (Esri) — izpostavi ceste in zgradbe",
-     "maxNativeZoom": 16,
-     "purgeBefore": 1795199291
-    },
-    {
-     "id": "lidar_overlay",
-     "name": "LIDAR overlay (iskanje)",
-     "type": "wms",
-     "url": "https://ipi.eprostor.gov.si/wms-si-gurs-dts/ows",
-     "opacity": 0.7,
-     "enhance": true,
-     "transparent": false,
-     "format": "image/jpeg",
-     "description": "LIDAR kot overlay (GURS) — jarki, nasipi, temelji zgradb",
-     "layers": "SI.GURS.ZPDZ:LIDAR",
-     "version": "1.3.0"
     }
    ]
   },
   {
-   "id": "vreme",
-   "name": "Vreme",
+   "id": "kataster",
+   "name": "Kataster & zemljišča",
+   "icon": "Home",
+   "description": "Parcele, stavbe, raba in bonitete zemljišč",
    "layers": [
     {
-     "id": "wx_radar",
-     "name": "Padavine – radar",
-     "type": "rainviewer",
-     "kind": "radar",
-     "opacity": 0.7,
-     "live": true,
-     "description": "Zadnji radarski posnetek padavin (RainViewer), osvežuje se vsakih 10 minut — brez API ključa"
-    },
-    {
-     "id": "wx_temp",
-     "name": "Temperatura",
-     "type": "weather",
-     "kind": "temp",
-     "opacity": 0.55,
-     "live": true,
-     "description": "Trenutna temperatura zraka nad Slovenijo (Open-Meteo), osvežuje se vsakih 30 minut — nadomešča OpenWeatherMap"
-    },
-    {
-     "id": "wx_wind",
-     "name": "Veter",
-     "type": "weather",
-     "kind": "wind",
-     "opacity": 0.9,
-     "live": true,
-     "description": "Trenutna hitrost in smer vetra (Open-Meteo) — puščice kažejo, kam piha"
-    },
-    {
-     "id": "wx_clouds",
-     "name": "Oblačnost",
-     "type": "weather",
-     "kind": "clouds",
+     "id": "gurs_parcels",
+     "name": "Parcele (Kataster)",
+     "type": "wms",
+     "url": "https://ipi.eprostor.gov.si/wms-si-gurs-kn/ows",
+     "layers": "SI.GURS.KN:PARCELE",
+     "format": "image/png",
+     "transparent": true,
+     "version": "1.1.1",
      "opacity": 0.6,
-     "live": true,
-     "description": "Trenutna pokritost neba z oblaki v % (Open-Meteo) — nadomešča OpenWeatherMap"
+     "description": "Zemljiške parcele iz katastra nepremičnin GURS (vidno od povečave 16)",
+     "minZoom": 16
+    },
+    {
+     "id": "gurs_buildings",
+     "name": "Stavbe (Kataster)",
+     "type": "wms",
+     "url": "https://ipi.eprostor.gov.si/wms-si-gurs-kn/ows",
+     "layers": "SI.GURS.KN:STAVBE",
+     "format": "image/png",
+     "transparent": true,
+     "version": "1.1.1",
+     "opacity": 0.7,
+     "description": "Stavbni objekti iz katastra nepremičnin GURS (vidno od povečave 17)",
+     "minZoom": 17
+    },
+    {
+     "id": "gurs_katastrske_obcine",
+     "name": "Katastrske občine",
+     "type": "wms",
+     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
+     "layers": "SI.GURS.KN:KATASTRSKE_OBCINE",
+     "format": "image/png",
+     "transparent": true,
+     "version": "1.3.0",
+     "opacity": 0.5,
+     "description": "Meje katastrskih občin iz GURS (vidno od povečave 12)",
+     "minZoom": 12
+    },
+    {
+     "id": "rpe_gradbene_parcele",
+     "name": "Gradbene parcele",
+     "type": "wms",
+     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
+     "layers": "SI.GURS.KN:GRADBENE_PARCELE",
+     "format": "image/png",
+     "transparent": true,
+     "version": "1.3.0",
+     "opacity": 0.65,
+     "description": "Gradbene parcele iz katastra nepremičnin (vidno od povečave 16)",
+     "minZoom": 16
+    },
+    {
+     "id": "rpe_hs_tocke",
+     "name": "Hišne številke",
+     "type": "wms",
+     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
+     "layers": "SI.GURS.KN:HISNE_STEVILKE",
+     "format": "image/png",
+     "transparent": true,
+     "version": "1.3.0",
+     "opacity": 0.9,
+     "description": "Hišne številke iz katastra (vidno od povečave 16)",
+     "minZoom": 16
+    },
+    {
+     "id": "gurs_dejanska_raba",
+     "name": "Dejanska raba (kataster)",
+     "type": "wms",
+     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
+     "layers": "SI.GURS.KN:DEJANSKE_RABE",
+     "format": "image/png",
+     "transparent": true,
+     "version": "1.3.0",
+     "opacity": 0.65,
+     "description": "Dejanska raba zemljišč iz katastra nepremičnin (nadomešča MKGP RABA) (vidno od povečave 16)",
+     "minZoom": 16
+    },
+    {
+     "id": "gurs_bonitete",
+     "name": "Bonitete kmetijskih zemljišč",
+     "type": "wms",
+     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
+     "layers": "SI.GURS.KN:BONITETE",
+     "format": "image/png",
+     "transparent": true,
+     "version": "1.3.0",
+     "opacity": 0.6,
+     "description": "Bonitete parcel — kakovost kmetijskih zemljišč (vidno od povečave 16)",
+     "minZoom": 16
     }
    ]
   },
   {
    "id": "prostorski",
    "name": "Prostorski načrti",
+   "icon": "Map",
+   "description": "Namenska raba, OPN in državni prostorski načrti",
    "layers": [
+    {
+     "id": "gurs_namenska_raba",
+     "name": "Namenska raba prostora",
+     "type": "wms",
+     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
+     "layers": "SI.GURS.KN:NAMENSKE_RABE",
+     "format": "image/png",
+     "transparent": true,
+     "version": "1.3.0",
+     "opacity": 0.6,
+     "description": "Namenska raba iz prostorskih aktov občin (vidno od povečave 14)",
+     "minZoom": 14
+    },
     {
      "id": "pis_nrp",
      "name": "Namenska raba (veljavni OPN)",
@@ -1406,41 +662,274 @@
    ]
   },
   {
-   "id": "vremenske",
-   "name": "Vremenske postaje",
+   "id": "rpe_naslovi",
+   "name": "Meje & naslovi",
+   "icon": "Home",
+   "description": "Državna meja, občine, naselja, ulice in okoliši",
    "layers": [
     {
-     "id": "arso_meteo",
-     "name": "Vremenske postaje — Meteo",
-     "type": "arso_stations",
-     "kind": "meteo",
-     "opacity": 1,
-     "live": true,
-     "description": "Meteorološke postaje ARSO (glavne in samodejne): temperatura, vlaga, veter, tlak, sneg, oblačnost. Osvežitev na 15 min."
+     "id": "gurs_drzavna_meja",
+     "name": "Državna meja",
+     "type": "wms",
+     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
+     "layers": "SI.GURS.EDM:DRZAVNA_MEJA",
+     "format": "image/png",
+     "transparent": true,
+     "version": "1.3.0",
+     "opacity": 0.9,
+     "description": "Uradna meja Republike Slovenije"
     },
     {
-     "id": "arso_voda",
-     "name": "Vremenske postaje — Voda",
-     "type": "arso_stations",
-     "kind": "voda",
-     "opacity": 1,
-     "live": true,
-     "description": "Hidrološke postaje ARSO: vodostaj, pretok, temperatura vode; rdeče, ko pretok doseže 1. visokovodni pretok."
+     "id": "rpe_obcine",
+     "name": "Občine (meje)",
+     "type": "wms",
+     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
+     "layers": "SI.GURS.RPE:OBCINE",
+     "format": "image/png",
+     "transparent": true,
+     "version": "1.3.0",
+     "opacity": 0.8,
+     "description": "Meje občin iz registra prostorskih enot (RPE) (vidno od povečave 9)",
+     "minZoom": 9
     },
     {
-     "id": "arso_zrak",
-     "name": "Vremenske postaje — Zrak",
-     "type": "arso_stations",
-     "kind": "zrak",
-     "opacity": 1,
-     "live": true,
-     "description": "Postaje za kakovost zraka ARSO: PM10, PM2,5, O₃, NO₂, SO₂, CO (urni podatki)."
+     "id": "rpe_naselja",
+     "name": "Naselja",
+     "type": "wms",
+     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
+     "layers": "SI.GURS.RPE:NASELJA",
+     "format": "image/png",
+     "transparent": true,
+     "version": "1.3.0",
+     "opacity": 0.6,
+     "description": "Meje naselij (RPE) (vidno od povečave 10)",
+     "minZoom": 10
+    },
+    {
+     "id": "rpe_ulice",
+     "name": "Ulice",
+     "type": "wms",
+     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
+     "layers": "SI.GURS.RPE:ULICE",
+     "format": "image/png",
+     "transparent": true,
+     "version": "1.3.0",
+     "opacity": 0.8,
+     "description": "Ulice iz registra prostorskih enot (vidno od povečave 16)",
+     "minZoom": 16
+    },
+    {
+     "id": "rpe_krajevne_skupnosti",
+     "name": "Krajevne skupnosti",
+     "type": "wms",
+     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
+     "layers": "SI.GURS.RPE:KRAJEVNE_SKUPNOSTI",
+     "format": "image/png",
+     "transparent": true,
+     "version": "1.3.0",
+     "opacity": 0.5,
+     "description": "Meje krajevnih skupnosti iz RPE (vidno od povečave 12)",
+     "minZoom": 12
+    },
+    {
+     "id": "rpe_upravne_enote",
+     "name": "Upravne enote",
+     "type": "wms",
+     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
+     "layers": "SI.GURS.RPE:UPRAVNE_ENOTE",
+     "format": "image/png",
+     "transparent": true,
+     "version": "1.3.0",
+     "opacity": 0.6,
+     "description": "Meje upravnih enot (vidno od povečave 10)",
+     "minZoom": 10
+    },
+    {
+     "id": "rpe_stat_regije",
+     "name": "Statistične regije",
+     "type": "wms",
+     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
+     "layers": "SI.GURS.RPE:STATISTICNE_REGIJE",
+     "format": "image/png",
+     "transparent": true,
+     "version": "1.3.0",
+     "opacity": 0.5,
+     "description": "Statistične regije Slovenije (vidno od povečave 10)",
+     "minZoom": 10
+    },
+    {
+     "id": "rpe_kohezijske_regije",
+     "name": "Kohezijske regije",
+     "type": "wms",
+     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
+     "layers": "SI.GURS.RPE:KOHEZIJSKE_REGIJE",
+     "format": "image/png",
+     "transparent": true,
+     "version": "1.3.0",
+     "opacity": 0.45,
+     "description": "Kohezijske regije Slovenije (Vzhodna / Zahodna) (vidno od povečave 9)",
+     "minZoom": 9
+    },
+    {
+     "id": "rpe_postni",
+     "name": "Poštni okoliši",
+     "type": "wms",
+     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
+     "layers": "SI.GURS.RPE:POSTNI_OKOLISI",
+     "format": "image/png",
+     "transparent": true,
+     "version": "1.3.0",
+     "opacity": 0.6,
+     "description": "Meje poštnih okolišev (vidno od povečave 10)",
+     "minZoom": 10
+    },
+    {
+     "id": "rpe_solski",
+     "name": "Šolski okoliši",
+     "type": "wms",
+     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
+     "layers": "SI.GURS.RPE:SOLSKI_OKOLISI",
+     "format": "image/png",
+     "transparent": true,
+     "version": "1.3.0",
+     "opacity": 0.6,
+     "description": "Meje šolskih okolišev (vidno od povečave 12)",
+     "minZoom": 12
+    }
+   ]
+  },
+  {
+   "id": "promet",
+   "name": "Ceste & promet",
+   "icon": "Car",
+   "description": "Ceste, železnica, javni promet, letališča in leti",
+   "layers": [
+    {
+     "id": "gji_ceste",
+     "name": "Ceste (GJI kataster)",
+     "type": "wms",
+     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
+     "layers": "SI.GURS.KGI:LINIJE_CESTE_G",
+     "format": "image/png",
+     "transparent": true,
+     "version": "1.3.0",
+     "opacity": 0.8,
+     "description": "Cestno omrežje iz katastra gospodarske infrastrukture GURS (vidno od povečave 13)",
+     "minZoom": 13
+    },
+    {
+     "id": "third_dev_axis",
+     "name": "3. razvojna os (nova hitra cesta)",
+     "type": "third_dev_axis",
+     "opacity": 0.85,
+     "description": "Tretja razvojna os — bodoča hitra cesta od Holmca (AT meja) preko Slovenj Gradca, Velenja in Šentruperta, ter od Novega mesta preko Gorjancev, Metlike do Črnomlja (HR meja). Severni krak v gradnji, južni v načrtovanju."
+    },
+    {
+     "id": "osm_transit",
+     "name": "Javni promet (OSM)",
+     "type": "tile",
+     "url": "https://tile.memomaps.de/tilegen/{z}/{x}/{y}.png",
+     "attribution": "&copy; MeMoMaps, &copy; OpenStreetMap",
+     "transparent": true,
+     "opacity": 0.85,
+     "description": "Linije javnega prevoza — avtobusi, vlaki iz OSM"
+    },
+    {
+     "id": "gji_parkirisca",
+     "name": "Parkirišča (GJI)",
+     "type": "wms",
+     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
+     "layers": "SI.GURS.KGI:PARKIRISCA",
+     "format": "image/png",
+     "transparent": true,
+     "version": "1.3.0",
+     "opacity": 0.7,
+     "description": "Parkirišča iz katastra GJI"
+    },
+    {
+     "id": "railway_lines",
+     "name": "Železnica",
+     "type": "tile",
+     "url": "https://tiles.openrailwaymap.org/standard/{z}/{x}/{y}.png",
+     "transparent": true,
+     "opacity": 0.9,
+     "description": "Železniške proge OpenRailwayMap"
+    },
+    {
+     "id": "gji_zeleznice",
+     "name": "Železnice (GJI)",
+     "type": "wms",
+     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
+     "layers": "SI.GURS.KGI:LINIJE_ZELEZNICE_G",
+     "format": "image/png",
+     "transparent": true,
+     "version": "1.3.0",
+     "opacity": 0.85,
+     "description": "Železniška infrastruktura iz katastra GJI (vidno od povečave 16)",
+     "minZoom": 16
+    },
+    {
+     "id": "openrailway_maxspeed",
+     "name": "Železnica — hitrosti",
+     "type": "tile",
+     "url": "https://tiles.openrailwaymap.org/maxspeed/{z}/{x}/{y}.png",
+     "attribution": "&copy; OpenRailwayMap",
+     "transparent": true,
+     "opacity": 0.85,
+     "description": "Železniške proge z barvnim prikazom hitrosti"
+    },
+    {
+     "id": "openrailway_signals",
+     "name": "Železnica — signali",
+     "type": "tile",
+     "url": "https://tiles.openrailwaymap.org/signals/{z}/{x}/{y}.png",
+     "attribution": "&copy; OpenRailwayMap",
+     "transparent": true,
+     "opacity": 0.85,
+     "description": "Železniški signali in varnostni sistemi"
+    },
+    {
+     "id": "gji_zicnice",
+     "name": "Žičnice (GJI)",
+     "type": "wms",
+     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
+     "layers": "SI.GURS.KGI:LINIJE_ZICNICE_G",
+     "format": "image/png",
+     "transparent": true,
+     "version": "1.3.0",
+     "opacity": 0.85,
+     "description": "Žičnice in vlečnice iz katastra GJI (vidno od povečave 16)",
+     "minZoom": 16,
+     "sparse": true
+    },
+    {
+     "id": "gji_letalisca",
+     "name": "Letališka infrastruktura (GJI)",
+     "type": "wms",
+     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
+     "layers": "SI.GURS.KGI:LINIJE_LETALISCA_G",
+     "format": "image/png",
+     "transparent": true,
+     "version": "1.3.0",
+     "opacity": 0.85,
+     "description": "Letališka infrastruktura iz katastra GJI (vidno od povečave 16)",
+     "minZoom": 16,
+     "sparse": true
+    },
+    {
+     "id": "live_flights",
+     "name": "Leti v realnem času (Flightradar24)",
+     "type": "live_flights",
+     "opacity": 0.9,
+     "description": "Pozicije letal v zraku nad Slovenijo v realnem času (OpenSky Network — brezplačna alternativa Flightradar24). Ikone letal rotirane v smeri leta, osvežitev vsako minuto."
     }
    ]
   },
   {
    "id": "promet_zivo",
    "name": "Promet v živo",
+   "icon": "Car",
+   "description": "Dogodki, dela, kamere in števci (NAP Slovenija)",
    "layers": [
     {
      "id": "nap_dogodki",
@@ -1506,176 +995,635 @@
      "description": "NAP Slovenija — Počivališča (GeoJSON) (CC BY-SA 4.0). Potrebna je prijava v NAP (panel Promet v živo)."
     }
    ]
+  },
+  {
+   "id": "rekreacija",
+   "name": "Rekreacija & poti",
+   "icon": "Route",
+   "description": "Pohodniške, kolesarske, MTB, konjeniške poti in smučišča",
+   "layers": [
+    {
+     "id": "hiking_routes",
+     "name": "Pohodniške poti",
+     "type": "tile",
+     "url": "https://tile.waymarkedtrails.org/hiking/{z}/{x}/{y}.png",
+     "transparent": true,
+     "opacity": 0.9,
+     "description": "Označene pohodniške steze"
+    },
+    {
+     "id": "cycling_routes",
+     "name": "Kolesarske poti",
+     "type": "tile",
+     "url": "https://tile.waymarkedtrails.org/cycling/{z}/{x}/{y}.png",
+     "transparent": true,
+     "opacity": 0.9,
+     "description": "Označene kolesarske poti"
+    },
+    {
+     "id": "mtb_waymarked",
+     "name": "MTB poti",
+     "type": "tile",
+     "url": "https://tile.waymarkedtrails.org/mtb/{z}/{x}/{y}.png",
+     "attribution": "&copy; WaymarkedTrails, &copy; OpenStreetMap",
+     "transparent": true,
+     "opacity": 0.9,
+     "description": "Označene MTB kolesarske poti"
+    },
+    {
+     "id": "equestrian_waymarked",
+     "name": "Konjeniške poti",
+     "type": "tile",
+     "url": "https://tile.waymarkedtrails.org/riding/{z}/{x}/{y}.png",
+     "attribution": "&copy; WaymarkedTrails, &copy; OpenStreetMap",
+     "transparent": true,
+     "opacity": 0.9,
+     "description": "Označene konjeniške poti"
+    },
+    {
+     "id": "slopes_waymarked",
+     "name": "Smučišča & Tereni",
+     "type": "tile",
+     "url": "https://tile.waymarkedtrails.org/slopes/{z}/{x}/{y}.png",
+     "attribution": "&copy; WaymarkedTrails, &copy; OpenStreetMap",
+     "transparent": true,
+     "opacity": 0.9,
+     "description": "Smučišča, tekaški tereni in zimske poti iz OSM"
+    }
+   ]
+  },
+  {
+   "id": "narava",
+   "name": "Narava & varstvo",
+   "icon": "Trees",
+   "description": "Zavarovana območja, Natura 2000, naravne vrednote, gozdovi",
+   "layers": [
+    {
+     "id": "arso_zavarovana_obmocja",
+     "name": "Zavarovana območja narave",
+     "type": "wms",
+     "url": "https://bio.discomap.eea.europa.eu/arcgis/services/ProtectedSites/CDDA_Dyna_WM/MapServer/WMSServer",
+     "layers": "0,1",
+     "format": "image/png",
+     "transparent": true,
+     "version": "1.3.0",
+     "opacity": 0.5,
+     "description": "Zavarovana območja narave (EEA CDDA) — parki, rezervati (vidno od povečave 8)",
+     "minZoom": 8
+    },
+    {
+     "id": "arso_natura2000_plg",
+     "name": "Natura 2000 območja",
+     "type": "wms",
+     "url": "https://bio.discomap.eea.europa.eu/arcgis/services/ProtectedSites/Natura2000Sites/MapServer/WMSServer",
+     "layers": "0",
+     "format": "image/png",
+     "transparent": true,
+     "version": "1.3.0",
+     "opacity": 0.45,
+     "description": "Natura 2000 (EEA) — ptice in habitati"
+    },
+    {
+     "id": "arso_naravne_vrednote",
+     "name": "Naravne vrednote (vse)",
+     "type": "arcgis_export",
+     "url": "https://geohub.gov.si/ags/rest/services/DRSV/Zavarovana_in_varovana_obmocja_po_ZON/MapServer/export",
+     "transparent": true,
+     "attribution": "&copy; GeoHub (RS)",
+     "layers": "show:5673,5671,5672",
+     "sparse": true,
+     "description": "Naravne vrednote — območja, točke in jame (GeoHub)",
+     "opacity": 0.5
+    },
+    {
+     "id": "arso_nv_tocke",
+     "name": "Naravne vrednote (točke)",
+     "type": "arcgis_export",
+     "url": "https://geohub.gov.si/ags/rest/services/DRSV/Zavarovana_in_varovana_obmocja_po_ZON/MapServer/export",
+     "transparent": true,
+     "attribution": "&copy; GeoHub (RS)",
+     "layers": "show:5671,5672",
+     "sparse": true,
+     "description": "Naravne vrednote — točke in jame (GeoHub)",
+     "opacity": 0.85
+    },
+    {
+     "id": "arso_nv_obmocja",
+     "name": "Naravne vrednote (območja)",
+     "type": "arcgis_export",
+     "url": "https://geohub.gov.si/ags/rest/services/DRSV/Zavarovana_in_varovana_obmocja_po_ZON/MapServer/export",
+     "transparent": true,
+     "attribution": "&copy; GeoHub (RS)",
+     "layers": "show:5673",
+     "description": "Naravne vrednote — območja (GeoHub)",
+     "opacity": 0.45
+    },
+    {
+     "id": "arso_epo_plg",
+     "name": "Ekološko pomembna območja",
+     "type": "arcgis_export",
+     "url": "https://geohub.gov.si/ags/rest/services/DRSV/Zavarovana_in_varovana_obmocja_po_ZON/MapServer/export",
+     "transparent": true,
+     "attribution": "&copy; GeoHub (RS)",
+     "layers": "show:5665",
+     "description": "Ekološko pomembna območja (GeoHub)",
+     "opacity": 0.5
+    },
+    {
+     "id": "arso_jame_epo",
+     "name": "Ekološko pomembna območja – jame",
+     "type": "arcgis_export",
+     "url": "https://geohub.gov.si/ags/rest/services/DRSV/Zavarovana_in_varovana_obmocja_po_ZON/MapServer/export",
+     "transparent": true,
+     "attribution": "&copy; GeoHub (RS)",
+     "layers": "show:5664",
+     "sparse": true,
+     "description": "Ekološko pomembna območja — jame (GeoHub)",
+     "opacity": 0.8
+    },
+    {
+     "id": "gurs_gozdno_gosp",
+     "name": "Gozdno-gospodarska območja",
+     "type": "wms",
+     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
+     "layers": "SI.GURS.KN:GOZDNO_GOSP_OBM",
+     "format": "image/png",
+     "transparent": true,
+     "version": "1.3.0",
+     "opacity": 0.5,
+     "description": "Gozdna gospodarska območja, rastiščni koeficient in odprtost (vidno od povečave 12)",
+     "minZoom": 12
+    }
+   ]
+  },
+  {
+   "id": "vode",
+   "name": "Vode, tla & nevarnosti",
+   "icon": "Mountain",
+   "description": "Vode, poplave, plazovi, erozija in tla",
+   "layers": [
+    {
+     "id": "arso_vode_povrsine",
+     "name": "Vodne površine (jezera, reke)",
+     "type": "arcgis_export",
+     "url": "https://geohub.gov.si/ags/rest/services/DRSV/Hidrografija/MapServer/export",
+     "transparent": true,
+     "attribution": "&copy; GeoHub (RS)",
+     "layers": "show:4202,4205,4201",
+     "description": "Površinske vode, vodotoki in imena voda (Direkcija za vode, GeoHub)",
+     "opacity": 0.85
+    },
+    {
+     "id": "arso_poplave",
+     "name": "Poplavna območja",
+     "type": "arcgis_export",
+     "url": "https://geohub.gov.si/ags/rest/services/DRSV/Opozorilna_KP_new/MapServer/export",
+     "transparent": true,
+     "attribution": "&copy; GeoHub (RS)",
+     "layers": "show:4016,4017,4018",
+     "description": "Opozorilna karta poplav: pogoste, redke in katastrofalne poplave (Direkcija za vode, GeoHub)",
+     "opacity": 0.6
+    },
+    {
+     "id": "poplave_2023",
+     "name": "Poplavljena območja avgust 2023",
+     "type": "arcgis_export",
+     "url": "https://geohub.gov.si/ags/rest/services/TEMELJNI_RASTRI/Poplavljena_obmocja_avgust_2023/MapServer/export",
+     "transparent": true,
+     "attribution": "&copy; GeoHub (RS)",
+     "opacity": 0.7,
+     "description": "Območja, poplavljena ob poplavah avgusta 2023 (GeoHub)"
+    },
+    {
+     "id": "vodovarstvena",
+     "name": "Vodovarstvena območja",
+     "type": "arcgis_export",
+     "url": "https://geohub.gov.si/ags/rest/services/DRSV/Varstvo_voda/MapServer/export",
+     "transparent": true,
+     "attribution": "&copy; GeoHub (RS)",
+     "layers": "show:5361,5362",
+     "opacity": 0.6,
+     "description": "Vodovarstvena območja po uredbah vlade in občinskih odlokih (Direkcija za vode, GeoHub)"
+    },
+    {
+     "id": "geozs_plazovi",
+     "name": "Plazovi (GeoZS)",
+     "type": "arcgis_export",
+     "url": "https://geohub.gov.si/ags/rest/services/DRSV/Terensko_preverjeni_zemeljski_in_hribinski_plazovi__GeoZS/MapServer/export",
+     "transparent": true,
+     "attribution": "&copy; GeoHub (RS)",
+     "sparse": true,
+     "opacity": 0.9,
+     "description": "Terensko preverjeni zemeljski in hribinski plazovi (Geološki zavod, GeoHub)"
+    },
+    {
+     "id": "arso_erozija",
+     "name": "Erozijska in plazljiva območja",
+     "type": "arcgis_export",
+     "url": "https://geohub.gov.si/ags/rest/services/DRSV/Ogrozena_obmocja/MapServer/export",
+     "transparent": true,
+     "attribution": "&copy; GeoHub (RS)",
+     "layers": "show:4401,4402",
+     "description": "Erozijska in plazljiva območja (opozorilna karta, Direkcija za vode, GeoHub)",
+     "opacity": 0.55
+    },
+    {
+     "id": "arso_tla_pedoloski",
+     "name": "Pedološka karta tal",
+     "type": "arcgis_export",
+     "url": "https://gis.arso.gov.si/arcgis/rest/services/Tla/MapServer/export",
+     "bboxSR": 4326,
+     "imageSR": 4326,
+     "transparent": true,
+     "format": "png32",
+     "opacity": 0.6,
+     "description": "Pedološka karta tal — tipi tal po Sloveniji"
+    },
+    {
+     "id": "arso_hidroloske_postaje",
+     "name": "Hidrološke merilne postaje (karta)",
+     "type": "arcgis_export",
+     "url": "https://geohub.gov.si/ags/rest/services/DRSV/Monitoring_voda/MapServer/export",
+     "transparent": true,
+     "attribution": "&copy; GeoHub (RS)",
+     "layers": "show:5643,5644,5645",
+     "sparse": true,
+     "description": "Hidrološke merilne postaje — tekoče, stoječe in podzemne vode (GeoHub)",
+     "opacity": 0.9
+    }
+   ]
+  },
+  {
+   "id": "dediscina",
+   "name": "Kulturna dediščina",
+   "icon": "Landmark",
+   "description": "Register kulturne dediščine in arheološke raziskave",
+   "layers": [
+    {
+     "id": "zvkds_rkd_tocke",
+     "name": "Kulturna dediščina — enote (točke)",
+     "type": "arcgis_export",
+     "url": "https://geohub.gov.si/ags/rest/services/MK/ISKD/MapServer/export",
+     "transparent": true,
+     "attribution": "&copy; GeoHub (RS)",
+     "layers": "show:3314",
+     "sparse": true,
+     "description": "Register nepremične kulturne dediščine — točke (Ministrstvo za kulturo, GeoHub)",
+     "opacity": 0.9
+    },
+    {
+     "id": "zvkds_rkd_obmocja",
+     "name": "Kulturna dediščina — območja",
+     "type": "arcgis_export",
+     "url": "https://geohub.gov.si/ags/rest/services/MK/ISKD/MapServer/export",
+     "transparent": true,
+     "attribution": "&copy; GeoHub (RS)",
+     "layers": "show:3312",
+     "description": "Register nepremične kulturne dediščine — območja (Ministrstvo za kulturo, GeoHub)",
+     "opacity": 0.5
+    },
+    {
+     "id": "mk_arheo",
+     "name": "Arheološke raziskave",
+     "type": "arcgis_export",
+     "url": "https://geohub.gov.si/ags/rest/services/MK/MK_ARHEO/MapServer/export",
+     "transparent": true,
+     "attribution": "&copy; GeoHub (RS)",
+     "layers": "show:3692,3694",
+     "opacity": 0.75,
+     "description": "Izvedene arheološke raziskave in raziskave v teku (Ministrstvo za kulturo, GeoHub)"
+    }
+   ]
+  },
+  {
+   "id": "energija",
+   "name": "Komunalna infrastruktura (GJI)",
+   "icon": "Zap",
+   "description": "Elektrika, vodovod, kanalizacija, telekomunikacije, plin",
+   "layers": [
+    {
+     "id": "gji_elektrika",
+     "name": "Električno omrežje (GJI)",
+     "type": "wms",
+     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
+     "layers": "SI.GURS.KGI:LINIJE_ELEKTRICNA_ENERGIJA_G",
+     "format": "image/png",
+     "transparent": true,
+     "version": "1.3.0",
+     "opacity": 0.85,
+     "description": "Električna energija — linije iz katastra gospodarske infrastrukture GURS (vidno od povečave 16)",
+     "minZoom": 16
+    },
+    {
+     "id": "openinframap_water",
+     "name": "Vodovod & Kanalizacija (GJI)",
+     "type": "wms",
+     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
+     "layers": "SI.GURS.KGI:LINIJE_VODOVOD_G,SI.GURS.KGI:LINIJE_KANALIZACIJA_G",
+     "format": "image/png",
+     "transparent": true,
+     "version": "1.3.0",
+     "opacity": 0.8,
+     "description": "Vodovod in kanalizacija iz katastra gospodarske javne infrastrukture GURS (vidno od povečave 16)",
+     "minZoom": 16
+    },
+    {
+     "id": "gji_kanalizacija",
+     "name": "Kanalizacija (GJI)",
+     "type": "wms",
+     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
+     "layers": "SI.GURS.KGI:LINIJE_KANALIZACIJA_G",
+     "format": "image/png",
+     "transparent": true,
+     "version": "1.3.0",
+     "opacity": 0.8,
+     "description": "Kanalizacijska omrežja iz katastra GJI (vidno od povečave 16)",
+     "minZoom": 16
+    },
+    {
+     "id": "gji_komunikacije",
+     "name": "Telekomunikacije (GJI)",
+     "type": "wms",
+     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
+     "layers": "SI.GURS.KGI:LINIJE_ELEKTRONSKE_KOMUNIKACIJE_G",
+     "format": "image/png",
+     "transparent": true,
+     "version": "1.3.0",
+     "opacity": 0.8,
+     "description": "Elektronske komunikacije iz katastra GJI (vidno od povečave 16)",
+     "minZoom": 16
+    },
+    {
+     "id": "gji_nafta",
+     "name": "Naftovodi & Plinovodi (GJI)",
+     "type": "wms",
+     "url": "https://ipi.eprostor.gov.si/wms-si-gurs/ows",
+     "layers": "SI.GURS.KGI:LINIJE_NAFTA_IN_NAFTNI_DERIVATI_G,SI.GURS.KGI:LINIJE_ZEMELJSKI_PLIN_G",
+     "format": "image/png",
+     "transparent": true,
+     "version": "1.3.0",
+     "opacity": 0.8,
+     "description": "Nafta in plin — cevovodi iz katastra GJI (vidno od povečave 16)",
+     "minZoom": 16
+    }
+   ]
+  },
+  {
+   "id": "vreme",
+   "name": "Vreme",
+   "icon": "Sun",
+   "description": "Radar, napoved in ARSO merilne postaje",
+   "layers": [
+    {
+     "id": "wx_radar",
+     "name": "Padavine – radar",
+     "type": "rainviewer",
+     "kind": "radar",
+     "opacity": 0.7,
+     "live": true,
+     "description": "Zadnji radarski posnetek padavin (RainViewer), osvežuje se vsakih 10 minut — brez API ključa"
+    },
+    {
+     "id": "wx_temp",
+     "name": "Temperatura",
+     "type": "weather",
+     "kind": "temp",
+     "opacity": 0.55,
+     "live": true,
+     "description": "Trenutna temperatura zraka nad Slovenijo (Open-Meteo), osvežuje se vsakih 30 minut — nadomešča OpenWeatherMap"
+    },
+    {
+     "id": "wx_wind",
+     "name": "Veter",
+     "type": "weather",
+     "kind": "wind",
+     "opacity": 0.9,
+     "live": true,
+     "description": "Trenutna hitrost in smer vetra (Open-Meteo) — puščice kažejo, kam piha"
+    },
+    {
+     "id": "wx_clouds",
+     "name": "Oblačnost",
+     "type": "weather",
+     "kind": "clouds",
+     "opacity": 0.6,
+     "live": true,
+     "description": "Trenutna pokritost neba z oblaki v % (Open-Meteo) — nadomešča OpenWeatherMap"
+    },
+    {
+     "id": "arso_meteo",
+     "name": "Vremenske postaje — Meteo",
+     "type": "arso_stations",
+     "kind": "meteo",
+     "opacity": 1,
+     "live": true,
+     "description": "Meteorološke postaje ARSO (glavne in samodejne): temperatura, vlaga, veter, tlak, sneg, oblačnost. Osvežitev na 15 min."
+    },
+    {
+     "id": "arso_voda",
+     "name": "Vremenske postaje — Voda",
+     "type": "arso_stations",
+     "kind": "voda",
+     "opacity": 1,
+     "live": true,
+     "description": "Hidrološke postaje ARSO: vodostaj, pretok, temperatura vode; rdeče, ko pretok doseže 1. visokovodni pretok."
+    },
+    {
+     "id": "arso_zrak",
+     "name": "Vremenske postaje — Zrak",
+     "type": "arso_stations",
+     "kind": "zrak",
+     "opacity": 1,
+     "live": true,
+     "description": "Postaje za kakovost zraka ARSO: PM10, PM2,5, O₃, NO₂, SO₂, CO (urni podatki)."
+    }
+   ]
   }
  ],
  "pois": [
-  {
-   "id": "castle",
-   "label": "Gradovi",
-   "emoji": "🏰",
-   "color": "#b45309",
-   "query": "[out:json][timeout:30];(node[\"historic\"=\"castle\"](45.4,13.4,46.9,16.6);way[\"historic\"=\"castle\"](45.4,13.4,46.9,16.6););out center;"
-  },
   {
    "id": "peak",
    "label": "Vrhovi",
    "emoji": "⛰️",
    "color": "#6b7280",
-   "query": "[out:json][timeout:30];node[\"natural\"=\"peak\"](45.4,13.4,46.9,16.6);out;"
+   "query": "[out:json][timeout:30];node[\"natural\"=\"peak\"](45.4,13.4,46.9,16.6);out;",
+   "group": "narava"
   },
   {
    "id": "waterfall",
    "label": "Slapovi",
    "emoji": "💧",
    "color": "#0ea5e9",
-   "query": "[out:json][timeout:30];node[\"waterway\"=\"waterfall\"](45.4,13.4,46.9,16.6);out;"
+   "query": "[out:json][timeout:30];node[\"waterway\"=\"waterfall\"](45.4,13.4,46.9,16.6);out;",
+   "group": "narava"
   },
   {
    "id": "viewpoint",
    "label": "Razglediš.",
    "emoji": "👁️",
    "color": "#8b5cf6",
-   "query": "[out:json][timeout:30];node[\"tourism\"=\"viewpoint\"](45.4,13.4,46.9,16.6);out;"
+   "query": "[out:json][timeout:30];node[\"tourism\"=\"viewpoint\"](45.4,13.4,46.9,16.6);out;",
+   "group": "narava"
   },
   {
    "id": "cave",
    "label": "Jame",
    "emoji": "🕳️",
    "color": "#78716c",
-   "query": "[out:json][timeout:60];(node[\"natural\"=\"cave_entrance\"](45.4,13.4,46.9,16.6););out;"
-  },
-  {
-   "id": "museum",
-   "label": "Muzeji",
-   "emoji": "🏛️",
-   "color": "#a855f7",
-   "query": "[out:json][timeout:30];(node[\"tourism\"=\"museum\"](45.4,13.4,46.9,16.6);way[\"tourism\"=\"museum\"](45.4,13.4,46.9,16.6););out center;"
-  },
-  {
-   "id": "ruins",
-   "label": "Ruševine",
-   "emoji": "🗿",
-   "color": "#92400e",
-   "query": "[out:json][timeout:30];(node[\"historic\"=\"ruins\"](45.4,13.4,46.9,16.6);way[\"historic\"=\"ruins\"](45.4,13.4,46.9,16.6););out center;"
+   "query": "[out:json][timeout:60];(node[\"natural\"=\"cave_entrance\"](45.4,13.4,46.9,16.6););out;",
+   "group": "narava"
   },
   {
    "id": "spring",
    "label": "Izviri",
    "emoji": "💦",
    "color": "#06b6d4",
-   "query": "[out:json][timeout:30];node[\"natural\"=\"spring\"](45.4,13.4,46.9,16.6);out;"
+   "query": "[out:json][timeout:30];node[\"natural\"=\"spring\"](45.4,13.4,46.9,16.6);out;",
+   "group": "narava"
   },
   {
    "id": "lake",
    "label": "Jezera",
    "emoji": "🌊",
    "color": "#3b82f6",
-   "query": "[out:json][timeout:45];(way[\"natural\"=\"water\"][\"water\"~\"lake|reservoir|pond\"](45.4,13.4,46.9,16.6);way[\"natural\"=\"water\"][!\"water\"](45.4,13.4,46.9,16.6);way[\"landuse\"=\"reservoir\"](45.4,13.4,46.9,16.6);relation[\"natural\"=\"water\"](45.4,13.4,46.9,16.6););out center;"
+   "query": "[out:json][timeout:45];(way[\"natural\"=\"water\"][\"water\"~\"lake|reservoir|pond\"](45.4,13.4,46.9,16.6);way[\"natural\"=\"water\"][!\"water\"](45.4,13.4,46.9,16.6);way[\"landuse\"=\"reservoir\"](45.4,13.4,46.9,16.6);relation[\"natural\"=\"water\"](45.4,13.4,46.9,16.6););out center;",
+   "group": "narava"
   },
   {
    "id": "park",
    "label": "Parki",
    "emoji": "🌳",
    "color": "#22c55e",
-   "query": "[out:json][timeout:30];(way[\"leisure\"=\"park\"](45.4,13.4,46.9,16.6);relation[\"leisure\"=\"park\"](45.4,13.4,46.9,16.6););out center;"
+   "query": "[out:json][timeout:30];(way[\"leisure\"=\"park\"](45.4,13.4,46.9,16.6);relation[\"leisure\"=\"park\"](45.4,13.4,46.9,16.6););out center;",
+   "group": "narava"
   },
   {
-   "id": "chapel",
-   "label": "Kapelice",
-   "emoji": "⛪",
-   "color": "#e879f9",
-   "query": "[out:json][timeout:30];(node[\"amenity\"=\"place_of_worship\"][\"religion\"=\"christian\"][\"building\"~\"chapel|wayside_shrine\"](45.4,13.4,46.9,16.6);node[\"historic\"=\"wayside_shrine\"](45.4,13.4,46.9,16.6););out;"
+   "id": "camp",
+   "label": "Kampi",
+   "emoji": "🏕️",
+   "color": "#22c55e",
+   "query": "[out:json][timeout:30];(node[\"tourism\"=\"camp_site\"](45.4,13.4,46.9,16.6);way[\"tourism\"=\"camp_site\"](45.4,13.4,46.9,16.6););out center;",
+   "group": "narava"
   },
   {
-   "id": "cross",
-   "label": "Križi",
-   "emoji": "✝️",
+   "id": "beach",
+   "label": "Plaže",
+   "emoji": "🏖️",
+   "color": "#fbbf24",
+   "query": "[out:json][timeout:30];(node[\"natural\"=\"beach\"](45.4,13.4,46.9,16.6);way[\"natural\"=\"beach\"](45.4,13.4,46.9,16.6);relation[\"natural\"=\"beach\"](45.4,13.4,46.9,16.6););out center;",
+   "group": "narava"
+  },
+  {
+   "id": "pitch",
+   "label": "Šport. igrišča",
+   "emoji": "⚽",
+   "color": "#22c55e",
+   "query": "[out:json][timeout:45];(way[\"leisure\"=\"pitch\"](45.4,13.4,46.9,16.6);relation[\"leisure\"=\"pitch\"](45.4,13.4,46.9,16.6););out center;",
+   "group": "narava"
+  },
+  {
+   "id": "fitness",
+   "label": "Outdoor fitnes",
+   "emoji": "💪",
+   "color": "#f97316",
+   "query": "[out:json][timeout:30];(node[\"leisure\"=\"fitness_station\"](45.4,13.4,46.9,16.6);way[\"leisure\"=\"fitness_station\"](45.4,13.4,46.9,16.6););out center;",
+   "group": "narava"
+  },
+  {
+   "id": "castle",
+   "label": "Gradovi",
+   "emoji": "🏰",
+   "color": "#b45309",
+   "query": "[out:json][timeout:30];(node[\"historic\"=\"castle\"](45.4,13.4,46.9,16.6);way[\"historic\"=\"castle\"](45.4,13.4,46.9,16.6););out center;",
+   "group": "kultura"
+  },
+  {
+   "id": "ruins",
+   "label": "Ruševine",
+   "emoji": "🗿",
+   "color": "#92400e",
+   "query": "[out:json][timeout:30];(node[\"historic\"=\"ruins\"](45.4,13.4,46.9,16.6);way[\"historic\"=\"ruins\"](45.4,13.4,46.9,16.6););out center;",
+   "group": "kultura"
+  },
+  {
+   "id": "museum",
+   "label": "Muzeji",
+   "emoji": "🏛️",
    "color": "#a855f7",
-   "query": "[out:json][timeout:30];node[\"historic\"=\"wayside_cross\"](45.4,13.4,46.9,16.6);out;"
-  },
-  {
-   "id": "helipad",
-   "label": "Helikopter.",
-   "emoji": "🚁",
-   "color": "#0ea5e9",
-   "query": "[out:json][timeout:30];(node[\"aeroway\"=\"helipad\"](45.4,13.4,46.9,16.6);way[\"aeroway\"=\"helipad\"](45.4,13.4,46.9,16.6););out center;"
-  },
-  {
-   "id": "mosque",
-   "label": "Mošeje",
-   "emoji": "🕌",
-   "color": "#16a34a",
-   "query": "[out:json][timeout:30];(node[\"amenity\"=\"place_of_worship\"][\"religion\"=\"muslim\"](45.4,13.4,46.9,16.6);way[\"amenity\"=\"place_of_worship\"][\"religion\"=\"muslim\"](45.4,13.4,46.9,16.6););out center;"
-  },
-  {
-   "id": "synagogue",
-   "label": "Sinagoge",
-   "emoji": "🕍",
-   "color": "#2563eb",
-   "query": "[out:json][timeout:30];(node[\"amenity\"=\"place_of_worship\"][\"religion\"=\"jewish\"](45.4,13.4,46.9,16.6);way[\"amenity\"=\"place_of_worship\"][\"religion\"=\"jewish\"](45.4,13.4,46.9,16.6););out center;"
+   "query": "[out:json][timeout:30];(node[\"tourism\"=\"museum\"](45.4,13.4,46.9,16.6);way[\"tourism\"=\"museum\"](45.4,13.4,46.9,16.6););out center;",
+   "group": "kultura"
   },
   {
    "id": "church",
    "label": "Cerkve",
    "emoji": "🕌",
    "color": "#d946ef",
-   "query": "[out:json][timeout:30];(node[\"amenity\"=\"place_of_worship\"][\"religion\"=\"christian\"](45.4,13.4,46.9,16.6);way[\"amenity\"=\"place_of_worship\"][\"religion\"=\"christian\"](45.4,13.4,46.9,16.6););out center;"
+   "query": "[out:json][timeout:30];(node[\"amenity\"=\"place_of_worship\"][\"religion\"=\"christian\"](45.4,13.4,46.9,16.6);way[\"amenity\"=\"place_of_worship\"][\"religion\"=\"christian\"](45.4,13.4,46.9,16.6););out center;",
+   "group": "kultura"
   },
   {
-   "id": "fuel",
-   "label": "Bencinske",
-   "emoji": "⛽",
-   "color": "#f59e0b",
-   "query": "[out:json][timeout:45];(node[\"amenity\"=\"fuel\"](45.4,13.4,46.9,16.6);way[\"amenity\"=\"fuel\"](45.4,13.4,46.9,16.6);node[\"fuel\"=\"yes\"](45.4,13.4,46.9,16.6););out center;"
+   "id": "chapel",
+   "label": "Kapelice",
+   "emoji": "⛪",
+   "color": "#e879f9",
+   "query": "[out:json][timeout:30];(node[\"amenity\"=\"place_of_worship\"][\"religion\"=\"christian\"][\"building\"~\"chapel|wayside_shrine\"](45.4,13.4,46.9,16.6);node[\"historic\"=\"wayside_shrine\"](45.4,13.4,46.9,16.6););out;",
+   "group": "kultura"
   },
   {
-   "id": "parking",
-   "label": "Parkirišča",
-   "emoji": "🅿️",
-   "color": "#6366f1",
-   "query": "[out:json][timeout:30];(node[\"amenity\"=\"parking\"](45.4,13.4,46.9,16.6);way[\"amenity\"=\"parking\"](45.4,13.4,46.9,16.6););out center;"
+   "id": "cross",
+   "label": "Križi",
+   "emoji": "✝️",
+   "color": "#a855f7",
+   "query": "[out:json][timeout:30];node[\"historic\"=\"wayside_cross\"](45.4,13.4,46.9,16.6);out;",
+   "group": "kultura"
   },
   {
-   "id": "supermarket",
-   "label": "Živila",
-   "emoji": "🛒",
-   "color": "#f97316",
-   "query": "[out:json][timeout:30];(node[\"shop\"~\"supermarket|grocery|convenience\"](45.4,13.4,46.9,16.6);way[\"shop\"~\"supermarket|grocery|convenience\"](45.4,13.4,46.9,16.6););out center;"
+   "id": "mosque",
+   "label": "Mošeje",
+   "emoji": "🕌",
+   "color": "#16a34a",
+   "query": "[out:json][timeout:30];(node[\"amenity\"=\"place_of_worship\"][\"religion\"=\"muslim\"](45.4,13.4,46.9,16.6);way[\"amenity\"=\"place_of_worship\"][\"religion\"=\"muslim\"](45.4,13.4,46.9,16.6););out center;",
+   "group": "kultura"
   },
   {
-   "id": "atm",
-   "label": "Bankomati",
-   "emoji": "💳",
-   "color": "#84cc16",
-   "query": "[out:json][timeout:45];(node[\"amenity\"=\"atm\"](45.4,13.4,46.9,16.6);node[\"amenity\"=\"bank\"][\"atm\"!=\"no\"](45.4,13.4,46.9,16.6);way[\"amenity\"=\"bank\"][\"atm\"!=\"no\"](45.4,13.4,46.9,16.6););out center;"
+   "id": "synagogue",
+   "label": "Sinagoge",
+   "emoji": "🕍",
+   "color": "#2563eb",
+   "query": "[out:json][timeout:30];(node[\"amenity\"=\"place_of_worship\"][\"religion\"=\"jewish\"](45.4,13.4,46.9,16.6);way[\"amenity\"=\"place_of_worship\"][\"religion\"=\"jewish\"](45.4,13.4,46.9,16.6););out center;",
+   "group": "kultura"
   },
   {
    "id": "hospital",
    "label": "Bolnice",
    "emoji": "🏥",
    "color": "#ec4899",
-   "query": "[out:json][timeout:45];(node[\"amenity\"=\"hospital\"](45.4,13.4,46.9,16.6);way[\"amenity\"=\"hospital\"](45.4,13.4,46.9,16.6);node[\"amenity\"=\"health_post\"](45.4,13.4,46.9,16.6);relation[\"amenity\"=\"hospital\"](45.4,13.4,46.9,16.6););out center;"
+   "query": "[out:json][timeout:45];(node[\"amenity\"=\"hospital\"](45.4,13.4,46.9,16.6);way[\"amenity\"=\"hospital\"](45.4,13.4,46.9,16.6);node[\"amenity\"=\"health_post\"](45.4,13.4,46.9,16.6);relation[\"amenity\"=\"hospital\"](45.4,13.4,46.9,16.6););out center;",
+   "group": "nujno"
   },
   {
    "id": "clinic",
    "label": "Ambulante",
    "emoji": "🩺",
    "color": "#14b8a6",
-   "query": "[out:json][timeout:45];(node[\"amenity\"~\"clinic|doctors|health_centre\"](45.4,13.4,46.9,16.6);way[\"amenity\"~\"clinic|doctors|health_centre\"](45.4,13.4,46.9,16.6);node[\"healthcare\"~\"centre|clinic|doctor|general_practitioner\"](45.4,13.4,46.9,16.6);way[\"healthcare\"~\"centre|clinic\"](45.4,13.4,46.9,16.6););out center;"
+   "query": "[out:json][timeout:45];(node[\"amenity\"~\"clinic|doctors|health_centre\"](45.4,13.4,46.9,16.6);way[\"amenity\"~\"clinic|doctors|health_centre\"](45.4,13.4,46.9,16.6);node[\"healthcare\"~\"centre|clinic|doctor|general_practitioner\"](45.4,13.4,46.9,16.6);way[\"healthcare\"~\"centre|clinic\"](45.4,13.4,46.9,16.6););out center;",
+   "group": "nujno"
   },
   {
    "id": "pharmacy",
    "label": "Lekarne",
    "emoji": "💊",
    "color": "#10b981",
-   "query": "[out:json][timeout:30];(node[\"amenity\"=\"pharmacy\"](45.4,13.4,46.9,16.6);way[\"amenity\"=\"pharmacy\"](45.4,13.4,46.9,16.6););out center;"
+   "query": "[out:json][timeout:30];(node[\"amenity\"=\"pharmacy\"](45.4,13.4,46.9,16.6);way[\"amenity\"=\"pharmacy\"](45.4,13.4,46.9,16.6););out center;",
+   "group": "nujno"
   },
   {
    "id": "fire_station",
    "label": "Gasilci",
    "emoji": "🚒",
    "color": "#ef4444",
-   "query": "[out:json][timeout:30];(node[\"amenity\"=\"fire_station\"](45.4,13.4,46.9,16.6);way[\"amenity\"=\"fire_station\"](45.4,13.4,46.9,16.6););out center;"
+   "query": "[out:json][timeout:30];(node[\"amenity\"=\"fire_station\"](45.4,13.4,46.9,16.6);way[\"amenity\"=\"fire_station\"](45.4,13.4,46.9,16.6););out center;",
+   "group": "nujno"
   },
   {
    "id": "hydrant",
@@ -1683,119 +1631,166 @@
    "emoji": "🧯",
    "color": "#dc2626",
    "query": "[out:json][timeout:90];node[\"emergency\"=\"fire_hydrant\"](45.4,13.4,46.9,16.6);out;",
-   "source": "gji"
+   "source": "gji",
+   "group": "nujno"
   },
   {
    "id": "police",
    "label": "Policija",
    "emoji": "🚔",
    "color": "#3b82f6",
-   "query": "[out:json][timeout:30];(node[\"amenity\"=\"police\"](45.4,13.4,46.9,16.6);way[\"amenity\"=\"police\"](45.4,13.4,46.9,16.6););out center;"
+   "query": "[out:json][timeout:30];(node[\"amenity\"=\"police\"](45.4,13.4,46.9,16.6);way[\"amenity\"=\"police\"](45.4,13.4,46.9,16.6););out center;",
+   "group": "nujno"
   },
   {
-   "id": "pipe",
-   "label": "Pipe",
-   "emoji": "🚰",
-   "color": "#0ea5e9",
-   "query": "[out:json][timeout:30];node[\"amenity\"=\"drinking_water\"](45.4,13.4,46.9,16.6);out;"
-  },
-  {
-   "id": "bus_station",
-   "label": "Avt. postaje",
-   "emoji": "🚌",
+   "id": "fuel",
+   "label": "Bencinske",
+   "emoji": "⛽",
    "color": "#f59e0b",
-   "query": "[out:json][timeout:30];(node[\"amenity\"=\"bus_station\"](45.4,13.4,46.9,16.6);node[\"highway\"=\"bus_stop\"](45.4,13.4,46.9,16.6););out;"
+   "query": "[out:json][timeout:45];(node[\"amenity\"=\"fuel\"](45.4,13.4,46.9,16.6);way[\"amenity\"=\"fuel\"](45.4,13.4,46.9,16.6);node[\"fuel\"=\"yes\"](45.4,13.4,46.9,16.6););out center;",
+   "group": "storitve"
   },
   {
-   "id": "train_station",
-   "label": "Vlak postaje",
-   "emoji": "🚂",
-   "color": "#78716c",
-   "query": "[out:json][timeout:30];(node[\"railway\"=\"station\"](45.4,13.4,46.9,16.6);node[\"railway\"=\"halt\"](45.4,13.4,46.9,16.6););out;"
+   "id": "parking",
+   "label": "Parkirišča",
+   "emoji": "🅿️",
+   "color": "#6366f1",
+   "query": "[out:json][timeout:30];(node[\"amenity\"=\"parking\"](45.4,13.4,46.9,16.6);way[\"amenity\"=\"parking\"](45.4,13.4,46.9,16.6););out center;",
+   "group": "storitve"
   },
   {
-   "id": "camp",
-   "label": "Kampi",
-   "emoji": "🏕️",
-   "color": "#22c55e",
-   "query": "[out:json][timeout:30];(node[\"tourism\"=\"camp_site\"](45.4,13.4,46.9,16.6);way[\"tourism\"=\"camp_site\"](45.4,13.4,46.9,16.6););out center;"
-  },
-  {
-   "id": "aerodrome",
-   "label": "Letališča",
-   "emoji": "✈️",
-   "color": "#06b6d4",
-   "query": "[out:json][timeout:30];(node[\"aeroway\"=\"aerodrome\"](45.4,13.4,46.9,16.6);way[\"aeroway\"=\"aerodrome\"](45.4,13.4,46.9,16.6););out center;"
-  },
-  {
-   "id": "cemetery",
-   "label": "Pokopališča",
-   "emoji": "⚰️",
-   "color": "#6b7280",
-   "query": "[out:json][timeout:30];(node[\"landuse\"=\"cemetery\"](45.4,13.4,46.9,16.6);way[\"landuse\"=\"cemetery\"](45.4,13.4,46.9,16.6););out center;"
-  },
-  {
-   "id": "motorway_jct",
-   "label": "AC uvozi",
-   "emoji": "🛣️",
-   "color": "#64748b",
-   "query": "[out:json][timeout:30];node[\"highway\"=\"motorway_junction\"](45.4,13.4,46.9,16.6);out;"
-  },
-  {
-   "id": "beach",
-   "label": "Plaže",
-   "emoji": "🏖️",
-   "color": "#fbbf24",
-   "query": "[out:json][timeout:30];(node[\"natural\"=\"beach\"](45.4,13.4,46.9,16.6);way[\"natural\"=\"beach\"](45.4,13.4,46.9,16.6);relation[\"natural\"=\"beach\"](45.4,13.4,46.9,16.6););out center;"
-  },
-  {
-   "id": "pitch",
-   "label": "Šport. igrišča",
-   "emoji": "⚽",
-   "color": "#22c55e",
-   "query": "[out:json][timeout:45];(way[\"leisure\"=\"pitch\"](45.4,13.4,46.9,16.6);relation[\"leisure\"=\"pitch\"](45.4,13.4,46.9,16.6););out center;"
-  },
-  {
-   "id": "fitness",
-   "label": "Outdoor fitnes",
-   "emoji": "💪",
+   "id": "supermarket",
+   "label": "Živila",
+   "emoji": "🛒",
    "color": "#f97316",
-   "query": "[out:json][timeout:30];(node[\"leisure\"=\"fitness_station\"](45.4,13.4,46.9,16.6);way[\"leisure\"=\"fitness_station\"](45.4,13.4,46.9,16.6););out center;"
+   "query": "[out:json][timeout:30];(node[\"shop\"~\"supermarket|grocery|convenience\"](45.4,13.4,46.9,16.6);way[\"shop\"~\"supermarket|grocery|convenience\"](45.4,13.4,46.9,16.6););out center;",
+   "group": "storitve"
   },
   {
-   "id": "toilets",
-   "label": "Stranišča",
-   "emoji": "🚻",
-   "color": "#64748b",
-   "query": "[out:json][timeout:30];(node[\"amenity\"=\"toilets\"](45.4,13.4,46.9,16.6);way[\"amenity\"=\"toilets\"](45.4,13.4,46.9,16.6););out center;"
-  },
-  {
-   "id": "transmitter",
-   "label": "Oddajniki",
-   "emoji": "📡",
-   "color": "#0ea5e9",
-   "query": "[out:json][timeout:30];(node[\"man_made\"=\"communications_tower\"](45.4,13.4,46.9,16.6);node[\"man_made\"=\"tower\"][\"tower:type\"=\"communication\"](45.4,13.4,46.9,16.6);way[\"man_made\"=\"tower\"][\"tower:type\"=\"communication\"](45.4,13.4,46.9,16.6);node[\"man_made\"=\"mast\"][\"tower:type\"=\"communication\"](45.4,13.4,46.9,16.6););out center;"
-  },
-  {
-   "id": "speed_camera",
-   "label": "Radarji",
-   "emoji": "📷",
-   "color": "#dc2626",
-   "query": "[out:json][timeout:30];node[\"highway\"=\"speed_camera\"](45.4,13.4,46.9,16.6);out;"
+   "id": "atm",
+   "label": "Bankomati",
+   "emoji": "💳",
+   "color": "#84cc16",
+   "query": "[out:json][timeout:45];(node[\"amenity\"=\"atm\"](45.4,13.4,46.9,16.6);node[\"amenity\"=\"bank\"][\"atm\"!=\"no\"](45.4,13.4,46.9,16.6);way[\"amenity\"=\"bank\"][\"atm\"!=\"no\"](45.4,13.4,46.9,16.6););out center;",
+   "group": "storitve"
   },
   {
    "id": "post_office",
    "label": "Pošte",
    "emoji": "📮",
    "color": "#8b5cf6",
-   "query": "[out:json][timeout:30];(node[\"amenity\"=\"post_office\"](45.4,13.4,46.9,16.6);way[\"amenity\"=\"post_office\"](45.4,13.4,46.9,16.6););out center;"
+   "query": "[out:json][timeout:30];(node[\"amenity\"=\"post_office\"](45.4,13.4,46.9,16.6);way[\"amenity\"=\"post_office\"](45.4,13.4,46.9,16.6););out center;",
+   "group": "storitve"
+  },
+  {
+   "id": "toilets",
+   "label": "Stranišča",
+   "emoji": "🚻",
+   "color": "#64748b",
+   "query": "[out:json][timeout:30];(node[\"amenity\"=\"toilets\"](45.4,13.4,46.9,16.6);way[\"amenity\"=\"toilets\"](45.4,13.4,46.9,16.6););out center;",
+   "group": "storitve"
+  },
+  {
+   "id": "pipe",
+   "label": "Pipe",
+   "emoji": "🚰",
+   "color": "#0ea5e9",
+   "query": "[out:json][timeout:30];node[\"amenity\"=\"drinking_water\"](45.4,13.4,46.9,16.6);out;",
+   "group": "storitve"
+  },
+  {
+   "id": "cemetery",
+   "label": "Pokopališča",
+   "emoji": "⚰️",
+   "color": "#6b7280",
+   "query": "[out:json][timeout:30];(node[\"landuse\"=\"cemetery\"](45.4,13.4,46.9,16.6);way[\"landuse\"=\"cemetery\"](45.4,13.4,46.9,16.6););out center;",
+   "group": "storitve"
+  },
+  {
+   "id": "bus_station",
+   "label": "Avt. postaje",
+   "emoji": "🚌",
+   "color": "#f59e0b",
+   "query": "[out:json][timeout:30];(node[\"amenity\"=\"bus_station\"](45.4,13.4,46.9,16.6);node[\"highway\"=\"bus_stop\"](45.4,13.4,46.9,16.6););out;",
+   "group": "promet"
+  },
+  {
+   "id": "train_station",
+   "label": "Vlak postaje",
+   "emoji": "🚂",
+   "color": "#78716c",
+   "query": "[out:json][timeout:30];(node[\"railway\"=\"station\"](45.4,13.4,46.9,16.6);node[\"railway\"=\"halt\"](45.4,13.4,46.9,16.6););out;",
+   "group": "promet"
+  },
+  {
+   "id": "aerodrome",
+   "label": "Letališča",
+   "emoji": "✈️",
+   "color": "#06b6d4",
+   "query": "[out:json][timeout:30];(node[\"aeroway\"=\"aerodrome\"](45.4,13.4,46.9,16.6);way[\"aeroway\"=\"aerodrome\"](45.4,13.4,46.9,16.6););out center;",
+   "group": "promet"
+  },
+  {
+   "id": "helipad",
+   "label": "Helikopter.",
+   "emoji": "🚁",
+   "color": "#0ea5e9",
+   "query": "[out:json][timeout:30];(node[\"aeroway\"=\"helipad\"](45.4,13.4,46.9,16.6);way[\"aeroway\"=\"helipad\"](45.4,13.4,46.9,16.6););out center;",
+   "group": "promet"
+  },
+  {
+   "id": "motorway_jct",
+   "label": "AC uvozi",
+   "emoji": "🛣️",
+   "color": "#64748b",
+   "query": "[out:json][timeout:30];node[\"highway\"=\"motorway_junction\"](45.4,13.4,46.9,16.6);out;",
+   "group": "promet"
   },
   {
    "id": "tunnel",
    "label": "Predori",
    "emoji": "🚇",
    "color": "#1e293b",
-   "query": "[out:json][timeout:45];(way[\"tunnel\"=\"yes\"][\"highway\"](45.4,13.4,46.9,16.6););out center;"
+   "query": "[out:json][timeout:45];(way[\"tunnel\"=\"yes\"][\"highway\"](45.4,13.4,46.9,16.6););out center;",
+   "group": "promet"
+  },
+  {
+   "id": "speed_camera",
+   "label": "Radarji",
+   "emoji": "📷",
+   "color": "#dc2626",
+   "query": "[out:json][timeout:30];node[\"highway\"=\"speed_camera\"](45.4,13.4,46.9,16.6);out;",
+   "group": "promet"
+  },
+  {
+   "id": "transmitter",
+   "label": "Oddajniki",
+   "emoji": "📡",
+   "color": "#0ea5e9",
+   "query": "[out:json][timeout:30];(node[\"man_made\"=\"communications_tower\"](45.4,13.4,46.9,16.6);node[\"man_made\"=\"tower\"][\"tower:type\"=\"communication\"](45.4,13.4,46.9,16.6);way[\"man_made\"=\"tower\"][\"tower:type\"=\"communication\"](45.4,13.4,46.9,16.6);node[\"man_made\"=\"mast\"][\"tower:type\"=\"communication\"](45.4,13.4,46.9,16.6););out center;",
+   "group": "promet"
+  }
+ ],
+ "poiGroups": [
+  {
+   "id": "narava",
+   "name": "Narava & prosti čas"
+  },
+  {
+   "id": "kultura",
+   "name": "Kultura & dediščina"
+  },
+  {
+   "id": "nujno",
+   "name": "Nujne službe & zdravje"
+  },
+  {
+   "id": "storitve",
+   "name": "Storitve"
+  },
+  {
+   "id": "promet",
+   "name": "Promet & infrastruktura"
   }
  ],
  "internal": []

@@ -237,12 +237,25 @@ export const poiPanel = {
   render(el) {
     panelEl = el;
     const s = state.settings;
-    const chips = state.db.pois.map((c) => {
+    const chip = (c) => {
       const on = s.pois.includes(c.id);
       const n = loaded.get(c.id)?.features.length;
       const filtered = c.id === "cave" && caveDb && n != null && n < caveDb.count;
       return `<button class="chip ${on ? "on" : ""} ${loading.has(c.id) ? "loading" : ""}" style="--c:${c.color}" data-poi="${c.id}" title="${esc(c.label)}">
         ${on && n != null ? `<span class="cnt ${filtered ? "filtered" : ""}">${fmtNum(n)}${filtered ? " ⚠" : ""}</span>` : ""}<span class="em">${emo(c)}</span><span class="ellipsis" style="max-width:100%">${esc(c.label)}</span></button>`;
+    };
+    // categories in groups (layers.json → poiGroups); a category without a group goes to "Ostalo"
+    const groups = [...(state.db.poiGroups || []), { id: "_other", name: "Ostalo" }];
+    const known = new Set(groups.map((g) => g.id));
+    const chips = groups.map((g) => {
+      const cats = state.db.pois.filter((c) => (known.has(c.group) ? c.group : "_other") === g.id);
+      if (!cats.length) return "";
+      const nOn = cats.filter((c) => s.pois.includes(c.id)).length;
+      return `<div class="poi-group">
+        <div class="poi-group-head"><span>${esc(g.name)}</span>${nOn ? `<span class="n">${nOn}/${cats.length}</span>` : ""}
+          <button class="btn sm ghost" data-poigroup="${g.id}" data-on="${nOn ? 0 : 1}">${nOn ? "Izklopi" : "Vklopi vse"}</button></div>
+        <div class="chip-grid">${cats.map(chip).join("")}</div>
+      </div>`;
     }).join("");
     let caveCard = "";
     if (s.pois.includes("cave") && caveDb) {
@@ -282,11 +295,18 @@ export const poiPanel = {
         <div class="section-title"><span>Kategorije</span>
           <span class="row">${s.pois.length ? `<button class="btn sm" id="poi-refresh" title="Ponovno prenesi aktivne kategorije">${icon("refresh")} Osveži</button><button class="btn sm danger" id="poi-clear">Izklopi vse</button>` : ""}</span>
         </div>
-        <div class="chip-grid">${chips}</div>
+        ${chips}
       </div>${hydCard}${caveCard}`;
     el.onclick = (e) => {
       const b = e.target.closest("[data-poi]");
       if (b) return togglePoi(b.dataset.poi);
+      const gb = e.target.closest("[data-poigroup]");
+      if (gb) {
+        const gid = gb.dataset.poigroup, on = gb.dataset.on === "1";
+        const known = new Set((state.db.poiGroups || []).map((g) => g.id));
+        state.db.pois.filter((c) => (known.has(c.group) ? c.group : "_other") === gid).forEach((c) => togglePoi(c.id, on));
+        return;
+      }
       const cf = e.target.closest("[data-cavef]");
       if (cf) { s.caveFilter = cf.dataset.cavef; saveSettings(); return showCategory("cave"); }
       const hf = e.target.closest("[data-hydf]");

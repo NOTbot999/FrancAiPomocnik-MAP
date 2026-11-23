@@ -74,9 +74,26 @@ export async function loadState() {
     state.settings.collab = { ...defCollab, ...(saved.collab || {}) };
     state.settings.plugins ||= [];
   }
+  migrateLayers(state.settings);
   // drop layers that no longer exist
   state.settings.overlays = state.settings.overlays.filter((o) => state.layerIndex[o.id]);
   if (!state.layerIndex[state.settings.base]) state.settings.base = "osm";
+}
+
+// 1.7.2: four base maps; the others live on as overlays. Duplicate layers were merged.
+const BASE_TO_OVERLAY = { carto_voyager: "ol_carto_voyager", esri_topo: "ol_esri_topo", dark: "ol_dark", arso_topo_nova: "arso_topo_overlay" };
+const LAYER_ALIASES = { ol_lidar: "gurs_lidar", lidar_overlay: "gurs_lidar", ol_arso_topo: "arso_topo_overlay", ol_waymarked_slopes: "slopes_waymarked" };
+function migrateLayers(s) {
+  const ov = BASE_TO_OVERLAY[s.base];
+  if (ov) {                       // keep the same look: OSM underneath, the old base on top at full strength
+    s.base = "osm";
+    if (!s.overlays.some((o) => o.id === ov)) s.overlays.unshift({ id: ov, opacity: s.baseOpacity ?? 1, visible: true });
+  }
+  const seen = new Set();
+  s.overlays = s.overlays.map((o) => ({ ...o, id: LAYER_ALIASES[o.id] || o.id })).filter((o) => !seen.has(o.id) && seen.add(o.id));
+  s.favorites = [...new Set((s.favorites || []).map((id) => LAYER_ALIASES[id] || BASE_TO_OVERLAY[id] || id))];
+  const cats = new Set(state.db.categories.map((c) => c.id));
+  s.openCats = (s.openCats || []).filter((id) => cats.has(id));
 }
 
 export function saveSettings() {

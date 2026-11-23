@@ -103,7 +103,7 @@ export const layersPanel = {
       const n = c.layers.filter((l) => isOverlayOn(l.id)).length;
       const open = q || s.openCats.includes(c.id);
       return `<div class="cat ${open ? "open" : ""}" data-cat="${c.id}">
-        <button class="cat-head" data-cat-toggle="${c.id}">${icon("chevron", "chev")}<span>${esc(c.name)}</span><span class="n">${n ? n + "/" + c.layers.length : c.layers.length}</span></button>
+        <button class="cat-head" data-cat-toggle="${c.id}">${icon("chevron", "chev")}<span class="ct">${esc(c.name)}${c.description ? `<span class="cd">${esc(c.description)}</span>` : ""}</span><span class="n">${n ? n + "/" + c.layers.length : c.layers.length}</span></button>
         <div class="cat-body">${list(layers)}</div>
       </div>`;
     }).join("");
