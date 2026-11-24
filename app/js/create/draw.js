@@ -8,12 +8,13 @@ import { setHint, setActions, cancelPick, pinIcon } from "../shared/tools.js";
 import { toGeoJSON, toGPX, toKML, parseFile } from "./geoio.js";
 import { showProfile } from "../explore/profile.js";
 import { showCentre, showAlongPath, showMidpoints, centroid, clearMidpoints, hasMidpoints, pathButtonsHtml, splitCount, pointLetter } from "./midpoint.js";
+import { loadMyMap, saveMyMap, emptyMap, newLayer, normalizeMap, adoptFeatures, layerByName } from "./mymaps.js";
 
 let features = [];
 let projects = [];
 let group;              // rendered features
 const layerOf = new Map();
-let color = COLORS[0];
+let mymap = null;       // "Moje karte": title, description, layers (see mymaps.js)
 let tool = null;        // active drawing tool
 let editing = null;     // { id, handles: [] }
 let selected = null;
@@ -22,13 +23,45 @@ let measureResult = null;
 
 export async function initDraw() {
   group = L.featureGroup().addTo(map);
-  [features, projects] = await Promise.all([store.get("drawings", []), store.get("projects", [])]);
+  [features, projects, mymap] = await Promise.all([store.get("drawings", []), store.get("projects", []), loadMyMap()]);
+  if (adoptFeatures(mymap, features)) persist();
+  saveMyMap(mymap);
   renderAll();
   on("add-marker", ({ latlng, name }) => addFeature({ type: "marker", coords: latlng, name: name || "Oznaka" }, true));
   on("midpoints", () => refreshPanel());
 }
 
 const persist = () => store.set("drawings", features);
+const persistMap = () => saveMyMap(mymap);
+
+// ── layers of the current map ──
+const layerOfFeature = (f) => mymap.layers.find((l) => l.id === f.layer) || mymap.layers[0];
+const activeLayer = () => mymap.layers.find((l) => l.id === mymap.active) || mymap.layers[0];
+const isVisible = (f) => layerOfFeature(f).visible !== false;
+export const getMyMap = () => mymap;
+
+function setLayerColor(l, c) {      // features that still use the layer colour follow it
+  for (const f of features) if (f.layer === l.id && f.color === l.color) f.color = c;
+  l.color = c;
+  persistMap(); persist(); renderAll();
+}
+function deleteLayer(id) {
+  if (mymap.layers.length === 1) return toast("Karta mora imeti vsaj en sloj.");
+  const l = mymap.layers.find((x) => x.id === id);
+  const n = features.filter((f) => f.layer === id).length;
+  if (n && !confirm(`Izbrišem sloj »${l.name}« in ${n} elementov v njem?`)) return;
+  if (editing && features.find((f) => f.id === editing.id)?.layer === id) stopEditing();
+  features = features.filter((f) => f.layer !== id);
+  mymap.layers = mymap.layers.filter((x) => x.id !== id);
+  if (mymap.active === id) mymap.active = mymap.layers[0].id;
+  persistMap(); persist(); renderAll();
+}
+function zoomToLayer(id) {
+  const fs = features.filter((f) => f.layer === id);
+  if (!fs.length) return toast("Sloj je prazen.");
+  const b = L.latLngBounds(fs.flatMap((f) => (f.type === "marker" ? [f.coords] : f.coords).map((p) => [p[0], p[1]])));
+  map.flyToBounds(b, { padding: [60, 60], maxZoom: 16, duration: 0.6 });
+}
 
 function measureText(f) {
   if (f.type === "line") return fmtDist(pathLength(f.coords));
@@ -38,6 +71,8 @@ function measureText(f) {
 
 function renderFeature(f) {
   layerOf.get(f.id) && group.removeLayer(layerOf.get(f.id));
+  layerOf.delete(f.id);
+  if (!isVisible(f)) return;          // its layer is hidden
   let l;
   const sel = selected === f.id;
   if (f.type === "marker") l = L.marker(f.coords, { icon: pinIcon(f.color, f.emoji || ""), pane: "top", draggable: false });
@@ -60,7 +95,9 @@ function renderAll() {
 export function getDrawings() { return features; }
 
 export function addFeature(f, open = false) {
-  const nf = { id: uid("f"), color, note: "", ...f };
+  const ids = new Set(mymap.layers.map((l) => l.id));
+  const ly = ids.has(f.layer) ? mymap.layers.find((l) => l.id === f.layer) : activeLayer();
+  const nf = { id: uid("f"), color: ly.color, note: "", ...f, layer: ly.id };
   if (!nf.name) nf.name = { marker: "Oznaka", line: "Črta", polygon: "Območje" }[nf.type] + " " + (features.filter((x) => x.type === nf.type).length + 1);
   features.push(nf);
   renderFeature(nf);
@@ -125,12 +162,14 @@ function pinCopyText(f) {
 
 function openFeaturePopup(f, at) {
   selected = f.id;
+  if (!isVisible(f)) { layerOfFeature(f).visible = true; persistMap(); renderAll(); }
   const pos = at || (f.type === "marker" ? f.coords : layerOf.get(f.id).getBounds().getCenter());
   const swatches = COLORS.map((c) => `<button class="swatch" style="background:${c};width:18px;height:18px;border:2px solid ${c === f.color ? "var(--text)" : "transparent"}" data-color="${c}"></button>`).join("");
   const html = `<div class="pop stack" style="min-width:240px">
     <input class="field" data-k="name" value="${esc(f.name)}" placeholder="Ime">
     ${f.type === "marker" ? pinInfoHtml(f) : `<div class="small muted">${measureText(f)}</div>`}
     <div class="row wrap" style="gap:4px">${swatches}</div>
+    ${mymap.layers.length > 1 ? `<label class="row small" style="gap:6px"><span class="muted">Sloj</span><select class="field grow" data-layer-sel>${mymap.layers.map((l) => `<option value="${l.id}" ${l.id === f.layer ? "selected" : ""}>${esc(l.name)}</option>`).join("")}</select></label>` : ""}
     <textarea class="field" data-k="note" placeholder="Opomba…">${esc(f.note || "")}</textarea>
     ${f.type === "line" ? `<div class="actions">${pathButtonsHtml("data-a")}</div>` : ""}
     <div class="actions">
@@ -146,6 +185,12 @@ function openFeaturePopup(f, at) {
   if (f.type === "marker" && !fmtEle(f)) {
     ensureElevation(f).then((txt) => { const s = el.querySelector("[data-ele]"); if (s) s.textContent = txt || "ni podatka"; });
   }
+  el.querySelector("[data-layer-sel]")?.addEventListener("change", (e) => {
+    const to = mymap.layers.find((l) => l.id === e.target.value);
+    const from = layerOfFeature(f);
+    updateFeature(f.id, { layer: to.id, ...(f.color === from.color ? { color: to.color } : {}) });
+    if (to.visible === false) map.closePopup();
+  });
   el.addEventListener("input", (e) => {
     const k = e.target.dataset.k;
     if (k) { f[k] = e.target.value; persist(); refreshPanel(); layerOf.get(f.id)?.setTooltipContent(`<b>${esc(f.name)}</b><br>${measureText(f)}`); }
@@ -298,7 +343,7 @@ function drawPreview(cursor) {
       .setContent(tool.pts.length < 2 ? `Točk: ${tool.pts.length} — klikni še ${2 - tool.pts.length}` : `Točk: ${tool.pts.length} · Enter = sredina`).addTo(tool.preview);
     return;
   }
-  const c = tool.kind.startsWith("measure") ? "#f97316" : color;
+  const c = tool.kind.startsWith("measure") ? "#f97316" : activeLayer().color;
   if (isArea() && pts.length > 2) L.polygon(pts, { color: c, weight: 2.5, dashArray: "6,5", fillOpacity: 0.15, interactive: false, pane: "vectors" }).addTo(tool.preview);
   else L.polyline(pts, { color: c, weight: 3, dashArray: "6,5", interactive: false, pane: "vectors" }).addTo(tool.preview);
   tool.pts.forEach((p) => L.circleMarker(p, { radius: 4, color: "#fff", weight: 2, fillColor: c, fillOpacity: 1, interactive: false, pane: "top" }).addTo(tool.preview));
@@ -355,59 +400,122 @@ export function drawKeydown(e) {
   return false;
 }
 
-// ── Import / export / projects ──
-async function exportAs(fmt, list = features) {
+// ── Import / export / saved maps ("Moje karte") ──
+const fileBase = () => (mymap.title || "karta").replace(/[\\/:*?"<>|]+/g, "").trim().slice(0, 60) || "karta";
+const layerName = (f) => layerOfFeature(f).name;
+
+async function exportAs(fmt, list = features, suffix = "") {
   if (!list.length) return toast("Ni elementov za izvoz.");
-  const stamp = new Date().toISOString().slice(0, 10);
-  if (fmt === "geojson") await saveTextFile(`risbe-${stamp}.geojson`, toGeoJSON(list), "application/geo+json");
-  if (fmt === "gpx") await saveTextFile(`risbe-${stamp}.gpx`, toGPX(list), "application/gpx+xml");
-  if (fmt === "kml") await saveTextFile(`risbe-${stamp}.kml`, toKML(list), "application/vnd.google-earth.kml+xml");
+  const base = fileBase() + suffix;
+  if (fmt === "geojson") await saveTextFile(`${base}.geojson`, toGeoJSON(list, { name: mymap.title, description: mymap.description, layerName }), "application/geo+json");
+  if (fmt === "gpx") await saveTextFile(`${base}.gpx`, toGPX(list, mymap.title), "application/gpx+xml");
+  if (fmt === "kml") await saveTextFile(`${base}.kml`, toKML(list, mymap.title, layerName, mymap.description), "application/vnd.google-earth.kml+xml");
 }
 
+// Each file becomes its own layer; files that carry layers (KML folders, GeoJSON "layer") keep them.
 async function importFiles() {
   const files = await openTextFiles();
   let n = 0;
-  for (const f of files || []) {
+  for (const file of files || []) {
     try {
-      const feats = parseFile(f.name, f.content);
-      feats.forEach((x) => { features.push(x); n++; });
-    } catch (e) { toast(`${f.name}: ${e.message}`, "err"); }
+      const feats = parseFile(file.name, file.content);
+      const fileLayer = file.name.replace(/\.[^.]+$/, "");
+      for (const x of feats) {
+        const ly = layerByName(mymap, x.layerName || fileLayer, x.color);
+        delete x.layerName;
+        features.push({ ...x, layer: ly.id, color: x.color || ly.color });
+        n++;
+      }
+    } catch (e) { toast(`${file.name}: ${e.message}`, "err"); }
   }
   if (n) {
-    renderAll(); persist();
-    map.flyToBounds(group.getBounds(), { padding: [50, 50] });
+    persistMap(); renderAll(); persist();
+    if (group.getLayers().length) map.flyToBounds(group.getBounds(), { padding: [50, 50] });
     toast(`Uvoženih elementov: ${n}`, "ok");
   }
 }
 
-function saveProject(name) {
-  if (!features.length) return toast("Ni risb za shranjevanje.");
-  projects.unshift({ id: uid("p"), name: name || `Projekt ${projects.length + 1}`, date: new Date().toLocaleString("sl-SI"), features: structuredClone(features) });
+function saveCurrentMap(silent = false) {
+  if (!features.length) { if (!silent) toast("Karta je prazna."); return; }
+  const rec = { id: uid("p"), name: mymap.title, date: new Date().toLocaleString("sl-SI"), features: structuredClone(features), map: structuredClone(mymap) };
+  const i = projects.findIndex((p) => p.map?.id === mymap.id);       // same map → update it
+  if (i >= 0) projects.splice(i, 1);
+  projects.unshift(rec);
   store.set("projects", projects, 0);
-  toast("Projekt shranjen", "ok");
+  if (!silent) toast(i >= 0 ? "Karta posodobljena" : "Karta shranjena", "ok");
   refreshPanel();
+}
+
+function newMap() {
+  if (features.length && !confirm("Začnem novo karto? Trenutna se shrani med Moje karte.")) return;
+  saveCurrentMap(true);
+  stopEditing(); stopTool();
+  mymap = emptyMap("Nova karta");
+  features = [];
+  persistMap(); persist(); renderAll();
+}
+
+function openSaved(p, merge) {
+  const copy = structuredClone(p.features).map((f) => ({ ...f, id: uid("f") }));
+  if (!merge) {
+    saveCurrentMap(true);
+    mymap = normalizeMap(p.map ? structuredClone(p.map) : { title: p.name });
+    features = copy;
+    adoptFeatures(mymap, features);
+  } else {
+    // add the saved map's layers next to ours (old projects without layers → one layer named after it)
+    const src = p.map ? normalizeMap(structuredClone(p.map)) : null;
+    const remap = new Map();
+    for (const l of src?.layers || []) { const nl = { ...l, id: uid("ly"), name: `${l.name} (${p.name})` }; mymap.layers.push(nl); remap.set(l.id, nl.id); }
+    const fallback = src ? null : layerByName(mymap, p.name);
+    for (const f of copy) f.layer = remap.get(f.layer) || fallback?.id || mymap.active;
+    features = [...features, ...copy];
+  }
+  persistMap(); renderAll(); persist();
+  if (group.getLayers().length) map.flyToBounds(group.getBounds(), { padding: [50, 50] });
+  toast(merge ? `Dodano: ${p.name}` : `Odprta karta: ${p.name}`, "ok");
 }
 
 function refreshPanel() { if (panelEl?.isConnected) drawPanel.render(panelEl); }
 
+const featureRow = (f) => `
+  <div class="list-item ${selected === f.id ? "sel" : ""}" data-id="${f.id}">
+    <span class="swatch" style="background:${f.color}"></span>
+    <div class="grow" style="min-width:0;cursor:pointer" data-open="${f.id}">
+      <div class="ellipsis" style="font-weight:600">${f.emoji ? f.emoji + " " : ""}${esc(f.name)}</div>
+      <div class="small muted ellipsis">${measureText(f)}</div>
+    </div>
+    <button class="icon-btn sm" data-zoom="${f.id}" title="Približaj">${icon("zoom")}</button>
+    ${f.type === "line" ? `<button class="icon-btn sm" data-prof="${f.id}" title="Višinski profil">${icon("mountain")}</button>` : ""}
+    <button class="icon-btn sm" data-del="${f.id}" title="Izbriši">${icon("trash")}</button>
+  </div>`;
+
 export const drawPanel = {
   id: "draw",
-  title: "Risanje in merjenje",
+  title: "Risanje · Moje karte",
   render(el) {
     panelEl = el;
     const tk = tool?.kind;
     const tb = (k, ic, label) => `<button class="${tk === k ? "on" : ""}" data-tool="${k}">${icon(ic)} ${label}</button>`;
-    const list = features.length ? features.map((f) => `
-      <div class="list-item ${selected === f.id ? "sel" : ""}" data-id="${f.id}">
-        <span class="swatch" style="background:${f.color}"></span>
-        <div class="grow" style="min-width:0;cursor:pointer" data-open="${f.id}">
-          <div class="ellipsis" style="font-weight:600">${esc(f.name)}</div>
-          <div class="small muted ellipsis">${measureText(f)}</div>
+    const act = activeLayer();
+
+    const layersHtml = mymap.layers.map((l) => {
+      const fs = features.filter((f) => f.layer === l.id);
+      const on = l.id === act.id, vis = l.visible !== false;
+      return `<div class="mm-layer ${on ? "active" : ""} ${vis ? "" : "hidden"}" data-lact="${l.id}">
+        <div class="mm-lhead">
+          <button class="icon-btn sm ${vis ? "on" : ""}" data-lvis="${l.id}" title="${vis ? "Skrij sloj" : "Pokaži sloj"}">${icon(vis ? "eye" : "eyeOff")}</button>
+          <span class="swatch" style="background:${l.color}"></span>
+          <input class="mm-lname" data-lname="${l.id}" value="${esc(l.name)}" title="Ime sloja (klikni za preimenovanje)">
+          <span class="n">${fs.length}</span>
+          <button class="icon-btn sm" data-lzoom="${l.id}" title="Približaj sloj">${icon("zoom")}</button>
+          <button class="icon-btn sm" data-lexp="${l.id}" title="Izvozi sloj (KML)">${icon("download")}</button>
+          <button class="icon-btn sm" data-ldel="${l.id}" title="Izbriši sloj">${icon("trash")}</button>
         </div>
-        <button class="icon-btn sm" data-zoom="${f.id}" title="Približaj">${icon("zoom")}</button>
-        ${f.type === "line" ? `<button class="icon-btn sm" data-prof="${f.id}" title="Višinski profil">${icon("mountain")}</button>` : ""}
-        <button class="icon-btn sm" data-del="${f.id}" title="Izbriši">${icon("trash")}</button>
-      </div>`).join("") : `<div class="empty"><div class="big">✏️</div>Ni risb. Izberi orodje zgoraj.</div>`;
+        <div class="mm-lnote">${on ? "✏️ Nove risbe gredo v ta sloj" : `<span class="muted">Klikni, da rišeš v ta sloj</span>`}</div>
+        ${vis ? fs.map(featureRow).join("") : ""}
+      </div>`;
+    }).join("");
 
     let mr = "";
     if (measureResult) {
@@ -422,73 +530,97 @@ export const drawPanel = {
         </div></div>`;
     }
 
+    const saved = projects.map((p) => `
+      <div class="list-item ${p.map?.id === mymap.id ? "sel" : ""}">
+        <div class="grow" style="min-width:0"><div class="ellipsis" style="font-weight:600">${esc(p.name)}</div>
+          <div class="small muted">${p.features.length} elementov · ${p.map?.layers?.length || 1} slojev · ${esc(p.date)}</div></div>
+        <button class="btn sm" data-pload="${p.id}" title="Odpri to karto (trenutna se shrani)">Odpri</button>
+        <button class="btn sm" data-pmerge="${p.id}" title="Dodaj njene sloje k trenutni karti">+</button>
+        <button class="icon-btn sm" data-pdel="${p.id}">${icon("trash")}</button>
+      </div>`).join("");
+
     el.innerHTML = `
+      <div class="section mm-head">
+        <input class="field mm-title" id="mm-title" value="${esc(mymap.title)}" placeholder="Ime karte">
+        <textarea class="field mm-desc" id="mm-desc" rows="2" placeholder="Opis karte (neobvezno)…">${esc(mymap.description)}</textarea>
+        <div class="row" style="margin-top:6px">
+          <button class="btn sm primary" id="mm-save">${icon("save")} Shrani karto</button>
+          <button class="btn sm" id="mm-new">+ Nova karta</button>
+        </div>
+      </div>
       <div class="section">
-        <div class="section-title">Riši</div>
+        <div class="section-title">Riši v »${esc(act.name)}«</div>
         <div class="seg">${tb("marker", "marker", "Oznaka")}${tb("line", "line", "Črta")}${tb("polygon", "polygon", "Območje")}</div>
+        <div class="row" style="margin-top:8px"><span class="small muted">Barva sloja</span>
+          ${COLORS.map((c) => `<button class="swatch" data-pick="${c}" style="background:${c};width:18px;height:18px;border:2px solid ${c === act.color ? "var(--text)" : "transparent"}"></button>`).join("")}
+        </div>
         <div class="section-title" style="margin-top:12px">Meri</div>
         <div class="seg">${tb("measure-line", "ruler", "Razdalja")}${tb("measure-area", "area", "Površina")}${tb("midpoint", "crosshair", "Sredina")}</div>
         ${hasMidpoints() ? `<div class="row" style="margin-top:6px"><span class="small muted grow">🎯 Sredina je prikazana na karti.</span><button class="btn sm" id="mid-clear">Skrij</button></div>` : ""}
         ${mr}
-        <div class="row" style="margin-top:10px"><span class="small muted">Barva</span>
-          ${COLORS.map((c) => `<button class="swatch" data-pick="${c}" style="background:${c};width:18px;height:18px;border:2px solid ${c === color ? "var(--text)" : "transparent"}"></button>`).join("")}
-        </div>
       </div>
       <div class="section">
-        <div class="section-title"><span>Elementi (${features.length})</span>
-          ${features.length ? `<button class="btn sm danger" id="d-clear">Počisti</button>` : ""}</div>
-        ${list}
+        <div class="section-title"><span>Sloji (${mymap.layers.length}) · ${features.length} elementov</span>
+          <span class="row"><button class="btn sm" id="ly-add">+ Sloj</button>${features.length ? `<button class="btn sm danger" id="d-clear" title="Izbriše vse elemente na tej karti">Počisti</button>` : ""}</span></div>
+        ${layersHtml}
+        ${features.length ? "" : `<div class="empty"><div class="big">✏️</div>Karta je prazna. Izberi orodje zgoraj ali uvozi datoteko.</div>`}
       </div>
       <div class="section">
-        <div class="section-title">Uvoz / izvoz</div>
+        <div class="section-title">Uvoz / izvoz karte</div>
         <div class="row wrap">
-          <button class="btn sm" id="d-import">${icon("upload")} Uvozi</button>
+          <button class="btn sm" id="d-import" title="GPX, KML (mape = sloji), GeoJSON — vsaka datoteka postane sloj">${icon("upload")} Uvozi</button>
+          <button class="btn sm" data-exp="kml" title="Za Google My Maps / Earth — sloji kot mape">KML</button>
           <button class="btn sm" data-exp="geojson">GeoJSON</button>
           <button class="btn sm" data-exp="gpx">GPX</button>
-          <button class="btn sm" data-exp="kml">KML</button>
         </div>
       </div>
       <div class="section">
-        <div class="section-title">Projekti</div>
-        <div class="row"><input class="field grow" id="p-name" placeholder="Ime projekta…"><button class="btn primary" id="p-save">${icon("save")} Shrani</button></div>
-        <div style="margin-top:8px">${projects.map((p) => `
-          <div class="list-item">
-            <div class="grow" style="min-width:0"><div class="ellipsis" style="font-weight:600">${esc(p.name)}</div><div class="small muted">${p.features.length} elementov · ${esc(p.date)}</div></div>
-            <button class="btn sm" data-pload="${p.id}" title="Zamenjaj trenutne risbe">Odpri</button>
-            <button class="btn sm" data-pmerge="${p.id}" title="Dodaj k trenutnim risbam">+</button>
-            <button class="icon-btn sm" data-pdel="${p.id}">${icon("trash")}</button>
-          </div>`).join("") || `<div class="help">Shranjeni projekti ostanejo na tem računalniku.</div>`}</div>
+        <div class="section-title">Moje karte (${projects.length})</div>
+        ${saved || `<div class="help">Shranjene karte ostanejo na tej napravi. Za skupno delo uporabi Sodelovanje.</div>`}
       </div>`;
 
     el.onclick = (e) => {
-      const t = e.target.closest("button, [data-open]");
+      if (e.target.closest("input, textarea, select")) return;
+      const t = e.target.closest("button, [data-open], [data-lact]");
       if (!t) return;
       const d = t.dataset;
       if (d.tool) return tool?.kind === d.tool ? stopTool() : startTool(d.tool);
-      if (d.pick) { color = d.pick; return refreshPanel(); }
+      if (d.pick) return setLayerColor(act, d.pick);
       if (d.open) { const f = features.find((x) => x.id === d.open); zoomTo(f); return openFeaturePopup(f); }
       if (d.zoom) return zoomTo(features.find((x) => x.id === d.zoom));
       if (d.prof) { const f = features.find((x) => x.id === d.prof); return showProfile(f.name, f.coords, f.color); }
       if (d.del) return deleteFeature(d.del);
       if (d.exp) return exportAs(d.exp);
-      if (d.pload || d.pmerge) {
-        const p = projects.find((x) => x.id === (d.pload || d.pmerge));
-        const copy = structuredClone(p.features).map((f) => ({ ...f, id: uid("f") }));
-        features = d.pload ? copy : [...features, ...copy];
-        renderAll(); persist();
-        if (features.length) map.flyToBounds(group.getBounds(), { padding: [50, 50] });
-        return toast(`Odprt projekt: ${p.name}`, "ok");
+      if (d.lvis) { const l = mymap.layers.find((x) => x.id === d.lvis); l.visible = l.visible === false; persistMap(); return renderAll(); }
+      if (d.lzoom) return zoomToLayer(d.lzoom);
+      if (d.lexp) { const l = mymap.layers.find((x) => x.id === d.lexp); return exportAs("kml", features.filter((f) => f.layer === l.id), ` - ${l.name}`); }
+      if (d.ldel) return deleteLayer(d.ldel);
+      if (d.pload || d.pmerge) return openSaved(projects.find((x) => x.id === (d.pload || d.pmerge)), !!d.pmerge);
+      if (d.pdel) {
+        const p = projects.find((x) => x.id === d.pdel);
+        if (!confirm(`Izbrišem shranjeno karto »${p.name}«?`)) return;
+        projects = projects.filter((x) => x.id !== d.pdel); store.set("projects", projects, 0); return refreshPanel();
       }
-      if (d.pdel) { projects = projects.filter((x) => x.id !== d.pdel); store.set("projects", projects, 0); return refreshPanel(); }
+      if (d.lact) { if (mymap.active !== d.lact) { mymap.active = d.lact; persistMap(); refreshPanel(); } return; }
       switch (t.id) {
-        case "d-clear": if (confirm("Izbrišem vse risbe? (Shranjeni projekti ostanejo.)")) { features = []; stopEditing(); renderAll(); persist(); } break;
+        case "mm-save": saveCurrentMap(); break;
+        case "mm-new": newMap(); break;
+        case "ly-add": { const l = newLayer(`Sloj ${mymap.layers.length + 1}`, COLORS[mymap.layers.length % COLORS.length]); mymap.layers.push(l); mymap.active = l.id; persistMap(); refreshPanel(); break; }
+        case "d-clear": if (confirm("Izbrišem vse elemente na tej karti? (Shranjene karte ostanejo.)")) { features = []; stopEditing(); renderAll(); persist(); } break;
         case "d-import": importFiles(); break;
-        case "p-save": saveProject($("#p-name", el).value.trim()); break;
         case "m-clear": clearMeasure(); break;
         case "mid-clear": clearMidpoints(); refreshPanel(); break;
         case "m-keep": { const { kind, pts } = measureResult; clearMeasure(); addFeature({ type: kind === "measure-area" ? "polygon" : "line", coords: pts }, true); break; }
         case "m-prof": showProfile("Meritev", measureResult.pts, "#f97316"); break;
       }
+    };
+    el.oninput = (e) => {   // title / description saved as you type (no re-render, keeps the cursor)
+      if (e.target.id === "mm-title") { mymap.title = e.target.value; persistMap(); }
+      if (e.target.id === "mm-desc") { mymap.description = e.target.value; persistMap(); }
+    };
+    el.onchange = (e) => {
+      const id = e.target.dataset.lname;
+      if (id) { const l = mymap.layers.find((x) => x.id === id); l.name = e.target.value.trim() || l.name; persistMap(); renderAll(); }
     };
   },
   onClose() { stopTool(); },

@@ -606,3 +606,16 @@ label.check { display: flex; align-items: center; gap: 8px; cursor: pointer; }
 .nap-report { font-size: 12.5px; line-height: 1.5; max-height: 320px; overflow: auto; }
 .nap-img { width: 100%; border-radius: 6px; }
 .live-status.ls-away { opacity: 0; pointer-events: none; transition: opacity .15s; }
+
+/* ── Moje karte (drawing panel) ── */
+.mm-head .mm-title { font-size: 15px; font-weight: 700; }
+.mm-head .mm-desc { margin-top: 6px; resize: vertical; min-height: 36px; font-size: 12px; }
+.mm-layer { border: 1px solid var(--border); border-radius: 10px; padding: 4px 4px 6px; margin-bottom: 8px; cursor: pointer; }
+.mm-layer.active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.mm-layer.hidden { opacity: .6; }
+.mm-lhead { display: flex; align-items: center; gap: 4px; }
+.mm-lhead .swatch { flex: none; width: 12px; height: 12px; border-radius: 50%; }
+.mm-lname { flex: 1; min-width: 0; border: 1px solid transparent; background: transparent; color: var(--text); font-weight: 650; font-size: 13px; padding: 3px 5px; border-radius: 6px; }
+.mm-lname:hover, .mm-lname:focus { border-color: var(--border); background: var(--surface-2); outline: none; }
+.mm-lhead .n { font-size: 11px; color: var(--accent); font-weight: 700; padding: 0 4px; }
+.mm-lnote { font-size: 11px; margin: 0 6px 4px 34px; color: var(--accent); }
