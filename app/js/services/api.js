@@ -91,9 +91,12 @@ export function directTileUrl(layerId, z, x, y) {
   const cfg = getLayerCfg(layerId);
   return cfg ? tileUrl(cfg, z, x, y) : "";
 }
-// An external image (e.g. a WMS legend): through the local cache in the apps, direct on the web
-export function proxiedImage(url, ttl = 2592000) {
-  return IS_WEB ? url : `/api/fetch?url=${encodeURIComponent(url)}&ttl=${ttl}&t=${TOKEN}`;
+// An external image (e.g. a WMS legend): through the local cache in the apps, direct on the web.
+// `sub` (one of TILE_SUBDOMAINS) sends it via a tile host alias, so many map images don't queue
+// behind — or block — the app's own API calls on the main origin's 6 connections.
+export function proxiedImage(url, ttl = 2592000, sub = null) {
+  if (IS_WEB) return url;
+  return `${sub ? tileHost(sub) : ""}/api/fetch?url=${encodeURIComponent(url)}&ttl=${ttl}&t=${TOKEN}`;
 }
 
 // Simple persisted key/value store (JSON files in the app's data folder)

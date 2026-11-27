@@ -217,6 +217,7 @@
      "url": "https://geohub.gov.si/ags/rest/services/TEMELJNE_KARTE/GH_MDP_TOPO_KARTA_SI/MapServer",
      "level": 15,
      "opacity": 1.0,
+     "legend": "Barvna Državna topografska karta 1:25.000 (GURS): zeleno gozd, modro vode, rjavo plastnice in skale, črno ceste, stavbe in imena.",
      "attribution": "DTK25 &copy; GURS (GeoHub)",
      "description": "Barvna Državna topografska karta 1:25.000 z ozadjem (gozd, vode, plastnice) pri vseh povečavah od 13 naprej. Ostra je do povečave 15, pri večji povečavi je povečan sken."
     },
@@ -226,8 +227,8 @@
      "type": "arcgis_d96",
      "minZoom": 12,
      "url": "https://geohub.gov.si/ags/rest/services/TEMELJNE_KARTE/DTK25_ZDR_CB/MapServer",
-     "maxLevel": 17,
      "opacity": 0.9,
+     "legend": "Črno-bela Državna topografska karta 1:25.000 (GURS). Najbolje se vidi nad ortofotom, LIDAR senčenjem ali svetlo podlago.",
      "attribution": "DTK25 &copy; GURS (GeoHub)",
      "description": "Državna topografska karta 1:25.000 — celotna črno-bela karta s plastnicami, vodami, cestami in imeni. Prozorno ozadje: vklopi jo nad ortofotom, LIDAR senčenjem ali svetlo podlago."
     },
@@ -237,8 +238,8 @@
      "type": "arcgis_d96",
      "minZoom": 12,
      "url": "https://geohub.gov.si/ags/rest/services/TEMELJNE_KARTE/DTK25_NPI_CB/MapServer",
-     "maxLevel": 17,
      "opacity": 0.9,
+     "legend": "Črno-bela Državna topografska karta 1:25.000 (GURS). Najbolje se vidi nad ortofotom, LIDAR senčenjem ali svetlo podlago.",
      "attribution": "DTK25 &copy; GURS (GeoHub)",
      "description": "DTK25 samo s situacijo (ceste, naselja, poti, imena, kote) brez plastnic — preglednejša nad LIDAR senčenjem"
     },

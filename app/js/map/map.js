@@ -1,13 +1,13 @@
 import { tileTemplate, TILE_SUBDOMAINS, IS_WEB } from "../services/api.js";
 import { tileUrl } from "../services/webbackend.js";
-import { state, emit, saveSettings, SLOVENIA_BOUNDS } from "../runtime/state.js";
+import { state, emit, saveSettings, SLOVENIA_BOUNDS, SI_TILE_BOUNDS } from "../runtime/state.js";
 import { createSpecialLayer } from "../explore/special.js";
 
 export let map;
 let baseLayer = null;
 const retiring = new Set();      // previous base layers kept until the new one has loaded
 const overlayLayers = new Map(); // id -> leaflet layer
-const SI_BOUNDS = L.latLngBounds([[45.25, 13.2], [46.98, 16.75]]);
+const SI_BOUNDS = L.latLngBounds(SI_TILE_BOUNDS);
 
 export function initMap(el) {
   const { center, zoom } = state.settings.startView || state.settings.view;

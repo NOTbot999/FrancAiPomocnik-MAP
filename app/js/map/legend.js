@@ -27,6 +27,7 @@ const bar = (stops, from, to) => `<div class="lg-bar" style="background:linear-g
 /** HTML legend of one layer config ("" when there is nothing to show). */
 export async function legendHtml(cfg) {
   if (!cfg) return "";
+  if (cfg.legend) return `<div class="lg-note">${esc(cfg.legend)}</div>`;   // plain-text legend from layers.json
   if (cfg.type === "wms") {
     const subs = (cfg.layers || "").split(",").filter(Boolean);
     return subs.map((l) => `<img class="lg-img" src="${wmsLegendUrl(cfg, l)}" alt="" loading="lazy" onerror="this.remove()">`).join("");
@@ -62,8 +63,6 @@ export async function legendHtml(cfg) {
     return items([[dot("#16a34a"), "PM10 pod 20 µg/m³"], [dot("#eab308"), "PM10 20–50 µg/m³"], [dot("#dc2626"), "PM10 nad 50 µg/m³"], [dot("#94a3b8"), "ni meritve"]]);
   }
   if (cfg.type === "nap") return `<div class="lg-note">Promet: NAP Slovenija (CC BY-SA 4.0). Barve po vrsti dogodka bodo dodane, ko bodo znana imena polj; zdaj so vsi elementi sivi.</div>`;
-  if (cfg.type === "arcgis_d96" && cfg.level) return `<div class="lg-note">Barvna Državna topografska karta 1:25.000 (GURS): zeleno gozd, modro vode, rjavo plastnice in skale, črno ceste, stavbe in imena.</div>`;
-  if (cfg.type === "arcgis_d96") return `<div class="lg-note">Črno-bela Državna topografska karta 1:25.000 (GURS). Najbolje se vidi nad ortofotom, LIDAR senčenjem ali svetlo podlago.</div>`;
   if (cfg.type === "live_flights") return items([[dot("#2563eb"), "letalo v zraku"], [dot("#94a3b8"), "na tleh"]]);
   return "";
 }

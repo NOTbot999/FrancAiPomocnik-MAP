@@ -2,6 +2,8 @@ import { store } from "../services/api.js";
 
 export const SLOVENIA_CENTER = [46.1512, 14.9955];
 export const SLOVENIA_BOUNDS = [[45.42, 13.37], [46.88, 16.62]];
+// Wider box that regional tile layers (GURS, GeoHub …) are clipped to — no requests outside it
+export const SI_TILE_BOUNDS = [[45.25, 13.2], [46.98, 16.75]];
 
 const DEFAULT_SETTINGS = {
   theme: "auto",            // auto | light | dark
