@@ -210,6 +210,17 @@
      "description": "Uradna slovenska topografska karta 1:50.000"
     },
     {
+     "id": "geohub_dtk25_color",
+     "name": "DTK25 barvna (1:25.000)",
+     "type": "arcgis_d96",
+     "minZoom": 13,
+     "url": "https://geohub.gov.si/ags/rest/services/TEMELJNE_KARTE/GH_MDP_TOPO_KARTA_SI/MapServer",
+     "level": 15,
+     "opacity": 1.0,
+     "attribution": "DTK25 &copy; GURS (GeoHub)",
+     "description": "Barvna Državna topografska karta 1:25.000 z ozadjem (gozd, vode, plastnice) pri vseh povečavah od 13 naprej. Ostra je do povečave 15, pri večji povečavi je povečan sken."
+    },
+    {
      "id": "geohub_dtk25",
      "name": "DTK25 (1:25.000)",
      "type": "arcgis_d96",

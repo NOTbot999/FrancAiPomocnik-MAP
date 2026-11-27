@@ -46,7 +46,9 @@ const D96TileLayer = L.GridLayer.extend({
     const nw = corner(0, 0), ne = corner(1, 0), sw = corner(0, 1), se = corner(1, 1);
     const groundRes = Math.hypot(ne.e - nw.e, ne.n - nw.n) / TS;          // metres per map pixel
     // source level whose pixels are about as big as the screen's (a bit sharper on hi-dpi)
-    const level = Math.max(0, Math.min(cfg.maxLevel ?? 17, Math.round(Math.log2(RES0 * scale / groundRes))));
+    // cfg.level pins one cache level: GeoHub's "Topografska karta" holds a different map per level
+    // (DTK50 at 14, colour DTK25 at 15, vector map from 16) and we want DTK25 at every zoom
+    const level = cfg.level ?? Math.max(0, Math.min(cfg.maxLevel ?? 17, Math.round(Math.log2(RES0 * scale / groundRes))));
     const res = RES0 / 2 ** level, span = res * TS;
 
     // D96 → canvas pixel: solve M·(NE−NW) = (W,0), M·(SW−NW) = (0,W)
@@ -58,7 +60,7 @@ const D96TileLayer = L.GridLayer.extend({
     const es = [nw.e, ne.e, sw.e, se.e], ns = [nw.n, ne.n, sw.n, se.n];
     const c0 = Math.floor((Math.min(...es) - ORIGIN_E) / span), c1 = Math.floor((Math.max(...es) - ORIGIN_E) / span);
     const r0 = Math.floor((ORIGIN_N - Math.max(...ns)) / span), r1 = Math.floor((ORIGIN_N - Math.min(...ns)) / span);
-    if ((c1 - c0 + 1) * (r1 - r0 + 1) > 16) return;   // never at sensible zooms; guards a runaway request
+    if ((c1 - c0 + 1) * (r1 - r0 + 1) > 36) return;   // a pinned level below its minZoom; guards a runaway request
 
     const jobs = [];
     for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
