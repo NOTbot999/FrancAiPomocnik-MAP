@@ -23,7 +23,7 @@ function tileAt(id, z, x, y) {
 }
 function previewHtml(l) {
   if (!["wms", "tile", "arcgis_export"].includes(l.type)) {
-    const ic = { live_flights: "navigation", weather: "sun", rainviewer: "sun", grid_d96: "grid", arso_stations: "sun", nap: "traffic" }[l.type] || "route";
+    const ic = { live_flights: "navigation", weather: "sun", rainviewer: "sun", grid_d96: "grid", arso_stations: "sun", nap: "traffic", arcgis_d96: "mountain" }[l.type] || "route";
     return `<div class="lt lt-icon">${icon(ic)}</div>`;
   }
   const z = Math.max(l.minZoom || 0, 13);

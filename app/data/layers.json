@@ -210,6 +210,28 @@
      "description": "Uradna slovenska topografska karta 1:50.000"
     },
     {
+     "id": "geohub_dtk25",
+     "name": "DTK25 (1:25.000)",
+     "type": "arcgis_d96",
+     "minZoom": 12,
+     "url": "https://geohub.gov.si/ags/rest/services/TEMELJNE_KARTE/DTK25_ZDR_CB/MapServer",
+     "maxLevel": 17,
+     "opacity": 0.9,
+     "attribution": "DTK25 &copy; GURS (GeoHub)",
+     "description": "Državna topografska karta 1:25.000 — celotna črno-bela karta s plastnicami, vodami, cestami in imeni. Prozorno ozadje: vklopi jo nad ortofotom, LIDAR senčenjem ali svetlo podlago."
+    },
+    {
+     "id": "geohub_dtk25_sit",
+     "name": "DTK25 — brez plastnic",
+     "type": "arcgis_d96",
+     "minZoom": 12,
+     "url": "https://geohub.gov.si/ags/rest/services/TEMELJNE_KARTE/DTK25_NPI_CB/MapServer",
+     "maxLevel": 17,
+     "opacity": 0.9,
+     "attribution": "DTK25 &copy; GURS (GeoHub)",
+     "description": "DTK25 samo s situacijo (ceste, naselja, poti, imena, kote) brez plastnic — preglednejša nad LIDAR senčenjem"
+    },
+    {
      "id": "gurs_dtk25",
      "name": "TTN5/TTN10 (1:5k–1:10k)",
      "type": "wms",

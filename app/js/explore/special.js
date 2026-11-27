@@ -5,6 +5,7 @@ import { createWeatherLayer } from "./weather.js";
 import { createGridLayer } from "./grid.js";
 import { createStationsLayer } from "./stations.js";
 import { createNapLayer } from "./traffic.js";
+import { createD96TileLayer } from "../map/d96tiles.js";
 
 const emojiIcon = (emoji, size = 18) => L.divIcon({
   html: `<div class="emoji-marker" style="font-size:${size}px">${emoji}</div>`,
@@ -18,6 +19,7 @@ export function createSpecialLayer(cfg, opacity) {
   if (cfg.type === "grid_d96") return createGridLayer(cfg, opacity);
   if (cfg.type === "arso_stations") return createStationsLayer(cfg, opacity);   // Vremenske postaje (ARSO)
   if (cfg.type === "nap") return createNapLayer(cfg, opacity);                  // Promet v živo (NAP)
+  if (cfg.type === "arcgis_d96") return createD96TileLayer(cfg, opacity);        // DTK25 (GeoHub, D96 cache)
   return L.layerGroup();
 }
 
