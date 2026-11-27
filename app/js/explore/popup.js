@@ -50,12 +50,13 @@ function wire(popup, lat, lng, name) {
 export function pointPopup(latlng, { title, subtitle = "", tags = {} }) {
   const [lat, lng] = latlng;
   const rows = Object.entries(tags)
-    .filter(([k]) => TAG_LABELS[k])
+    // OSM tags we know + rows that are already labelled in Slovenian (hydrants, AED: "Naslov", "Vir"…)
+    .filter(([k, v]) => v !== "" && v != null && (TAG_LABELS[k] || /^[A-ZČŠŽ]/.test(k)))
     .map(([k, v]) => {
       let val = esc(YES_NO[v] || v);
       if (k === "website") val = `<a href="${esc(v)}" target="_blank" rel="noopener">${esc(v.replace(/^https?:\/\//, ""))}</a>`;
       if (k === "wikipedia") { const [lang, t] = v.split(":"); val = `<a href="https://${esc(lang)}.wikipedia.org/wiki/${encodeURIComponent(t || "")}" target="_blank" rel="noopener">${esc(t || v)}</a>`; }
-      return `<div><b>${TAG_LABELS[k]}</b><span>${val}</span></div>`;
+      return `<div><b>${esc(TAG_LABELS[k] || k)}</b><span>${val}</span></div>`;
     }).join("");
   const html = `<div class="pop"><h3>${esc(title)}</h3><div class="sub">${esc(subtitle)}</div>
     ${rows ? `<div class="tags">${rows}</div>` : ""}${coordBlock(lat, lng)}${actions(lat, lng, title)}</div>`;

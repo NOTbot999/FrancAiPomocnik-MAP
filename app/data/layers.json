@@ -1644,11 +1644,12 @@
   },
   {
    "id": "defibrillator",
-   "label": "Defibrilatorji",
+   "label": "Defibrilatorji (AED)",
    "emoji": "❤️",
    "color": "#16a34a",
    "query": "[out:json][timeout:30];(node[\"emergency\"=\"defibrillator\"](45.4,13.4,46.9,16.6);way[\"emergency\"=\"defibrillator\"](45.4,13.4,46.9,16.6););out center;",
-   "group": "nujno"
+   "group": "nujno",
+   "source": "dsz"
   },
   {
    "id": "fuel",

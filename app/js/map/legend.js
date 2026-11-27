@@ -76,6 +76,8 @@ function poiLegend() {
     if (!c) continue;
     if (id === "hydrant") {
       list.push([dot("#dc2626"), "hidrant — nadzemni"], [dot("#2563eb"), "hidrant — podzemni"], [dot("#f97316"), "hidrant — vrsta ni podana"], [dot("#9ca3af"), "hidrant — opuščen"]);
+    } else if (id === "defibrillator") {
+      list.push([dot("#16a34a"), "AED — dostop 24 ur"], [dot("#eab308"), "AED — omejen urnik"], [dot("#0ea5e9"), "AED — samo v OSM"], [dot("#9ca3af"), "AED — ne deluje"]);
     } else if (id === "cave") {
       list.push([dot("#f59e0b"), "jama (večja pika = daljša jama)"]);
     } else list.push([dot(c.color), `${c.emoji || ""} ${c.label}`]);

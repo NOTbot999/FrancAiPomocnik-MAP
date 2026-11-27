@@ -103,6 +103,53 @@ function hydrantTooltip(h) {
     <dt>D96/TM</dt><dd>e ${Math.round(e)} n ${Math.round(n)}</dd></div></div>`;
 }
 
+// ── Defibrillators (AED) — Register AED of the 112 medical dispatch (DSZ) + OSM extras, bundled ──
+let aedDb = null, aedDbPromise = null;
+const AED_FILTERS = [["all", "Vsi delujoči"], ["h24", "Dostop 24 ur"], ["free", "Prost dostop"], ["broken", "Ne delujejo"]];
+const AED_COLOR = { h24: "#16a34a", limited: "#eab308", off: "#9ca3af", osm: "#0ea5e9" };
+
+export function loadAed() {
+  aedDbPromise ||= fetch("data/aed.json").then((r) => r.json()).then((d) => {
+    const st = d.status || {};
+    const items = [
+      ...d.dsz.map(([lat, lng, name, addr, status, flags, time, path, protocol, id]) => ({ id: `aed/${id}`, src: "dsz", lat, lng, name, addr,
+        status: st[status] || "neznano", ok: status === 0, h24: !!(flags & 1), free: !!(flags & 2), time, path, protocol })),
+      ...d.osm.map(([lat, lng, name, loc, indoor, access, hours, ref]) => ({ id: ref, src: "osm", lat, lng, name, path: loc, indoor, access,
+        time: hours, ok: true, h24: hours === "24/7", free: ["yes", "public"].includes(access) })),
+    ];
+    aedDb = { ...d, items };
+    return aedDb;
+  });
+  aedDbPromise.catch(() => { aedDbPromise = null; });
+  return aedDbPromise;
+}
+function aedFilter() {
+  const f = state.settings.aedFilter || "all";
+  const all = aedDb?.items || [];
+  if (f === "broken") return all.filter((a) => !a.ok);
+  const ok = all.filter((a) => a.ok);
+  return f === "h24" ? ok.filter((a) => a.h24) : f === "free" ? ok.filter((a) => a.free) : ok;
+}
+const aedColor = (a) => (!a.ok ? AED_COLOR.off : a.src === "osm" ? AED_COLOR.osm : a.h24 ? AED_COLOR.h24 : AED_COLOR.limited);
+function aedTags(a) {
+  const yn = { yes: "da", no: "ne" };
+  return {
+    ...(a.addr ? { "Naslov": a.addr } : {}),
+    ...(a.src === "dsz" ? { "Stanje": a.status, "Dostop 24 ur": a.h24 ? "da" : "ne", "Prost dostop": a.free ? "da" : "ne" } : {}),
+    ...(a.time ? { "Kdaj je dostopen": a.time } : {}),
+    ...(a.path ? { "Kje točno": a.path } : {}),
+    ...(a.protocol ? { "Kako do njega": a.protocol } : {}),
+    ...(a.indoor ? { "V stavbi": yn[a.indoor] || a.indoor } : {}),
+    "Vir": a.src === "dsz" ? "Register AED, Dispečerska služba zdravstva" : "OpenStreetMap (ni v registru DSZ)",
+  };
+}
+function aedTooltip(a) {
+  return `<div class="cave-tip"><b>❤️ ${esc(a.name || "Defibrilator")}</b>
+    <div class="kv">${a.addr ? `<dt>Naslov</dt><dd>${esc(a.addr)}</dd>` : ""}
+    <dt>Dostop</dt><dd>${!a.ok ? esc(a.status) : a.h24 ? "24 ur" : esc(a.time || "omejen")}</dd>
+    ${a.path ? `<dt>Kje</dt><dd>${esc(a.path)}</dd>` : ""}</div></div>`;
+}
+
 export function flyToCave(c) {
   map.flyTo([c.lat, c.lng], Math.max(map.getZoom(), 15), { duration: 0.7 });
   setTimeout(() => pointPopup([c.lat, c.lng], { title: `🕳️ ${c.name}`, subtitle: `Kataster jam · št. ${c.ref}`, tags: c.tags }), 750);
@@ -142,6 +189,11 @@ export async function loadCategory(cat, { force = false, silent = false } = {}) 
       loading.delete(cat.id);
       return hydrantFilter();
     }
+    if (cat.id === "defibrillator") {
+      await loadAed();
+      loading.delete(cat.id);
+      return aedFilter();
+    }
     const json = await overpass(cat.query, force ? 0 : 14 * 86400);
     const features = toFeatures(json);
     loading.delete(cat.id);
@@ -165,11 +217,13 @@ export async function showCategory(id, force = false) {
   if (showGen.get(id) !== gen) return;               // a newer call (filter change, refresh) took over
   if (!state.settings.pois.includes(id)) return;     // toggled off while loading
   hideLayer(id);
-  const isCave = id === "cave", isHyd = id === "hydrant";
+  const isCave = id === "cave", isHyd = id === "hydrant", isAed = id === "defibrillator";
   const ms = state.settings.ui?.markerSize || 18;    // "Velikost označb" (px diameter)
   // caves: marker size grows with cave length (log scale) so big systems stand out
   const em = emo(cat);   // shown on a badge when zoomed in (rim colour = category / hydrant type)
-  const points = features.map((f) => isHyd ? {
+  const points = features.map((f) => isAed ? {
+    lat: f.lat, lng: f.lng, f, r: ms / 3.2, w: 2, stroke: "#ffffff", emoji: em, faded: !f.ok, fill: aedColor(f),
+  } : isHyd ? {
     lat: f.lat, lng: f.lng, f, r: ms / 4, w: 1.5, stroke: "#ffffff", emoji: em, faded: f.abandoned,
     fill: f.abandoned ? HYD_COLOR.abandoned : HYD_COLOR[f.type],
   } : {
@@ -179,8 +233,10 @@ export async function showCategory(id, force = false) {
   });
   const layer = new PointLayer(points, {
     emojiSize: Math.round(Math.max(10, ms * 0.65)),   // "Velikost označb" also sizes the emoji badges
-    tooltip: ({ f }) => isCave ? caveTooltip(f) : isHyd ? hydrantTooltip(f) : `${emo(cat)} ${esc(f.name || cat.label)}`,
-    onClick: ({ f }) => isHyd
+    tooltip: ({ f }) => isCave ? caveTooltip(f) : isHyd ? hydrantTooltip(f) : isAed ? aedTooltip(f) : `${emo(cat)} ${esc(f.name || cat.label)}`,
+    onClick: ({ f }) => isAed
+      ? pointPopup([f.lat, f.lng], { title: `${emo(cat)} ${f.name || "Defibrilator"}`, subtitle: f.ok ? (f.h24 ? "AED · dostopen 24 ur" : "AED · omejen dostop") : `AED · ${f.status}`, tags: aedTags(f) })
+      : isHyd
       ? pointPopup([f.lat, f.lng], { title: `${emo(cat)} Hidrant — ${HYD_TYPE[f.type]}`, subtitle: "Zbirni kataster GJI", tags: hydrantTags(f) })
       : isCave
       ? pointPopup([f.lat, f.lng], { title: `${emo(cat)} ${f.name}`, subtitle: `Kataster jam · št. ${f.ref}`, tags: f.tags })
@@ -289,6 +345,22 @@ export const poiPanel = {
           </div>
         </div></div>`;
     }
+    let aedCard = "";
+    if (s.pois.includes("defibrillator") && aedDb) {
+      const f = s.aedFilter || "all", it = aedDb.items, c = (pred) => fmtNum(it.filter(pred).length);
+      aedCard = `<div class="section"><div class="section-title"><span>❤️ Defibrilatorji</span><span>${fmtNum(it.length)} AED</span></div>
+        <div class="card stack">
+          <div class="small">Ob srčnem zastoju najprej pokliči <b>112</b> — dispečer te usmeri do najbližjega AED.</div>
+          <div class="small muted">Vir: Register AED Dispečerske službe zdravstva (aed.dsz.si) · ${fmtNum(aedDb.dsz.length)} naprav, dopolnjeno z ${fmtNum(aedDb.osm.length)} iz OpenStreetMap, ki jih v registru ni · uvoženo ${esc(aedDb.imported)}.</div>
+          <div class="seg">${AED_FILTERS.map(([v, l]) => `<button class="${f === v ? "on" : ""}" data-aedf="${v}">${l}</button>`).join("")}</div>
+          <div class="hyd-legend">
+            <span><i style="background:${AED_COLOR.h24}"></i>24 ur ${c((a) => a.ok && a.src === "dsz" && a.h24)}</span>
+            <span><i style="background:${AED_COLOR.limited}"></i>omejen urnik ${c((a) => a.ok && a.src === "dsz" && !a.h24)}</span>
+            <span><i style="background:${AED_COLOR.osm}"></i>samo OSM ${c((a) => a.src === "osm")}</span>
+            <span><i style="background:${AED_COLOR.off}"></i>ne deluje ${c((a) => !a.ok)}</span>
+          </div>
+        </div></div>`;
+    }
     el.innerHTML = `
       <div class="help">Točke iz OpenStreetMap (Overpass), jame iz katastra jam, hidranti iz državnega katastra GJI. Ko so enkrat naložene, delujejo brez povezave.</div>
       <div class="section">
@@ -296,7 +368,7 @@ export const poiPanel = {
           <span class="row">${s.pois.length ? `<button class="btn sm" id="poi-refresh" title="Ponovno prenesi aktivne kategorije">${icon("refresh")} Osveži</button><button class="btn sm danger" id="poi-clear">Izklopi vse</button>` : ""}</span>
         </div>
         ${chips}
-      </div>${hydCard}${caveCard}`;
+      </div>${aedCard}${hydCard}${caveCard}`;
     el.onclick = (e) => {
       const b = e.target.closest("[data-poi]");
       if (b) return togglePoi(b.dataset.poi);
@@ -309,6 +381,8 @@ export const poiPanel = {
       }
       const cf = e.target.closest("[data-cavef]");
       if (cf) { s.caveFilter = cf.dataset.cavef; saveSettings(); return showCategory("cave"); }
+      const af = e.target.closest("[data-aedf]");
+      if (af) { s.aedFilter = af.dataset.aedf; saveSettings(); return showCategory("defibrillator"); }
       const hf = e.target.closest("[data-hydf]");
       if (hf) { s.hydrantFilter = hf.dataset.hydf; saveSettings(); return showCategory("hydrant"); }
       const cv = e.target.closest("[data-cave]");
