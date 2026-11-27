@@ -139,8 +139,36 @@ function markerFor(kind, s) {
     html: `<div class="st-air emoji-marker" style="background:${pmColor(pm)}">${pm == null ? "–" : Math.round(pm)}</div>` });
 }
 
+// ── weather "cards" on the map: name, weather symbol, temperature, wind, humidity ──
+const WW = [   // ARSO wwsyn_icon (present weather; may carry light/mod/heavy prefix) → symbol
+  [/^TS/, "⛈️"], [/FZ(DZ|RA)/, "🧊"], [/RASN/, "🌨️"], [/(SN|GR)$/, "❄️"], [/RA$/, "🌧️"], [/DZ$/, "🌦️"], [/FG$/, "🌫️"],
+];
+const NN = { clear: "☀️", mostClear: "🌤️", slightCloudy: "🌤️", partCloudy: "⛅", modCloudy: "⛅", prevCloudy: "🌥️", overcast: "☁️", FG: "🌫️" };
+export function weatherSymbol(p) {
+  const ww = (p.wwsyn_icon || "").replace(/^(light|mod|heavy)/, "");
+  if (ww) for (const [re, s] of WW) if (re.test(ww)) return s;
+  return NN[p.nn_icon] || "";
+}
+const CARD_FROM_ZOOM = CLUSTER_BELOW_ZOOM;   // single stations from here on: card when there is room
+const NAME_FROM_ZOOM = 11;
+const shortName = (s) => s.props.domain_shortTitle && s.props.domain_shortTitle.length < (s.name || "").length
+  ? s.props.domain_shortTitle.charAt(0) + s.props.domain_shortTitle.slice(1).toLowerCase() : s.name;
+
+function cardIcon(s, withName) {
+  const p = s.props, t = num(p.t), rh = num(p.rh), ff = num(p.ff_val), dd = num(p.dd_val), sym = weatherSymbol(p);
+  const wind = ff == null ? "" : `<span class="st-wind">${dd != null && ff > 0 ? `<i style="transform:rotate(${dd + 180}deg)">↑</i>` : ""}${Math.round(ff)} m/s</span>`;
+  const hum = rh == null ? "" : `<span>💧${Math.round(rh)} %</span>`;
+  return L.divIcon({ className: "st-card-wrap", iconSize: [0, 0],
+    html: `<div class="st-card emoji-marker">
+      <div class="st-card-top">${sym ? `<span class="wx">${sym}</span>` : ""}<b style="color:${tempColor(t)}">${t == null ? "–" : Math.round(t) + "°"}</b></div>
+      ${wind || hum ? `<div class="st-card-sub">${wind}${hum}</div>` : ""}
+      ${withName ? `<div class="st-card-name">${esc(shortName(s))}</div>` : ""}
+    </div>` });
+}
+const filledCount = (s) => Object.values(s.props).filter((v) => v != null).length;
+
 const MAIN = {   // what the popup shows first (only non-empty values)
-  meteo: [["t", "Temperatura", "°C"], ["rh", "Vlažnost", "%"], ["ff_val", "Veter", "m/s"], ["dd_shortText", "Smer vetra", ""], ["msl", "Tlak (morje)", "hPa"], ["p", "Tlak", "hPa"], ["snow", "Snežna odeja", "cm"], ["rr_val", "Padavine", "mm"], ["nn_shortText", "Oblačnost", ""], ["wwsyn_shortText", "Pojavi", ""], ["vis_value", "Vidnost", "km"]],
+  meteo: [["t", "Temperatura", "°C"], ["rh", "Vlažnost", "%"], ["ff_val", "Veter", "m/s"], ["ff_val_kmh", "Veter", "km/h"], ["ffmax_val", "Sunki vetra", "m/s"], ["dd_longText", "Smer vetra", ""], ["dd_shortText", "Smer vetra", ""], ["td", "Rosišče", "°C"], ["msl", "Tlak (morje)", "hPa"], ["p", "Tlak", "hPa"], ["snow", "Snežna odeja", "cm"], ["rr_val", "Padavine", "mm"], ["nn_shortText", "Oblačnost", ""], ["wwsyn_shortText", "Pojavi", ""], ["vis_value", "Vidnost", "km"]],
   voda: [["reka", "Reka", ""], ["vodostaj", "Vodostaj", "cm"], ["pretok", "Pretok", "m³/s"], ["prvi_vv_pretok", "1. visokovodni pretok", "m³/s"], ["temp_vode", "Temperatura vode", "°C"], ["pretok_znacilni", "Značilni pretok", ""]],
   zrak: [["pm10", "PM10", "µg/m³"], ["pm2.5", "PM2,5", "µg/m³"], ["o3", "O₃", "µg/m³"], ["no2", "NO₂", "µg/m³"], ["so2", "SO₂", "µg/m³"], ["co", "CO", "mg/m³"]],
 };
@@ -149,11 +177,11 @@ const TITLE = { meteo: "🌡️ Meteorološka postaja", voda: "💧 Hidrološka 
 
 function popupHtml(kind, s) {
   const p = s.props;
-  const main = MAIN[kind].filter(([k]) => p[k] != null)
+  const main = MAIN[kind].filter(([k]) => p[k] != null && !(k === "dd_shortText" && p.dd_longText))
     .map(([k, label, unit]) => `<dt>${esc(label)}</dt><dd>${esc(p[k])}${unit ? " " + unit : ""}</dd>`).join("");
   const all = Object.entries(p).map(([k, v]) => `<tr><th>${esc(k)}</th><td>${v == null ? '<span class="muted">—</span>' : esc(v)}</td></tr>`).join("");
   return `<div class="pop stack st-pop" style="min-width:230px">
-    <b>${esc(s.name)}</b><div class="small muted">${TITLE[kind]}${s.id ? ` · ${esc(s.id)}` : ""}</div>
+    <b>${kind === "meteo" && weatherSymbol(p) ? weatherSymbol(p) + " " : ""}${esc(s.name)}</b><div class="small muted">${TITLE[kind]}${s.id ? ` · ${esc(s.id)}` : ""}</div>
     ${main ? `<dl class="kv">${main}</dl>` : `<div class="small muted">Ni trenutnih meritev.</div>`}
     <div class="small muted">Meritev: ${esc(TIME[kind](p) || "—")}</div>
     <button class="btn sm" data-st-all>Vsi podatki</button>
@@ -177,11 +205,26 @@ function stationsLayer(kind, opacity) {
       const k = `${Math.floor(pt.x / CLUSTER_PX)},${Math.floor(pt.y / CLUSTER_PX)}`;
       (groups.get(k) || groups.set(k, []).get(k)).push(s);
     }
+    // weather cards: richest stations first, a card only where it doesn't cover another one
+    const placed = [];
+    const withName = z >= NAME_FROM_ZOOM;
+    const cardFor = new Set();
+    if (kind === "meteo" && z >= CARD_FROM_ZOOM) {
+      const W = 96, H = withName ? 58 : 44;
+      for (const s of [...list].sort((a, b) => filledCount(b) - filledCount(a))) {
+        const pt = map.latLngToContainerPoint([s.lat, s.lng]);
+        const r = { x0: pt.x - W / 2, y0: pt.y - H / 2, x1: pt.x + W / 2, y1: pt.y + H / 2 };
+        if (placed.some((q) => r.x0 < q.x1 && r.x1 > q.x0 && r.y0 < q.y1 && r.y1 > q.y0)) continue;
+        placed.push(r); cardFor.add(s);
+      }
+    }
     for (const grp of groups.values()) {
       if (grp.length === 1) {
         const s = grp[0];
-        const m = L.marker([s.lat, s.lng], { icon: markerFor(kind, s), pane: "top", opacity: op, keyboard: false })
+        const card = cardFor.has(s);
+        const m = L.marker([s.lat, s.lng], { icon: card ? cardIcon(s, withName) : markerFor(kind, s), pane: "top", opacity: op, keyboard: false, zIndexOffset: card ? 100 : 0 })
           .bindPopup(() => popupHtml(kind, s), { maxWidth: 360 });
+        if (!card) m.bindTooltip(kind === "meteo" ? `${esc(s.name)} · ${weatherSymbol(s.props)} ${s.props.t ?? "–"} °C` : esc(s.name), { direction: "top", offset: [0, -14] });
         m.on("popupopen", (e) => {
           e.popup.getElement().onclick = (ev) => {
             if (!ev.target.closest("[data-st-all]")) return;
@@ -206,6 +249,7 @@ function stationsLayer(kind, opacity) {
   g.on("add", async () => {
     active.set(kind, g);
     map.on("zoomend", onZoom);
+    map.on("moveend", onZoom);        // card placement depends on what is on screen
     await loadCache();
     g._redraw();
     updateStatus();
@@ -216,6 +260,7 @@ function stationsLayer(kind, opacity) {
   g.on("remove", () => {
     active.delete(kind);
     map.off("zoomend", onZoom);
+    map.off("moveend", onZoom);
     if (!active.size) { clearInterval(timer); timer = null; }
     updateStatus();
   });

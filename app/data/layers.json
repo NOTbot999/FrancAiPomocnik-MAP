@@ -1372,8 +1372,17 @@
    "id": "vreme",
    "name": "Vreme",
    "icon": "Sun",
-   "description": "Radar, napoved in ARSO merilne postaje",
+   "description": "Vremenske postaje v živo, radar, napoved, reke in zrak",
    "layers": [
+    {
+     "id": "arso_meteo",
+     "name": "Vremenske postaje — vreme v živo",
+     "type": "arso_stations",
+     "kind": "meteo",
+     "opacity": 1,
+     "live": true,
+     "description": "ARSO postaje z imeni: vreme, temperatura, veter, vlažnost (osvežuje se na 15 min)"
+    },
     {
      "id": "wx_radar",
      "name": "Padavine – radar",
@@ -1411,17 +1420,8 @@
      "description": "Trenutna pokritost neba z oblaki v % (Open-Meteo) — nadomešča OpenWeatherMap"
     },
     {
-     "id": "arso_meteo",
-     "name": "Vremenske postaje — Meteo",
-     "type": "arso_stations",
-     "kind": "meteo",
-     "opacity": 1,
-     "live": true,
-     "description": "Meteorološke postaje ARSO (glavne in samodejne): temperatura, vlaga, veter, tlak, sneg, oblačnost. Osvežitev na 15 min."
-    },
-    {
      "id": "arso_voda",
-     "name": "Vremenske postaje — Voda",
+     "name": "Vremenske postaje — reke (vodostaj, pretok)",
      "type": "arso_stations",
      "kind": "voda",
      "opacity": 1,
@@ -1430,7 +1430,7 @@
     },
     {
      "id": "arso_zrak",
-     "name": "Vremenske postaje — Zrak",
+     "name": "Vremenske postaje — kakovost zraka",
      "type": "arso_stations",
      "kind": "zrak",
      "opacity": 1,
@@ -1640,6 +1640,14 @@
    "emoji": "🚔",
    "color": "#3b82f6",
    "query": "[out:json][timeout:30];(node[\"amenity\"=\"police\"](45.4,13.4,46.9,16.6);way[\"amenity\"=\"police\"](45.4,13.4,46.9,16.6););out center;",
+   "group": "nujno"
+  },
+  {
+   "id": "defibrillator",
+   "label": "Defibrilatorji",
+   "emoji": "❤️",
+   "color": "#16a34a",
+   "query": "[out:json][timeout:30];(node[\"emergency\"=\"defibrillator\"](45.4,13.4,46.9,16.6);way[\"emergency\"=\"defibrillator\"](45.4,13.4,46.9,16.6););out center;",
    "group": "nujno"
   },
   {

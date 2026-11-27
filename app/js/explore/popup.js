@@ -11,7 +11,11 @@ const TAG_LABELS = {
   operator: "Upravljavec", description: "Opis", "addr:street": "Ulica", "addr:housenumber": "Hišna št.",
   "addr:city": "Kraj", "addr:postcode": "Pošta", wikipedia: "Wikipedija", heritage: "Dediščina", denomination: "Veroizpoved",
   capacity: "Kapaciteta", fee: "Plačljivo", access: "Dostop", brand: "Znamka", length: "Dolžina", height: "Višina",
+  // defibrillators (AED)
+  "defibrillator:location": "Kje je AED", "defibrillator:location:sl": "Kje je AED", indoor: "V stavbi", level: "Nadstropje",
+  "defibrillator:code": "Koda omarice", "emergency:phone": "Klic v sili", note: "Opomba",
 };
+const YES_NO = { yes: "da", no: "ne", public: "javno", private: "zasebno", customers: "strankam", permissive: "dovoljeno" };
 
 function coordBlock(lat, lng) {
   const { e, n } = toD96(lat, lng);
@@ -48,7 +52,7 @@ export function pointPopup(latlng, { title, subtitle = "", tags = {} }) {
   const rows = Object.entries(tags)
     .filter(([k]) => TAG_LABELS[k])
     .map(([k, v]) => {
-      let val = esc(v);
+      let val = esc(YES_NO[v] || v);
       if (k === "website") val = `<a href="${esc(v)}" target="_blank" rel="noopener">${esc(v.replace(/^https?:\/\//, ""))}</a>`;
       if (k === "wikipedia") { const [lang, t] = v.split(":"); val = `<a href="https://${esc(lang)}.wikipedia.org/wiki/${encodeURIComponent(t || "")}" target="_blank" rel="noopener">${esc(t || v)}</a>`; }
       return `<div><b>${TAG_LABELS[k]}</b><span>${val}</span></div>`;
